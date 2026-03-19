@@ -43,6 +43,10 @@ subprojects {
         testImplementation("org.springframework.boot:spring-boot-starter-test")
     }
 
+    tasks.withType<Test> {
+        useJUnitPlatform()
+    }
+
     ktlint {
         version.set("1.5.0")
         android.set(false)
