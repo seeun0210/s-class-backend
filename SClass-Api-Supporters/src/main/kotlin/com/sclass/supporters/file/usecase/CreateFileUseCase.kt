@@ -26,10 +26,11 @@ class CreateFileUseCase(
     ): PresignedUrlResponse {
         val fileId = Ulid.generate()
         val storedFilename = "${fileId}_$originalFilename"
-        val filePath = generateStoragePath(fileId, fileType, originalFilename)
+        val directoryPath = generateDirectoryPath(fileType)
+        val filePath = "$directoryPath/$storedFilename"
 
         val file =
-            File(
+            File.create(
                 id = fileId,
                 originalFilename = originalFilename,
                 storedFilename = storedFilename,
@@ -54,13 +55,9 @@ class CreateFileUseCase(
         )
     }
 
-    private fun generateStoragePath(
-        fileId: String,
-        fileType: FileType,
-        originalFilename: String,
-    ): String {
+    private fun generateDirectoryPath(fileType: FileType): String {
         val today = LocalDate.now()
         val datePath = today.format(DateTimeFormatter.ofPattern("yyyy/MM"))
-        return "supporters/${fileType.name.lowercase()}/$datePath/${fileId}_$originalFilename"
+        return "supporters/${fileType.name.lowercase()}/$datePath"
     }
 }

@@ -33,6 +33,7 @@ class File(
 ) : BaseTimeEntity() {
     companion object {
         fun create(
+            id: String = Ulid.generate(),
             originalFilename: String,
             storedFilename: String,
             filePath: String,
@@ -42,7 +43,7 @@ class File(
             uploadedBy: String,
         ): File =
             File(
-                id = Ulid.generate(),
+                id = id,
                 originalFilename = originalFilename,
                 storedFilename = storedFilename,
                 filePath = filePath,
