@@ -1,0 +1,34 @@
+package com.sclass.domain.domains.file.domain
+
+enum class FileType {
+    // 수업 관련
+    PLAN,
+    REPORT,
+    MATERIAL,
+    SUMMARY,
+    VIDEO,
+
+    // 탐구 관련
+    INQUIRY_PLAN,
+    INQUIRY_DRAFT,
+
+    // 선생님 서류
+    TEACHER_APPLICATION,
+    TEACHER_CERTIFICATE,
+    TEACHER_POLICE_CHECK,
+    TEACHER_BANK_STATEMENT,
+    TEACHER_RESIDENT_REGISTRATION,
+    TEACHER_TRANSCRIPT,
+    TEACHER_PROFILE,
+
+    // 학생 서류
+    STUDENT_APPLICATION,
+    STUDENT_TRANSCRIPT,
+    STUDENT_CAREERNET,
+    STUDENT_CONSULTING_MATERIAL,
+    STUDENT_REGISTRATION_RECEIPT,
+    STUDENT_RECORD,
+
+    // 과제
+    TASK_SUBMISSION,
+}
