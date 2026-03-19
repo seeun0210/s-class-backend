@@ -7,7 +7,6 @@ import com.sclass.supporters.file.usecase.CreateFileUseCase
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -18,12 +17,11 @@ class FileController(
 ) {
     @PostMapping("/presigned-url")
     fun createPresignedUrl(
-        @RequestHeader("X-User-Id") uploadedBy: String,
         @Valid @RequestBody request: PresignedUrlRequest,
     ): ApiResponse<PresignedUrlResponse> {
         val response =
             createFileUseCase.execute(
-                uploadedBy = uploadedBy,
+                uploadedBy = request.uploadedBy,
                 originalFilename = request.originalFilename,
                 contentType = request.contentType,
                 fileSize = request.fileSize,
