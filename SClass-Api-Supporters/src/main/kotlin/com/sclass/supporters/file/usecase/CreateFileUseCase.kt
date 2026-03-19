@@ -25,16 +25,14 @@ class CreateFileUseCase(
         fileType: FileType,
     ): PresignedUrlResponse {
         val fileId = Ulid.generate()
-        val storedFilename = "${fileId}_$originalFilename"
         val directoryPath = generateDirectoryPath(fileType)
-        val filePath = "$directoryPath/$storedFilename"
+        val storedFilename = "$directoryPath/${fileId}_$originalFilename"
 
         val file =
             File.create(
                 id = fileId,
                 originalFilename = originalFilename,
                 storedFilename = storedFilename,
-                filePath = filePath,
                 mimeType = contentType,
                 fileSize = fileSize,
                 fileType = fileType,
@@ -44,14 +42,14 @@ class CreateFileUseCase(
 
         val presignedUrl =
             s3Service.generatePresignedPutUrl(
-                key = filePath,
+                key = storedFilename,
                 contentType = contentType,
             )
 
         return PresignedUrlResponse(
             fileId = fileId,
             presignedUrl = presignedUrl,
-            filePath = filePath,
+            storedFilename = storedFilename,
         )
     }
 

@@ -44,8 +44,8 @@ class CreateFileUseCaseTest {
 
         assertEquals("https://s3.example.com/presigned", result.presignedUrl)
         assertTrue(result.fileId.length == 26)
-        assertTrue(result.filePath.contains("task_submission"))
-        assertTrue(result.filePath.endsWith("_report.pdf"))
+        assertTrue(result.storedFilename.contains("task_submission"))
+        assertTrue(result.storedFilename.endsWith("_report.pdf"))
     }
 
     @Test
@@ -65,7 +65,7 @@ class CreateFileUseCaseTest {
 
         val today = LocalDate.now()
         val datePath = today.format(DateTimeFormatter.ofPattern("yyyy/MM"))
-        assertTrue(result.filePath.startsWith("supporters/teacher_profile/$datePath/"))
+        assertTrue(result.storedFilename.startsWith("supporters/teacher_profile/$datePath/"))
     }
 
     @Test
@@ -89,7 +89,7 @@ class CreateFileUseCaseTest {
         assertEquals(FileType.PLAN, saved.fileType)
         assertEquals("user-456", saved.uploadedBy)
         assertTrue(saved.storedFilename.endsWith("_doc.pdf"))
-        assertTrue(saved.filePath.contains("plan"))
+        assertTrue(saved.storedFilename.contains("plan"))
     }
 
     @Test
@@ -109,7 +109,7 @@ class CreateFileUseCaseTest {
 
         verify {
             s3Service.generatePresignedPutUrl(
-                key = result.filePath,
+                key = result.storedFilename,
                 contentType = "image/png",
             )
         }

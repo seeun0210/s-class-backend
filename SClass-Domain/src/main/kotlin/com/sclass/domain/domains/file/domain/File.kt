@@ -15,19 +15,23 @@ class File(
     @Id
     @Column(length = 26)
     val id: String,
+
     @Column(nullable = false)
     val originalFilename: String,
+
     @Column(nullable = false)
     val storedFilename: String,
-    @Column(nullable = false)
-    val filePath: String,
+
     @Column(nullable = false)
     val mimeType: String,
+
     @Column(nullable = false)
     val fileSize: Long,
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val fileType: FileType,
+
     @Column(nullable = false)
     val uploadedBy: String,
 ) : BaseTimeEntity() {
@@ -36,7 +40,6 @@ class File(
             id: String = Ulid.generate(),
             originalFilename: String,
             storedFilename: String,
-            filePath: String,
             mimeType: String,
             fileSize: Long,
             fileType: FileType,
@@ -46,7 +49,6 @@ class File(
                 id = id,
                 originalFilename = originalFilename,
                 storedFilename = storedFilename,
-                filePath = filePath,
                 mimeType = mimeType,
                 fileSize = fileSize,
                 fileType = fileType,
