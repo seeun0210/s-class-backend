@@ -13,12 +13,12 @@ allowed-tools: Bash, Read, Edit, Glob, Grep, AskUserQuestion
 1. **PR 번호 확인**: `gh pr view --json number`로 현재 브랜치의 PR 번호 조회
 2. **리뷰 코멘트 수집**: `gh api repos/{owner}/{repo}/pulls/{pr_number}/comments`로 인라인 리뷰 코멘트 조회
 3. **일반 코멘트 수집**: `gh api repos/{owner}/{repo}/issues/{pr_number}/comments`로 일반 코멘트 조회
-4. **미응답 코멘트 필터링**: 이미 답변한 코멘트는 제외하고 새로운 리뷰 코멘트만 처리
+4. **미응답 코멘트 필터링**: 내가 아직 답글을 달지 않은 새로운 리뷰 코멘트만 필터링하여 처리
 5. **각 코멘트별 처리**:
    - 코드 수정이 필요한 경우: 해당 파일을 읽고 수정 반영
    - 설명이 필요한 경우: 리뷰어에게 답변 코멘트 작성
    - **애매모호한 리뷰**: 리뷰 내용이 불명확하거나 수정/답변 판단이 어려운 경우, `AskUserQuestion`으로 사용자에게 질문하여 함께 결정
-6. **리뷰어 멘션**: 답변 시 리뷰어를 @ 멘션 (예: `gemini-code-assist[bot]` → `@gemini-code-assist`)
+6. **리뷰어 멘션**: 답변 시 리뷰어의 `login`을 사용하여 @ 멘션 (예: API 응답의 `user.login`이 `gemini-code-assist`인 경우 `@gemini-code-assist`)
 7. **수정사항 커밋/푸시**: 코드 수정이 있으면 커밋하고 푸시
 8. **요약 코멘트**: PR에 전체 리뷰 대응 요약 코멘트 작성
 
