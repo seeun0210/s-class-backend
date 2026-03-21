@@ -76,7 +76,7 @@ class OAuthLoginUseCase(
                 email = signupInfo.email,
                 name = signupInfo.name,
                 phoneNumber = request.phoneNumber,
-                profileImageUrl = null,
+                profileImageUrl = request.profileImageUrl,
                 platform = platform,
                 role = role,
             )
