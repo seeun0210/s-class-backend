@@ -1,0 +1,42 @@
+name: PR Labeler
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  type-label:
+    name: Set Type Labels (branch pattern)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: TimonVS/pr-labeler-action@v5
+        with:
+          configuration-path: .github/pr-labels.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  module-label:
+    name: Set Module Labels (changed files)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          configuration-path: .github/module-labels.yml
+
+  auto-assign:
+    name: Assign PR author
+    if: github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: toshimaru/auto-author-assign@v2.1.1
