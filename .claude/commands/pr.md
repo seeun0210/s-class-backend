@@ -17,7 +17,6 @@
 ## 규칙
 
 - PR 제목은 70자 이내
-- 본문 마지막에 `🤖 Generated with [Claude Code](https://claude.com/claude-code)` 추가
 - 커밋이 없으면 PR 생성하지 말고 안내
 
 ## 추가 컨텍스트
