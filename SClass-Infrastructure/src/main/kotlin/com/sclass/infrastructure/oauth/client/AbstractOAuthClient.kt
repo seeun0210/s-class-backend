@@ -7,10 +7,10 @@ import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestClientException
 import org.springframework.web.client.RestTemplate
 
-abstract class AbstractOAuthClient : OAuthClient {
+abstract class AbstractOAuthClient(
+    private val restTemplate: RestTemplate,
+) : OAuthClient {
     protected abstract val userInfoUrl: String
-
-    private val restTemplate: RestTemplate = RestTemplate()
 
     protected fun <T : Any> requestUserInfo(
         accessToken: String,
@@ -26,7 +26,7 @@ abstract class AbstractOAuthClient : OAuthClient {
 
             return response.body ?: throw RestClientException("OAuth 사용자 정보 응답이 비어있습니다.")
         } catch (e: RestClientException) {
-            throw RestClientException("OAuth 사용자 정보 조회 실패: ${e.message}")
+            throw RestClientException("OAuth 사용자 정보 조회 실패", e)
         }
     }
 
