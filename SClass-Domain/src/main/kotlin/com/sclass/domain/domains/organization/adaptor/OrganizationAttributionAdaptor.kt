@@ -12,15 +12,15 @@ class OrganizationAttributionAdaptor(
     fun findById(id: String): OrganizationAttribution =
         organizationAttributionRepository.findById(id).orElseThrow { OrganizationAttributionNotFoundException() }
 
-    fun findByUserId(userId: String): OrganizationAttribution =
-        organizationAttributionRepository.findByUserId(userId) ?: throw OrganizationAttributionNotFoundException()
+    fun findByStudentId(studentId: String): OrganizationAttribution =
+        organizationAttributionRepository.findByStudentId(studentId) ?: throw OrganizationAttributionNotFoundException()
 
-    fun findByUserIdOrNull(userId: String): OrganizationAttribution? = organizationAttributionRepository.findByUserId(userId)
+    fun findByStudentIdOrNull(studentId: String): OrganizationAttribution? = organizationAttributionRepository.findByStudentId(studentId)
 
     fun findAllByOrganizationId(organizationId: Long): List<OrganizationAttribution> =
         organizationAttributionRepository.findAllByOrganizationId(organizationId)
 
-    fun existsByUserId(userId: String): Boolean = organizationAttributionRepository.existsByUserId(userId)
+    fun existsByStudentId(studentId: String): Boolean = organizationAttributionRepository.existsByStudentId(studentId)
 
     fun save(attribution: OrganizationAttribution): OrganizationAttribution = organizationAttributionRepository.save(attribution)
 }

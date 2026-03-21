@@ -8,15 +8,9 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(
-    name = "organization_attributions",
-    uniqueConstraints = [
-        UniqueConstraint(columnNames = ["organizationId", "userId"]),
-    ],
-)
+@Table(name = "organization_attributions")
 class OrganizationAttribution(
     @Id
     @Column(length = 26)
@@ -26,7 +20,7 @@ class OrganizationAttribution(
     val organizationId: Long,
 
     @Column(nullable = false, unique = true, length = 26)
-    val userId: String,
+    val studentId: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
