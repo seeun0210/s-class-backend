@@ -6,11 +6,26 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${DDL_AUTO:validate}
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+
+auth:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY:your-secret-key-must-be-at-least-256-bits}
+    access-exp: ${JWT_ACCESS_EXP:3600}
+    refresh-exp: ${JWT_REFRESH_EXP:604800}
+  token-encryption:
+    secret-key: ${TOKEN_ENCRYPTION_KEY:your-32-byte-aes-encryption-key!}
+
+oauth2:
+  providers:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
 
 cloud:
   aws:
