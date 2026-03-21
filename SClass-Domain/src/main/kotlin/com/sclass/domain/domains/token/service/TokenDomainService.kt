@@ -7,6 +7,7 @@ import com.sclass.common.jwt.SignupTokenInfo
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
 import com.sclass.domain.domains.token.dto.TokenResult
+import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import org.springframework.transaction.annotation.Transactional
@@ -51,13 +52,13 @@ class TokenDomainService(
 
     fun issueSignupToken(
         oauthId: String,
-        provider: String,
+        provider: AuthProvider,
         email: String,
         name: String,
         role: Role,
         platform: Platform,
     ): String {
-        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role.name, platform.name)
+        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider.name, email, name, role.name, platform.name)
         return aesTokenEncryptor.encrypt(signupJwt)
     }
 

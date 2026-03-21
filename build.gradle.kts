@@ -7,6 +7,7 @@ plugins {
     kotlin("plugin.jpa") version "2.1.10"
     kotlin("kapt") version "2.1.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.1.0"
+    id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
 
 repositories { mavenCentral() }
@@ -30,6 +31,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
     apply(plugin = "org.jetbrains.kotlin.kapt")
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    apply(plugin = "org.jetbrains.kotlinx.kover")
 
     group = "com.sclass"
     version = "0.0.1-SNAPSHOT"
@@ -59,5 +61,22 @@ subprojects {
         version.set("1.5.0")
         android.set(false)
         outputToConsole.set(true)
+    }
+}
+
+dependencies {
+    subprojects.forEach { kover(it) }
+}
+
+kover {
+    reports {
+        total {
+            xml {
+                onCheck = false
+            }
+            html {
+                onCheck = false
+            }
+        }
     }
 }
