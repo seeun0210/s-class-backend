@@ -11,7 +11,8 @@
 - [ ] SClass-Domain
 - [ ] SClass-Infrastructure
 - [ ] SClass-Api-Supporters
-- [ ] SClass-Api-Management
+- [ ] SClass-Api-Lms
+- [ ] SClass-Api-Backoffice
 - [ ] SClass-Batch
 
 ## Test Plan

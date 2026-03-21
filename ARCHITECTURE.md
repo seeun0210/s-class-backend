@@ -7,7 +7,8 @@ s-class-backend/
 ├── SClass-Common          # 공통 코드 (exception, dto, annotation, util)
 ├── SClass-Domain          # 도메인 엔티티, 리포지토리, 도메인 서비스
 ├── SClass-Infrastructure  # 외부 연동 (Redis, S3, PubSub, Feign 등)
-├── SClass-Api-Management  # 관리자/선생님 API (Web)
+├── SClass-Api-Lms         # LMS API (수업/탐구/정산)
+├── SClass-Api-Backoffice  # 슈퍼어드민 Backoffice API
 ├── SClass-Api-Supporters  # 서포터즈 API (Web)
 └── SClass-Batch           # 배치 처리
 ```
@@ -15,7 +16,8 @@ s-class-backend/
 ## 의존성 흐름
 
 ```
-Api-Management ─┐
+Api-Lms ────────┐
+Api-Backoffice ─┤
 Api-Supporters ─┼→ Domain ──→ Common
 Batch ──────────┘  Infrastructure ──→ Common
 ```
