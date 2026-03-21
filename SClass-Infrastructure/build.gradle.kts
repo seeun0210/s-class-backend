@@ -13,5 +13,5 @@ dependencies {
     implementation(platform("com.google.cloud:libraries-bom:26.55.0"))
     implementation("com.google.cloud:google-cloud-storage")
 
-    implementation("org.springframework:spring-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
 }
