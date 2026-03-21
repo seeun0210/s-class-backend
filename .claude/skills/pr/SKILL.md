@@ -34,6 +34,9 @@ allowed-tools: Bash, Read, Glob, Grep
   - `pr-labeler` 워크플로우가 브랜치명 패턴으로 타입 라벨 자동 부여 (`feat/*` → `✨ feature` 등)
   - `actions/labeler`가 변경 파일 경로로 모듈 라벨 자동 부여
   - 수동 라벨 지정 시 워크플로우와 충돌하여 라벨이 제거될 수 있음
+- **이슈 연동**: 커밋 메시지에 `Closes #N`이 있으면 PR 본문에도 `Closes #N` 포함
+  - `gh issue list --state open --limit 10`으로 열린 이슈 확인 후 관련 이슈 연결
+  - 관련 이슈가 없으면 생략
 
 ## 추가 컨텍스트
 
