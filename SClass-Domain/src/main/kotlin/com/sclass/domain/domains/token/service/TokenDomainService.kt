@@ -7,6 +7,8 @@ import com.sclass.common.jwt.SignupTokenInfo
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
 import com.sclass.domain.domains.token.dto.TokenResult
+import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.Role
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
@@ -19,9 +21,9 @@ class TokenDomainService(
     @Transactional
     fun issueTokens(
         userId: String,
-        role: String,
+        role: Role,
     ): TokenResult {
-        val accessToken = jwtTokenProvider.generateAccessToken(userId, role)
+        val accessToken = jwtTokenProvider.generateAccessToken(userId, role.name)
         val refreshJwt = jwtTokenProvider.generateRefreshToken(userId)
 
         refreshTokenAdaptor.save(
@@ -52,9 +54,10 @@ class TokenDomainService(
         provider: String,
         email: String,
         name: String,
-        role: String,
+        role: Role,
+        platform: Platform,
     ): String {
-        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role)
+        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role.name, platform.name)
         return aesTokenEncryptor.encrypt(signupJwt)
     }
 

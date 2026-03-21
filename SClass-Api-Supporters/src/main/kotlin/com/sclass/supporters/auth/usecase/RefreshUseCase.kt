@@ -21,7 +21,7 @@ class RefreshUseCase(
         val userId = tokenDomainService.resolveUserId(request.refreshToken)
         userAdaptor.findById(userId)
         tokenDomainService.revokeAllByUserId(userId)
-        val tokens = tokenDomainService.issueTokens(userId, role.name)
+        val tokens = tokenDomainService.issueTokens(userId, role)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,

@@ -6,4 +6,5 @@ data class SignupTokenInfo(
     val email: String,
     val name: String,
     val role: String,
+    val platform: String,
 )
