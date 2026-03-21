@@ -49,44 +49,44 @@ class OrganizationAttributionAdaptorTest {
     }
 
     @Nested
-    inner class FindByUserId {
+    inner class FindByStudentId {
         @Test
-        fun `존재하는 userId로 조회하면 귀속 정보를 반환한다`() {
+        fun `존재하는 studentId로 조회하면 귀속 정보를 반환한다`() {
             val attribution = mockk<OrganizationAttribution>()
-            every { organizationAttributionRepository.findByUserId("user-id") } returns attribution
+            every { organizationAttributionRepository.findByStudentId("student-id") } returns attribution
 
-            val result = organizationAttributionAdaptor.findByUserId("user-id")
+            val result = organizationAttributionAdaptor.findByStudentId("student-id")
 
             assertEquals(attribution, result)
         }
 
         @Test
-        fun `존재하지 않는 userId로 조회하면 OrganizationAttributionNotFoundException이 발생한다`() {
-            every { organizationAttributionRepository.findByUserId("unknown-id") } returns null
+        fun `존재하지 않는 studentId로 조회하면 OrganizationAttributionNotFoundException이 발생한다`() {
+            every { organizationAttributionRepository.findByStudentId("unknown-id") } returns null
 
             assertThrows<OrganizationAttributionNotFoundException> {
-                organizationAttributionAdaptor.findByUserId("unknown-id")
+                organizationAttributionAdaptor.findByStudentId("unknown-id")
             }
         }
     }
 
     @Nested
-    inner class FindByUserIdOrNull {
+    inner class FindByStudentIdOrNull {
         @Test
-        fun `존재하는 userId로 조회하면 귀속 정보를 반환한다`() {
+        fun `존재하는 studentId로 조회하면 귀속 정보를 반환한다`() {
             val attribution = mockk<OrganizationAttribution>()
-            every { organizationAttributionRepository.findByUserId("user-id") } returns attribution
+            every { organizationAttributionRepository.findByStudentId("student-id") } returns attribution
 
-            val result = organizationAttributionAdaptor.findByUserIdOrNull("user-id")
+            val result = organizationAttributionAdaptor.findByStudentIdOrNull("student-id")
 
             assertEquals(attribution, result)
         }
 
         @Test
-        fun `존재하지 않는 userId로 조회하면 null을 반환한다`() {
-            every { organizationAttributionRepository.findByUserId("unknown-id") } returns null
+        fun `존재하지 않는 studentId로 조회하면 null을 반환한다`() {
+            every { organizationAttributionRepository.findByStudentId("unknown-id") } returns null
 
-            val result = organizationAttributionAdaptor.findByUserIdOrNull("unknown-id")
+            val result = organizationAttributionAdaptor.findByStudentIdOrNull("unknown-id")
 
             assertNull(result)
         }
@@ -116,21 +116,21 @@ class OrganizationAttributionAdaptorTest {
     }
 
     @Nested
-    inner class ExistsByUserId {
+    inner class ExistsByStudentId {
         @Test
         fun `귀속 정보가 존재하면 true를 반환한다`() {
-            every { organizationAttributionRepository.existsByUserId("user-id") } returns true
+            every { organizationAttributionRepository.existsByStudentId("student-id") } returns true
 
-            val result = organizationAttributionAdaptor.existsByUserId("user-id")
+            val result = organizationAttributionAdaptor.existsByStudentId("student-id")
 
             assertTrue(result)
         }
 
         @Test
         fun `귀속 정보가 없으면 false를 반환한다`() {
-            every { organizationAttributionRepository.existsByUserId("unknown-id") } returns false
+            every { organizationAttributionRepository.existsByStudentId("unknown-id") } returns false
 
-            val result = organizationAttributionAdaptor.existsByUserId("unknown-id")
+            val result = organizationAttributionAdaptor.existsByStudentId("unknown-id")
 
             assertFalse(result)
         }
