@@ -1,6 +1,7 @@
 ---
 name: review-pr
 description: PR 리뷰 코멘트를 읽고 피드백 반영 및 답변
+argument-hint: "[추가 컨텍스트]"
 disable-model-invocation: true
 allowed-tools: Bash, Read, Edit, Glob, Grep, AskUserQuestion
 ---

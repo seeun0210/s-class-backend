@@ -1,6 +1,7 @@
 ---
 name: pr
 description: 현재 브랜치의 변경사항을 분석하여 PR 자동 생성
+argument-hint: "[추가 컨텍스트]"
 disable-model-invocation: true
 allowed-tools: Bash, Read, Glob, Grep
 ---
