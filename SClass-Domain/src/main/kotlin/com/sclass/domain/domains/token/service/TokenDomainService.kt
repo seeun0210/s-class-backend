@@ -53,8 +53,9 @@ class TokenDomainService(
         email: String,
         name: String,
         role: String,
+        platform: String,
     ): String {
-        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role)
+        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role, platform)
         return aesTokenEncryptor.encrypt(signupJwt)
     }
 

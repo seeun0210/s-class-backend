@@ -30,6 +30,7 @@ class JwtTokenProvider(
         private const val PROVIDER = "provider"
         private const val EMAIL = "email"
         private const val NAME = "name"
+        private const val PLATFORM = "platform"
         private const val SIGNUP_TOKEN_TTL_SECONDS = 300L
     }
 
@@ -123,6 +124,7 @@ class JwtTokenProvider(
         email: String,
         name: String,
         role: String,
+        platform: String,
     ): String {
         val issuedAt = Date()
         val expiration = Date(issuedAt.time + SIGNUP_TOKEN_TTL_SECONDS * MILLI_TO_SECOND)
@@ -136,6 +138,7 @@ class JwtTokenProvider(
             .claim(EMAIL, email)
             .claim(NAME, name)
             .claim(ROLE, role)
+            .claim(PLATFORM, platform)
             .expiration(expiration)
             .signWith(secretKey)
             .compact()
@@ -152,6 +155,7 @@ class JwtTokenProvider(
             email = claims.get(EMAIL, String::class.java),
             name = claims.get(NAME, String::class.java),
             role = claims.get(ROLE, String::class.java),
+            platform = claims.get(PLATFORM, String::class.java),
         )
     }
 }
