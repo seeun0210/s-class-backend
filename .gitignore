@@ -17,3 +17,7 @@ build
 # Environment
 .env
 .env.*
+
+# Application config (contains secrets)
+**/src/main/resources/application.yml
+**/src/main/resources/application-*.yml
