@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: Lint
+  build:
+    name: Build & Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -21,27 +21,9 @@ jobs:
           distribution: 'temurin'
 
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: ktlint Check
         run: ./gradlew ktlintCheck --no-daemon
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
 
       - name: Build & Test
         run: ./gradlew build --no-daemon
