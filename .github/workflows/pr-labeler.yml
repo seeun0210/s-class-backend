@@ -30,3 +30,13 @@ jobs:
       - uses: actions/labeler@v5
         with:
           configuration-path: .github/module-labels.yml
+
+  auto-assign:
+    name: Assign PR author
+    if: github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: toshimaru/auto-author-assign@v2.1.1
