@@ -64,6 +64,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
+      pull-requests: write
 
   ci-skip:
     name: Skip CI for docs

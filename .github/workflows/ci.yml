@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   build:
@@ -25,5 +26,15 @@ jobs:
       - name: ktlint Check
         run: ./gradlew ktlintCheck --no-daemon
 
-      - name: Build & Test
-        run: ./gradlew build --no-daemon
+      - name: Build & Test & Coverage
+        run: ./gradlew build koverXmlReport --no-daemon
+
+      - name: Add coverage report to PR
+        if: github.event_name == 'pull_request'
+        uses: mi-kas/kover-report@v1
+        with:
+          path: ${{ github.workspace }}/build/reports/kover/report.xml
+          title: Test Coverage
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
