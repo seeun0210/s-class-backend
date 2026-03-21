@@ -3,12 +3,12 @@ package com.sclass.infrastructure.oauth.client
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
 import org.springframework.stereotype.Component
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
 
 @Component
 class GoogleOAuthClient(
-    restTemplate: RestTemplate,
-) : AbstractOAuthClient(restTemplate) {
+    webClient: WebClient,
+) : AbstractOAuthClient(webClient) {
     override val provider = "GOOGLE"
     override val userInfoUrl = "https://www.googleapis.com/oauth2/v2/userinfo"
 
