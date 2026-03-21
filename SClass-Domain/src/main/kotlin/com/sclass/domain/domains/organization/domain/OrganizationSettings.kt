@@ -4,7 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 
 @Embeddable
-class OrganizationSettings(
+data class OrganizationSettings(
     @Column(nullable = false)
-    var useSupporters: Boolean = false,
+    val useSupporters: Boolean = false,
 )

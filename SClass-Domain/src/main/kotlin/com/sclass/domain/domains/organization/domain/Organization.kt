@@ -22,13 +22,13 @@ class Organization(
     var name: String,
 
     @Column(nullable = false, unique = true, length = 200)
-    var domain: String,
+    val domain: String,
 
     @Column(length = 500)
     var logoUrl: String? = null,
 
     @Column(unique = true, length = 6)
-    var inviteCode: String? = null,
+    val inviteCode: String? = null,
 
     @Embedded
     var settings: OrganizationSettings = OrganizationSettings(),
@@ -36,4 +36,20 @@ class Organization(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: OrganizationStatus = OrganizationStatus.ACTIVE,
-) : BaseTimeEntity()
+) : BaseTimeEntity() {
+    fun changeName(newName: String) {
+        this.name = newName
+    }
+
+    fun changeLogoUrl(newLogoUrl: String?) {
+        this.logoUrl = newLogoUrl
+    }
+
+    fun changeSettings(newSettings: OrganizationSettings) {
+        this.settings = newSettings
+    }
+
+    fun changeStatus(newStatus: OrganizationStatus) {
+        this.status = newStatus
+    }
+}

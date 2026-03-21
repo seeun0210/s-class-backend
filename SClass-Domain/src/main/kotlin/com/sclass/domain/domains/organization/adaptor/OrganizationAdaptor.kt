@@ -9,22 +9,15 @@ import com.sclass.domain.domains.organization.repository.OrganizationRepository
 class OrganizationAdaptor(
     private val organizationRepository: OrganizationRepository,
 ) {
-    fun findById(id: Long): Organization =
-        organizationRepository.findById(id).orElseThrow {
-            OrganizationNotFoundException()
-        }
+    fun findById(id: Long): Organization = findByIdOrNull(id) ?: throw OrganizationNotFoundException()
 
     fun findByIdOrNull(id: Long): Organization? = organizationRepository.findById(id).orElse(null)
 
-    fun findByDomain(domain: String): Organization =
-        organizationRepository.findByDomain(domain) ?: throw
-            OrganizationNotFoundException()
+    fun findByDomain(domain: String): Organization = findByDomainOrNull(domain) ?: throw OrganizationNotFoundException()
 
     fun findByDomainOrNull(domain: String): Organization? = organizationRepository.findByDomain(domain)
 
-    fun findByInviteCode(inviteCode: String): Organization =
-        organizationRepository.findByInviteCode(inviteCode) ?: throw
-            OrganizationNotFoundException()
+    fun findByInviteCode(inviteCode: String): Organization = findByInviteCodeOrNull(inviteCode) ?: throw OrganizationNotFoundException()
 
     fun findByInviteCodeOrNull(inviteCode: String): Organization? = organizationRepository.findByInviteCode(inviteCode)
 
