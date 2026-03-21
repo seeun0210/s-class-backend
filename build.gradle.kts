@@ -13,6 +13,14 @@ repositories { mavenCentral() }
 
 tasks.bootJar { enabled = false }
 
+tasks.register<Exec>("installGitHooks") {
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+}
+
+tasks.named("build") {
+    dependsOn("installGitHooks")
+}
+
 subprojects {
     apply(plugin = "java")
     apply(plugin = "org.springframework.boot")

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+echo "🔧 Running ktlintFormat..."
+./gradlew ktlintFormat --daemon -q
+
+if [ $? -ne 0 ]; then
+  echo "❌ ktlintFormat failed"
+  exit 1
+fi
+
+# ktlintFormat이 수정한 파일을 다시 staging
+git diff --name-only | while read file; do
+  if git diff --cached --name-only | grep -q "^$file$"; then
+    git add "$file"
+  fi
+done
+
+echo "🔨 Running build..."
+./gradlew build --daemon -q
+
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed"
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed"
