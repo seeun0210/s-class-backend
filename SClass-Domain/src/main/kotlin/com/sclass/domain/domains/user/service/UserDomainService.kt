@@ -26,7 +26,7 @@ class UserDomainService(
         role: Role,
     ): User {
         if (userAdaptor.existsByEmail(user.email)) {
-            throw UserAlreadyExistsException.EXCEPTION
+            throw UserAlreadyExistsException()
         }
 
         user.hashedPassword = passwordService.hash(rawPassword)
@@ -54,14 +54,14 @@ class UserDomainService(
 
         val hashedPassword =
             user.hashedPassword
-                ?: throw InvalidPasswordException.EXCEPTION
+                ?: throw InvalidPasswordException()
 
         if (!passwordService.matches(rawPassword, hashedPassword)) {
-            throw InvalidPasswordException.EXCEPTION
+            throw InvalidPasswordException()
         }
 
         userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, platform, role)
-            ?: throw RoleNotFoundException.EXCEPTION
+            ?: throw RoleNotFoundException()
 
         return user
     }

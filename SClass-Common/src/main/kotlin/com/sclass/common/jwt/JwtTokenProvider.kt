@@ -38,15 +38,15 @@ class JwtTokenProvider(
                 .build()
                 .parseSignedClaims(token)
         } catch (e: ExpiredJwtException) {
-            throw TokenExpiredException.EXCEPTION
+            throw TokenExpiredException()
         } catch (e: SecurityException) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         } catch (e: io.jsonwebtoken.MalformedJwtException) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         } catch (e: io.jsonwebtoken.UnsupportedJwtException) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         } catch (e: IllegalArgumentException) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         }
 
     fun generateAccessToken(
@@ -84,7 +84,7 @@ class JwtTokenProvider(
     fun parseAccessToken(token: String): AccessTokenInfo {
         val claims = getJws(token).payload
         if (claims.get(TOKEN_TYPE) != ACCESS_TOKEN) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         }
         @Suppress("UNCHECKED_CAST")
         val roles = claims.get(ROLES, List::class.java) as List<String>
@@ -99,10 +99,10 @@ class JwtTokenProvider(
             try {
                 getJws(token).payload
             } catch (e: TokenExpiredException) {
-                throw RefreshTokenExpiredException.EXCEPTION
+                throw RefreshTokenExpiredException()
             }
         if (claims.get(TOKEN_TYPE) != REFRESH_TOKEN) {
-            throw InvalidTokenException.EXCEPTION
+            throw InvalidTokenException()
         }
         return claims.subject
     }

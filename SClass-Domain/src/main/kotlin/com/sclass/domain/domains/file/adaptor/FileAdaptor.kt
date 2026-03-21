@@ -9,7 +9,7 @@ import com.sclass.domain.domains.file.repository.FileRepository
 class FileAdaptor(
     private val fileRepository: FileRepository,
 ) {
-    fun findById(id: String): File = fileRepository.findById(id).orElseThrow { FileNotFoundException.EXCEPTION }
+    fun findById(id: String): File = fileRepository.findById(id).orElseThrow { FileNotFoundException() }
 
     fun findByIdOrNull(id: String): File? = fileRepository.findById(id).orElse(null)
 

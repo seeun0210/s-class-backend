@@ -86,7 +86,7 @@ domains/{feature}/
 
 ### Adaptor
 - 읽기 + 쓰기 모두 담당 (find, save, delete)
-- 조회 실패 시 도메인 예외 throw: `throw UserNotFoundException.EXCEPTION`
+- 조회 실패 시 도메인 예외 throw: `throw UserNotFoundException()`
 - `findByXxxOrNull` 패턴으로 nullable 조회 제공
 
 ### DomainService
@@ -112,14 +112,8 @@ enum class UserErrorCode(
     USER_NOT_FOUND("USER_001", "유저를 찾을 수 없습니다", 404),
 }
 
-// Exception class (companion EXCEPTION 싱글턴)
-class UserNotFoundException private constructor() :
-    BusinessException(UserErrorCode.USER_NOT_FOUND) {
-    companion object {
-        @JvmField
-        val EXCEPTION: BusinessException = UserNotFoundException()
-    }
-}
+// Exception class (매번 새 인스턴스 생성 — 정확한 스택트레이스 확보)
+class UserNotFoundException : BusinessException(UserErrorCode.USER_NOT_FOUND)
 ```
 
 ### API Response

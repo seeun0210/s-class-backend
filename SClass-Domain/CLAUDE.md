@@ -55,7 +55,7 @@ com.sclass.domain/
 
 ### Exception
 - `{Feature}ErrorCode` enum: ErrorCode 인터페이스 구현
-- `{Feature}Exception` class: BusinessException 상속 + companion EXCEPTION 싱글턴
+- `{Feature}Exception` class: BusinessException 상속, 매번 새 인스턴스 생성 (`throw XxxException()`)
 - 코드 네이밍: `{FEATURE}_{NUMBER}` (e.g., USER_001, AUTH_001)
 
 ## 주요 서비스
