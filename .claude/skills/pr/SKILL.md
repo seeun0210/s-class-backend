@@ -1,3 +1,10 @@
+---
+name: pr
+description: 현재 브랜치의 변경사항을 분석하여 PR 자동 생성
+disable-model-invocation: true
+allowed-tools: Bash, Read, Glob, Grep
+---
+
 현재 브랜치의 변경사항을 분석하여 develop 브랜치로 PR을 생성해줘.
 
 ## 절차

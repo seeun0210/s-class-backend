@@ -1,3 +1,10 @@
+---
+name: review-pr
+description: PR 리뷰 코멘트를 읽고 피드백 반영 및 답변
+disable-model-invocation: true
+allowed-tools: Bash, Read, Edit, Glob, Grep, AskUserQuestion
+---
+
 현재 브랜치의 PR에 달린 리뷰 코멘트를 읽고, 피드백을 반영하고, 리뷰어에게 답변해줘.
 
 ## 절차
