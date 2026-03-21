@@ -15,8 +15,8 @@
 SClass-Common           # 공통 (어노테이션, DTO, 예외, JWT, 유틸)
 SClass-Domain           # 도메인 (엔티티, 리포지토리, 어댑터, 도메인서비스)
 SClass-Infrastructure   # 외부 연동 (S3, GCS, OAuth 등)
-SClass-Api-Supporters   # 학생/학부모용 API
-SClass-Api-Management   # 관리자/선생님용 API
+SClass-Api-Supporters   # 서포터즈 서비스 전용 API
+SClass-Api-Management   # 관리자/선생님 수업 관리 API
 SClass-Batch            # 배치 처리
 ```
 
