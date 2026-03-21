@@ -43,7 +43,7 @@ class JwtTokenProvider(
 
     fun generateAccessToken(
         userId: String,
-        roles: List<String>,
+        role: String,
     ): String {
         val issuedAt = Date()
         val expiration = Date(issuedAt.time + jwtProperties.accessExp * MILLI_TO_SECOND)
@@ -53,7 +53,7 @@ class JwtTokenProvider(
             .issuedAt(issuedAt)
             .subject(userId)
             .claim(TOKEN_TYPE, ACCESS_TOKEN)
-            .claim(ROLES, roles)
+            .claim(ROLES, role)
             .expiration(expiration)
             .signWith(getSecretKey())
             .compact()

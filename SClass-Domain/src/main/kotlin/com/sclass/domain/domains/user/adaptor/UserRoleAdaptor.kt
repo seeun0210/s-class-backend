@@ -1,6 +1,8 @@
 package com.sclass.domain.domains.user.adaptor
 
 import com.sclass.common.annotation.Adaptor
+import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.UserRole
 import com.sclass.domain.domains.user.repository.UserRoleRepository
 
@@ -13,4 +15,10 @@ class UserRoleAdaptor(
     fun save(userRole: UserRole): UserRole = userRoleRepository.save(userRole)
 
     fun deleteAllByUserId(userId: String) = userRoleRepository.deleteAllByUserId(userId)
+
+    fun findByUserIdAndPlatformAndRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ): UserRole? = userRoleRepository.findByUserIdAndPlatformAndRole(userId, platform, role)
 }

@@ -4,7 +4,9 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface UserRepository : JpaRepository<User, String> {
+interface UserRepository :
+    JpaRepository<User, String>,
+    UserCustomRepository {
     fun findByEmail(email: String): User?
 
     fun existsByEmail(email: String): Boolean

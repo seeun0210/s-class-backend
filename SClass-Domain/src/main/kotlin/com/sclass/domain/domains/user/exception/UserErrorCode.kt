@@ -9,4 +9,5 @@ enum class UserErrorCode(
 ) : ErrorCode {
     USER_NOT_FOUND("USER_001", "유저를 찾을 수 없습니다", 404),
     USER_ALREADY_EXISTS("USER_002", "이미 존재하는 이메일입니다", 409),
+    ROLE_NOT_FOUND("USER_003", "해당 권한이 없습니다", 403),
 }

@@ -1,21 +1,48 @@
 package com.sclass.domain.domains.token.service
 
 import com.sclass.common.annotation.DomainService
+import com.sclass.common.jwt.AesTokenEncryptor
+import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
-import com.sclass.domain.domains.token.repository.RefreshTokenRepository
+import com.sclass.domain.domains.token.dto.TokenResult
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @DomainService
-@Transactional(readOnly = true)
 class TokenDomainService(
-    private val refreshTokenRepository: RefreshTokenRepository,
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val aesTokenEncryptor: AesTokenEncryptor,
+    private val refreshTokenAdaptor: RefreshTokenAdaptor,
 ) {
     @Transactional
-    fun save(refreshToken: RefreshToken) = refreshTokenRepository.save(refreshToken)
+    fun issueTokens(
+        userId: String,
+        role: String,
+    ): TokenResult {
+        val accessToken = jwtTokenProvider.generateAccessToken(userId, role)
+        val refreshJwt = jwtTokenProvider.generateRefreshToken(userId)
+
+        refreshTokenAdaptor.save(
+            RefreshToken(
+                userId = userId,
+                expiresAt = LocalDateTime.now().plusSeconds(jwtTokenProvider.getRefreshTokenTtlSecond()),
+            ),
+        )
+
+        return TokenResult(
+            accessToken = aesTokenEncryptor.encrypt(accessToken),
+            refreshToken = aesTokenEncryptor.encrypt(refreshJwt),
+        )
+    }
 
     @Transactional
-    fun deleteByUserId(userId: String) = refreshTokenRepository.deleteAllByUserId(userId)
+    fun revokeAllByUserId(userId: String) {
+        refreshTokenAdaptor.deleteAllByUserId(userId)
+    }
 
-    @Transactional
-    fun deleteById(id: String) = refreshTokenRepository.deleteById(id)
+    fun resolveUserId(encryptedRefreshToken: String): String {
+        val refreshJwt = aesTokenEncryptor.decrypt(encryptedRefreshToken)
+        return jwtTokenProvider.parseRefreshToken(refreshJwt)
+    }
 }
