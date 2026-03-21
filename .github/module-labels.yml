@@ -14,9 +14,13 @@
   - changed-files:
       - any-glob-to-any-file: "SClass-Api-Supporters/**"
 
-"🛠️ module: management":
+"📚 module: lms":
   - changed-files:
-      - any-glob-to-any-file: "SClass-Api-Management/**"
+      - any-glob-to-any-file: "SClass-Api-Lms/**"
+
+"🛡️ module: backoffice":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Backoffice/**"
 
 "⏰ module: batch":
   - changed-files:
