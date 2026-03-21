@@ -1,0 +1,23 @@
+"module: common":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Common/**"
+
+"module: domain":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Domain/**"
+
+"module: infra":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Infrastructure/**"
+
+"module: supporters":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Supporters/**"
+
+"module: management":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Management/**"
+
+"module: batch":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Batch/**"

@@ -5,8 +5,8 @@ on:
     types: [opened]
 
 jobs:
-  label:
-    name: Set Labels to PR
+  type-label:
+    name: Set Type Labels (branch pattern)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,3 +18,15 @@ jobs:
           configuration-path: .github/pr-labels.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  module-label:
+    name: Set Module Labels (changed files)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          configuration-path: .github/module-labels.yml
