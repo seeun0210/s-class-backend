@@ -92,7 +92,6 @@ class UserDomainService(
         authProvider: AuthProvider,
         email: String,
         name: String,
-        phoneNumber: String,
         profileImageUrl: String?,
         platform: Platform,
         role: Role,
@@ -107,7 +106,6 @@ class UserDomainService(
                 name = name,
                 authProvider = authProvider,
                 oauthId = oauthId,
-                phoneNumber = User.formatPhoneNumber(phoneNumber),
                 profileImageUrl = profileImageUrl,
             )
         val savedUser = userAdaptor.save(user)

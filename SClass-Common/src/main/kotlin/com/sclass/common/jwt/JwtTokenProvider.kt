@@ -93,7 +93,6 @@ class JwtTokenProvider(
         if (claims.get(TOKEN_TYPE) != ACCESS_TOKEN) {
             throw InvalidTokenException()
         }
-        @Suppress("UNCHECKED_CAST")
         val role = claims.get(ROLE, String::class.java)
         return AccessTokenInfo(
             userId = claims.subject,
