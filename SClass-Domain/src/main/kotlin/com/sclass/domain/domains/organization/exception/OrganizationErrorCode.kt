@@ -9,4 +9,5 @@ enum class OrganizationErrorCode(
 ) : ErrorCode {
     ORGANIZATION_NOT_FOUND("ORGANIZATION_001", "기관을 찾을 수 없습니다", 404),
     ORGANIZATION_ATTRIBUTION_NOT_FOUND("ORGANIZATION_002", "기관 귀속 정보를 찾을 수 없습니다", 404),
+    ORGANIZATION_ALREADY_ATTRIBUTED("ORGANIZATION_003", "이미 다른 기관에 귀속되어 있습니다", 409),
 }
