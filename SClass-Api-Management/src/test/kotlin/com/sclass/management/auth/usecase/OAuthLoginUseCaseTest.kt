@@ -147,14 +147,14 @@ class OAuthLoginUseCaseTest {
 
         verify {
             userService.registerWithOAuth(
-                oauthId = any(),
-                authProvider = any(),
-                email = any(),
-                name = any(),
-                phoneNumber = any(),
+                oauthId = "oauth-id",
+                authProvider = AuthProvider.GOOGLE,
+                email = "test@example.com",
+                name = "테스트",
+                phoneNumber = "010-1234-5678",
                 profileImageUrl = "https://example.com/profile.jpg",
-                platform = any(),
-                role = any(),
+                platform = Platform.LMS,
+                role = Role.ADMIN,
             )
         }
     }
