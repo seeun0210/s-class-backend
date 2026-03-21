@@ -11,22 +11,21 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class SwaggerConfig {
     @Bean
-    fun openAPI(): OpenAPI =
-        OpenAPI()
+    fun openAPI(): OpenAPI {
+        val securitySchemeName = "Bearer Authentication"
+        val securityScheme =
+            SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+
+        return OpenAPI()
             .info(
                 Info()
                     .title("S-Class Management API")
                     .description("관리자/선생님용 LMS API")
                     .version("v1"),
-            ).addSecurityItem(SecurityRequirement().addList("Bearer Authentication"))
-            .components(
-                Components()
-                    .addSecuritySchemes(
-                        "Bearer Authentication",
-                        SecurityScheme()
-                            .type(SecurityScheme.Type.HTTP)
-                            .scheme("bearer")
-                            .bearerFormat("JWT"),
-                    ),
-            )
+            ).addSecurityItem(SecurityRequirement().addList(securitySchemeName))
+            .components(Components().addSecuritySchemes(securitySchemeName, securityScheme))
+    }
 }
