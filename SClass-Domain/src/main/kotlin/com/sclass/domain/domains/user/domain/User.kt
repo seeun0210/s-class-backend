@@ -30,8 +30,7 @@ class User(
 
     var oauthId: String? = null,
 
-    @Column(nullable = false)
-    var phoneNumber: String,
+    var phoneNumber: String? = null,
 
     var profileImageUrl: String? = null,
 

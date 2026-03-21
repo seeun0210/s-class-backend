@@ -21,9 +21,16 @@ class JwtTokenProvider(
         private const val TOKEN_TYPE = "type"
         private const val ACCESS_TOKEN = "ACCESS"
         private const val REFRESH_TOKEN = "REFRESH"
-        private const val ROLES = "roles"
+        private const val ROLE = "role"
         private const val TOKEN_ISSUER = "sclass"
         private const val MILLI_TO_SECOND = 1000L
+
+        private const val SIGNUP_TOKEN = "SIGNUP"
+        private const val OAUTH_ID = "oauthId"
+        private const val PROVIDER = "provider"
+        private const val EMAIL = "email"
+        private const val NAME = "name"
+        private const val SIGNUP_TOKEN_TTL_SECONDS = 300L
     }
 
     private val secretKey: SecretKey by lazy {
@@ -61,7 +68,7 @@ class JwtTokenProvider(
             .issuedAt(issuedAt)
             .subject(userId)
             .claim(TOKEN_TYPE, ACCESS_TOKEN)
-            .claim(ROLES, role)
+            .claim(ROLE, role)
             .expiration(expiration)
             .signWith(secretKey)
             .compact()
@@ -87,10 +94,10 @@ class JwtTokenProvider(
             throw InvalidTokenException()
         }
         @Suppress("UNCHECKED_CAST")
-        val roles = claims.get(ROLES, List::class.java) as List<String>
+        val role = claims.get(ROLE, String::class.java)
         return AccessTokenInfo(
             userId = claims.subject,
-            roles = roles,
+            role = role,
         )
     }
 
@@ -110,4 +117,42 @@ class JwtTokenProvider(
     fun getRefreshTokenTtlSecond(): Long = jwtProperties.refreshExp
 
     fun getAccessTokenTtlSecond(): Long = jwtProperties.accessExp
+
+    fun generateSignupToken(
+        oauthId: String,
+        provider: String,
+        email: String,
+        name: String,
+        role: String,
+    ): String {
+        val issuedAt = Date()
+        val expiration = Date(issuedAt.time + SIGNUP_TOKEN_TTL_SECONDS * MILLI_TO_SECOND)
+        return Jwts
+            .builder()
+            .issuer(TOKEN_ISSUER)
+            .issuedAt(issuedAt)
+            .claim(TOKEN_TYPE, SIGNUP_TOKEN)
+            .claim(OAUTH_ID, oauthId)
+            .claim(PROVIDER, provider)
+            .claim(EMAIL, email)
+            .claim(NAME, name)
+            .claim(ROLE, role)
+            .expiration(expiration)
+            .signWith(secretKey)
+            .compact()
+    }
+
+    fun parseSignupToken(token: String): SignupTokenInfo {
+        val claims = getJws(token).payload
+        if (claims.get(TOKEN_TYPE) != SIGNUP_TOKEN) {
+            throw InvalidTokenException()
+        }
+        return SignupTokenInfo(
+            oauthId = claims.get(OAUTH_ID, String::class.java),
+            provider = claims.get(PROVIDER, String::class.java),
+            email = claims.get(EMAIL, String::class.java),
+            name = claims.get(NAME, String::class.java),
+            role = claims.get(ROLE, String::class.java),
+        )
+    }
 }
