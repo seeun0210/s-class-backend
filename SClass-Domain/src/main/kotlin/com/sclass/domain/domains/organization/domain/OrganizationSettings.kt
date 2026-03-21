@@ -7,4 +7,7 @@ import jakarta.persistence.Embeddable
 data class OrganizationSettings(
     @Column(nullable = false)
     val useSupporters: Boolean = false,
+
+    @Column(nullable = false)
+    val useLms: Boolean = false,
 )

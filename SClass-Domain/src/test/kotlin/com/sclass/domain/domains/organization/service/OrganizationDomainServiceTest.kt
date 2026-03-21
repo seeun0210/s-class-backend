@@ -67,6 +67,32 @@ class OrganizationDomainServiceTest {
             verify { organization.changeSettings(newSettings) }
             verify { organizationAdaptor.save(organization) }
         }
+
+        @Test
+        fun `LMS 기능을 활성화한다`() {
+            val organization = mockk<Organization>(relaxed = true)
+            val newSettings = OrganizationSettings(useLms = true)
+            every { organizationAdaptor.findById(1L) } returns organization
+            every { organizationAdaptor.save(organization) } returns organization
+
+            val result = organizationDomainService.updateSettings(1L, newSettings)
+
+            assertEquals(organization, result)
+            verify { organization.changeSettings(newSettings) }
+        }
+
+        @Test
+        fun `Supporters와 LMS를 모두 활성화한다`() {
+            val organization = mockk<Organization>(relaxed = true)
+            val newSettings = OrganizationSettings(useSupporters = true, useLms = true)
+            every { organizationAdaptor.findById(1L) } returns organization
+            every { organizationAdaptor.save(organization) } returns organization
+
+            val result = organizationDomainService.updateSettings(1L, newSettings)
+
+            assertEquals(organization, result)
+            verify { organization.changeSettings(newSettings) }
+        }
     }
 
     @Nested
