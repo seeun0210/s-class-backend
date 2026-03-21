@@ -2,10 +2,10 @@ plugins {
     java
     id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
-    kotlin("jvm") version "2.1.10"
-    kotlin("plugin.spring") version "2.1.10"
-    kotlin("plugin.jpa") version "2.1.10"
-    kotlin("kapt") version "2.1.10"
+    kotlin("jvm") version "2.2.21"
+    kotlin("plugin.spring") version "2.2.21"
+    kotlin("plugin.jpa") version "2.2.21"
+    kotlin("kapt") version "2.2.21"
     id("org.jlleitschuh.gradle.ktlint") version "14.1.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
 }
@@ -51,6 +51,7 @@ subprojects {
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
         testImplementation("org.springframework.boot:spring-boot-starter-test")
+        testImplementation("com.h2database:h2")
     }
 
     tasks.withType<Test> {
@@ -76,6 +77,42 @@ kover {
             }
             html {
                 onCheck = false
+            }
+            filters {
+                excludes {
+                    classes(
+                        // Application main
+                        "*Application",
+                        "*Application\$Companion",
+                        // Config & Properties
+                        "*Config",
+                        "*Config\$*",
+                        "*Properties",
+                        // DTO (Request, Response, data class)
+                        "*Request",
+                        "*Response",
+                        "*Result",
+                        "*Info",
+                        // Entity & Enum & VO
+                        "*.domain.*Entity",
+                        "*.domain.BaseTimeEntity",
+                        "*.domain.AuthProvider",
+                        "*.domain.Platform",
+                        "*.domain.Role",
+                        "*.domain.Grade",
+                        "*.domain.FileType",
+                        "*.domain.TokenType",
+                        // Exception & ErrorCode
+                        "*Exception",
+                        "*ErrorCode",
+                        // Repository (Spring Data interface)
+                        "*Repository",
+                    )
+                    packages(
+                        // Test support
+                        "*.config",
+                    )
+                }
             }
         }
     }
