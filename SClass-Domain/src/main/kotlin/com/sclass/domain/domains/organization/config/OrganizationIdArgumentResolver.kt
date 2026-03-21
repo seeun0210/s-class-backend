@@ -11,6 +11,7 @@ import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
 import java.net.URI
+import java.net.URISyntaxException
 
 @Component
 class OrganizationIdArgumentResolver(
@@ -42,30 +43,16 @@ class OrganizationIdArgumentResolver(
         return organization.id
     }
 
-    private fun extractDomain(webRequest: NativeWebRequest): String? {
-        val origin = webRequest.getHeader("Origin")
-        if (!origin.isNullOrBlank()) {
-            return extractHostFromUrl(origin)
-        }
-
-        val referer = webRequest.getHeader("Referer")
-        if (!referer.isNullOrBlank()) {
-            return extractHostFromUrl(referer)
-        }
-
-        val host = webRequest.getHeader("Host")
-        if (!host.isNullOrBlank()) {
-            return removePort(host)
-        }
-
-        return null
-    }
+    private fun extractDomain(webRequest: NativeWebRequest): String? =
+        webRequest.getHeader("Origin")?.takeIf { it.isNotBlank() }?.let(::extractHostFromUrl)
+            ?: webRequest.getHeader("Referer")?.takeIf { it.isNotBlank() }?.let(::extractHostFromUrl)
+            ?: webRequest.getHeader("Host")?.takeIf { it.isNotBlank() }?.let(::removePort)
 
     private fun extractHostFromUrl(url: String): String? {
         return try {
             val host = URI(url).host ?: return null
             removePort(host)
-        } catch (_: Exception) {
+        } catch (_: URISyntaxException) {
             null
         }
     }
