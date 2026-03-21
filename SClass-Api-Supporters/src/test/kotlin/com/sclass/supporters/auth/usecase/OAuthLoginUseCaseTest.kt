@@ -7,6 +7,7 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
 import com.sclass.domain.domains.user.service.UserDomainService
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
@@ -325,5 +326,41 @@ class OAuthLoginUseCaseTest {
             )
         }
         verify { tokenService.issueTokens("user-id", Role.STUDENT) }
+    }
+
+    @Test
+    fun `이미 존재하는 이메일로 회원가입하면 UserAlreadyExistsException이 발생한다`() {
+        val request =
+            OAuthCompleteSignupRequest(
+                signupToken = "encrypted-signup-token",
+                phoneNumber = "010-1111-2222",
+            )
+        val signupInfo =
+            SignupTokenInfo(
+                oauthId = "oauth-id",
+                provider = "GOOGLE",
+                email = "existing@example.com",
+                name = "테스트",
+                role = "STUDENT",
+                platform = "SUPPORTERS",
+            )
+
+        every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every {
+            userService.registerWithOAuth(
+                oauthId = "oauth-id",
+                authProvider = AuthProvider.GOOGLE,
+                email = "existing@example.com",
+                name = "테스트",
+                phoneNumber = "010-1111-2222",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+        } throws UserAlreadyExistsException()
+
+        assertThrows<UserAlreadyExistsException> {
+            useCase.completeSignup(request)
+        }
     }
 }

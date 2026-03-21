@@ -7,6 +7,7 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
 import com.sclass.domain.domains.user.service.UserDomainService
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class OAuthLoginUseCaseTest {
     private lateinit var oAuthClientFactory: OAuthClientFactory
@@ -197,5 +199,41 @@ class OAuthLoginUseCaseTest {
 
         assertEquals("access-token", result.accessToken)
         assertEquals("refresh-token", result.refreshToken)
+    }
+
+    @Test
+    fun `이미 존재하는 이메일로 회원가입하면 UserAlreadyExistsException이 발생한다`() {
+        val request =
+            OAuthCompleteSignupRequest(
+                signupToken = "encrypted-signup-token",
+                phoneNumber = "010-1234-5678",
+            )
+        val signupInfo =
+            SignupTokenInfo(
+                oauthId = "oauth-id",
+                provider = "GOOGLE",
+                email = "existing@example.com",
+                name = "테스트",
+                role = "ADMIN",
+                platform = "LMS",
+            )
+
+        every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every {
+            userService.registerWithOAuth(
+                oauthId = "oauth-id",
+                authProvider = AuthProvider.GOOGLE,
+                email = "existing@example.com",
+                name = "테스트",
+                phoneNumber = "010-1234-5678",
+                profileImageUrl = null,
+                platform = Platform.LMS,
+                role = Role.ADMIN,
+            )
+        } throws UserAlreadyExistsException()
+
+        assertThrows<UserAlreadyExistsException> {
+            useCase.completeSignup(request)
+        }
     }
 }
