@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   type-label:
     name: Set Type Labels (branch pattern)
@@ -11,8 +14,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     outputs:
       is-docs: ${{ steps.check-docs.outputs.is-docs }}
 
@@ -52,7 +53,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: toshimaru/auto-author-assign@v2.1.1
+      - uses: toshimaru/auto-author-assign@v3.0.1
 
   ci:
     name: CI
