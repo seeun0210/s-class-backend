@@ -98,7 +98,7 @@ domains/{feature}/
 ### UseCase
 - Api 모듈에 위치
 - DomainService/Adaptor를 조합하여 유즈케이스 구현
-- `@Transactional` 선언
+- `@Transactional` 선언 (주 트랜잭션 경계)
 - Request DTO → 도메인 호출 → Response DTO 반환
 
 ### Exception
@@ -130,7 +130,7 @@ class UserNotFoundException private constructor() :
 ### QueryDSL
 - `CustomRepository` 인터페이스 + `Impl` 클래스 패턴
 - `JPAQueryFactory` 주입 (`QuerydslConfig`에서 Bean 등록)
-- JOIN해도 도메인 엔티티 그대로 반환 (Projection 지양)
+- 기본적으로 도메인 엔티티 반환, 성능이 중요한 읽기 전용 조회는 DTO Projection 허용
 
 ### Token
 - Access Token: stateless JWT + AES-256-GCM 암호화

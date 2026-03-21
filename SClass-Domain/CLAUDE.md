@@ -51,7 +51,7 @@ com.sclass.domain/
 - Adaptor를 주입받아 사용 (Repository 직접 참조 금지)
 - 같은 도메인 내 다른 Service 참조 가능 (e.g., UserDomainService → PasswordService)
 - 도메인 엔티티를 반환 (DTO/VO 아님)
-- `@Transactional` 선언
+- `@Transactional` 선언 가능 (단독 호출될 수 있는 경우). 주 트랜잭션 경계는 UseCase
 
 ### Exception
 - `{Feature}ErrorCode` enum: ErrorCode 인터페이스 구현
