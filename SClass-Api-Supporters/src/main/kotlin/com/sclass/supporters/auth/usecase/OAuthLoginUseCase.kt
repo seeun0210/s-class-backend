@@ -26,28 +26,19 @@ class OAuthLoginUseCase(
 
         val authProvider = AuthProvider.valueOf(request.provider.uppercase())
 
-        // 1. oauthId로 기존 유저 검색
-        val existingUser = userService.findByOAuthOrNull(userInfo.id, authProvider)
-        if (existingUser != null) {
-            userService.ensureUserRole(existingUser.id, request.platform, request.role)
-            val tokens = tokenService.issueTokens(existingUser.id, request.role)
-            return OAuthLoginResponse(
-                isNewUser = false,
-                accessToken = tokens.accessToken,
-                refreshToken = tokens.refreshToken,
-            )
-        }
-
-        // 2. email로 기존 유저 검색 → OAuth 연결
-        val linkedUser =
-            userService.linkOAuthAndEnsureRole(
+        // 1. oauthId로 기존 유저 검색, 없으면 email로 검색 → OAuth 연결
+        val user =
+            userService.findByOAuthOrNull(userInfo.id, authProvider)?.also {
+                userService.ensureUserRole(it.id, request.platform, request.role)
+            } ?: userService.linkOAuthAndEnsureRole(
                 email = userInfo.email,
                 oauthId = userInfo.id,
                 platform = request.platform,
                 role = request.role,
             )
-        if (linkedUser != null) {
-            val tokens = tokenService.issueTokens(linkedUser.id, request.role)
+
+        if (user != null) {
+            val tokens = tokenService.issueTokens(user.id, request.role)
             return OAuthLoginResponse(
                 isNewUser = false,
                 accessToken = tokens.accessToken,
@@ -55,7 +46,7 @@ class OAuthLoginUseCase(
             )
         }
 
-        // 3. 신규 유저 → signupToken 발급
+        // 2. 신규 유저 → signupToken 발급
         val signupToken =
             tokenService.issueSignupToken(
                 oauthId = userInfo.id,
@@ -74,20 +65,23 @@ class OAuthLoginUseCase(
     @Transactional
     fun completeSignup(request: OAuthCompleteSignupRequest): TokenResponse {
         val signupInfo = tokenService.resolveSignupToken(request.signupToken)
+        val authProvider = AuthProvider.valueOf(signupInfo.provider)
+        val platform = Platform.valueOf(signupInfo.platform)
+        val role = Role.valueOf(signupInfo.role)
 
         val user =
             userService.registerWithOAuth(
                 oauthId = signupInfo.oauthId,
-                authProvider = AuthProvider.valueOf(signupInfo.provider),
+                authProvider = authProvider,
                 email = signupInfo.email,
                 name = signupInfo.name,
                 phoneNumber = request.phoneNumber,
                 profileImageUrl = null,
-                platform = Platform.valueOf(signupInfo.platform),
-                role = Role.valueOf(signupInfo.role),
+                platform = platform,
+                role = role,
             )
 
-        val tokens = tokenService.issueTokens(user.id, Role.valueOf(signupInfo.role))
+        val tokens = tokenService.issueTokens(user.id, role)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,
