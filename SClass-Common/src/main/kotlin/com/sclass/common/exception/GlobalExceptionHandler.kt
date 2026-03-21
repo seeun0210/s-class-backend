@@ -4,6 +4,7 @@ import com.sclass.common.dto.ApiResponse
 import com.sclass.common.dto.ErrorResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -31,6 +32,15 @@ open class GlobalExceptionHandler {
         return ResponseEntity
             .badRequest()
             .body(ApiResponse.error(ErrorResponse(GlobalErrorCode.INVALID_INPUT.code, message, 400)))
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadable(e: HttpMessageNotReadableException): ResponseEntity<ApiResponse<Nothing>> {
+        log.warn("Message not readable: {}", e.message)
+        val errorCode = GlobalErrorCode.INVALID_INPUT
+        return ResponseEntity
+            .badRequest()
+            .body(ApiResponse.error(ErrorResponse.of(errorCode)))
     }
 
     @ExceptionHandler(Exception::class)

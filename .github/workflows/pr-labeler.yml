@@ -64,6 +64,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
+      pull-requests: write
 
   ci-skip:
     name: Skip CI for docs
@@ -73,7 +74,7 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - name: Report Build & Lint as success
+      - name: Report Build & Test as success
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -81,4 +82,4 @@ jobs:
             -H "Authorization: token $GH_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.pull_request.head.sha }}" \
-            -d '{"state":"success","description":"CI skipped for docs branch","context":"Build & Lint"}'
+            -d '{"state":"success","description":"CI skipped for docs branch","context":"Build & Test"}'

@@ -21,14 +21,12 @@ class OAuthLoginUseCase(
 ) {
     @Transactional
     fun login(request: OAuthLoginRequest): OAuthLoginResponse {
-        val client = oAuthClientFactory.getClient(request.provider)
+        val client = oAuthClientFactory.getClient(request.provider.name)
         val userInfo = client.fetchUserInfo(request.accessToken)
-
-        val authProvider = AuthProvider.valueOf(request.provider.uppercase())
 
         // 1. oauthId로 기존 유저 검색, 없으면 email로 검색 → OAuth 연결
         val user =
-            userService.findByOAuthOrNull(userInfo.id, authProvider)?.also {
+            userService.findByOAuthOrNull(userInfo.id, request.provider)?.also {
                 userService.ensureUserRole(it.id, request.platform, request.role)
             } ?: userService.linkOAuthAndEnsureRole(
                 email = userInfo.email,
@@ -50,7 +48,7 @@ class OAuthLoginUseCase(
         val signupToken =
             tokenService.issueSignupToken(
                 oauthId = userInfo.id,
-                provider = request.provider.uppercase(),
+                provider = request.provider,
                 email = userInfo.email,
                 name = userInfo.name,
                 role = request.role,
