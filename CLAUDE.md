@@ -31,7 +31,7 @@ Common (최하위)
 - Infrastructure는 Common만 의존
 - Common은 외부 의존 없음
 
-## Layer Architecture (DuDoong Pattern)
+## Layer Architecture
 
 ```
 Controller (@RestController)  ← Api 모듈
@@ -93,7 +93,7 @@ domains/{feature}/
 - 비즈니스 로직이 있을 때만 생성 (단순 CRUD는 Adaptor로 충분)
 - Adaptor를 주입받아 사용 (Repository 직접 참조 금지)
 - 같은 도메인 내 다른 Service 참조 가능
-- 도메인 엔티티를 반환 (DTO 아님, DuDoong 패턴)
+- 도메인 엔티티를 반환 (DTO 아님)
 
 ### UseCase
 - Api 모듈에 위치
