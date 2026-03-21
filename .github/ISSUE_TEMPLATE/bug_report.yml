@@ -1,0 +1,62 @@
+name: "\U0001F41B 버그 리포트"
+description: 버그를 발견했을 때 사용해주세요
+labels: ["🐛 bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 버그 설명
+      description: 어떤 버그인지 간결하게 설명해주세요
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 방법
+      description: 버그를 재현하는 단계를 작성해주세요
+      placeholder: |
+        1. '...'로 이동
+        2. '...'를 클릭
+        3. 에러 발생
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+      description: 정상적으로 동작했을 때 예상되는 결과
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+      description: 실제로 발생한 결과
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: 관련 모듈
+      options:
+        - SClass-Common
+        - SClass-Domain
+        - SClass-Infrastructure
+        - SClass-Api-Supporters
+        - SClass-Api-Management
+        - SClass-Batch
+        - 잘 모르겠음
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 로그 / 스크린샷
+      description: 관련 에러 로그나 스크린샷이 있으면 첨부해주세요
+    validations:
+      required: false
