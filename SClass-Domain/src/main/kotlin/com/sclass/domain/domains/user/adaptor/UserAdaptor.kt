@@ -10,9 +10,9 @@ import com.sclass.domain.domains.user.repository.UserRepository
 class UserAdaptor(
     private val userRepository: UserRepository,
 ) {
-    fun findById(id: String): User = userRepository.findById(id).orElseThrow { UserNotFoundException.EXCEPTION }
+    fun findById(id: String): User = userRepository.findById(id).orElseThrow { UserNotFoundException() }
 
-    fun findByEmail(email: String): User = userRepository.findByEmail(email) ?: throw UserNotFoundException.EXCEPTION
+    fun findByEmail(email: String): User = userRepository.findByEmail(email) ?: throw UserNotFoundException()
 
     fun findByEmailOrNull(email: String): User? = userRepository.findByEmail(email)
 
