@@ -9,4 +9,6 @@ interface OrganizationAttributionRepository : JpaRepository<OrganizationAttribut
     fun findAllByOrganizationId(organizationId: Long): List<OrganizationAttribution>
 
     fun existsByStudentId(studentId: String): Boolean
+
+    fun countByOrganizationId(organizationId: Long): Long
 }

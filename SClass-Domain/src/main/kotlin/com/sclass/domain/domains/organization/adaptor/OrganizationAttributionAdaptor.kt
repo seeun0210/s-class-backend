@@ -23,4 +23,6 @@ class OrganizationAttributionAdaptor(
     fun existsByStudentId(studentId: String): Boolean = organizationAttributionRepository.existsByStudentId(studentId)
 
     fun save(attribution: OrganizationAttribution): OrganizationAttribution = organizationAttributionRepository.save(attribution)
+
+    fun countByOrganizationId(organizationId: Long): Long = organizationAttributionRepository.countByOrganizationId(organizationId)
 }
