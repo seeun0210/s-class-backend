@@ -7,6 +7,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Entity
@@ -27,5 +28,5 @@ class RefreshToken(
     @Column(nullable = false)
     val expiresAt: LocalDateTime,
 ) : BaseTimeEntity() {
-    fun isValid(): Boolean = expiresAt.isAfter(LocalDateTime.now())
+    fun isValid(clock: Clock = Clock.systemDefaultZone()): Boolean = expiresAt.isAfter(LocalDateTime.now(clock))
 }

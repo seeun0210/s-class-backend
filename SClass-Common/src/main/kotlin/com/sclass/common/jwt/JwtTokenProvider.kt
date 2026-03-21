@@ -26,18 +26,26 @@ class JwtTokenProvider(
         private const val MILLI_TO_SECOND = 1000L
     }
 
-    private fun getSecretKey(): SecretKey = Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray(StandardCharsets.UTF_8))
+    private val secretKey: SecretKey by lazy {
+        Keys.hmacShaKeyFor(jwtProperties.secretKey.toByteArray(StandardCharsets.UTF_8))
+    }
 
     private fun getJws(token: String): Jws<Claims> =
         try {
             Jwts
                 .parser()
-                .verifyWith(getSecretKey())
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
         } catch (e: ExpiredJwtException) {
             throw TokenExpiredException.EXCEPTION
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            throw InvalidTokenException.EXCEPTION
+        } catch (e: io.jsonwebtoken.MalformedJwtException) {
+            throw InvalidTokenException.EXCEPTION
+        } catch (e: io.jsonwebtoken.UnsupportedJwtException) {
+            throw InvalidTokenException.EXCEPTION
+        } catch (e: IllegalArgumentException) {
             throw InvalidTokenException.EXCEPTION
         }
 
@@ -55,7 +63,7 @@ class JwtTokenProvider(
             .claim(TOKEN_TYPE, ACCESS_TOKEN)
             .claim(ROLES, role)
             .expiration(expiration)
-            .signWith(getSecretKey())
+            .signWith(secretKey)
             .compact()
     }
 
@@ -69,7 +77,7 @@ class JwtTokenProvider(
             .subject(userId)
             .claim(TOKEN_TYPE, REFRESH_TOKEN)
             .expiration(expiration)
-            .signWith(getSecretKey())
+            .signWith(secretKey)
             .compact()
     }
 

@@ -44,7 +44,6 @@ class User(
 
     companion object {
         private val PHONE_DIGITS_REGEX = Regex("^\\d{10,11}$")
-        private val PHONE_FORMATTED_REGEX = Regex("^\\d{3}-\\d{3,4}-\\d{4}$")
 
         fun formatPhoneNumber(raw: String): String {
             val digits = raw.replace("-", "")
@@ -54,7 +53,7 @@ class User(
             return when (digits.length) {
                 10 -> "${digits.substring(0, 3)}-${digits.substring(3, 6)}-${digits.substring(6)}"
                 11 -> "${digits.substring(0, 3)}-${digits.substring(3, 7)}-${digits.substring(7)}"
-                else -> throw IllegalArgumentException("전화번호는 10~11자리 숫자여야 합니다")
+                else -> error("Unreachable: phone number length is already validated by regex.")
             }
         }
     }

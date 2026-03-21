@@ -17,19 +17,20 @@ class AesTokenEncryptor(
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val GCM_IV_LENGTH = 12
         private const val GCM_TAG_LENGTH = 128
+        private val secureRandom = SecureRandom()
     }
 
-    private fun getSecretKey(): SecretKeySpec {
+    private val secretKey: SecretKeySpec by lazy {
         val keyBytes = properties.secretKey.toByteArray(StandardCharsets.UTF_8)
         require(keyBytes.size == 32) { "AES-256 key must be 32 bytes" }
-        return SecretKeySpec(keyBytes, ALGORITHM)
+        SecretKeySpec(keyBytes, ALGORITHM)
     }
 
     fun encrypt(plainToken: String): String {
         val iv = ByteArray(GCM_IV_LENGTH)
-        SecureRandom().nextBytes(iv)
+        secureRandom.nextBytes(iv)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
         val encrypted = cipher.doFinal(plainToken.toByteArray(StandardCharsets.UTF_8))
         val combined = iv + encrypted
         return Base64.getUrlEncoder().withoutPadding().encodeToString(combined)
@@ -40,7 +41,7 @@ class AesTokenEncryptor(
         val iv = combined.copyOfRange(0, GCM_IV_LENGTH)
         val encrypted = combined.copyOfRange(GCM_IV_LENGTH, combined.size)
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(GCM_TAG_LENGTH, iv))
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv))
         return String(cipher.doFinal(encrypted), StandardCharsets.UTF_8)
     }
 }
