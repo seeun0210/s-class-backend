@@ -3,6 +3,7 @@ package com.sclass.domain.domains.token.service
 import com.sclass.common.annotation.DomainService
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.common.jwt.SignupTokenInfo
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
 import com.sclass.domain.domains.token.dto.TokenResult
@@ -44,5 +45,21 @@ class TokenDomainService(
     fun resolveUserId(encryptedRefreshToken: String): String {
         val refreshJwt = aesTokenEncryptor.decrypt(encryptedRefreshToken)
         return jwtTokenProvider.parseRefreshToken(refreshJwt)
+    }
+
+    fun issueSignupToken(
+        oauthId: String,
+        provider: String,
+        email: String,
+        name: String,
+        role: String,
+    ): String {
+        val signupJwt = jwtTokenProvider.generateSignupToken(oauthId, provider, email, name, role)
+        return aesTokenEncryptor.encrypt(signupJwt)
+    }
+
+    fun resolveSignupToken(encryptedSignupToken: String): SignupTokenInfo {
+        val signupJwt = aesTokenEncryptor.decrypt(encryptedSignupToken)
+        return jwtTokenProvider.parseSignupToken(signupJwt)
     }
 }
