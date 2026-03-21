@@ -93,15 +93,11 @@ kover {
                         "*Response",
                         "*Result",
                         "*Info",
-                        // Entity & Enum & VO
-                        "*.domain.*Entity",
-                        "*.domain.BaseTimeEntity",
-                        "*.domain.AuthProvider",
-                        "*.domain.Platform",
-                        "*.domain.Role",
-                        "*.domain.Grade",
-                        "*.domain.FileType",
-                        "*.domain.TokenType",
+                        // Entity, Enum, VO, Embedded — domain 하위 패키지 전체
+                        "*.domains.*.domain.*",
+                        // Common model & VO
+                        "*.common.model.*",
+                        "*.common.vo.*",
                         // Exception & ErrorCode
                         "*Exception",
                         "*ErrorCode",
