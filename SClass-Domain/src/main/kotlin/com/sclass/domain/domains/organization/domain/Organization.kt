@@ -30,7 +30,6 @@ class Organization(
 
     @Embedded
     var settings: OrganizationSettings = OrganizationSettings(),
-
 ) : BaseTimeEntity() {
     fun changeName(newName: String) {
         this.name = newName
