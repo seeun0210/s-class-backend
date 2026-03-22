@@ -4,6 +4,7 @@ import com.sclass.common.annotation.DomainService
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
+import com.sclass.domain.domains.user.domain.User
 import org.springframework.transaction.annotation.Transactional
 
 @DomainService
@@ -12,21 +13,21 @@ class TeacherDomainService(
 ) {
     @Transactional
     fun register(
-        userId: String,
+        user: User,
         organizationId: Long?,
     ): Teacher {
         val alreadyExists =
             if (organizationId != null) {
-                teacherAdaptor.existsByUserIdAndOrganizationId(userId, organizationId)
+                teacherAdaptor.existsByUserIdAndOrganizationId(user.id, organizationId)
             } else {
-                teacherAdaptor.existsByUserIdAndOrganizationIdIsNull(userId)
+                teacherAdaptor.existsByUserIdAndOrganizationIdIsNull(user.id)
             }
         if (alreadyExists) {
             throw TeacherAlreadyExistsException()
         }
         return teacherAdaptor.save(
             Teacher(
-                userId = userId,
+                user = user,
                 organizationId = organizationId,
             ),
         )

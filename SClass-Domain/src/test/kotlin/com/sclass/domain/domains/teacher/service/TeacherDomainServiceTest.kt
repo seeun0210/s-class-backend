@@ -3,6 +3,7 @@ package com.sclass.domain.domains.teacher.service
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
+import com.sclass.domain.domains.user.domain.User
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -17,10 +18,14 @@ class TeacherDomainServiceTest {
     private lateinit var teacherAdaptor: TeacherAdaptor
     private lateinit var teacherDomainService: TeacherDomainService
 
+    private lateinit var user: User
+
     @BeforeEach
     fun setUp() {
         teacherAdaptor = mockk()
         teacherDomainService = TeacherDomainService(teacherAdaptor)
+        user = mockk<User>()
+        every { user.id } returns "user-id"
     }
 
     @Nested
@@ -31,9 +36,9 @@ class TeacherDomainServiceTest {
             every { teacherAdaptor.existsByUserIdAndOrganizationId("user-id", 1L) } returns false
             every { teacherAdaptor.save(capture(slot)) } answers { slot.captured }
 
-            val result = teacherDomainService.register(userId = "user-id", organizationId = 1L)
+            val result = teacherDomainService.register(user = user, organizationId = 1L)
 
-            assertEquals("user-id", result.userId)
+            assertEquals(user, result.user)
             assertEquals(1L, result.organizationId)
         }
 
@@ -43,9 +48,9 @@ class TeacherDomainServiceTest {
             every { teacherAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns false
             every { teacherAdaptor.save(capture(slot)) } answers { slot.captured }
 
-            val result = teacherDomainService.register(userId = "user-id", organizationId = null)
+            val result = teacherDomainService.register(user = user, organizationId = null)
 
-            assertEquals("user-id", result.userId)
+            assertEquals(user, result.user)
             assertNull(result.organizationId)
         }
 
@@ -54,7 +59,7 @@ class TeacherDomainServiceTest {
             every { teacherAdaptor.existsByUserIdAndOrganizationId("user-id", 1L) } returns true
 
             assertThrows<TeacherAlreadyExistsException> {
-                teacherDomainService.register(userId = "user-id", organizationId = 1L)
+                teacherDomainService.register(user = user, organizationId = 1L)
             }
         }
 
@@ -63,7 +68,7 @@ class TeacherDomainServiceTest {
             every { teacherAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns true
 
             assertThrows<TeacherAlreadyExistsException> {
-                teacherDomainService.register(userId = "user-id", organizationId = null)
+                teacherDomainService.register(user = user, organizationId = null)
             }
         }
     }
