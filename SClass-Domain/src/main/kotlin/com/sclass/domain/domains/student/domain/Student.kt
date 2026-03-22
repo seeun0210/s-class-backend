@@ -18,7 +18,7 @@ import jakarta.persistence.UniqueConstraint
 @Entity
 @Table(
     name = "students",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "organization_id"])],
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id"])],
 )
 class Student(
     @Id
@@ -28,9 +28,6 @@ class Student(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-
-    @Column(name = "organization_id")
-    val organizationId: Long? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

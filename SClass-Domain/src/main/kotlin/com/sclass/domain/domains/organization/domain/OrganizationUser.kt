@@ -1,10 +1,9 @@
-package com.sclass.domain.domains.teacher.domain
+package com.sclass.domain.domains.organization.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.user.domain.User
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.Id
@@ -15,10 +14,10 @@ import jakarta.persistence.UniqueConstraint
 
 @Entity
 @Table(
-    name = "teachers",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id"])],
+    name = "organization_users",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "organization_id"])],
 )
-class Teacher(
+class OrganizationUser(
     @Id
     @Column(length = 26)
     val id: String = Ulid.generate(),
@@ -27,18 +26,7 @@ class Teacher(
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
 
-    @Embedded
-    var profile: TeacherProfile = TeacherProfile(),
-
-    @Embedded
-    var education: TeacherEducation = TeacherEducation(),
-
-    @Embedded
-    var personalInfo: TeacherPersonalInfo = TeacherPersonalInfo(),
-
-    @Embedded
-    var contract: TeacherContract = TeacherContract(),
-
-    @Embedded
-    var verification: TeacherVerification = TeacherVerification(),
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    val organization: Organization,
 ) : BaseTimeEntity()

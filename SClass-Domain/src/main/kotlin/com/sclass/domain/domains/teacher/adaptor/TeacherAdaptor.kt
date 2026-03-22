@@ -13,28 +13,11 @@ class TeacherAdaptor(
 
     fun findByIdOrNull(id: String): Teacher? = teacherRepository.findById(id).orElse(null)
 
-    fun findAllByUserId(userId: String): List<Teacher> = teacherRepository.findAllByUserId(userId)
+    fun findByUserId(userId: String): Teacher = findByUserIdOrNull(userId) ?: throw TeacherNotFoundException()
 
-    fun findByUserIdAndOrganizationId(
-        userId: String,
-        organizationId: Long,
-    ): Teacher = findByUserIdAndOrganizationIdOrNull(userId, organizationId) ?: throw TeacherNotFoundException()
+    fun findByUserIdOrNull(userId: String): Teacher? = teacherRepository.findByUserId(userId)
 
-    fun findByUserIdAndOrganizationIdOrNull(
-        userId: String,
-        organizationId: Long,
-    ): Teacher? = teacherRepository.findByUserIdAndOrganizationId(userId, organizationId)
-
-    fun findByUserIdAndOrganizationIdIsNull(userId: String): Teacher? = teacherRepository.findByUserIdAndOrganizationIdIsNull(userId)
-
-    fun findAllByOrganizationId(organizationId: Long): List<Teacher> = teacherRepository.findAllByOrganizationId(organizationId)
-
-    fun existsByUserIdAndOrganizationId(
-        userId: String,
-        organizationId: Long,
-    ): Boolean = teacherRepository.existsByUserIdAndOrganizationId(userId, organizationId)
-
-    fun existsByUserIdAndOrganizationIdIsNull(userId: String): Boolean = teacherRepository.existsByUserIdAndOrganizationIdIsNull(userId)
+    fun existsByUserId(userId: String): Boolean = teacherRepository.existsByUserId(userId)
 
     fun save(teacher: Teacher): Teacher = teacherRepository.save(teacher)
 }

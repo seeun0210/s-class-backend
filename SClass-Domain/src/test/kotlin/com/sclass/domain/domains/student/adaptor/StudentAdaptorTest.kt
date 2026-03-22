@@ -71,132 +71,65 @@ class StudentAdaptorTest {
     }
 
     @Nested
-    inner class FindAllByUserId {
+    inner class FindByUserId {
         @Test
-        fun `userId로 조회하면 해당 유저의 학생 목록을 반환한다`() {
-            val students = listOf(mockk<Student>(), mockk<Student>())
-            every { studentRepository.findAllByUserId("user-id") } returns students
-
-            val result = studentAdaptor.findAllByUserId("user-id")
-
-            assertEquals(2, result.size)
-            assertEquals(students, result)
-        }
-
-        @Test
-        fun `학생이 없으면 빈 리스트를 반환한다`() {
-            every { studentRepository.findAllByUserId("unknown-id") } returns emptyList()
-
-            val result = studentAdaptor.findAllByUserId("unknown-id")
-
-            assertTrue(result.isEmpty())
-        }
-    }
-
-    @Nested
-    inner class FindByUserIdAndOrganizationId {
-        @Test
-        fun `존재하는 userId와 organizationId로 조회하면 학생을 반환한다`() {
+        fun `존재하는 userId로 조회하면 학생을 반환한다`() {
             val student = mockk<Student>()
-            every { studentRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns student
+            every { studentRepository.findByUserId("user-id") } returns student
 
-            val result = studentAdaptor.findByUserIdAndOrganizationId("user-id", 1L)
+            val result = studentAdaptor.findByUserId("user-id")
 
             assertEquals(student, result)
         }
 
         @Test
         fun `존재하지 않으면 StudentNotFoundException이 발생한다`() {
-            every { studentRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns null
+            every { studentRepository.findByUserId("user-id") } returns null
 
             assertThrows<StudentNotFoundException> {
-                studentAdaptor.findByUserIdAndOrganizationId("user-id", 1L)
+                studentAdaptor.findByUserId("user-id")
             }
         }
     }
 
     @Nested
-    inner class FindByUserIdAndOrganizationIdOrNull {
+    inner class FindByUserIdOrNull {
         @Test
         fun `존재하면 학생을 반환한다`() {
             val student = mockk<Student>()
-            every { studentRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns student
+            every { studentRepository.findByUserId("user-id") } returns student
 
-            val result = studentAdaptor.findByUserIdAndOrganizationIdOrNull("user-id", 1L)
+            val result = studentAdaptor.findByUserIdOrNull("user-id")
 
             assertEquals(student, result)
         }
 
         @Test
         fun `존재하지 않으면 null을 반환한다`() {
-            every { studentRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns null
+            every { studentRepository.findByUserId("user-id") } returns null
 
-            val result = studentAdaptor.findByUserIdAndOrganizationIdOrNull("user-id", 1L)
+            val result = studentAdaptor.findByUserIdOrNull("user-id")
 
             assertNull(result)
         }
     }
 
     @Nested
-    inner class FindAllByOrganizationId {
-        @Test
-        fun `기관 id로 조회하면 해당 기관의 학생 목록을 반환한다`() {
-            val students = listOf(mockk<Student>(), mockk<Student>())
-            every { studentRepository.findAllByOrganizationId(1L) } returns students
-
-            val result = studentAdaptor.findAllByOrganizationId(1L)
-
-            assertEquals(2, result.size)
-            assertEquals(students, result)
-        }
-
-        @Test
-        fun `학생이 없으면 빈 리스트를 반환한다`() {
-            every { studentRepository.findAllByOrganizationId(1L) } returns emptyList()
-
-            val result = studentAdaptor.findAllByOrganizationId(1L)
-
-            assertTrue(result.isEmpty())
-        }
-    }
-
-    @Nested
-    inner class ExistsByUserIdAndOrganizationId {
+    inner class ExistsByUserId {
         @Test
         fun `학생이 존재하면 true를 반환한다`() {
-            every { studentRepository.existsByUserIdAndOrganizationId("user-id", 1L) } returns true
+            every { studentRepository.existsByUserId("user-id") } returns true
 
-            val result = studentAdaptor.existsByUserIdAndOrganizationId("user-id", 1L)
+            val result = studentAdaptor.existsByUserId("user-id")
 
             assertTrue(result)
         }
 
         @Test
         fun `학생이 없으면 false를 반환한다`() {
-            every { studentRepository.existsByUserIdAndOrganizationId("user-id", 1L) } returns false
+            every { studentRepository.existsByUserId("user-id") } returns false
 
-            val result = studentAdaptor.existsByUserIdAndOrganizationId("user-id", 1L)
-
-            assertFalse(result)
-        }
-    }
-
-    @Nested
-    inner class ExistsByUserIdAndOrganizationIdIsNull {
-        @Test
-        fun `기관 없이 등록된 학생이 존재하면 true를 반환한다`() {
-            every { studentRepository.existsByUserIdAndOrganizationIdIsNull("user-id") } returns true
-
-            val result = studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id")
-
-            assertTrue(result)
-        }
-
-        @Test
-        fun `기관 없이 등록된 학생이 없으면 false를 반환한다`() {
-            every { studentRepository.existsByUserIdAndOrganizationIdIsNull("user-id") } returns false
-
-            val result = studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id")
+            val result = studentAdaptor.existsByUserId("user-id")
 
             assertFalse(result)
         }
