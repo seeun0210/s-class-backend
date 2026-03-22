@@ -14,9 +14,15 @@ class StudentDomainService(
     @Transactional
     fun register(
         user: User,
-        organizationId: Long,
+        organizationId: Long?,
     ): Student {
-        if (studentAdaptor.existsByUserIdAndOrganizationId(user.id, organizationId)) {
+        val alreadyExists =
+            if (organizationId != null) {
+                studentAdaptor.existsByUserIdAndOrganizationId(user.id, organizationId)
+            } else {
+                studentAdaptor.existsByUserIdAndOrganizationIdIsNull(user.id)
+            }
+        if (alreadyExists) {
             throw StudentAlreadyExistsException()
         }
         return studentAdaptor.save(

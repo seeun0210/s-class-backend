@@ -29,8 +29,8 @@ class Student(
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
 
-    @Column(name = "organization_id", nullable = false)
-    val organizationId: Long,
+    @Column(name = "organization_id")
+    val organizationId: Long? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

@@ -182,6 +182,27 @@ class StudentAdaptorTest {
     }
 
     @Nested
+    inner class ExistsByUserIdAndOrganizationIdIsNull {
+        @Test
+        fun `기관 없이 등록된 학생이 존재하면 true를 반환한다`() {
+            every { studentRepository.existsByUserIdAndOrganizationIdIsNull("user-id") } returns true
+
+            val result = studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id")
+
+            assertTrue(result)
+        }
+
+        @Test
+        fun `기관 없이 등록된 학생이 없으면 false를 반환한다`() {
+            every { studentRepository.existsByUserIdAndOrganizationIdIsNull("user-id") } returns false
+
+            val result = studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id")
+
+            assertFalse(result)
+        }
+    }
+
+    @Nested
     inner class Save {
         @Test
         fun `학생 저장을 repository에 위임한다`() {

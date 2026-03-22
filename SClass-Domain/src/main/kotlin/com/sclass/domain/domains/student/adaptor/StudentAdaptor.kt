@@ -25,12 +25,16 @@ class StudentAdaptor(
         organizationId: Long,
     ): Student? = studentRepository.findByUserIdAndOrganizationId(userId, organizationId)
 
+    fun findByUserIdAndOrganizationIdIsNull(userId: String): Student? = studentRepository.findByUserIdAndOrganizationIdIsNull(userId)
+
     fun findAllByOrganizationId(organizationId: Long): List<Student> = studentRepository.findAllByOrganizationId(organizationId)
 
     fun existsByUserIdAndOrganizationId(
         userId: String,
         organizationId: Long,
     ): Boolean = studentRepository.existsByUserIdAndOrganizationId(userId, organizationId)
+
+    fun existsByUserIdAndOrganizationIdIsNull(userId: String): Boolean = studentRepository.existsByUserIdAndOrganizationIdIsNull(userId)
 
     fun save(student: Student): Student = studentRepository.save(student)
 }

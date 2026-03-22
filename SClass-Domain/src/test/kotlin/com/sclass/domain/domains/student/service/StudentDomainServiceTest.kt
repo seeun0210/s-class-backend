@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -42,11 +43,32 @@ class StudentDomainServiceTest {
         }
 
         @Test
+        fun `기관 없이 학생을 등록한다`() {
+            val slot = slot<Student>()
+            every { studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns false
+            every { studentAdaptor.save(capture(slot)) } answers { slot.captured }
+
+            val result = studentDomainService.register(user = user, organizationId = null)
+
+            assertEquals(user, result.user)
+            assertNull(result.organizationId)
+        }
+
+        @Test
         fun `이미 해당 기관에 등록된 학생이면 StudentAlreadyExistsException이 발생한다`() {
             every { studentAdaptor.existsByUserIdAndOrganizationId("user-id", 1L) } returns true
 
             assertThrows<StudentAlreadyExistsException> {
                 studentDomainService.register(user = user, organizationId = 1L)
+            }
+        }
+
+        @Test
+        fun `기관 없이 이미 등록된 학생이면 StudentAlreadyExistsException이 발생한다`() {
+            every { studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns true
+
+            assertThrows<StudentAlreadyExistsException> {
+                studentDomainService.register(user = user, organizationId = null)
             }
         }
     }

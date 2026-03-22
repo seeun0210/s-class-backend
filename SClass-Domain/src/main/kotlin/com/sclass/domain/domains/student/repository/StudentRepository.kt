@@ -11,10 +11,14 @@ interface StudentRepository : JpaRepository<Student, String> {
         organizationId: Long,
     ): Student?
 
+    fun findByUserIdAndOrganizationIdIsNull(userId: String): Student?
+
     fun findAllByOrganizationId(organizationId: Long): List<Student>
 
     fun existsByUserIdAndOrganizationId(
         userId: String,
         organizationId: Long,
     ): Boolean
+
+    fun existsByUserIdAndOrganizationIdIsNull(userId: String): Boolean
 }
