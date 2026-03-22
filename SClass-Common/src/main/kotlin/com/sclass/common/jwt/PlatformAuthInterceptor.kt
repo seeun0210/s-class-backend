@@ -13,6 +13,8 @@ class PlatformAuthInterceptor(
         response: HttpServletResponse,
         handler: Any,
     ): Boolean {
+        if (request.method == "OPTIONS") return true
+
         val platform =
             request.getAttribute(JwtAuthInterceptor.USER_PLATFORM_ATTRIBUTE) as? String
                 ?: throw ForbiddenException()

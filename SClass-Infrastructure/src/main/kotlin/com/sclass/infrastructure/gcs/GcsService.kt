@@ -4,11 +4,13 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.HttpMethod
 import com.google.cloud.storage.Storage
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 @Service
+@ConditionalOnProperty("cloud.gcp.storage.project-id")
 class GcsService(
     private val storage: Storage,
     private val gcsProperties: GcsProperties,
