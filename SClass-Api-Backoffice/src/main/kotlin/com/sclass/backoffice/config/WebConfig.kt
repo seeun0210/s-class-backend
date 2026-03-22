@@ -15,7 +15,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfig(
     private val jwtAuthInterceptor: JwtAuthInterceptor,
     private val currentUserIdArgumentResolver: CurrentUserIdArgumentResolver,
-    @param:Value($$"${cors.allow.origins}") private val allowedOrigins: String,
+    @param:Value("${cors.allow.origins}") private val allowedOrigins: String,
 ) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry
