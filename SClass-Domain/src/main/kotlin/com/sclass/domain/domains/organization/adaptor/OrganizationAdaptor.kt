@@ -4,11 +4,15 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.organization.domain.Organization
 import com.sclass.domain.domains.organization.exception.OrganizationNotFoundException
 import com.sclass.domain.domains.organization.repository.OrganizationRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 @Adaptor
 class OrganizationAdaptor(
     private val organizationRepository: OrganizationRepository,
 ) {
+    fun findAll(pageable: Pageable): Page<Organization> = organizationRepository.findAll(pageable)
+
     fun findById(id: Long): Organization = findByIdOrNull(id) ?: throw OrganizationNotFoundException()
 
     fun findByIdOrNull(id: Long): Organization? = organizationRepository.findById(id).orElse(null)
