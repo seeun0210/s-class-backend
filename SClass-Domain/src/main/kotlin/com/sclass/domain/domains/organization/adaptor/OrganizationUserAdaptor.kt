@@ -2,8 +2,12 @@ package com.sclass.domain.domains.organization.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.organization.domain.OrganizationUser
+import com.sclass.domain.domains.organization.dto.OrganizationUserInfo
 import com.sclass.domain.domains.organization.exception.OrganizationUserNotFoundException
 import com.sclass.domain.domains.organization.repository.OrganizationUserRepository
+import com.sclass.domain.domains.user.domain.Role
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 @Adaptor
 class OrganizationUserAdaptor(
@@ -32,4 +36,13 @@ class OrganizationUserAdaptor(
     ): Boolean = organizationUserRepository.existsByUserIdAndOrganizationId(userId, organizationId)
 
     fun save(organizationUser: OrganizationUser): OrganizationUser = organizationUserRepository.save(organizationUser)
+
+    fun findUsersByOrganizationIdAndRole(
+        organizationId: Long,
+        role: Role,
+        pageable: Pageable,
+    ): Page<OrganizationUserInfo> = organizationUserRepository.findUsersByOrganizationIdAndRole(organizationId, role, pageable)
+
+    fun countByOrganizationIdGroupByRole(organizationId: Long): Map<Role, Long> =
+        organizationUserRepository.countByOrganizationIdGroupByRole(organizationId)
 }
