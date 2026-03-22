@@ -4,8 +4,6 @@ import com.sclass.domain.common.model.BaseTimeEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -33,9 +31,6 @@ class Organization(
     @Embedded
     var settings: OrganizationSettings = OrganizationSettings(),
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var status: OrganizationStatus = OrganizationStatus.ACTIVE,
 ) : BaseTimeEntity() {
     fun changeName(newName: String) {
         this.name = newName
@@ -47,9 +42,5 @@ class Organization(
 
     fun changeSettings(newSettings: OrganizationSettings) {
         this.settings = newSettings
-    }
-
-    fun changeStatus(newStatus: OrganizationStatus) {
-        this.status = newStatus
     }
 }
