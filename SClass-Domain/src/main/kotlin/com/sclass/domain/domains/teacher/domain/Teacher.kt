@@ -35,9 +35,6 @@ class Teacher(
     var personalInfo: TeacherPersonalInfo = TeacherPersonalInfo(),
 
     @Embedded
-    var documentFiles: TeacherDocumentFiles = TeacherDocumentFiles(),
-
-    @Embedded
     var contract: TeacherContract = TeacherContract(),
 
     @Embedded
