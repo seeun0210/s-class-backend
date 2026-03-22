@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.s3
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.net.URI
 
 @Configuration
+@ConditionalOnProperty("cloud.aws.s3.access-key")
 @EnableConfigurationProperties(S3Properties::class)
 class S3Config(
     private val s3Properties: S3Properties,
