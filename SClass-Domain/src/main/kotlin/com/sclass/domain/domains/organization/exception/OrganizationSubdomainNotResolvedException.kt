@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.organization.exception
+
+import com.sclass.common.exception.BusinessException
+
+class OrganizationSubdomainNotResolvedException : BusinessException(OrganizationErrorCode.ORGANIZATION_SUBDOMAIN_NOT_RESOLVED)
