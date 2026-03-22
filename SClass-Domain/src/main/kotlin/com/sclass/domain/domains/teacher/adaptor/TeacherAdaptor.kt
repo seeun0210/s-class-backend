@@ -13,9 +13,7 @@ class TeacherAdaptor(
 
     fun findByIdOrNull(id: String): Teacher? = teacherRepository.findById(id).orElse(null)
 
-    fun findByUserId(userId: String): Teacher = findByUserIdOrNull(userId) ?: throw TeacherNotFoundException()
-
-    fun findByUserIdOrNull(userId: String): Teacher? = teacherRepository.findByUserId(userId)
+    fun findAllByUserId(userId: String): List<Teacher> = teacherRepository.findAllByUserId(userId)
 
     fun findByUserIdAndOrganizationId(
         userId: String,

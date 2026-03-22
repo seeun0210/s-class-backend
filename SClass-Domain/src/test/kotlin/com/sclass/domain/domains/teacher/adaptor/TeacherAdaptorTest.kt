@@ -71,24 +71,25 @@ class TeacherAdaptorTest {
     }
 
     @Nested
-    inner class FindByUserId {
+    inner class FindAllByUserId {
         @Test
-        fun `존재하는 userId로 조회하면 교사를 반환한다`() {
-            val teacher = mockk<Teacher>()
-            every { teacherRepository.findByUserId("user-id") } returns teacher
+        fun `userId로 조회하면 해당 유저의 교사 목록을 반환한다`() {
+            val teachers = listOf(mockk<Teacher>(), mockk<Teacher>())
+            every { teacherRepository.findAllByUserId("user-id") } returns teachers
 
-            val result = teacherAdaptor.findByUserId("user-id")
+            val result = teacherAdaptor.findAllByUserId("user-id")
 
-            assertEquals(teacher, result)
+            assertEquals(2, result.size)
+            assertEquals(teachers, result)
         }
 
         @Test
-        fun `존재하지 않는 userId로 조회하면 TeacherNotFoundException이 발생한다`() {
-            every { teacherRepository.findByUserId("unknown-id") } returns null
+        fun `교사가 없으면 빈 리스트를 반환한다`() {
+            every { teacherRepository.findAllByUserId("unknown-id") } returns emptyList()
 
-            assertThrows<TeacherNotFoundException> {
-                teacherAdaptor.findByUserId("unknown-id")
-            }
+            val result = teacherAdaptor.findAllByUserId("unknown-id")
+
+            assertTrue(result.isEmpty())
         }
     }
 

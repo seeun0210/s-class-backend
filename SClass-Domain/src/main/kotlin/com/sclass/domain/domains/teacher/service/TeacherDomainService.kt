@@ -33,7 +33,7 @@ class TeacherDomainService(
     }
 
     @Transactional(readOnly = true)
-    fun findByUserId(userId: String): Teacher = teacherAdaptor.findByUserId(userId)
+    fun findAllByUserId(userId: String): List<Teacher> = teacherAdaptor.findAllByUserId(userId)
 
     @Transactional(readOnly = true)
     fun findAllByOrganizationId(organizationId: Long): List<Teacher> = teacherAdaptor.findAllByOrganizationId(organizationId)

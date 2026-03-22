@@ -69,15 +69,16 @@ class TeacherDomainServiceTest {
     }
 
     @Nested
-    inner class FindByUserId {
+    inner class FindAllByUserId {
         @Test
-        fun `교사 프로필을 반환한다`() {
-            val teacher = mockk<Teacher>()
-            every { teacherAdaptor.findByUserId("user-id") } returns teacher
+        fun `userId로 조회하면 해당 유저의 교사 목록을 반환한다`() {
+            val teachers = listOf(mockk<Teacher>(), mockk<Teacher>())
+            every { teacherAdaptor.findAllByUserId("user-id") } returns teachers
 
-            val result = teacherDomainService.findByUserId("user-id")
+            val result = teacherDomainService.findAllByUserId("user-id")
 
-            assertEquals(teacher, result)
+            assertEquals(2, result.size)
+            assertEquals(teachers, result)
         }
     }
 
