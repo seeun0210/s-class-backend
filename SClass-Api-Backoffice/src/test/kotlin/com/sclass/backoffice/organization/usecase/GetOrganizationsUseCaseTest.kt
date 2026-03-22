@@ -7,6 +7,7 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 
@@ -33,12 +34,14 @@ class GetOrganizationsUseCaseTest {
 
         val result = getOrganizationsUseCase.execute(pageable)
 
-        assertEquals(2, result.content.size)
-        assertEquals(0, result.page)
-        assertEquals(20, result.size)
-        assertEquals(2, result.totalElements)
-        assertEquals(1, result.totalPages)
-        assertEquals("테스트학원", result.content[0].name)
+        assertAll(
+            { assertEquals(2, result.content.size) },
+            { assertEquals(0, result.page) },
+            { assertEquals(20, result.size) },
+            { assertEquals(2, result.totalElements) },
+            { assertEquals(1, result.totalPages) },
+            { assertEquals("테스트학원", result.content[0].name) },
+        )
     }
 
     @Test

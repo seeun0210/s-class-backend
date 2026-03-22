@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 
 class UpdateOrganizationSettingsUseCaseTest {
     private lateinit var organizationDomainService: OrganizationDomainService
@@ -41,9 +42,11 @@ class UpdateOrganizationSettingsUseCaseTest {
 
         val result = updateOrganizationSettingsUseCase.execute(1L, request)
 
-        assertEquals(1L, result.id)
-        assertTrue(result.useSupporters)
-        assertTrue(result.useLms)
+        assertAll(
+            { assertEquals(1L, result.id) },
+            { assertTrue(result.useSupporters) },
+            { assertTrue(result.useLms) },
+        )
     }
 
     @Test
@@ -65,7 +68,9 @@ class UpdateOrganizationSettingsUseCaseTest {
 
         val result = updateOrganizationSettingsUseCase.execute(1L, request)
 
-        assertFalse(result.useSupporters)
-        assertFalse(result.useLms)
+        assertAll(
+            { assertFalse(result.useSupporters) },
+            { assertFalse(result.useLms) },
+        )
     }
 }

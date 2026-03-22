@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 
 class CreateOrganizationUseCaseTest {
     private lateinit var organizationDomainService: OrganizationDomainService
@@ -46,11 +47,13 @@ class CreateOrganizationUseCaseTest {
 
         val result = createOrganizationUseCase.execute(request)
 
-        assertEquals(1L, result.id)
-        assertEquals("테스트학원", result.name)
-        assertEquals("test.sclass.com", result.domain)
-        assertEquals("https://logo.png", result.logoUrl)
-        assertEquals("ABC123", result.inviteCode)
+        assertAll(
+            { assertEquals(1L, result.id) },
+            { assertEquals("테스트학원", result.name) },
+            { assertEquals("test.sclass.com", result.domain) },
+            { assertEquals("https://logo.png", result.logoUrl) },
+            { assertEquals("ABC123", result.inviteCode) },
+        )
     }
 
     @Test

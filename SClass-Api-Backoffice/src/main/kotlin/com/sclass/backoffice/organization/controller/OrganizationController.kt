@@ -10,15 +10,15 @@ import com.sclass.backoffice.organization.usecase.UpdateOrganizationSettingsUseC
 import com.sclass.common.dto.ApiResponse
 import com.sclass.common.dto.ApiResponse.Companion.success
 import jakarta.validation.Valid
-import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -30,13 +30,10 @@ class OrganizationController(
 ) {
     @GetMapping
     fun getOrganizations(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<OrganizationPageResponse> =
         success(
-            getOrganizationsUseCase.execute(
-                PageRequest.of(page, size, Sort.by("id").descending()),
-            ),
+            getOrganizationsUseCase.execute(pageable),
         )
 
     @PostMapping

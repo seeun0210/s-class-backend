@@ -13,10 +13,7 @@ data class OrganizationPageResponse(
     companion object {
         fun from(page: Page<Organization>): OrganizationPageResponse =
             OrganizationPageResponse(
-                content =
-                    page.content.map {
-                        OrganizationResponse.from(it)
-                    },
+                content = page.content.map(OrganizationResponse::from),
                 page = page.number,
                 size = page.size,
                 totalElements = page.totalElements,
