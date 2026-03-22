@@ -3,7 +3,9 @@ package com.sclass.domain.domains.organization.repository
 import com.sclass.domain.domains.organization.domain.OrganizationUser
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface OrganizationUserRepository : JpaRepository<OrganizationUser, String> {
+interface OrganizationUserRepository :
+    JpaRepository<OrganizationUser, String>,
+    OrganizationUserCustomRepository {
     fun findByUserIdAndOrganizationId(
         userId: String,
         organizationId: Long,
