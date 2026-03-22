@@ -131,4 +131,17 @@ class TeacherDocumentAdaptorTest {
             verify { teacherDocumentRepository.save(document) }
         }
     }
+
+    @Nested
+    inner class DeleteAllByTeacherId {
+        @Test
+        fun `교사 ID로 서류 삭제를 repository에 위임한다`() {
+            val teacherId = "teacher-id"
+            every { teacherDocumentRepository.deleteAllByTeacherId(teacherId) } returns Unit
+
+            teacherDocumentAdaptor.deleteAllByTeacherId(teacherId)
+
+            verify { teacherDocumentRepository.deleteAllByTeacherId(teacherId) }
+        }
+    }
 }
