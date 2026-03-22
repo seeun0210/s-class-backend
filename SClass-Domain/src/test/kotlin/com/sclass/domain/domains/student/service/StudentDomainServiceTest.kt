@@ -8,7 +8,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -31,72 +30,36 @@ class StudentDomainServiceTest {
     @Nested
     inner class Register {
         @Test
-        fun `학생을 기관에 등록한다`() {
+        fun `학생을 등록한다`() {
             val slot = slot<Student>()
-            every { studentAdaptor.existsByUserIdAndOrganizationId("user-id", 1L) } returns false
+            every { studentAdaptor.existsByUserId("user-id") } returns false
             every { studentAdaptor.save(capture(slot)) } answers { slot.captured }
 
-            val result = studentDomainService.register(user = user, organizationId = 1L)
+            val result = studentDomainService.register(user = user)
 
             assertEquals(user, result.user)
-            assertEquals(1L, result.organizationId)
         }
 
         @Test
-        fun `기관 없이 학생을 등록한다`() {
-            val slot = slot<Student>()
-            every { studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns false
-            every { studentAdaptor.save(capture(slot)) } answers { slot.captured }
-
-            val result = studentDomainService.register(user = user, organizationId = null)
-
-            assertEquals(user, result.user)
-            assertNull(result.organizationId)
-        }
-
-        @Test
-        fun `이미 해당 기관에 등록된 학생이면 StudentAlreadyExistsException이 발생한다`() {
-            every { studentAdaptor.existsByUserIdAndOrganizationId("user-id", 1L) } returns true
+        fun `이미 등록된 학생이면 StudentAlreadyExistsException이 발생한다`() {
+            every { studentAdaptor.existsByUserId("user-id") } returns true
 
             assertThrows<StudentAlreadyExistsException> {
-                studentDomainService.register(user = user, organizationId = 1L)
-            }
-        }
-
-        @Test
-        fun `기관 없이 이미 등록된 학생이면 StudentAlreadyExistsException이 발생한다`() {
-            every { studentAdaptor.existsByUserIdAndOrganizationIdIsNull("user-id") } returns true
-
-            assertThrows<StudentAlreadyExistsException> {
-                studentDomainService.register(user = user, organizationId = null)
+                studentDomainService.register(user = user)
             }
         }
     }
 
     @Nested
-    inner class FindAllByUserId {
+    inner class FindByUserId {
         @Test
-        fun `userId로 조회하면 해당 유저의 학생 목록을 반환한다`() {
-            val students = listOf(mockk<Student>(), mockk<Student>())
-            every { studentAdaptor.findAllByUserId("user-id") } returns students
+        fun `userId로 학생을 반환한다`() {
+            val student = mockk<Student>()
+            every { studentAdaptor.findByUserId("user-id") } returns student
 
-            val result = studentDomainService.findAllByUserId("user-id")
+            val result = studentDomainService.findByUserId("user-id")
 
-            assertEquals(2, result.size)
-            assertEquals(students, result)
-        }
-    }
-
-    @Nested
-    inner class FindAllByOrganizationId {
-        @Test
-        fun `기관의 학생 목록을 반환한다`() {
-            val students = listOf(mockk<Student>(), mockk<Student>())
-            every { studentAdaptor.findAllByOrganizationId(1L) } returns students
-
-            val result = studentDomainService.findAllByOrganizationId(1L)
-
-            assertEquals(2, result.size)
+            assertEquals(student, result)
         }
     }
 }
