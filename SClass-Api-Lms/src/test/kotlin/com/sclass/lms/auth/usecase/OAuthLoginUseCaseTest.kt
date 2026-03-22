@@ -60,7 +60,7 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.LMS, Role.ADMIN) } just runs
-        every { tokenService.issueTokens("user-id", Role.ADMIN) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.ADMIN, Platform.LMS) } returns tokenResult
 
         val result = useCase.login(request)
 
@@ -143,7 +143,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.ADMIN,
             )
         } returns user
-        every { tokenService.issueTokens("user-id", Role.ADMIN) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.ADMIN, Platform.LMS) } returns tokenResult
 
         useCase.completeSignup(request)
 
@@ -193,7 +193,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.TEACHER,
             )
         } returns user
-        every { tokenService.issueTokens("new-user-id", Role.TEACHER) } returns tokenResult
+        every { tokenService.issueTokens("new-user-id", Role.TEACHER, Platform.LMS) } returns tokenResult
 
         val result = useCase.completeSignup(request)
 

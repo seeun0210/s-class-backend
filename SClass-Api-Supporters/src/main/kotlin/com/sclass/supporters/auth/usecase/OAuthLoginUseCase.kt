@@ -36,7 +36,7 @@ class OAuthLoginUseCase(
             )
 
         if (user != null) {
-            val tokens = tokenService.issueTokens(user.id, request.role)
+            val tokens = tokenService.issueTokens(user.id, request.role, request.platform)
             return OAuthLoginResponse(
                 isNewUser = false,
                 accessToken = tokens.accessToken,
@@ -79,7 +79,7 @@ class OAuthLoginUseCase(
                 role = role,
             )
 
-        val tokens = tokenService.issueTokens(user.id, role)
+        val tokens = tokenService.issueTokens(user.id, role, platform)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,

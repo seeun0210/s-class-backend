@@ -23,8 +23,9 @@ class TokenDomainService(
     fun issueTokens(
         userId: String,
         role: Role,
+        platform: Platform,
     ): TokenResult {
-        val accessToken = jwtTokenProvider.generateAccessToken(userId, role.name)
+        val accessToken = jwtTokenProvider.generateAccessToken(userId, role.name, platform.name)
         val refreshJwt = jwtTokenProvider.generateRefreshToken(userId)
 
         refreshTokenAdaptor.save(

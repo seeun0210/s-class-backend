@@ -60,6 +60,7 @@ class JwtTokenProvider(
     fun generateAccessToken(
         userId: String,
         role: String,
+        platform: String,
     ): String {
         val issuedAt = Date()
         val expiration = Date(issuedAt.time + jwtProperties.accessExp * MILLI_TO_SECOND)
@@ -70,6 +71,7 @@ class JwtTokenProvider(
             .subject(userId)
             .claim(TOKEN_TYPE, ACCESS_TOKEN)
             .claim(ROLE, role)
+            .claim(PLATFORM, platform)
             .expiration(expiration)
             .signWith(secretKey)
             .compact()
@@ -95,9 +97,11 @@ class JwtTokenProvider(
             throw InvalidTokenException()
         }
         val role = claims.get(ROLE, String::class.java)
+        val platform = claims.get(PLATFORM, String::class.java)
         return AccessTokenInfo(
             userId = claims.subject,
             role = role,
+            platform = platform,
         )
     }
 

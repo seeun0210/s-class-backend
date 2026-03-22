@@ -1,0 +1,37 @@
+package com.sclass.common.jwt
+
+import com.sclass.common.exception.UnauthorizedException
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.stereotype.Component
+import org.springframework.web.servlet.HandlerInterceptor
+
+@Component
+class JwtAuthInterceptor(
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val aesTokenEncryptor: AesTokenEncryptor,
+) : HandlerInterceptor {
+    companion object {
+        const val USER_ID_ATTRIBUTE = "currentUserId"
+        const val USER_ROLE_ATTRIBUTE = "currentUserRole"
+        const val USER_PLATFORM_ATTRIBUTE = "currentUserPlatform"
+    }
+
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+    ): Boolean {
+        val authHeader = request.getHeader("Authorization") ?: throw UnauthorizedException()
+        if (!authHeader.startsWith("Bearer ")) throw UnauthorizedException()
+
+        val encryptedToken = authHeader.substring(7)
+        val jwt = aesTokenEncryptor.decrypt(encryptedToken)
+        val tokenInfo = jwtTokenProvider.parseAccessToken(jwt)
+
+        request.setAttribute(USER_ID_ATTRIBUTE, tokenInfo.userId)
+        request.setAttribute(USER_ROLE_ATTRIBUTE, tokenInfo.role)
+        request.setAttribute(USER_PLATFORM_ATTRIBUTE, tokenInfo.platform)
+        return true
+    }
+}
