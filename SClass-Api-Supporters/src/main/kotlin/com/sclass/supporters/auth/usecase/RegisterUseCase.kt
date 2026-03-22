@@ -31,7 +31,7 @@ class RegisterUseCase(
                 role = request.role,
             )
 
-        val tokens = tokenService.issueTokens(user.id, request.role)
+        val tokens = tokenService.issueTokens(user.id, request.role, Platform.SUPPORTERS)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,

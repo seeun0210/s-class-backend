@@ -60,7 +60,7 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.STUDENT) } just runs
-        every { tokenService.issueTokens("user-id", Role.STUDENT) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.STUDENT, Platform.SUPPORTERS) } returns tokenResult
 
         val result = useCase.login(request)
 
@@ -87,7 +87,7 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.TEACHER) } just runs
-        every { tokenService.issueTokens("user-id", Role.TEACHER) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.TEACHER, Platform.SUPPORTERS) } returns tokenResult
 
         useCase.login(request)
 
@@ -118,7 +118,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.STUDENT,
             )
         } returns user
-        every { tokenService.issueTokens("linked-user-id", Role.STUDENT) } returns tokenResult
+        every { tokenService.issueTokens("linked-user-id", Role.STUDENT, Platform.SUPPORTERS) } returns tokenResult
 
         val result = useCase.login(request)
 
@@ -218,7 +218,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.STUDENT,
             )
         } returns user
-        every { tokenService.issueTokens("new-user-id", Role.STUDENT) } returns tokenResult
+        every { tokenService.issueTokens("new-user-id", Role.STUDENT, Platform.SUPPORTERS) } returns tokenResult
 
         val result = useCase.completeSignup(request)
 
@@ -259,7 +259,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.TEACHER,
             )
         } returns user
-        every { tokenService.issueTokens("user-id", Role.TEACHER) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.TEACHER, Platform.SUPPORTERS) } returns tokenResult
 
         useCase.completeSignup(request)
 
@@ -309,7 +309,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.STUDENT,
             )
         } returns user
-        every { tokenService.issueTokens("user-id", Role.STUDENT) } returns tokenResult
+        every { tokenService.issueTokens("user-id", Role.STUDENT, Platform.SUPPORTERS) } returns tokenResult
 
         useCase.completeSignup(request)
 
@@ -325,7 +325,7 @@ class OAuthLoginUseCaseTest {
                 role = Role.STUDENT,
             )
         }
-        verify { tokenService.issueTokens("user-id", Role.STUDENT) }
+        verify { tokenService.issueTokens("user-id", Role.STUDENT, Platform.SUPPORTERS) }
     }
 
     @Test
