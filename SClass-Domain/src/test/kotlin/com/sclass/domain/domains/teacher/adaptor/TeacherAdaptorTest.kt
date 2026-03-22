@@ -71,111 +71,65 @@ class TeacherAdaptorTest {
     }
 
     @Nested
-    inner class FindAllByUserId {
+    inner class FindByUserId {
         @Test
-        fun `userId로 조회하면 해당 유저의 교사 목록을 반환한다`() {
-            val teachers = listOf(mockk<Teacher>(), mockk<Teacher>())
-            every { teacherRepository.findAllByUserId("user-id") } returns teachers
-
-            val result = teacherAdaptor.findAllByUserId("user-id")
-
-            assertEquals(2, result.size)
-            assertEquals(teachers, result)
-        }
-
-        @Test
-        fun `교사가 없으면 빈 리스트를 반환한다`() {
-            every { teacherRepository.findAllByUserId("unknown-id") } returns emptyList()
-
-            val result = teacherAdaptor.findAllByUserId("unknown-id")
-
-            assertTrue(result.isEmpty())
-        }
-    }
-
-    @Nested
-    inner class FindByUserIdAndOrganizationId {
-        @Test
-        fun `존재하는 userId와 organizationId로 조회하면 교사를 반환한다`() {
+        fun `존재하는 userId로 조회하면 교사를 반환한다`() {
             val teacher = mockk<Teacher>()
-            every { teacherRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns teacher
+            every { teacherRepository.findByUserId("user-id") } returns teacher
 
-            val result = teacherAdaptor.findByUserIdAndOrganizationId("user-id", 1L)
+            val result = teacherAdaptor.findByUserId("user-id")
 
             assertEquals(teacher, result)
         }
 
         @Test
         fun `존재하지 않으면 TeacherNotFoundException이 발생한다`() {
-            every { teacherRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns null
+            every { teacherRepository.findByUserId("user-id") } returns null
 
             assertThrows<TeacherNotFoundException> {
-                teacherAdaptor.findByUserIdAndOrganizationId("user-id", 1L)
+                teacherAdaptor.findByUserId("user-id")
             }
         }
     }
 
     @Nested
-    inner class FindByUserIdAndOrganizationIdOrNull {
+    inner class FindByUserIdOrNull {
         @Test
         fun `존재하면 교사를 반환한다`() {
             val teacher = mockk<Teacher>()
-            every { teacherRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns teacher
+            every { teacherRepository.findByUserId("user-id") } returns teacher
 
-            val result = teacherAdaptor.findByUserIdAndOrganizationIdOrNull("user-id", 1L)
+            val result = teacherAdaptor.findByUserIdOrNull("user-id")
 
             assertEquals(teacher, result)
         }
 
         @Test
         fun `존재하지 않으면 null을 반환한다`() {
-            every { teacherRepository.findByUserIdAndOrganizationId("user-id", 1L) } returns null
+            every { teacherRepository.findByUserId("user-id") } returns null
 
-            val result = teacherAdaptor.findByUserIdAndOrganizationIdOrNull("user-id", 1L)
+            val result = teacherAdaptor.findByUserIdOrNull("user-id")
 
             assertNull(result)
         }
     }
 
     @Nested
-    inner class FindAllByOrganizationId {
-        @Test
-        fun `기관 id로 조회하면 해당 기관의 교사 목록을 반환한다`() {
-            val teachers = listOf(mockk<Teacher>(), mockk<Teacher>())
-            every { teacherRepository.findAllByOrganizationId(1L) } returns teachers
-
-            val result = teacherAdaptor.findAllByOrganizationId(1L)
-
-            assertEquals(2, result.size)
-            assertEquals(teachers, result)
-        }
-
-        @Test
-        fun `교사가 없으면 빈 리스트를 반환한다`() {
-            every { teacherRepository.findAllByOrganizationId(1L) } returns emptyList()
-
-            val result = teacherAdaptor.findAllByOrganizationId(1L)
-
-            assertTrue(result.isEmpty())
-        }
-    }
-
-    @Nested
-    inner class ExistsByUserIdAndOrganizationId {
+    inner class ExistsByUserId {
         @Test
         fun `교사가 존재하면 true를 반환한다`() {
-            every { teacherRepository.existsByUserIdAndOrganizationId("user-id", 1L) } returns true
+            every { teacherRepository.existsByUserId("user-id") } returns true
 
-            val result = teacherAdaptor.existsByUserIdAndOrganizationId("user-id", 1L)
+            val result = teacherAdaptor.existsByUserId("user-id")
 
             assertTrue(result)
         }
 
         @Test
         fun `교사가 없으면 false를 반환한다`() {
-            every { teacherRepository.existsByUserIdAndOrganizationId("user-id", 1L) } returns false
+            every { teacherRepository.existsByUserId("user-id") } returns false
 
-            val result = teacherAdaptor.existsByUserIdAndOrganizationId("user-id", 1L)
+            val result = teacherAdaptor.existsByUserId("user-id")
 
             assertFalse(result)
         }

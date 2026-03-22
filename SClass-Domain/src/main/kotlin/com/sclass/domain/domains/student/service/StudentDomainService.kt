@@ -12,30 +12,13 @@ class StudentDomainService(
     private val studentAdaptor: StudentAdaptor,
 ) {
     @Transactional
-    fun register(
-        user: User,
-        organizationId: Long?,
-    ): Student {
-        val alreadyExists =
-            if (organizationId != null) {
-                studentAdaptor.existsByUserIdAndOrganizationId(user.id, organizationId)
-            } else {
-                studentAdaptor.existsByUserIdAndOrganizationIdIsNull(user.id)
-            }
-        if (alreadyExists) {
+    fun register(user: User): Student {
+        if (studentAdaptor.existsByUserId(user.id)) {
             throw StudentAlreadyExistsException()
         }
-        return studentAdaptor.save(
-            Student(
-                user = user,
-                organizationId = organizationId,
-            ),
-        )
+        return studentAdaptor.save(Student(user = user))
     }
 
     @Transactional(readOnly = true)
-    fun findAllByUserId(userId: String): List<Student> = studentAdaptor.findAllByUserId(userId)
-
-    @Transactional(readOnly = true)
-    fun findAllByOrganizationId(organizationId: Long): List<Student> = studentAdaptor.findAllByOrganizationId(organizationId)
+    fun findByUserId(userId: String): Student = studentAdaptor.findByUserId(userId)
 }

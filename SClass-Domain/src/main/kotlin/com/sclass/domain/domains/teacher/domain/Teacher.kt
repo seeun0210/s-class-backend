@@ -16,7 +16,7 @@ import jakarta.persistence.UniqueConstraint
 @Entity
 @Table(
     name = "teachers",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "organizationId"])],
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id"])],
 )
 class Teacher(
     @Id
@@ -26,9 +26,6 @@ class Teacher(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-
-    @Column(nullable = true)
-    val organizationId: Long? = null,
 
     @Embedded
     var profile: TeacherProfile = TeacherProfile(),
