@@ -13,7 +13,12 @@ class PlatformAuthInterceptor(
         response: HttpServletResponse,
         handler: Any,
     ): Boolean {
-        if (request.method == "OPTIONS") return true
+        if (request.method ==
+            org.springframework.http.HttpMethod.OPTIONS
+                .name()
+        ) {
+            return true
+        }
 
         val platform =
             request.getAttribute(JwtAuthInterceptor.USER_PLATFORM_ATTRIBUTE) as? String

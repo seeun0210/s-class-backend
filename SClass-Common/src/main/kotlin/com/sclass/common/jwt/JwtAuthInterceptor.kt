@@ -22,7 +22,12 @@ class JwtAuthInterceptor(
         response: HttpServletResponse,
         handler: Any,
     ): Boolean {
-        if (request.method == "OPTIONS") return true
+        if (request.method ==
+            org.springframework.http.HttpMethod.OPTIONS
+                .name()
+        ) {
+            return true
+        }
 
         val authHeader = request.getHeader("Authorization") ?: throw UnauthorizedException()
         if (!authHeader.startsWith("Bearer ")) throw UnauthorizedException()

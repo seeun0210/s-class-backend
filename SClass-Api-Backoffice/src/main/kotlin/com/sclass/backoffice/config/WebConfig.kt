@@ -15,13 +15,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfig(
     private val jwtAuthInterceptor: JwtAuthInterceptor,
     private val currentUserIdArgumentResolver: CurrentUserIdArgumentResolver,
-    @param:Value("${cors.allow.origins}") private val allowedOrigins: String,
+    @param:Value("\${cors.allow.origins}") private val allowedOrigins: String,
 ) : WebMvcConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry
             .addMapping("/**")
-            .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
-            .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+            .allowedOrigins(
+                *allowedOrigins
+                    .split(",")
+                    .map(String::trim)
+                    .filter(String::isNotEmpty)
+                    .toTypedArray(),
+            ).allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true)
     }
