@@ -7,7 +7,7 @@ import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.service.UserDomainService
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class LoginUseCase(
