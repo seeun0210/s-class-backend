@@ -11,7 +11,6 @@ data class OrganizationResponse(
     val inviteCode: String?,
     val useSupporters: Boolean,
     val useLms: Boolean,
-    val status: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {
@@ -25,7 +24,6 @@ data class OrganizationResponse(
                 inviteCode = org.inviteCode,
                 useSupporters = org.settings.useSupporters,
                 useLms = org.settings.useLms,
-                status = org.status.name,
                 createdAt = org.createdAt,
                 updatedAt = org.updatedAt,
             )
