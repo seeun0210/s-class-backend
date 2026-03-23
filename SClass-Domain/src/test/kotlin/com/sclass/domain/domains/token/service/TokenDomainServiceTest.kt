@@ -2,11 +2,13 @@ package com.sclass.domain.domains.token.service
 
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.common.jwt.VerificationTokenInfo
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.verification.domain.VerificationChannel
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -109,6 +111,40 @@ class TokenDomainServiceTest {
                 )
 
             assertEquals("encrypted-signup", result)
+        }
+    }
+
+    @Nested
+    inner class IssueVerificationToken {
+        @Test
+        fun `verification JWT를 생성하고 암호화하여 반환한다`() {
+            every {
+                jwtTokenProvider.generateVerificationToken("PHONE", "010-1234-5678")
+            } returns "raw-verification-jwt"
+            every { aesTokenEncryptor.encrypt("raw-verification-jwt") } returns "encrypted-verification"
+
+            val result =
+                tokenDomainService.issueVerificationToken(
+                    channel = VerificationChannel.PHONE,
+                    target = "010-1234-5678",
+                )
+
+            assertEquals("encrypted-verification", result)
+        }
+    }
+
+    @Nested
+    inner class ResolveVerificationToken {
+        @Test
+        fun `암호화된 verification token에서 channel과 target을 추출한다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-verification") } returns "raw-verification-jwt"
+            every { jwtTokenProvider.parseVerificationToken("raw-verification-jwt") } returns
+                VerificationTokenInfo(channel = "PHONE", target = "010-1234-5678")
+
+            val result = tokenDomainService.resolveVerificationToken("encrypted-verification")
+
+            assertEquals("PHONE", result.channel)
+            assertEquals("010-1234-5678", result.target)
         }
     }
 }

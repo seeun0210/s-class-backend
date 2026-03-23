@@ -31,7 +31,12 @@ class JwtTokenProvider(
         private const val EMAIL = "email"
         private const val NAME = "name"
         private const val PLATFORM = "platform"
-        private const val SIGNUP_TOKEN_TTL_SECONDS = 300L
+        private const val SIGNUP_TOKEN_TTL_SECONDS = 300L // 5분
+
+        private const val VERIFICATION_TOKEN = "VERIFICATION"
+        private const val CHANNEL = "channel"
+        private const val TARGET = "target"
+        private const val VERIFICATION_TOKEN_TTL_SECONDS = 600L
     }
 
     private val secretKey: SecretKey by lazy {
@@ -160,6 +165,35 @@ class JwtTokenProvider(
             name = claims.get(NAME, String::class.java),
             role = claims.get(ROLE, String::class.java),
             platform = claims.get(PLATFORM, String::class.java),
+        )
+    }
+
+    fun generateVerificationToken(
+        channel: String,
+        target: String,
+    ): String {
+        val issuedAt = Date()
+        val expiration = Date(issuedAt.time + VERIFICATION_TOKEN_TTL_SECONDS * MILLI_TO_SECOND)
+        return Jwts
+            .builder()
+            .issuer(TOKEN_ISSUER)
+            .issuedAt(issuedAt)
+            .claim(TOKEN_TYPE, VERIFICATION_TOKEN)
+            .claim(CHANNEL, channel)
+            .claim(TARGET, target)
+            .expiration(expiration)
+            .signWith(secretKey)
+            .compact()
+    }
+
+    fun parseVerificationToken(token: String): VerificationTokenInfo {
+        val claims = getJws(token).payload
+        if (claims.get(TOKEN_TYPE) != VERIFICATION_TOKEN) {
+            throw InvalidTokenException()
+        }
+        return VerificationTokenInfo(
+            channel = claims.get(CHANNEL, String::class.java),
+            target = claims.get(TARGET, String::class.java),
         )
     }
 }

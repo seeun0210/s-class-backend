@@ -1,6 +1,7 @@
 package com.sclass.supporters.auth.usecase
 
 import com.sclass.common.jwt.SignupTokenInfo
+import com.sclass.common.jwt.VerificationTokenInfo
 import com.sclass.domain.domains.token.dto.TokenResult
 import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.AuthProvider
@@ -190,7 +191,7 @@ class OAuthLoginUseCaseTest {
         val request =
             OAuthCompleteSignupRequest(
                 signupToken = "encrypted-signup-token",
-                phoneNumber = "010-1234-5678",
+                phoneVerificationToken = "encrypted-phone-token",
                 profileImageUrl = "https://example.com/profile.jpg",
             )
         val signupInfo =
@@ -202,10 +203,12 @@ class OAuthLoginUseCaseTest {
                 role = "STUDENT",
                 platform = "SUPPORTERS",
             )
+        val phoneInfo = VerificationTokenInfo(channel = "PHONE", target = "010-1234-5678")
         val user = mockk<User> { every { id } returns "new-user-id" }
         val tokenResult = TokenResult(accessToken = "at", refreshToken = "rt")
 
         every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every { tokenService.resolveVerificationToken("encrypted-phone-token") } returns phoneInfo
         every {
             userService.registerWithOAuth(
                 oauthId = "oauth-id",
@@ -231,7 +234,7 @@ class OAuthLoginUseCaseTest {
         val request =
             OAuthCompleteSignupRequest(
                 signupToken = "encrypted-signup-token",
-                phoneNumber = "010-9999-8888",
+                phoneVerificationToken = "encrypted-phone-token",
                 profileImageUrl = "https://example.com/img.png",
             )
         val signupInfo =
@@ -243,10 +246,12 @@ class OAuthLoginUseCaseTest {
                 role = "TEACHER",
                 platform = "SUPPORTERS",
             )
+        val phoneInfo = VerificationTokenInfo(channel = "PHONE", target = "010-9999-8888")
         val user = mockk<User> { every { id } returns "user-id" }
         val tokenResult = TokenResult(accessToken = "at", refreshToken = "rt")
 
         every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every { tokenService.resolveVerificationToken("encrypted-phone-token") } returns phoneInfo
         every {
             userService.registerWithOAuth(
                 oauthId = "oauth-id-2",
@@ -282,7 +287,7 @@ class OAuthLoginUseCaseTest {
         val request =
             OAuthCompleteSignupRequest(
                 signupToken = "encrypted-signup-token",
-                phoneNumber = "010-1111-2222",
+                phoneVerificationToken = "encrypted-phone-token",
             )
         val signupInfo =
             SignupTokenInfo(
@@ -293,10 +298,12 @@ class OAuthLoginUseCaseTest {
                 role = "STUDENT",
                 platform = "SUPPORTERS",
             )
+        val phoneInfo = VerificationTokenInfo(channel = "PHONE", target = "010-1111-2222")
         val user = mockk<User> { every { id } returns "user-id" }
         val tokenResult = TokenResult(accessToken = "at", refreshToken = "rt")
 
         every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every { tokenService.resolveVerificationToken("encrypted-phone-token") } returns phoneInfo
         every {
             userService.registerWithOAuth(
                 oauthId = any(),
@@ -333,7 +340,7 @@ class OAuthLoginUseCaseTest {
         val request =
             OAuthCompleteSignupRequest(
                 signupToken = "encrypted-signup-token",
-                phoneNumber = "010-1111-2222",
+                phoneVerificationToken = "encrypted-phone-token",
             )
         val signupInfo =
             SignupTokenInfo(
@@ -344,8 +351,10 @@ class OAuthLoginUseCaseTest {
                 role = "STUDENT",
                 platform = "SUPPORTERS",
             )
+        val phoneInfo = VerificationTokenInfo(channel = "PHONE", target = "010-1111-2222")
 
         every { tokenService.resolveSignupToken("encrypted-signup-token") } returns signupInfo
+        every { tokenService.resolveVerificationToken("encrypted-phone-token") } returns phoneInfo
         every {
             userService.registerWithOAuth(
                 oauthId = "oauth-id",

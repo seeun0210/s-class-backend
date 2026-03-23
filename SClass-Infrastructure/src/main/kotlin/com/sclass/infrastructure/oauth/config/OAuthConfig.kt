@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.oauth.config
 
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,6 +13,7 @@ import java.time.Duration
 @EnableConfigurationProperties(OAuthProperties::class)
 class OAuthConfig {
     @Bean
+    @Qualifier("oAuthWebClient")
     fun oAuthWebClient(): WebClient {
         val httpClient =
             HttpClient

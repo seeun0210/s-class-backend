@@ -5,7 +5,6 @@ import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
-import com.sclass.domain.domains.user.domain.QUser.user
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.domain.UserRole
@@ -109,6 +108,7 @@ class UserDomainService(
                 oauthId = oauthId,
                 phoneNumber = User.formatPhoneNumber(phoneNumber),
                 profileImageUrl = profileImageUrl,
+                emailVerified = true,
             )
         val savedUser = userAdaptor.save(user)
 
