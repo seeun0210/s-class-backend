@@ -6,6 +6,8 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.service.UserDomainService
+import com.sclass.domain.domains.verification.domain.VerificationChannel
+import com.sclass.domain.domains.verification.exception.VerificationTokenMismatchException
 import com.sclass.supporters.auth.dto.RegisterRequest
 import com.sclass.supporters.auth.dto.TokenResponse
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +19,10 @@ class RegisterUseCase(
 ) {
     @Transactional
     fun execute(request: RegisterRequest): TokenResponse {
+        val phoneNumber = User.formatPhoneNumber(request.phoneNumber)
+        verifyToken(request.phoneVerificationToken, VerificationChannel.PHONE, phoneNumber)
+        verifyToken(request.emailVerificationToken, VerificationChannel.EMAIL, request.email)
+
         val user =
             userService.register(
                 user =
@@ -24,7 +30,7 @@ class RegisterUseCase(
                         email = request.email,
                         name = request.name,
                         authProvider = AuthProvider.EMAIL,
-                        phoneNumber = request.phoneNumber,
+                        phoneNumber = phoneNumber,
                     ),
                 rawPassword = request.password,
                 platform = Platform.SUPPORTERS,
@@ -36,5 +42,16 @@ class RegisterUseCase(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,
         )
+    }
+
+    private fun verifyToken(
+        encryptedToken: String,
+        expectedChannel: VerificationChannel,
+        expectedTarget: String,
+    ) {
+        val tokenInfo = tokenService.resolveVerificationToken(encryptedToken)
+        if (tokenInfo.channel != expectedChannel.name || tokenInfo.target != expectedTarget) {
+            throw VerificationTokenMismatchException()
+        }
     }
 }

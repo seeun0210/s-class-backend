@@ -12,4 +12,5 @@ enum class VerificationErrorCode(
     VERIFICATION_CODE_MISMATCH("VERIFICATION_003", "인증번호가 일치하지 않습니다", 400),
     VERIFICATION_MAX_ATTEMPTS("VERIFICATION_004", "인증 시도 횟수를 초과했습니다", 429),
     VERIFICATION_SEND_RATE_LIMIT("VERIFICATION_005", "인증번호 발송 횟수를 초과했습니다", 429),
+    VERIFICATION_TOKEN_MISMATCH("VERIFICATION_006", "인증 토큰이 요청 정보와 일치하지 않습니다", 400),
 }

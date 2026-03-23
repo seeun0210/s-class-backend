@@ -11,3 +11,5 @@ class VerificationCodeMismatchException : BusinessException(VerificationErrorCod
 class VerificationMaxAttemptsException : BusinessException(VerificationErrorCode.VERIFICATION_MAX_ATTEMPTS)
 
 class VerificationSendRateLimitException : BusinessException(VerificationErrorCode.VERIFICATION_SEND_RATE_LIMIT)
+
+class VerificationTokenMismatchException : BusinessException(VerificationErrorCode.VERIFICATION_TOKEN_MISMATCH)
