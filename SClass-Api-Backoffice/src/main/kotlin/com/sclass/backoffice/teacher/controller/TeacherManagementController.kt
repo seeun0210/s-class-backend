@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/backoffice/teachers")
+@RequestMapping("/api/v1/teachers")
 class TeacherManagementController(
     private val getTeachersUseCase: GetTeachersUseCase,
     private val approveTeacherUseCase: ApproveTeacherUseCase,
