@@ -52,13 +52,13 @@ class EmailVerificationUseCaseTest {
                 target = "test@example.com",
             )
         } returns verification
-        every { emailSender.sendVerificationCode("test@example.com", "123456") } just runs
+        every { emailSender.sendVerificationCode("test@example.com", "123456", any()) } just runs
 
         val result = useCase.sendCode(request)
 
         assertNotNull(result)
         assertEquals(300L, result.expiresInSeconds)
-        verify { emailSender.sendVerificationCode("test@example.com", "123456") }
+        verify { emailSender.sendVerificationCode("test@example.com", "123456", "S-Class Supporters") }
     }
 
     @Test

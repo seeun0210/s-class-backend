@@ -17,6 +17,10 @@ class EmailVerificationUseCase(
     private val tokenService: TokenDomainService,
     private val emailSender: EmailSender,
 ) {
+    companion object {
+        private const val SERVICE_NAME = "S-Class LMS"
+    }
+
     @Transactional
     fun sendCode(request: SendEmailCodeRequest): SendEmailCodeResponse {
         val verification =
@@ -24,7 +28,7 @@ class EmailVerificationUseCase(
                 channel = VerificationChannel.EMAIL,
                 target = request.email,
             )
-        emailSender.sendVerificationCode(request.email, verification.code)
+        emailSender.sendVerificationCode(request.email, verification.code, SERVICE_NAME)
         return SendEmailCodeResponse()
     }
 

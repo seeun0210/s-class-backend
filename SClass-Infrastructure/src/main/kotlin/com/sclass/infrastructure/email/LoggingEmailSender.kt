@@ -12,7 +12,8 @@ class LoggingEmailSender : EmailSender {
     override fun sendVerificationCode(
         email: String,
         code: String,
+        serviceName: String,
     ) {
-        log.info("[이메일 인증] {} → {}", email, code)
+        log.info("[이메일 인증] [{}] {} → {}", serviceName, email, code)
     }
 }
