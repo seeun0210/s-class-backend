@@ -2,8 +2,11 @@ package com.sclass.domain.domains.teacher.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 @Adaptor
 class TeacherAdaptor(
@@ -20,4 +23,9 @@ class TeacherAdaptor(
     fun existsByUserId(userId: String): Boolean = teacherRepository.existsByUserId(userId)
 
     fun save(teacher: Teacher): Teacher = teacherRepository.save(teacher)
+
+    fun findAllByVerificationStatus(
+        status: TeacherVerificationStatus,
+        pageable: Pageable,
+    ): Page<Teacher> = teacherRepository.findAllByVerificationVerificationStatus(status, pageable)
 }

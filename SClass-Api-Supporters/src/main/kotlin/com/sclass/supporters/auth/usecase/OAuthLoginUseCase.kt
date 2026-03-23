@@ -1,10 +1,13 @@
 package com.sclass.supporters.auth.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.student.service.StudentDomainService
+import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.service.UserDomainService
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.supporters.auth.dto.OAuthCompleteSignupRequest
@@ -18,6 +21,8 @@ class OAuthLoginUseCase(
     private val oAuthClientFactory: OAuthClientFactory,
     private val userService: UserDomainService,
     private val tokenService: TokenDomainService,
+    private val teacherDomainService: TeacherDomainService,
+    private val studentDomainService: StudentDomainService,
 ) {
     @Transactional
     fun login(request: OAuthLoginRequest): OAuthLoginResponse {
@@ -81,10 +86,23 @@ class OAuthLoginUseCase(
                 role = role,
             )
 
+        createRoleProfile(user, role)
+
         val tokens = tokenService.issueTokens(user.id, role, platform)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,
         )
+    }
+
+    private fun createRoleProfile(
+        user: User,
+        role: Role,
+    ) {
+        when (role) {
+            Role.TEACHER -> teacherDomainService.register(user)
+            Role.STUDENT -> studentDomainService.register(user)
+            else -> {}
+        }
     }
 }

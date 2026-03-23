@@ -2,6 +2,8 @@ package com.sclass.supporters.auth.usecase
 
 import com.sclass.common.jwt.SignupTokenInfo
 import com.sclass.common.jwt.VerificationTokenInfo
+import com.sclass.domain.domains.student.service.StudentDomainService
+import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.token.dto.TokenResult
 import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.AuthProvider
@@ -32,6 +34,8 @@ class OAuthLoginUseCaseTest {
     private lateinit var oAuthClientFactory: OAuthClientFactory
     private lateinit var userService: UserDomainService
     private lateinit var tokenService: TokenDomainService
+    private lateinit var teacherDomainService: TeacherDomainService
+    private lateinit var studentDomainService: StudentDomainService
     private lateinit var oAuthClient: OAuthClient
     private lateinit var useCase: OAuthLoginUseCase
 
@@ -40,8 +44,10 @@ class OAuthLoginUseCaseTest {
         oAuthClientFactory = mockk()
         userService = mockk()
         tokenService = mockk()
+        teacherDomainService = mockk(relaxed = true)
+        studentDomainService = mockk(relaxed = true)
         oAuthClient = mockk()
-        useCase = OAuthLoginUseCase(oAuthClientFactory, userService, tokenService)
+        useCase = OAuthLoginUseCase(oAuthClientFactory, userService, tokenService, teacherDomainService, studentDomainService)
     }
 
     @Test

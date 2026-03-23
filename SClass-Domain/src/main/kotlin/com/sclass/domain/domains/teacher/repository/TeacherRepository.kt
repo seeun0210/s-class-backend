@@ -1,10 +1,18 @@
 package com.sclass.domain.domains.teacher.repository
 
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface TeacherRepository : JpaRepository<Teacher, String> {
     fun findByUserId(userId: String): Teacher?
 
     fun existsByUserId(userId: String): Boolean
+
+    fun findAllByVerificationVerificationStatus(
+        status: TeacherVerificationStatus,
+        pageable: Pageable,
+    ): Page<Teacher>
 }

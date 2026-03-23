@@ -28,5 +28,7 @@ class StudentDocumentAdaptor(
 
     fun save(studentDocument: StudentDocument): StudentDocument = studentDocumentRepository.save(studentDocument)
 
+    fun delete(studentDocument: StudentDocument) = studentDocumentRepository.delete(studentDocument)
+
     fun deleteAllByStudentId(studentId: String) = studentDocumentRepository.deleteAllByStudentId(studentId)
 }
