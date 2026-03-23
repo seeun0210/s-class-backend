@@ -7,6 +7,7 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.service.UserDomainService
+import com.sclass.domain.domains.verification.domain.VerificationChannel
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
@@ -122,10 +123,16 @@ class OAuthControllerIntegrationTest {
                 platform = Platform.SUPPORTERS,
             )
 
+        val phoneVerificationToken =
+            tokenDomainService.issueVerificationToken(
+                channel = VerificationChannel.PHONE,
+                target = "010-9999-8888",
+            )
+
         val request =
             OAuthCompleteSignupRequest(
                 signupToken = signupToken,
-                phoneNumber = "01099998888",
+                phoneVerificationToken = phoneVerificationToken,
                 profileImageUrl = "https://example.com/profile.jpg",
             )
 

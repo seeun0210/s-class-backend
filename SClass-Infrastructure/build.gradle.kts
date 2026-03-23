@@ -14,6 +14,7 @@ dependencies {
     implementation("com.google.cloud:google-cloud-storage")
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-mail")
 
     testImplementation("io.mockk:mockk:1.13.16")
 }

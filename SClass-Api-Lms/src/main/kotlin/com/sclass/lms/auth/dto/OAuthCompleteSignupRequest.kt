@@ -8,7 +8,7 @@ data class OAuthCompleteSignupRequest(
     val signupToken: String,
 
     @field:NotBlank
-    val phoneNumber: String,
+    val phoneVerificationToken: String,
 
     @field:Nullable
     val profileImageUrl: String? = null,
