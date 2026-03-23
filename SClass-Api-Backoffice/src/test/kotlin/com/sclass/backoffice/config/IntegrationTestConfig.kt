@@ -1,6 +1,8 @@
 package com.sclass.backoffice.config
 
 import com.google.cloud.storage.Storage
+import com.sclass.infrastructure.email.EmailSender
+import com.sclass.infrastructure.message.MessageSender
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
 import io.mockk.mockk
@@ -31,4 +33,12 @@ class IntegrationTestConfig {
     @Bean
     @Primary
     fun mockGcsStorage(): Storage = mockk<Storage>(relaxed = true)
+
+    @Bean
+    @Primary
+    fun mockMessageSender(): MessageSender = mockk<MessageSender>(relaxed = true)
+
+    @Bean
+    @Primary
+    fun mockEmailSender(): EmailSender = mockk<EmailSender>(relaxed = true)
 }

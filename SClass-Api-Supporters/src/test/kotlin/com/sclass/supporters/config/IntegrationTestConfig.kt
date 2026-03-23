@@ -1,6 +1,7 @@
 package com.sclass.supporters.config
 
 import com.google.cloud.storage.Storage
+import com.sclass.infrastructure.email.EmailSender
 import com.sclass.infrastructure.message.MessageSender
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
@@ -36,4 +37,8 @@ class IntegrationTestConfig {
     @Bean
     @Primary
     fun mockMessageSender(): MessageSender = mockk<MessageSender>(relaxed = true)
+
+    @Bean
+    @Primary
+    fun mockEmailSender(): EmailSender = mockk<EmailSender>(relaxed = true)
 }
