@@ -1,11 +1,3 @@
----
-name: issue
-description: GitHub 이슈 생성
-argument-hint: "[이슈 내용]"
-disable-model-invocation: true
-allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
----
-
 사용자의 요청을 분석하여 GitHub 이슈를 생성해줘.
 
 ## 절차
@@ -20,7 +12,7 @@ allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
 5. 적절한 라벨 지정:
    - 버그: `🐛 bug`
    - 기능: `✨ feature`
-   - 모듈: `📦 module: common`, `🏛️ module: domain`, `🔌 module: infra`, `🎓 module: supporters`, `🛠️ module: management`, `⏰ module: batch`
+   - 모듈: `📦 module: common`, `🏛️ module: domain`, `🔌 module: infra`, `🎓 module: supporters`, `📚 module: lms`, `🛡️ module: backoffice`, `⏰ module: batch`
 6. `gh issue create --title "..." --body "..." --label "..."` 로 이슈 생성
 7. 생성된 이슈 URL 출력
 
