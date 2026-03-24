@@ -14,4 +14,8 @@ class FileAdaptor(
     fun findByIdOrNull(id: String): File? = fileRepository.findById(id).orElse(null)
 
     fun findAllByIds(ids: List<String>): List<File> = fileRepository.findAllByIdIn(ids)
+
+    fun save(file: File): File = fileRepository.save(file)
+
+    fun delete(id: String) = fileRepository.deleteById(id)
 }

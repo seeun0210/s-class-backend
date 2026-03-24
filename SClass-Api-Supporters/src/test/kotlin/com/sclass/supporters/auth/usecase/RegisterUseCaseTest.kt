@@ -1,6 +1,8 @@
 package com.sclass.supporters.auth.usecase
 
 import com.sclass.common.jwt.VerificationTokenInfo
+import com.sclass.domain.domains.student.service.StudentDomainService
+import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.token.dto.TokenResult
 import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.AuthProvider
@@ -21,13 +23,17 @@ import org.junit.jupiter.api.assertThrows
 class RegisterUseCaseTest {
     private lateinit var userService: UserDomainService
     private lateinit var tokenService: TokenDomainService
+    private lateinit var teacherDomainService: TeacherDomainService
+    private lateinit var studentDomainService: StudentDomainService
     private lateinit var useCase: RegisterUseCase
 
     @BeforeEach
     fun setUp() {
         userService = mockk()
         tokenService = mockk()
-        useCase = RegisterUseCase(userService, tokenService)
+        teacherDomainService = mockk(relaxed = true)
+        studentDomainService = mockk(relaxed = true)
+        useCase = RegisterUseCase(userService, tokenService, teacherDomainService, studentDomainService)
     }
 
     private fun createRequest(

@@ -33,6 +33,19 @@ class Student(
     @Column(length = 20)
     var grade: Grade? = null,
 
+    @Column(length = 50)
+    var school: String? = null,
+
     @Column(length = 20)
     var parentPhoneNumber: String? = null,
-) : BaseTimeEntity()
+) : BaseTimeEntity() {
+    fun updateProfile(
+        grade: Grade,
+        school: String,
+        parentPhoneNumber: String?,
+    ) {
+        this.grade = grade
+        this.school = school
+        this.parentPhoneNumber = parentPhoneNumber
+    }
+}

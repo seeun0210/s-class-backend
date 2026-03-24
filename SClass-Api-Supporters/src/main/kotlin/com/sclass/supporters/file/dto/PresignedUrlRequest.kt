@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Positive
 
 data class PresignedUrlRequest(
     @field:NotBlank
-    val uploadedBy: String,
-    @field:NotBlank
     val originalFilename: String,
     @field:NotNull
     val fileType: FileType,

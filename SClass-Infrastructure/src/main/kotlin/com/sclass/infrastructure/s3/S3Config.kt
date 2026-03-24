@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.net.URI
 
@@ -48,7 +49,9 @@ class S3Config(
                 .credentialsProvider(credentialsProvider())
 
         s3Properties.endpoint?.let {
-            builder.endpointOverride(URI.create(it))
+            builder
+                .endpointOverride(URI.create(it))
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
         }
 
         return builder.build()
