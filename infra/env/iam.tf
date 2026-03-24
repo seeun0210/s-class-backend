@@ -122,12 +122,19 @@ resource "aws_iam_user_policy" "deployer" {
         Resource = [for repo in aws_ecr_repository.services : repo.arn]
       },
       {
+        Sid    = "AppRunnerList"
+        Effect = "Allow"
+        Action = [
+          "apprunner:ListServices"
+        ]
+        Resource = "*"
+      },
+      {
         Sid    = "AppRunnerDeploy"
         Effect = "Allow"
         Action = [
           "apprunner:UpdateService",
           "apprunner:DescribeService",
-          "apprunner:ListServices",
           "apprunner:StartDeployment"
         ]
         Resource = "arn:aws:apprunner:${var.aws_region}:*:service/${local.name_prefix}-*"
