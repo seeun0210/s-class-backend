@@ -23,5 +23,7 @@ class TeacherDocumentAdaptor(
 
     fun save(teacherDocument: TeacherDocument): TeacherDocument = teacherDocumentRepository.save(teacherDocument)
 
+    fun delete(teacherDocument: TeacherDocument) = teacherDocumentRepository.delete(teacherDocument)
+
     fun deleteAllByTeacherId(teacherId: String) = teacherDocumentRepository.deleteAllByTeacherId(teacherId)
 }
