@@ -9,11 +9,30 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: ${DDL_AUTO:validate}
+      ddl-auto: ${DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: ${SMTP_HOST:}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+cors:
+  allow:
+    origins: ${CORS_ALLOW_ORIGINS:}
+
+email:
+  smtp:
+    enabled: ${SMTP_ENABLED:false}
 
 auth:
   jwt:
@@ -38,8 +57,3 @@ cloud:
       access-key: ${S3_ACCESS_KEY:}
       secret-key: ${S3_SECRET_KEY:}
       endpoint: ${S3_ENDPOINT:}
-  gcp:
-    storage:
-      bucket: ${GCS_BUCKET:sclass-backoffice}
-      project-id: ${GCP_PROJECT_ID:}
-      credentials-location: ${GCP_CREDENTIALS_LOCATION:}

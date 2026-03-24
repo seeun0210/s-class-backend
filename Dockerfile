@@ -16,6 +16,8 @@ RUN chmod +x gradlew && ./gradlew dependencies --no-daemon || true
 
 # Copy source and build
 COPY . .
+# application.yml is gitignored — use .example files (env var placeholders only, no secrets)
+RUN find . -name "application.yml.example" -exec sh -c 'cp "$1" "${1%.example}"' _ {} \;
 ARG MODULE
 RUN ./gradlew :${MODULE}:bootJar -x test --no-daemon
 
