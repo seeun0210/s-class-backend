@@ -6,8 +6,8 @@ import jakarta.validation.constraints.NotNull
 
 data class UploadStudentDocumentRequest(
     @field:NotBlank
-    val fileId: String?,
+    val fileId: String,
 
     @field:NotNull
-    val documentType: StudentDocumentType?,
+    val documentType: StudentDocumentType,
 )

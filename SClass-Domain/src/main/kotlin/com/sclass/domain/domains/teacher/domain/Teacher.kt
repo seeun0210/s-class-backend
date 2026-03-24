@@ -3,6 +3,7 @@ package com.sclass.domain.domains.teacher.domain
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.teacher.exception.TeacherNotEditableException
+import com.sclass.domain.domains.teacher.exception.TeacherNotPendingException
 import com.sclass.domain.domains.teacher.exception.TeacherNotSubmittableException
 import com.sclass.domain.domains.teacher.exception.TeacherProfileIncompleteException
 import com.sclass.domain.domains.teacher.exception.TeacherRequiredDocumentsMissingException
@@ -78,7 +79,10 @@ class Teacher(
             )
     }
 
-    fun submitForVerification(documents: List<TeacherDocument>) {
+    fun submitForVerification(
+        documents: List<TeacherDocument>,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
         val status = verification.verificationStatus
         if (status != TeacherVerificationStatus.DRAFT && status != TeacherVerificationStatus.REJECTED) {
             throw TeacherNotSubmittableException()
@@ -88,21 +92,30 @@ class Teacher(
         verification =
             TeacherVerification(
                 verificationStatus = TeacherVerificationStatus.PENDING,
-                submittedAt = LocalDateTime.now(),
+                submittedAt = now,
             )
     }
 
-    fun approve(approvedBy: String) {
+    fun approve(
+        approvedBy: String,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
+        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
+            throw TeacherNotPendingException()
+        }
         verification =
             TeacherVerification(
                 verificationStatus = TeacherVerificationStatus.APPROVED,
                 submittedAt = verification.submittedAt,
-                approvedAt = LocalDateTime.now(),
+                approvedAt = now,
                 approvedBy = approvedBy,
             )
     }
 
     fun reject(reason: String) {
+        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
+            throw TeacherNotPendingException()
+        }
         verification =
             TeacherVerification(
                 verificationStatus = TeacherVerificationStatus.REJECTED,
@@ -126,14 +139,17 @@ class Teacher(
 
     private fun validateRequiredDocuments(documents: List<TeacherDocument>) {
         val uploadedTypes = documents.map { it.documentType }.toSet()
-        val requiredTypes =
+        if (!uploadedTypes.containsAll(REQUIRED_DOCUMENT_TYPES)) {
+            throw TeacherRequiredDocumentsMissingException()
+        }
+    }
+
+    companion object {
+        val REQUIRED_DOCUMENT_TYPES =
             setOf(
                 TeacherDocumentType.COMPLETION_CERTIFICATE,
                 TeacherDocumentType.STUDENT_RECORD,
                 TeacherDocumentType.RESIDENT_CERTIFICATE,
             )
-        if (!uploadedTypes.containsAll(requiredTypes)) {
-            throw TeacherRequiredDocumentsMissingException()
-        }
     }
 }

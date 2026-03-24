@@ -22,14 +22,14 @@ class UpdateTeacherProfileUseCase(
         val updated =
             teacherDomainService.updateProfile(
                 teacher = teacher,
-                birthDate = request.birthDate!!,
+                birthDate = request.birthDate,
                 selfIntroduction = request.selfIntroduction,
-                majorCategory = request.majorCategory!!,
-                university = request.university!!,
-                major = request.major!!,
-                highSchool = request.highSchool!!,
-                address = request.address!!,
-                residentNumber = request.residentNumber!!,
+                majorCategory = request.majorCategory,
+                university = request.university,
+                major = request.major,
+                highSchool = request.highSchool,
+                address = request.address,
+                residentNumber = request.residentNumber,
             )
         val documents = teacherDocumentAdaptor.findAllByTeacherId(updated.id)
         return TeacherProfileResponse.from(

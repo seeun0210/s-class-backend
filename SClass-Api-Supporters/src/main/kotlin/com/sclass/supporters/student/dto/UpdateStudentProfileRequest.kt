@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull
 
 data class UpdateStudentProfileRequest(
     @field:NotNull
-    val grade: Grade?,
+    val grade: Grade,
 
     @field:NotBlank
-    val school: String?,
+    val school: String,
 
     val parentPhoneNumber: String?,
 )

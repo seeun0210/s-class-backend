@@ -47,7 +47,7 @@ class TeacherManagementController(
         @PathVariable teacherId: String,
         @Valid @RequestBody request: RejectTeacherRequest,
     ): ApiResponse<Nothing> {
-        rejectTeacherUseCase.execute(teacherId, request.reason!!)
+        rejectTeacherUseCase.execute(teacherId, request.reason)
         return ApiResponse.success()
     }
 }

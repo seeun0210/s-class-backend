@@ -27,5 +27,5 @@ class TeacherAdaptor(
     fun findAllByVerificationStatus(
         status: TeacherVerificationStatus,
         pageable: Pageable,
-    ): Page<Teacher> = teacherRepository.findAllByVerificationVerificationStatus(status, pageable)
+    ): Page<Teacher> = teacherRepository.findAllByStatus(status, pageable)
 }

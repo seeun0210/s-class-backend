@@ -5,9 +5,7 @@ import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.adaptor.TeacherDocumentAdaptor
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
-import com.sclass.domain.domains.teacher.exception.TeacherNotPendingException
 import com.sclass.domain.domains.user.domain.User
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -65,9 +63,6 @@ class TeacherDomainService(
         teacher: Teacher,
         approvedBy: String,
     ): Teacher {
-        if (teacher.verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
         teacher.approve(approvedBy)
         return teacherAdaptor.save(teacher)
     }
@@ -77,9 +72,6 @@ class TeacherDomainService(
         teacher: Teacher,
         reason: String,
     ): Teacher {
-        if (teacher.verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
         teacher.reject(reason)
         return teacherAdaptor.save(teacher)
     }

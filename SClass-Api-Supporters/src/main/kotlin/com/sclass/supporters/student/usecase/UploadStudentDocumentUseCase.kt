@@ -1,7 +1,7 @@
 package com.sclass.supporters.student.usecase
 
 import com.sclass.common.annotation.UseCase
-import com.sclass.domain.domains.file.adaptor.FileAdaptor
+import com.sclass.domain.domains.file.service.FileDomainService
 import com.sclass.domain.domains.student.adaptor.StudentDocumentAdaptor
 import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.service.StudentDomainService
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 class UploadStudentDocumentUseCase(
     private val studentDomainService: StudentDomainService,
     private val studentDocumentAdaptor: StudentDocumentAdaptor,
-    private val fileAdaptor: FileAdaptor,
+    private val fileDomainService: FileDomainService,
 ) {
     @Transactional
     fun execute(
@@ -21,9 +21,9 @@ class UploadStudentDocumentUseCase(
         request: UploadStudentDocumentRequest,
     ): StudentDocumentResponse {
         val student = studentDomainService.findByUserId(userId)
-        val file = fileAdaptor.findById(request.fileId!!)
+        val file = fileDomainService.findById(request.fileId)
 
-        val existing = studentDocumentAdaptor.findByStudentIdAndDocumentType(student.id, request.documentType!!)
+        val existing = studentDocumentAdaptor.findByStudentIdAndDocumentType(student.id, request.documentType)
         if (existing != null) {
             studentDocumentAdaptor.delete(existing)
         }

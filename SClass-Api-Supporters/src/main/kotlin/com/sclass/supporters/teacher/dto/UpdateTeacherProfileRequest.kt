@@ -7,25 +7,25 @@ import java.time.LocalDate
 
 data class UpdateTeacherProfileRequest(
     @field:NotNull
-    val birthDate: LocalDate?,
+    val birthDate: LocalDate,
 
     val selfIntroduction: String?,
 
     @field:NotNull
-    val majorCategory: MajorCategory?,
+    val majorCategory: MajorCategory,
 
     @field:NotBlank
-    val university: String?,
+    val university: String,
 
     @field:NotBlank
-    val major: String?,
+    val major: String,
 
     @field:NotBlank
-    val highSchool: String?,
+    val highSchool: String,
 
     @field:NotBlank
-    val address: String?,
+    val address: String,
 
     @field:NotBlank
-    val residentNumber: String?,
+    val residentNumber: String,
 )

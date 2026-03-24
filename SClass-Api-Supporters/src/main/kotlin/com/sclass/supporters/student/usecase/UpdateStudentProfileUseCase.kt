@@ -22,8 +22,8 @@ class UpdateStudentProfileUseCase(
         val updated =
             studentDomainService.updateProfile(
                 student = student,
-                grade = request.grade!!,
-                school = request.school!!,
+                grade = request.grade,
+                school = request.school,
                 parentPhoneNumber = request.parentPhoneNumber,
             )
         val documents = studentDocumentAdaptor.findAllByStudentId(updated.id)
