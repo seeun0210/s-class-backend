@@ -8,11 +8,17 @@ import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParametersByPathRequest
 
 class ParameterStorePropertySource : EnvironmentPostProcessor {
+    private val logger =
+        java.util.logging.Logger
+            .getLogger(ParameterStorePropertySource::class.java.name)
+
     override fun postProcessEnvironment(
         environment: ConfigurableEnvironment,
         application: SpringApplication,
     ) {
         val prefix = System.getenv("SSM_PARAMETER_PREFIX") ?: return
+
+        logger.info("Loading SSM parameters from prefix: $prefix (region: ${System.getenv("AWS_REGION")})")
 
         val parameters = mutableMapOf<String, Any>()
         val client = SsmClient.create()
@@ -38,6 +44,11 @@ class ParameterStorePropertySource : EnvironmentPostProcessor {
 
                 nextToken = response.nextToken()
             } while (nextToken != null)
+
+            logger.info("Loaded ${parameters.size} SSM parameters: ${parameters.keys}")
+        } catch (e: Exception) {
+            logger.severe("Failed to load SSM parameters from $prefix: ${e.message}")
+            throw e
         } finally {
             client.close()
         }
