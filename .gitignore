@@ -25,4 +25,12 @@ build
 **/src/main/resources/application.yml
 **/src/main/resources/application.yaml
 **/src/main/resources/application-*.yml
-**/src/main/resources/application-*.yaml
+
+# Terraform
+infra/**/.terraform/
+infra/**/*.tfstate*
+infra/**/crash.log
+infra/**/envs/*.secrets.tfvars
+
+# Docker
+docker-compose.override.yml
