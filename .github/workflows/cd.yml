@@ -2,13 +2,28 @@ name: CD
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, main]
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.env.outputs.env }}
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "env=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "env=dev" >> "$GITHUB_OUTPUT"
+          fi
+
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
@@ -62,15 +77,15 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   deploy:
-    name: Deploy ${{ matrix.target.service }}
-    needs: [changes, ci]
+    name: Deploy ${{ matrix.target.service }} (${{ needs.setup.outputs.env }})
+    needs: [setup, changes, ci]
     if: needs.changes.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         target: ${{ fromJson(needs.changes.outputs.matrix) }}
     environment:
-      name: dev / ${{ matrix.target.service }}
+      name: ${{ needs.setup.outputs.env }} / ${{ matrix.target.service }}
       url: ${{ steps.deploy.outputs.service_url }}
 
     steps:
@@ -90,7 +105,7 @@ jobs:
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          ECR_REPOSITORY: sclass-dev-${{ matrix.target.service }}
+          ECR_REPOSITORY: sclass-${{ needs.setup.outputs.env }}-${{ matrix.target.service }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build \
@@ -105,7 +120,7 @@ jobs:
       - name: Deploy to App Runner
         id: deploy
         env:
-          SERVICE_NAME: sclass-dev-${{ matrix.target.service }}
+          SERVICE_NAME: sclass-${{ needs.setup.outputs.env }}-${{ matrix.target.service }}
         run: |
           SERVICE_ARN=$(aws apprunner list-services \
             --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" \
