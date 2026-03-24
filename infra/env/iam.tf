@@ -92,9 +92,8 @@ resource "aws_iam_user" "deployer" {
   name = "${local.name_prefix}-deployer"
 }
 
-resource "aws_iam_user_policy" "deployer" {
+resource "aws_iam_policy" "deployer" {
   name = "${local.name_prefix}-deploy-policy"
-  user = aws_iam_user.deployer.name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -124,47 +123,104 @@ resource "aws_iam_user_policy" "deployer" {
         Resource = "arn:aws:dynamodb:*:*:table/sclass-terraform-lock"
       },
       {
-        Sid    = "ECRAuth"
+        Sid    = "ECR"
         Effect = "Allow"
         Action = [
-          "ecr:GetAuthorizationToken"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "ECRPush"
-        Effect = "Allow"
-        Action = [
+          "ecr:GetAuthorizationToken",
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchGetImage",
           "ecr:PutImage",
           "ecr:InitiateLayerUpload",
           "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload"
-        ]
-        Resource = [for repo in aws_ecr_repository.services : repo.arn]
-      },
-      {
-        Sid    = "AppRunnerList"
-        Effect = "Allow"
-        Action = [
-          "apprunner:ListServices"
+          "ecr:CompleteLayerUpload",
+          "ecr:CreateRepository",
+          "ecr:DeleteRepository",
+          "ecr:DescribeRepositories",
+          "ecr:ListTagsForResource",
+          "ecr:TagResource",
+          "ecr:UntagResource",
+          "ecr:PutLifecyclePolicy",
+          "ecr:GetLifecyclePolicy",
+          "ecr:GetRepositoryPolicy",
+          "ecr:SetRepositoryPolicy",
+          "ecr:DeleteLifecyclePolicy"
         ]
         Resource = "*"
       },
       {
-        Sid    = "AppRunnerDeploy"
+        Sid      = "AppRunner"
+        Effect   = "Allow"
+        Action   = ["apprunner:*"]
+        Resource = "*"
+      },
+      {
+        Sid    = "SSM"
         Effect = "Allow"
         Action = [
-          "apprunner:UpdateService",
-          "apprunner:DescribeService",
-          "apprunner:StartDeployment"
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath",
+          "ssm:PutParameter",
+          "ssm:DeleteParameter",
+          "ssm:AddTagsToResource",
+          "ssm:ListTagsForResource",
+          "ssm:RemoveTagsFromResource"
         ]
-        Resource = "arn:aws:apprunner:${var.aws_region}:*:service/${local.name_prefix}-*"
+        Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/sclass/${var.environment}/*"
+      },
+      {
+        Sid    = "IAM"
+        Effect = "Allow"
+        Action = [
+          "iam:Get*",
+          "iam:List*",
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:PassRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:PutUserPolicy",
+          "iam:DeleteUserPolicy",
+          "iam:CreateAccessKey",
+          "iam:DeleteAccessKey",
+          "iam:CreatePolicy",
+          "iam:DeletePolicy",
+          "iam:AttachUserPolicy",
+          "iam:DetachUserPolicy"
+        ]
+        Resource = [
+          "arn:aws:iam::*:user/${local.name_prefix}-*",
+          "arn:aws:iam::*:role/${local.name_prefix}-*",
+          "arn:aws:iam::*:policy/${local.name_prefix}-*"
+        ]
+      },
+      {
+        Sid    = "S3Infra"
+        Effect = "Allow"
+        Action = ["s3:*"]
+        Resource = [
+          "arn:aws:s3:::${local.name_prefix}-*",
+          "arn:aws:s3:::${local.name_prefix}-*/*"
+        ]
+      },
+      {
+        Sid      = "Route53"
+        Effect   = "Allow"
+        Action   = ["route53:*"]
+        Resource = "*"
       }
     ]
   })
+}
+
+resource "aws_iam_user_policy_attachment" "deployer" {
+  user       = aws_iam_user.deployer.name
+  policy_arn = aws_iam_policy.deployer.arn
 }
 
 resource "aws_iam_access_key" "deployer" {
