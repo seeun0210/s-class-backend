@@ -5,7 +5,7 @@ resource "aws_route53_record" "app_runner_cname" {
   for_each = var.enable_custom_domain ? var.services : {}
 
   zone_id = local.shared.route53_zone_id
-  name    = "${each.key}.${var.domain}"
+  name    = "${each.key}.${local.domain_suffix}"
   type    = "CNAME"
   ttl     = 300
   records = [aws_apprunner_service.services[each.key].service_url]

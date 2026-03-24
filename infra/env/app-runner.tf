@@ -75,12 +75,12 @@ resource "aws_apprunner_service" "services" {
 }
 
 # ──────────────────────────────────────
-# Custom Domain (prod만 활성화)
+# Custom Domain
 # ──────────────────────────────────────
 resource "aws_apprunner_custom_domain_association" "services" {
   for_each = var.enable_custom_domain ? var.services : {}
 
-  domain_name          = "${each.key}.${var.domain}"
+  domain_name          = "${each.key}.${local.domain_suffix}"
   service_arn          = aws_apprunner_service.services[each.key].arn
   enable_www_subdomain = false
 }
