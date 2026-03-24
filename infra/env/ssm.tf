@@ -60,3 +60,53 @@ resource "aws_ssm_parameter" "kakao_client_id" {
     Name = "${local.name_prefix}-ssm-kakao-client"
   }
 }
+
+resource "aws_ssm_parameter" "smtp_username" {
+  name  = "/sclass/${var.environment}/SMTP_USERNAME"
+  type  = "SecureString"
+  value = var.smtp_username
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-smtp-username"
+  }
+}
+
+resource "aws_ssm_parameter" "smtp_password" {
+  name  = "/sclass/${var.environment}/SMTP_PASSWORD"
+  type  = "SecureString"
+  value = var.smtp_password
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-smtp-password"
+  }
+}
+
+resource "aws_ssm_parameter" "alimtalk_access_key" {
+  name  = "/sclass/${var.environment}/ALIMTALK_ACCESS_KEY"
+  type  = "SecureString"
+  value = var.alimtalk_access_key
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-alimtalk-access"
+  }
+}
+
+resource "aws_ssm_parameter" "alimtalk_service_id" {
+  name  = "/sclass/${var.environment}/ALIMTALK_SERVICE_ID"
+  type  = "SecureString"
+  value = var.alimtalk_service_id
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-alimtalk-service"
+  }
+}
+
+resource "aws_ssm_parameter" "alimtalk_secret_key" {
+  name  = "/sclass/${var.environment}/ALIMTALK_SECRET_KEY"
+  type  = "SecureString"
+  value = var.alimtalk_secret_key
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-alimtalk-secret"
+  }
+}

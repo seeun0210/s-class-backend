@@ -1,0 +1,117 @@
+name: CD
+
+on:
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            common:
+              - 'SClass-Common/**'
+              - 'SClass-Domain/**'
+              - 'SClass-Infrastructure/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle/**'
+              - 'Dockerfile'
+            supporters:
+              - 'SClass-Api-Supporters/**'
+            lms:
+              - 'SClass-Api-Lms/**'
+            backoffice:
+              - 'SClass-Api-Backoffice/**'
+
+      - name: Build deploy matrix
+        id: set-matrix
+        run: |
+          matrix='[]'
+
+          if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.supporters }}" == "true" ]]; then
+            matrix=$(echo "$matrix" | jq -c '. + [{"service": "supporters-api", "module": "SClass-Api-Supporters"}]')
+          fi
+
+          if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.lms }}" == "true" ]]; then
+            matrix=$(echo "$matrix" | jq -c '. + [{"service": "lms-api", "module": "SClass-Api-Lms"}]')
+          fi
+
+          if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.backoffice }}" == "true" ]]; then
+            matrix=$(echo "$matrix" | jq -c '. + [{"service": "backoffice-api", "module": "SClass-Api-Backoffice"}]')
+          fi
+
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Deploy targets: $matrix"
+
+  ci:
+    name: CI
+    needs: changes
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy ${{ matrix.target.service }}
+    needs: [changes, ci]
+    if: needs.changes.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: ${{ fromJson(needs.changes.outputs.matrix) }}
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: sclass-dev-${{ matrix.target.service }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            --build-arg MODULE=${{ matrix.target.module }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            .
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Deploy to App Runner
+        env:
+          SERVICE_NAME: sclass-dev-${{ matrix.target.service }}
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services \
+            --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" \
+            --output text)
+
+          if [ -z "$SERVICE_ARN" ]; then
+            echo "::error::App Runner service '${SERVICE_NAME}' not found"
+            exit 1
+          fi
+
+          aws apprunner start-deployment --service-arn "$SERVICE_ARN"
+          echo "Deployment triggered for ${SERVICE_NAME} (${SERVICE_ARN})"

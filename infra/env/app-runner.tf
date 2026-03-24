@@ -1,11 +1,11 @@
 # ──────────────────────────────────────
-# Shared VPC Connector (App Runner → VPC)
+# VPC Connector (App Runner → 공유 VPC)
 # ──────────────────────────────────────
 resource "aws_apprunner_vpc_connector" "main" {
   vpc_connector_name = local.name_prefix
 
-  subnets         = module.vpc.private_subnets
-  security_groups = [aws_security_group.app_runner.id]
+  subnets         = local.shared.private_subnets
+  security_groups = [local.shared.app_runner_sg_id]
 
   tags = {
     Name = "${local.name_prefix}-vpc-connector"
@@ -49,14 +49,17 @@ resource "aws_apprunner_service" "services" {
 
         runtime_environment_variables = {
           SERVER_PORT          = each.value.port
-          DATASOURCE_URL       = "jdbc:mysql://${aws_db_instance.main.endpoint}/${var.db_name}"
+          DATASOURCE_URL       = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
           DDL_AUTO             = var.environment == "dev" ? "update" : "validate"
           S3_BUCKET            = aws_s3_bucket.main.id
           S3_REGION            = var.aws_region
           CORS_ALLOW_ORIGINS   = var.cors_allow_origins
           SSM_PARAMETER_PREFIX = "/sclass/${var.environment}"
+          SMTP_HOST            = var.smtp_host
+          SMTP_PORT            = var.smtp_port
+          JWT_ACCESS_EXP       = var.jwt_access_exp
+          JWT_REFRESH_EXP      = var.jwt_refresh_exp
           # 민감 정보(DB 자격증명, JWT, OAuth 등)는 SSM Parameter Store에서 런타임 로드
-          # S3는 IAM Role 사용하므로 access-key/secret-key 불필요
         }
       }
 
@@ -86,10 +89,10 @@ resource "aws_apprunner_service" "services" {
 }
 
 # ──────────────────────────────────────
-# Custom Domain (서브도메인 연결)
+# Custom Domain (prod만 활성화)
 # ──────────────────────────────────────
 resource "aws_apprunner_custom_domain_association" "services" {
-  for_each = var.services
+  for_each = var.enable_custom_domain ? var.services : {}
 
   domain_name          = "${each.key}.${var.domain}"
   service_arn          = aws_apprunner_service.services[each.key].arn

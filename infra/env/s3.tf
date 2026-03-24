@@ -2,10 +2,10 @@
 # S3 Bucket (파일 업로드용)
 # ──────────────────────────────────────
 resource "aws_s3_bucket" "main" {
-  bucket = "${local.name_prefix}-storage"
+  bucket = "${local.name_prefix}-files"
 
   tags = {
-    Name = "${local.name_prefix}-storage"
+    Name = "${local.name_prefix}-files"
   }
 }
 

@@ -11,7 +11,7 @@ resource "aws_db_subnet_group" "main" {
 }
 
 # ──────────────────────────────────────
-# RDS MySQL (Single-AZ)
+# RDS MySQL (Single-AZ, dev/prod 공유)
 # ──────────────────────────────────────
 resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-mysql"
@@ -34,11 +34,10 @@ resource "aws_db_instance" "main" {
 
   multi_az            = false
   publicly_accessible = false
-  skip_final_snapshot = var.environment == "dev"
+  skip_final_snapshot = false
 
-  final_snapshot_identifier = var.environment == "prod" ? "${local.name_prefix}-final-snapshot" : null
-
-  backup_retention_period = var.environment == "prod" ? 7 : 1
+  final_snapshot_identifier = "${local.name_prefix}-final-snapshot"
+  backup_retention_period   = 7
 
   tags = {
     Name = "${local.name_prefix}-mysql"

@@ -38,20 +38,12 @@ resource "aws_security_group" "nat" {
 }
 
 # ──────────────────────────────────────
-# App Runner VPC Connector SG
+# App Runner VPC Connector SG (dev/prod 공유)
 # ──────────────────────────────────────
 resource "aws_security_group" "app_runner" {
   name_prefix = "${local.name_prefix}-apprunner-"
   description = "App Runner VPC Connector"
   vpc_id      = module.vpc.vpc_id
-
-  # RDS 접근
-  egress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.rds.id]
-  }
 
   # 인터넷 접근 (OAuth 등, NAT Instance 경유)
   egress {
@@ -78,14 +70,6 @@ resource "aws_security_group" "rds" {
   description = "RDS MySQL"
   vpc_id      = module.vpc.vpc_id
 
-  # App Runner에서만 접근 허용
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    security_groups = [aws_security_group.app_runner.id]
-  }
-
   tags = {
     Name = "${local.name_prefix}-rds"
   }
@@ -93,4 +77,25 @@ resource "aws_security_group" "rds" {
   lifecycle {
     create_before_destroy = true
   }
+}
+
+# ──────────────────────────────────────
+# 순환 참조 방지: 별도 rule로 분리
+# ──────────────────────────────────────
+resource "aws_security_group_rule" "app_runner_to_rds" {
+  type                     = "egress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.app_runner.id
+  source_security_group_id = aws_security_group.rds.id
+}
+
+resource "aws_security_group_rule" "rds_from_app_runner" {
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.rds.id
+  source_security_group_id = aws_security_group.app_runner.id
 }

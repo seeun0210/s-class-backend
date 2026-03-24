@@ -1,9 +1,4 @@
 # ──────────────────────────────────────
-# Data Sources
-# ──────────────────────────────────────
-data "aws_caller_identity" "current" {}
-
-# ──────────────────────────────────────
 # App Runner Instance Role (S3, SSM 접근 등)
 # ──────────────────────────────────────
 resource "aws_iam_role" "app_runner_instance" {
