@@ -155,6 +155,12 @@ resource "aws_iam_policy" "deployer" {
         Resource = "*"
       },
       {
+        Sid      = "SSMDescribe"
+        Effect   = "Allow"
+        Action   = ["ssm:DescribeParameters"]
+        Resource = "*"
+      },
+      {
         Sid    = "SSM"
         Effect = "Allow"
         Action = [
