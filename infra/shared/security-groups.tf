@@ -99,3 +99,21 @@ resource "aws_security_group_rule" "rds_from_app_runner" {
   security_group_id        = aws_security_group.rds.id
   source_security_group_id = aws_security_group.app_runner.id
 }
+
+# ──────────────────────────────────────
+# App Runner VPC Connector (dev/prod 공유)
+# ──────────────────────────────────────
+resource "aws_apprunner_vpc_connector" "main" {
+  vpc_connector_name = "${local.name_prefix}-dev"
+
+  subnets         = module.vpc.private_subnets
+  security_groups = [aws_security_group.app_runner.id]
+
+  tags = {
+    Name = "${local.name_prefix}-vpc-connector"
+  }
+
+  lifecycle {
+    ignore_changes = [vpc_connector_name]
+  }
+}

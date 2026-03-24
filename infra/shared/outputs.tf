@@ -33,6 +33,14 @@ output "app_runner_sg_id" {
 }
 
 # ──────────────────────────────────────
+# VPC Connector
+# ──────────────────────────────────────
+output "vpc_connector_arn" {
+  description = "App Runner VPC Connector ARN"
+  value       = aws_apprunner_vpc_connector.main.arn
+}
+
+# ──────────────────────────────────────
 # Route 53
 # ──────────────────────────────────────
 output "route53_zone_id" {

@@ -1,18 +1,4 @@
 # ──────────────────────────────────────
-# VPC Connector (App Runner → 공유 VPC)
-# ──────────────────────────────────────
-resource "aws_apprunner_vpc_connector" "main" {
-  vpc_connector_name = local.name_prefix
-
-  subnets         = local.shared.private_subnets
-  security_groups = [local.shared.app_runner_sg_id]
-
-  tags = {
-    Name = "${local.name_prefix}-vpc-connector"
-  }
-}
-
-# ──────────────────────────────────────
 # Auto Scaling Configuration
 # ──────────────────────────────────────
 resource "aws_apprunner_auto_scaling_configuration_version" "services" {
@@ -77,7 +63,7 @@ resource "aws_apprunner_service" "services" {
   network_configuration {
     egress_configuration {
       egress_type       = "VPC"
-      vpc_connector_arn = aws_apprunner_vpc_connector.main.arn
+      vpc_connector_arn = local.shared.vpc_connector_arn
     }
   }
 
