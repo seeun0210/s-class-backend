@@ -41,6 +41,7 @@ resource "aws_apprunner_service" "services" {
           S3_BUCKET          = aws_s3_bucket.main.id
           S3_REGION          = var.aws_region
           CORS_ALLOW_ORIGINS = var.cors_allow_origins
+          SMTP_ENABLED       = "true"
           SMTP_HOST          = var.smtp_host
           SMTP_PORT          = var.smtp_port
           JWT_ACCESS_EXP     = var.jwt_access_exp
