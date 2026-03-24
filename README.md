@@ -38,6 +38,14 @@ SClass-Batch            # 배치 처리
 
 ## Branch Strategy
 
+- `develop` — 개발 통합 (default branch)
 - `main` — 프로덕션
-- `develop` — 개발 통합
 - `feat/*`, `fix/*`, `refactor/*` — 작업 브랜치 → `develop`으로 PR
+
+## AWS Architecture
+
+![AWS Architecture](docs/aws-architecture.png)
+
+## CI/CD & Git Flow
+
+![CI/CD & Git Flow](docs/cicd-git-flow.png)
