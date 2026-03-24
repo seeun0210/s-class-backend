@@ -1,5 +1,10 @@
 # ──────────────────────────────────────
-# App Runner Instance Role (S3 접근 등)
+# Data Sources
+# ──────────────────────────────────────
+data "aws_caller_identity" "current" {}
+
+# ──────────────────────────────────────
+# App Runner Instance Role (S3, SSM 접근 등)
 # ──────────────────────────────────────
 resource "aws_iam_role" "app_runner_instance" {
   name = "${local.name_prefix}-apprunner-instance"
@@ -37,6 +42,24 @@ resource "aws_iam_role_policy" "app_runner_s3" {
           aws_s3_bucket.main.arn,
           "${aws_s3_bucket.main.arn}/*"
         ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "app_runner_ssm" {
+  name = "${local.name_prefix}-ssm-read"
+  role = aws_iam_role.app_runner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/sclass/${var.environment}/*"
       }
     ]
   })

@@ -53,11 +53,4 @@ provider "aws" {
 locals {
   name_prefix = "sclass-${var.environment}"
   azs         = ["${var.aws_region}a", "${var.aws_region}c"]
-
-  # Gradle module name → App Runner service mapping
-  module_map = {
-    "supporters-api" = "SClass-Api-Supporters"
-    "lms-api"        = "SClass-Api-Lms"
-    "backoffice-api" = "SClass-Api-Backoffice"
-  }
 }

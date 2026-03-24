@@ -50,18 +50,13 @@ resource "aws_apprunner_service" "services" {
         runtime_environment_variables = {
           SERVER_PORT          = each.value.port
           DATASOURCE_URL       = "jdbc:mysql://${aws_db_instance.main.endpoint}/${var.db_name}"
-          DATASOURCE_USERNAME  = var.db_username
-          DATASOURCE_PASSWORD  = var.db_password
           DDL_AUTO             = var.environment == "dev" ? "update" : "validate"
-          JWT_SECRET_KEY       = var.jwt_secret_key
-          TOKEN_ENCRYPTION_KEY = var.token_encryption_key
-          GOOGLE_CLIENT_ID     = var.google_client_id
-          KAKAO_CLIENT_ID      = var.kakao_client_id
           S3_BUCKET            = aws_s3_bucket.main.id
           S3_REGION            = var.aws_region
           CORS_ALLOW_ORIGINS   = var.cors_allow_origins
+          SSM_PARAMETER_PREFIX = "/sclass/${var.environment}"
+          # 민감 정보(DB 자격증명, JWT, OAuth 등)는 SSM Parameter Store에서 런타임 로드
           # S3는 IAM Role 사용하므로 access-key/secret-key 불필요
-          # S3_ENDPOINT도 AWS 기본이라 불필요
         }
       }
 
