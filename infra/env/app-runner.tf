@@ -44,6 +44,8 @@ resource "aws_apprunner_service" "services" {
           SMTP_ENABLED       = "true"
           SMTP_HOST          = var.smtp_host
           SMTP_PORT          = var.smtp_port
+          ALIMTALK_ENABLED        = "true"
+          ALIMTALK_PLUS_FRIEND_ID = "@학생부종합전형"
           JWT_ACCESS_EXP     = var.jwt_access_exp
           JWT_REFRESH_EXP    = var.jwt_refresh_exp
         }
