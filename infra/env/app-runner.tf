@@ -34,19 +34,31 @@ resource "aws_apprunner_service" "services" {
         port = each.value.port
 
         runtime_environment_variables = {
-          AWS_REGION           = var.aws_region
-          SERVER_PORT          = each.value.port
-          DATASOURCE_URL       = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
-          DDL_AUTO             = var.environment == "dev" ? "update" : "validate"
-          S3_BUCKET            = aws_s3_bucket.main.id
-          S3_REGION            = var.aws_region
-          CORS_ALLOW_ORIGINS   = var.cors_allow_origins
-          SSM_PARAMETER_PREFIX = "/sclass/${var.environment}"
-          SMTP_HOST            = var.smtp_host
-          SMTP_PORT            = var.smtp_port
-          JWT_ACCESS_EXP       = var.jwt_access_exp
-          JWT_REFRESH_EXP      = var.jwt_refresh_exp
-          # 민감 정보(DB 자격증명, JWT, OAuth 등)는 SSM Parameter Store에서 런타임 로드
+          AWS_REGION         = var.aws_region
+          SERVER_PORT        = each.value.port
+          DATASOURCE_URL     = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
+          DDL_AUTO           = var.environment == "dev" ? "update" : "validate"
+          S3_BUCKET          = aws_s3_bucket.main.id
+          S3_REGION          = var.aws_region
+          CORS_ALLOW_ORIGINS = var.cors_allow_origins
+          SMTP_HOST          = var.smtp_host
+          SMTP_PORT          = var.smtp_port
+          JWT_ACCESS_EXP     = var.jwt_access_exp
+          JWT_REFRESH_EXP    = var.jwt_refresh_exp
+        }
+
+        runtime_environment_secrets = {
+          DATASOURCE_USERNAME  = aws_ssm_parameter.db_username.arn
+          DATASOURCE_PASSWORD  = aws_ssm_parameter.db_password.arn
+          JWT_SECRET_KEY       = aws_ssm_parameter.jwt_secret_key.arn
+          TOKEN_ENCRYPTION_KEY = aws_ssm_parameter.token_encryption_key.arn
+          GOOGLE_CLIENT_ID     = aws_ssm_parameter.google_client_id.arn
+          KAKAO_CLIENT_ID      = aws_ssm_parameter.kakao_client_id.arn
+          SMTP_USERNAME        = aws_ssm_parameter.smtp_username.arn
+          SMTP_PASSWORD        = aws_ssm_parameter.smtp_password.arn
+          ALIMTALK_ACCESS_KEY  = aws_ssm_parameter.alimtalk_access_key.arn
+          ALIMTALK_SERVICE_ID  = aws_ssm_parameter.alimtalk_service_id.arn
+          ALIMTALK_SECRET_KEY  = aws_ssm_parameter.alimtalk_secret_key.arn
         }
       }
 
