@@ -34,6 +34,7 @@ resource "aws_apprunner_service" "services" {
         port = each.value.port
 
         runtime_environment_variables = {
+          AWS_REGION           = var.aws_region
           SERVER_PORT          = each.value.port
           DATASOURCE_URL       = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
           DDL_AUTO             = var.environment == "dev" ? "update" : "validate"
