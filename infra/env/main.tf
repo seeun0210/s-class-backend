@@ -46,5 +46,5 @@ data "aws_caller_identity" "current" {}
 locals {
   name_prefix   = "sclass-${var.environment}"
   shared        = data.terraform_remote_state.shared.outputs
-  domain_suffix = var.environment == "prod" ? var.domain : "${var.environment}.${var.domain}"
+  domain_suffix = "${var.environment}.${var.domain}"
 }

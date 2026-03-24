@@ -28,7 +28,7 @@ services = {
 }
 
 cors_allow_origins   = "https://aura.co.kr,https://app.aura.co.kr,https://lms.aura.co.kr,https://backoffice.aura.co.kr"
-enable_custom_domain = true
+enable_custom_domain = false
 
 # ──────────────────────────────────────
 # Secrets: TF_VAR_ 환경변수로 전달하거나 별도 tfvars 사용
