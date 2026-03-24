@@ -2,7 +2,7 @@ package com.sclass.supporters.file.usecase
 
 import com.sclass.domain.domains.file.domain.File
 import com.sclass.domain.domains.file.domain.FileType
-import com.sclass.domain.domains.file.service.FileService
+import com.sclass.domain.domains.file.service.FileDomainService
 import com.sclass.infrastructure.s3.S3Service
 import io.mockk.every
 import io.mockk.mockk
@@ -17,20 +17,20 @@ import java.time.format.DateTimeFormatter
 
 class CreateFileUseCaseTest {
     private lateinit var s3Service: S3Service
-    private lateinit var fileService: FileService
+    private lateinit var fileDomainService: FileDomainService
     private lateinit var useCase: CreateFileUseCase
 
     @BeforeEach
     fun setUp() {
         s3Service = mockk()
-        fileService = mockk()
-        useCase = CreateFileUseCase(s3Service, fileService)
+        fileDomainService = mockk()
+        useCase = CreateFileUseCase(s3Service, fileDomainService)
     }
 
     @Test
     fun `presigned URL과 파일 메타를 정상 반환한다`() {
         val fileSlot = slot<File>()
-        every { fileService.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { fileDomainService.save(capture(fileSlot)) } answers { fileSlot.captured }
         every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://s3.example.com/presigned"
 
         val result =
@@ -51,7 +51,7 @@ class CreateFileUseCaseTest {
     @Test
     fun `저장 경로가 fileType과 날짜 기반으로 생성된다`() {
         val fileSlot = slot<File>()
-        every { fileService.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { fileDomainService.save(capture(fileSlot)) } answers { fileSlot.captured }
         every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://presigned"
 
         val result =
@@ -71,7 +71,7 @@ class CreateFileUseCaseTest {
     @Test
     fun `File 엔티티가 올바른 값으로 저장된다`() {
         val fileSlot = slot<File>()
-        every { fileService.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { fileDomainService.save(capture(fileSlot)) } answers { fileSlot.captured }
         every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://presigned"
 
         useCase.execute(
@@ -95,7 +95,7 @@ class CreateFileUseCaseTest {
     @Test
     fun `S3Service에 올바른 key와 contentType이 전달된다`() {
         val fileSlot = slot<File>()
-        every { fileService.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { fileDomainService.save(capture(fileSlot)) } answers { fileSlot.captured }
         every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://presigned"
 
         val result =
