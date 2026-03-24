@@ -65,13 +65,15 @@ class OAuthLoginUseCase(
         val platform = Platform.valueOf(signupInfo.platform)
         val role = Role.valueOf(signupInfo.role)
 
+        val phoneInfo = tokenService.resolveVerificationToken(request.phoneVerificationToken)
+
         val user =
             userService.registerWithOAuth(
                 oauthId = signupInfo.oauthId,
                 authProvider = authProvider,
                 email = signupInfo.email,
                 name = signupInfo.name,
-                phoneNumber = request.phoneNumber,
+                phoneNumber = phoneInfo.target,
                 profileImageUrl = request.profileImageUrl,
                 platform = platform,
                 role = role,

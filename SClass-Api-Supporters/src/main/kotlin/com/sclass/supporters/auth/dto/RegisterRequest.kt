@@ -23,4 +23,10 @@ data class RegisterRequest(
 
     @field:NotNull
     val role: Role,
+
+    @field:NotBlank
+    val phoneVerificationToken: String,
+
+    @field:NotBlank
+    val emailVerificationToken: String,
 )

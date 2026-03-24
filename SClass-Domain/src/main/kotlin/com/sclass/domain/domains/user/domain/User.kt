@@ -36,6 +36,9 @@ class User(
 
     @Column(nullable = false)
     var activated: Boolean = true,
+
+    @Column(nullable = false)
+    var emailVerified: Boolean = false,
 ) : BaseTimeEntity() {
     fun changePassword(newHashedPassword: String) {
         this.hashedPassword = newHashedPassword

@@ -1,0 +1,15 @@
+package com.sclass.domain.domains.verification.exception
+
+import com.sclass.common.exception.BusinessException
+
+class VerificationNotFoundException : BusinessException(VerificationErrorCode.VERIFICATION_NOT_FOUND)
+
+class VerificationExpiredException : BusinessException(VerificationErrorCode.VERIFICATION_EXPIRED)
+
+class VerificationCodeMismatchException : BusinessException(VerificationErrorCode.VERIFICATION_CODE_MISMATCH)
+
+class VerificationMaxAttemptsException : BusinessException(VerificationErrorCode.VERIFICATION_MAX_ATTEMPTS)
+
+class VerificationSendRateLimitException : BusinessException(VerificationErrorCode.VERIFICATION_SEND_RATE_LIMIT)
+
+class VerificationTokenMismatchException : BusinessException(VerificationErrorCode.VERIFICATION_TOKEN_MISMATCH)

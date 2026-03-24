@@ -2,12 +2,13 @@ package com.sclass.infrastructure.oauth.client
 
 import com.sclass.infrastructure.oauth.dto.KakaoUserInfoResponse
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
 @Component
 class KakaoOAuthClient(
-    webClient: WebClient,
+    @Qualifier("oAuthWebClient") webClient: WebClient,
 ) : AbstractOAuthClient(webClient) {
     override val provider = "KAKAO"
     override val userInfoUrl = "https://kapi.kakao.com/v2/user/me"
