@@ -16,6 +16,8 @@ build
 
 # Claude Code
 .claude/worktrees/
+# 로컬 전용 커맨드 (원격 저장소에 포함하지 않음)
+.claude/commands/troubleshoot.md
 
 # Environment
 .env
