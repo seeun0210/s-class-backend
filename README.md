@@ -42,10 +42,14 @@ SClass-Batch            # 배치 처리
 - `main` — 프로덕션
 - `feat/*`, `fix/*`, `refactor/*` — 작업 브랜치 → `develop`으로 PR
 
+## 로컬에서 Dev DB 접속
+
+[로컬 Dev DB 접속 가이드](DEV_DB_ACCESS.md) 참고
+
 ## AWS Architecture
 
-![AWS Architecture](docs/aws-architecture.png)
+![Architecture](architecture.svg)
 
 ## CI/CD & Git Flow
 
-![CI/CD & Git Flow](docs/cicd-git-flow.png)
+![CI/CD & Git Flow](cicd-git-flow.svg)
