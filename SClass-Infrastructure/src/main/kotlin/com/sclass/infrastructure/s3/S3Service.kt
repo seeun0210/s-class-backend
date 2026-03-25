@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import java.time.Duration
 
 @Service
-@ConditionalOnProperty("cloud.aws.s3.access-key")
+@ConditionalOnProperty("cloud.aws.s3.bucket")
 class S3Service(
     private val s3Client: S3Client,
     private val s3Presigner: S3Presigner,
