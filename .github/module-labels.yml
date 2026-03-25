@@ -1,0 +1,27 @@
+"📦 module: common":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Common/**"
+
+"🏛️ module: domain":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Domain/**"
+
+"🔌 module: infra":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Infrastructure/**"
+
+"🎓 module: supporters":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Supporters/**"
+
+"📚 module: lms":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Lms/**"
+
+"🛡️ module: backoffice":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Api-Backoffice/**"
+
+"⏰ module: batch":
+  - changed-files:
+      - any-glob-to-any-file: "SClass-Batch/**"

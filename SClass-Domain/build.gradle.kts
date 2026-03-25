@@ -17,4 +17,17 @@ dependencies {
     implementation("com.github.f4b6a3:ulid-creator:5.2.3")
 
     implementation("org.springframework.security:spring-security-crypto")
+
+    // Web (compile-only: 런타임은 Api 모듈이 제공)
+    compileOnly("org.springframework.boot:spring-boot-starter-web")
+
+    testImplementation("io.mockk:mockk:1.13.16")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-web")
+}
+
+afterEvaluate {
+    tasks
+        .matching { it.name == "kaptTestKotlin" || it.name == "kaptGenerateStubsTestKotlin" }
+        .configureEach { enabled = false }
 }

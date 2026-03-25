@@ -1,0 +1,15 @@
+package com.sclass.lms.auth.dto
+
+import jakarta.annotation.Nullable
+import jakarta.validation.constraints.NotBlank
+
+data class OAuthCompleteSignupRequest(
+    @field:NotBlank
+    val signupToken: String,
+
+    @field:NotBlank
+    val phoneVerificationToken: String,
+
+    @field:Nullable
+    val profileImageUrl: String? = null,
+)

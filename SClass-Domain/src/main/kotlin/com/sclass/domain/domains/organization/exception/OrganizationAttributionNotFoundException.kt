@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.organization.exception
+
+import com.sclass.common.exception.BusinessException
+
+class OrganizationAttributionNotFoundException : BusinessException(OrganizationErrorCode.ORGANIZATION_ATTRIBUTION_NOT_FOUND)

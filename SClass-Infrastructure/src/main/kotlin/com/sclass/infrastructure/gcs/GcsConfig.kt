@@ -3,6 +3,7 @@ package com.sclass.infrastructure.gcs
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageOptions
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -10,6 +11,7 @@ import org.springframework.core.io.ClassPathResource
 import java.io.FileInputStream
 
 @Configuration
+@ConditionalOnProperty("cloud.gcp.storage.project-id")
 @EnableConfigurationProperties(GcsProperties::class)
 class GcsConfig(
     private val gcsProperties: GcsProperties,

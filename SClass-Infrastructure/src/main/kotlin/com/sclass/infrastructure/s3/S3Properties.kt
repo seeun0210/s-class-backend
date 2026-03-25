@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class S3Properties(
     val bucket: String,
     val region: String,
-    val accessKey: String,
-    val secretKey: String,
+    val accessKey: String = "",
+    val secretKey: String = "",
     val endpoint: String? = null,
 )

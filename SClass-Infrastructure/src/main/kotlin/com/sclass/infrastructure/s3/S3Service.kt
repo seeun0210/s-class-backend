@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.s3
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import java.time.Duration
 
 @Service
+@ConditionalOnProperty("cloud.aws.s3.bucket")
 class S3Service(
     private val s3Client: S3Client,
     private val s3Presigner: S3Presigner,

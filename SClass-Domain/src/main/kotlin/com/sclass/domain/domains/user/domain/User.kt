@@ -30,13 +30,15 @@ class User(
 
     var oauthId: String? = null,
 
-    @Column(nullable = false)
-    var phoneNumber: String,
+    var phoneNumber: String? = null,
 
     var profileImageUrl: String? = null,
 
     @Column(nullable = false)
     var activated: Boolean = true,
+
+    @Column(nullable = false)
+    var emailVerified: Boolean = false,
 ) : BaseTimeEntity() {
     fun changePassword(newHashedPassword: String) {
         this.hashedPassword = newHashedPassword

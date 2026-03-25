@@ -23,7 +23,7 @@ class LoginUseCase(
                 request.role,
             )
 
-        val tokens = tokenService.issueTokens(user.id, request.role.name)
+        val tokens = tokenService.issueTokens(user.id, request.role, Platform.SUPPORTERS)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,

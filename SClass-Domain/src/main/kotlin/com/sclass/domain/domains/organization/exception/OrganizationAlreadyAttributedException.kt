@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.organization.exception
+
+import com.sclass.common.exception.BusinessException
+
+class OrganizationAlreadyAttributedException : BusinessException(OrganizationErrorCode.ORGANIZATION_ALREADY_ATTRIBUTED)

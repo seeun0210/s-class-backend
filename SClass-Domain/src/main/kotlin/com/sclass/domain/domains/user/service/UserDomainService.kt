@@ -3,6 +3,7 @@ package com.sclass.domain.domains.user.service
 import com.sclass.common.annotation.DomainService
 import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
+import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
@@ -26,7 +27,7 @@ class UserDomainService(
         role: Role,
     ): User {
         if (userAdaptor.existsByEmail(user.email)) {
-            throw UserAlreadyExistsException.EXCEPTION
+            throw UserAlreadyExistsException()
         }
 
         user.hashedPassword = passwordService.hash(rawPassword)
@@ -54,15 +55,87 @@ class UserDomainService(
 
         val hashedPassword =
             user.hashedPassword
-                ?: throw InvalidPasswordException.EXCEPTION
+                ?: throw InvalidPasswordException()
 
         if (!passwordService.matches(rawPassword, hashedPassword)) {
-            throw InvalidPasswordException.EXCEPTION
+            throw InvalidPasswordException()
         }
 
         userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, platform, role)
-            ?: throw RoleNotFoundException.EXCEPTION
+            ?: throw RoleNotFoundException()
 
         return user
+    }
+
+    fun findByOAuthOrNull(
+        oauthId: String,
+        authProvider: AuthProvider,
+    ): User? = userAdaptor.findByOauthId(oauthId, authProvider)
+
+    @Transactional
+    fun linkOAuthAndEnsureRole(
+        email: String,
+        oauthId: String,
+        platform: Platform,
+        role: Role,
+    ): User? {
+        val user = userAdaptor.findByEmailOrNull(email) ?: return null
+        user.oauthId = oauthId
+        ensureUserRole(user.id, platform, role)
+        return userAdaptor.save(user)
+    }
+
+    @Transactional
+    fun registerWithOAuth(
+        oauthId: String,
+        authProvider: AuthProvider,
+        email: String,
+        name: String,
+        phoneNumber: String,
+        profileImageUrl: String?,
+        platform: Platform,
+        role: Role,
+    ): User {
+        if (userAdaptor.existsByEmail(email)) {
+            throw UserAlreadyExistsException()
+        }
+
+        val user =
+            User(
+                email = email,
+                name = name,
+                authProvider = authProvider,
+                oauthId = oauthId,
+                phoneNumber = User.formatPhoneNumber(phoneNumber),
+                profileImageUrl = profileImageUrl,
+                emailVerified = true,
+            )
+        val savedUser = userAdaptor.save(user)
+
+        userRoleAdaptor.save(
+            UserRole(
+                userId = savedUser.id,
+                platform = platform,
+                role = role,
+            ),
+        )
+
+        return savedUser
+    }
+
+    fun ensureUserRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ) {
+        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) == null) {
+            userRoleAdaptor.save(
+                UserRole(
+                    userId = userId,
+                    platform = platform,
+                    role = role,
+                ),
+            )
+        }
     }
 }
