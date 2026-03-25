@@ -99,6 +99,12 @@ variable "kakao_client_id" {
   default = ""
 }
 
+variable "kakao_app_id" {
+  description = "Kakao application ID (numeric) for OAuth audience validation"
+  type        = string
+  default     = ""
+}
+
 # ──────────────────────────────────────
 # SMTP
 # ──────────────────────────────────────

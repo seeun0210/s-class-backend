@@ -61,6 +61,16 @@ resource "aws_ssm_parameter" "kakao_client_id" {
   }
 }
 
+resource "aws_ssm_parameter" "kakao_app_id" {
+  name  = "/sclass/${var.environment}/KAKAO_APP_ID"
+  type  = "SecureString"
+  value = var.kakao_app_id
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-kakao-app"
+  }
+}
+
 resource "aws_ssm_parameter" "smtp_username" {
   name  = "/sclass/${var.environment}/SMTP_USERNAME"
   type  = "SecureString"
