@@ -6,6 +6,7 @@ import com.sclass.infrastructure.oauth.config.OAuthProperties
 import com.sclass.infrastructure.oauth.dto.KakaoTokenInfoResponse
 import com.sclass.infrastructure.oauth.dto.KakaoUserInfoResponse
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -16,9 +17,9 @@ class KakaoOAuthClient(
     @Qualifier("oAuthWebClient") private val webClient: WebClient,
     private val oAuthProperties: OAuthProperties,
 ) : OAuthClient {
-    override val provider = "KAKAO"
+    private val log = LoggerFactory.getLogger(javaClass)
 
-    private val userInfoUrl = "https://kapi.kakao.com/v2/user/me"
+    override val provider = "KAKAO"
 
     private fun providerConfig() =
         oAuthProperties.providers["kakao"]
@@ -29,12 +30,13 @@ class KakaoOAuthClient(
             try {
                 webClient
                     .get()
-                    .uri("https://kapi.kakao.com/v1/user/access_token_info")
+                    .uri(TOKEN_INFO_URL)
                     .headers { it.setBearerAuth(accessToken) }
                     .retrieve()
                     .bodyToMono(KakaoTokenInfoResponse::class.java)
                     .block() ?: throw OAuthTokenValidationFailedException()
             } catch (e: WebClientResponseException) {
+                log.warn("Kakao access token validation failed", e)
                 throw OAuthTokenValidationFailedException()
             }
         if (tokenInfo.appId != providerConfig().appId) {
@@ -49,7 +51,7 @@ class KakaoOAuthClient(
             try {
                 webClient
                     .get()
-                    .uri(userInfoUrl)
+                    .uri(USER_INFO_URL)
                     .headers { it.setBearerAuth(accessToken) }
                     .retrieve()
                     .bodyToMono(KakaoUserInfoResponse::class.java)
@@ -62,5 +64,10 @@ class KakaoOAuthClient(
             email = response.kakaoAccount.email,
             name = response.kakaoAccount.profile.nickname,
         )
+    }
+
+    companion object {
+        private const val TOKEN_INFO_URL = "https://kapi.kakao.com/v1/user/access_token_info"
+        private const val USER_INFO_URL = "https://kapi.kakao.com/v2/user/me"
     }
 }
