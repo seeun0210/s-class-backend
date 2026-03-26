@@ -37,7 +37,7 @@ resource "aws_apprunner_service" "services" {
           AWS_REGION         = var.aws_region
           SERVER_PORT        = each.value.port
           DATASOURCE_URL     = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
-          DDL_AUTO           = var.environment == "dev" ? "update" : "validate"
+          DDL_AUTO           = "update"  # TODO: prod 테이블 생성 후 validate로 복원
           S3_BUCKET          = aws_s3_bucket.main.id
           S3_REGION          = var.aws_region
           CORS_ALLOW_ORIGINS = var.cors_allow_origins
