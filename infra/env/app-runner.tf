@@ -57,6 +57,7 @@ resource "aws_apprunner_service" "services" {
           TOKEN_ENCRYPTION_KEY = aws_ssm_parameter.token_encryption_key.arn
           GOOGLE_CLIENT_ID     = aws_ssm_parameter.google_client_id.arn
           KAKAO_CLIENT_ID      = aws_ssm_parameter.kakao_client_id.arn
+          KAKAO_APP_ID         = aws_ssm_parameter.kakao_app_id.arn
           SMTP_USERNAME        = aws_ssm_parameter.smtp_username.arn
           SMTP_PASSWORD        = aws_ssm_parameter.smtp_password.arn
           ALIMTALK_ACCESS_KEY  = aws_ssm_parameter.alimtalk_access_key.arn
