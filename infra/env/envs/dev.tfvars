@@ -42,5 +42,5 @@ jwt_refresh_exp = "604800"
 # Secrets: GitHub Secrets → TF_VAR_ 환경변수로 전달
 # ──────────────────────────────────────
 # db_username, db_password, jwt_secret_key, token_encryption_key,
-# google_client_id, kakao_client_id, smtp_username, smtp_password,
+# google_client_id, kakao_client_id, kakao_app_id, smtp_username, smtp_password,
 # alimtalk_access_key, alimtalk_service_id, alimtalk_secret_key

@@ -30,12 +30,17 @@ services = {
 cors_allow_origins   = "https://aura.co.kr,https://app.aura.co.kr,https://lms.aura.co.kr,https://backoffice.aura.co.kr"
 enable_custom_domain = false
 
+# SMTP (default: smtp.gmail.com:587)
+smtp_host = "smtp.gmail.com"
+smtp_port = "587"
+
+# JWT Expiry (default: access=3600, refresh=604800)
+jwt_access_exp  = "3600"
+jwt_refresh_exp = "604800"
+
 # ──────────────────────────────────────
-# Secrets: TF_VAR_ 환경변수로 전달하거나 별도 tfvars 사용
+# Secrets: GitHub Secrets → TF_VAR_ 환경변수로 전달
 # ──────────────────────────────────────
-# db_username          = "sclass_prod_user"
-# db_password          = "..."
-# jwt_secret_key       = "..."
-# token_encryption_key = "..."
-# google_client_id     = "..."
-# kakao_client_id      = "..."
+# db_username, db_password, jwt_secret_key, token_encryption_key,
+# google_client_id, kakao_client_id, kakao_app_id, smtp_username, smtp_password,
+# alimtalk_access_key, alimtalk_service_id, alimtalk_secret_key
