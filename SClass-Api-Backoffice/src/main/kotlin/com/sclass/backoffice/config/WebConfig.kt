@@ -18,11 +18,11 @@ class WebConfig(
         registry
             .addInterceptor(jwtAuthInterceptor)
             .addPathPatterns("/api/**")
-            .excludePathPatterns("/api/v1/auth/**")
+            .excludePathPatterns("/api/v1/auth/**", "/api/v1/oauth/**")
         registry
             .addInterceptor(PlatformAuthInterceptor(Platform.BACKOFFICE.name))
             .addPathPatterns("/api/**")
-            .excludePathPatterns("/api/v1/auth/**")
+            .excludePathPatterns("/api/v1/auth/**", "/api/v1/oauth/**")
     }
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {

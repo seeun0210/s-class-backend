@@ -58,7 +58,7 @@ class OAuthControllerIntegrationTest {
 
         mockMvc
             .perform(
-                post("/api/v1/auth/oauth/login")
+                post("/api/v1/oauth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)),
             ).andExpect(status().isOk)
@@ -96,7 +96,7 @@ class OAuthControllerIntegrationTest {
 
         mockMvc
             .perform(
-                post("/api/v1/auth/oauth/login")
+                post("/api/v1/oauth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)),
             ).andExpect(status().isOk)
@@ -133,7 +133,7 @@ class OAuthControllerIntegrationTest {
 
         mockMvc
             .perform(
-                post("/api/v1/auth/oauth/complete-signup")
+                post("/api/v1/oauth/complete-signup")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request)),
             ).andExpect(status().isOk)
@@ -148,7 +148,7 @@ class OAuthControllerIntegrationTest {
 
         mockMvc
             .perform(
-                post("/api/v1/auth/oauth/login")
+                post("/api/v1/oauth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(invalidBody),
             ).andExpect(status().isBadRequest)
