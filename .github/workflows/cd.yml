@@ -31,8 +31,21 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if release merge
+        id: release
+        run: |
+          COMMIT_MSG=$(git log -1 --format='%s')
+          if [[ "$COMMIT_MSG" =~ ^Merge\ (branch\ \'release/|tag\ \') ]]; then
+            echo "is_release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: dorny/paths-filter@v3
+        if: steps.release.outputs.is_release != 'true'
         id: filter
         with:
           filters: |
@@ -54,6 +67,14 @@ jobs:
       - name: Build deploy matrix
         id: set-matrix
         run: |
+          # release 머지 → 전체 서비스 배포
+          if [[ "${{ steps.release.outputs.is_release }}" == "true" ]]; then
+            matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
+            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+            echo "Release merge detected — deploying all services: $matrix"
+            exit 0
+          fi
+
           matrix='[]'
 
           if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.supporters }}" == "true" ]]; then
