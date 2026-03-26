@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class OAuthTokenValidationFailedException : BusinessException(OAuthTokenErrorCode.OAUTH_TOKEN_VALIDATION_FAILED)

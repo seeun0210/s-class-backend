@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class OAuthTokenAudienceMismatchException : BusinessException(OAuthTokenErrorCode.OAUTH_TOKEN_AUDIENCE_MISMATCH)

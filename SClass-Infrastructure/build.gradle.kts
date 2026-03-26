@@ -13,6 +13,7 @@ dependencies {
     // GCP Cloud Storage
     implementation(platform("com.google.cloud:libraries-bom:26.55.0"))
     implementation("com.google.cloud:google-cloud-storage")
+    implementation("com.google.api-client:google-api-client")
 
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-mail")
