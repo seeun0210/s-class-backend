@@ -214,6 +214,8 @@ resource "aws_iam_policy" "deployer" {
           "iam:DeleteAccessKey",
           "iam:CreatePolicy",
           "iam:DeletePolicy",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
           "iam:AttachUserPolicy",
           "iam:DetachUserPolicy"
         ]
@@ -248,7 +250,10 @@ resource "aws_iam_policy" "deployer" {
           "cloudwatch:ListDashboards",
           "cloudwatch:PutMetricAlarm",
           "cloudwatch:DeleteAlarms",
-          "cloudwatch:DescribeAlarms"
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource"
         ]
         Resource = "*"
       }
