@@ -70,6 +70,12 @@ management:
   auth:
     username: ${ACTUATOR_USERNAME:admin}
     password: ${ACTUATOR_PASSWORD:changeme}
+  cloudwatch:
+    metrics:
+      enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+      namespace: ${CLOUDWATCH_NAMESPACE:SClass/Backoffice}
+      step: ${CLOUDWATCH_STEP:60}
+      region: ${AWS_REGION:ap-northeast-1}
 
 cloud:
   aws:
