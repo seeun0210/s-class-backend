@@ -5,6 +5,7 @@ import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.adaptor.TeacherDocumentAdaptor
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherEducation
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.Platform
@@ -22,11 +23,14 @@ class TeacherDomainService(
     private val userRoleAdaptor: UserRoleAdaptor,
 ) {
     @Transactional
-    fun register(user: User): Teacher {
+    fun register(
+        user: User,
+        education: TeacherEducation = TeacherEducation(),
+    ): Teacher {
         if (teacherAdaptor.existsByUserId(user.id)) {
             throw TeacherAlreadyExistsException()
         }
-        return teacherAdaptor.save(Teacher(user = user))
+        return teacherAdaptor.save(Teacher(user = user, education = education))
     }
 
     @Transactional
