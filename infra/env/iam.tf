@@ -237,6 +237,20 @@ resource "aws_iam_policy" "deployer" {
         Effect   = "Allow"
         Action   = ["route53:*"]
         Resource = "*"
+      },
+      {
+        Sid    = "CloudWatch"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutDashboard",
+          "cloudwatch:DeleteDashboards",
+          "cloudwatch:GetDashboard",
+          "cloudwatch:ListDashboards",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms"
+        ]
+        Resource = "*"
       }
     ]
   })
