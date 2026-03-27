@@ -102,9 +102,8 @@ class TeacherCustomRepositoryImpl(
 
     override fun findOrganizationByUserId(userId: String): List<OrganizationUser> =
         queryFactory
-            .selectFrom(
-                organizationUser,
-            ).join(organizationUser.organization, organization)
+            .selectFrom(organizationUser)
+            .join(organizationUser.organization, organization)
             .fetchJoin()
             .where(organizationUser.user.id.eq(userId))
             .fetch()

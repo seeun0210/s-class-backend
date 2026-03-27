@@ -35,19 +35,19 @@ class Teacher(
     val user: User,
 
     @Embedded
-    var profile: TeacherProfile = TeacherProfile(),
+    var profile: TeacherProfile? = null,
 
     @Embedded
-    var education: TeacherEducation = TeacherEducation(),
+    var education: TeacherEducation? = null,
 
     @Embedded
-    var personalInfo: TeacherPersonalInfo = TeacherPersonalInfo(),
+    var personalInfo: TeacherPersonalInfo? = null,
 
     @Embedded
-    var contract: TeacherContract = TeacherContract(),
+    var contract: TeacherContract? = null,
 
     @Embedded
-    var verification: TeacherVerification = TeacherVerification(),
+    var verification: TeacherVerification? = null,
 ) : BaseTimeEntity() {
     fun updateProfile(
         state: UserRoleState,
@@ -75,7 +75,7 @@ class Teacher(
             TeacherPersonalInfo(
                 address = address,
                 residentNumber = residentNumber,
-                bankAccount = personalInfo.bankAccount,
+                bankAccount = personalInfo?.bankAccount,
             )
     }
 
@@ -113,13 +113,13 @@ class Teacher(
     }
 
     private fun validateProfileComplete() {
-        if (profile.birthDate == null ||
-            education.majorCategory == null ||
-            education.university.isNullOrBlank() ||
-            education.major.isNullOrBlank() ||
-            education.highSchool.isNullOrBlank() ||
-            personalInfo.address.isNullOrBlank() ||
-            personalInfo.residentNumber.isNullOrBlank()
+        if (profile?.birthDate == null ||
+            education?.majorCategory == null ||
+            education?.university.isNullOrBlank() ||
+            education?.major.isNullOrBlank() ||
+            education?.highSchool.isNullOrBlank() ||
+            personalInfo?.address.isNullOrBlank() ||
+            personalInfo?.residentNumber.isNullOrBlank()
         ) {
             throw TeacherProfileIncompleteException()
         }
