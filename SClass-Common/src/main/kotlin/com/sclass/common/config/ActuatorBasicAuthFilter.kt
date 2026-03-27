@@ -8,6 +8,7 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import java.security.MessageDigest
 import java.util.Base64
 
 @Component
@@ -43,8 +44,8 @@ class ActuatorBasicAuthFilter(
         val decoded = String(Base64.getDecoder().decode(authHeader.substring(6)))
         val parts = decoded.split(":", limit = 2)
         if (parts.size != 2 ||
-            parts[0] != actuatorAuthProperties.username ||
-            parts[1] != actuatorAuthProperties.password
+            !MessageDigest.isEqual(parts[0].toByteArray(), actuatorAuthProperties.username.toByteArray()) ||
+            !MessageDigest.isEqual(parts[1].toByteArray(), actuatorAuthProperties.password.toByteArray())
         ) {
             sendUnauthorized(response)
             return
