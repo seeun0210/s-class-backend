@@ -42,6 +42,22 @@ resource "aws_iam_role_policy" "app_runner_s3" {
   })
 }
 
+resource "aws_iam_role_policy" "app_runner_cloudwatch" {
+  name = "${local.name_prefix}-cloudwatch-put"
+  role = aws_iam_role.app_runner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["cloudwatch:PutMetricData"]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "app_runner_ssm" {
   name = "${local.name_prefix}-ssm-read"
   role = aws_iam_role.app_runner_instance.id
