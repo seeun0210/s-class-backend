@@ -1,7 +1,9 @@
 package com.sclass.domain.domains.teacher.adaptor
 
 import com.sclass.common.annotation.Adaptor
+import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherDocument
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
@@ -29,4 +31,11 @@ class TeacherAdaptor(
         condition: TeacherSearchCondition,
         pageable: Pageable,
     ): Page<TeacherWithPlatform> = teacherRepository.searchTeachers(condition, pageable)
+
+    fun findByIdWithUser(id: String): Teacher = teacherRepository.findByIdWithUser(id) ?: throw TeacherNotFoundException()
+
+    fun findDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument> =
+        teacherRepository.findByDocumentsWithFileByTeacherId(teacherId)
+
+    fun findOrganizationsByUserId(userId: String): List<OrganizationUser> = teacherRepository.findOrganizationByUserId(userId)
 }
