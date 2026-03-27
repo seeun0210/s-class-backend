@@ -108,6 +108,7 @@ class TeacherManagementControllerIntegrationTest {
                     "email" to "newteacher@example.com",
                     "name" to "새선생님",
                     "platform" to "SUPPORTERS",
+                    "phoneNumber" to "01012345678",
                 )
 
             mockMvc
@@ -121,6 +122,7 @@ class TeacherManagementControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("newteacher@example.com"))
                 .andExpect(jsonPath("$.data.name").value("새선생님"))
                 .andExpect(jsonPath("$.data.platform").value("SUPPORTERS"))
+                .andExpect(jsonPath("$.data.phoneNumber").value("010-1234-5678"))
                 .andExpect(jsonPath("$.data.teacherId").exists())
                 .andExpect(jsonPath("$.data.userId").exists())
         }
@@ -132,6 +134,7 @@ class TeacherManagementControllerIntegrationTest {
                     "email" to "teacher@sclass.com",
                     "name" to "중복선생님",
                     "platform" to "SUPPORTERS",
+                    "phoneNumber" to "01012345678",
                 )
 
             mockMvc
@@ -178,6 +181,99 @@ class TeacherManagementControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isUnauthorized)
+        }
+    }
+
+    @Nested
+    inner class BulkCreateTeacher {
+        @Test
+        fun `일괄 등록 성공 시 건별 결과를 반환한다`() {
+            val body =
+                mapOf(
+                    "teachers" to
+                        listOf(
+                            mapOf(
+                                "email" to "bulk1@example.com",
+                                "name" to "선생1",
+                                "platform" to "SUPPORTERS",
+                                "phoneNumber" to "01011111111",
+                            ),
+                            mapOf(
+                                "email" to "bulk2@example.com",
+                                "name" to "선생2",
+                                "platform" to "SUPPORTERS",
+                                "phoneNumber" to "01022222222",
+                            ),
+                        ),
+                )
+
+            mockMvc
+                .perform(
+                    post("/api/v1/teachers/bulk")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.successCount").value(2))
+                .andExpect(jsonPath("$.data.failureCount").value(0))
+                .andExpect(jsonPath("$.data.results[0].row").value(1))
+                .andExpect(jsonPath("$.data.results[0].success").value(true))
+                .andExpect(jsonPath("$.data.results[0].data.email").value("bulk1@example.com"))
+                .andExpect(jsonPath("$.data.results[1].row").value(2))
+                .andExpect(jsonPath("$.data.results[1].success").value(true))
+                .andExpect(jsonPath("$.data.results[1].data.email").value("bulk2@example.com"))
+        }
+
+        @Test
+        fun `일부 이메일이 중복이면 해당 건만 실패하고 나머지는 성공한다`() {
+            val body =
+                mapOf(
+                    "teachers" to
+                        listOf(
+                            mapOf(
+                                "email" to "teacher@sclass.com",
+                                "name" to "중복선생님",
+                                "platform" to "SUPPORTERS",
+                                "phoneNumber" to "01011111111",
+                            ),
+                            mapOf(
+                                "email" to "new-bulk@example.com",
+                                "name" to "신규선생님",
+                                "platform" to "SUPPORTERS",
+                                "phoneNumber" to "01022222222",
+                            ),
+                        ),
+                )
+
+            mockMvc
+                .perform(
+                    post("/api/v1/teachers/bulk")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.data.totalCount").value(2))
+                .andExpect(jsonPath("$.data.successCount").value(1))
+                .andExpect(jsonPath("$.data.failureCount").value(1))
+                .andExpect(jsonPath("$.data.results[0].success").value(false))
+                .andExpect(jsonPath("$.data.results[0].error").isNotEmpty)
+                .andExpect(jsonPath("$.data.results[1].success").value(true))
+                .andExpect(jsonPath("$.data.results[1].data.email").value("new-bulk@example.com"))
+        }
+
+        @Test
+        fun `빈 배열이면 400을 반환한다`() {
+            val body = mapOf("teachers" to emptyList<Any>())
+
+            mockMvc
+                .perform(
+                    post("/api/v1/teachers/bulk")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isBadRequest)
         }
     }
 
