@@ -11,4 +11,5 @@ enum class UserErrorCode(
     USER_ALREADY_EXISTS("USER_002", "이미 존재하는 이메일입니다", 409),
     ROLE_NOT_FOUND("USER_003", "해당 권한이 없습니다", 403),
     INVALID_USER_ROLE_STATE_TRANSITION("USER_004", "허용되지 않는 상태 전이입니다", 400),
+    CONFLICTING_ROLE("USER_005", "같은 플랫폼에서 학생과 선생님 역할을 동시에 가질 수 없습니다", 409),
 }
