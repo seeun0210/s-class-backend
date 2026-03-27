@@ -63,10 +63,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, metrics
   endpoint:
     health:
       show-details: never
+  auth:
+    username: ${ACTUATOR_USERNAME:admin}
+    password: ${ACTUATOR_PASSWORD:changeme}
 
 cloud:
   aws:
