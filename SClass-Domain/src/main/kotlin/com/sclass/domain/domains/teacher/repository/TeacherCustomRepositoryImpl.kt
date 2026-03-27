@@ -2,8 +2,15 @@ package com.sclass.domain.domains.teacher.repository
 
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sclass.domain.domains.file.domain.QFile.file
+import com.sclass.domain.domains.organization.domain.OrganizationUser
+import com.sclass.domain.domains.organization.domain.QOrganization.organization
+import com.sclass.domain.domains.organization.domain.QOrganizationUser.organizationUser
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.QTeacher.teacher
+import com.sclass.domain.domains.teacher.domain.QTeacherDocument.teacherDocument
+import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherDocument
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.user.domain.Platform
@@ -76,6 +83,30 @@ class TeacherCustomRepositoryImpl(
 
         return PageImpl(content, page, total)
     }
+
+    override fun findByIdWithUser(id: String): Teacher? =
+        queryFactory
+            .selectFrom(teacher)
+            .join(teacher.user, user)
+            .fetchJoin()
+            .where(teacher.id.eq(id))
+            .fetchOne()
+
+    override fun findByDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument> =
+        queryFactory
+            .selectFrom(teacherDocument)
+            .join(teacherDocument.file, file)
+            .fetchJoin()
+            .where(teacherDocument.teacher.id.eq(teacherId))
+            .fetch()
+
+    override fun findOrganizationByUserId(userId: String): List<OrganizationUser> =
+        queryFactory
+            .selectFrom(organizationUser)
+            .join(organizationUser.organization, organization)
+            .fetchJoin()
+            .where(organizationUser.user.id.eq(userId))
+            .fetch()
 
     private fun nameContains(name: String?): BooleanExpression? = name?.let { user.name.contains(it) }
 

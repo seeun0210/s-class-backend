@@ -4,10 +4,12 @@ import com.sclass.backoffice.teacher.dto.BulkCreateTeachersRequest
 import com.sclass.backoffice.teacher.dto.BulkCreateTeachersResponse
 import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.backoffice.teacher.dto.CreateTeacherResponse
+import com.sclass.backoffice.teacher.dto.TeacherDetailResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
 import com.sclass.backoffice.teacher.dto.UpdateTeacherStateRequest
 import com.sclass.backoffice.teacher.usecase.BulkCreateTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.CreateTeacherUseCase
+import com.sclass.backoffice.teacher.usecase.GetTeacherDetailUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherStateUseCase
 import com.sclass.common.annotation.CurrentUserId
@@ -35,6 +37,7 @@ import java.time.LocalDateTime
 @RequestMapping("/api/v1/teachers")
 class TeacherManagementController(
     private val getTeachersUseCase: GetTeachersUseCase,
+    private val getTeacherDetailUseCase: GetTeacherDetailUseCase,
     private val updateTeacherStateUseCase: UpdateTeacherStateUseCase,
     private val createTeacherUseCase: CreateTeacherUseCase,
     private val bulkCreateTeachersUseCase: BulkCreateTeachersUseCase,
@@ -82,6 +85,11 @@ class TeacherManagementController(
                 pageable,
             ),
         )
+
+    @GetMapping("/{teacherId}")
+    fun getTeacherDetail(
+        @PathVariable teacherId: String,
+    ): ApiResponse<TeacherDetailResponse> = ApiResponse.success(getTeacherDetailUseCase.execute(teacherId))
 
     @PatchMapping("/{teacherId}/state")
     fun updateState(

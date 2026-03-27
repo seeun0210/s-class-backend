@@ -77,9 +77,9 @@ class TeacherDomainServiceTest {
             val result = teacherDomainService.register(user = user, education = education)
 
             assertEquals(user, result.user)
-            assertEquals("서울대학교", result.education.university)
-            assertEquals("컴퓨터공학", result.education.major)
-            assertEquals(MajorCategory.ENGINEERING, result.education.majorCategory)
+            assertEquals("서울대학교", result.education?.university)
+            assertEquals("컴퓨터공학", result.education?.major)
+            assertEquals(MajorCategory.ENGINEERING, result.education?.majorCategory)
         }
 
         @Test
@@ -123,9 +123,9 @@ class TeacherDomainServiceTest {
                     residentNumber = "000101-3000000",
                 )
 
-            assertEquals("서울대학교", result.education.university)
-            assertEquals("컴퓨터공학", result.education.major)
-            assertEquals(MajorCategory.ENGINEERING, result.education.majorCategory)
+            assertEquals("서울대학교", result.education?.university)
+            assertEquals("컴퓨터공학", result.education?.major)
+            assertEquals(MajorCategory.ENGINEERING, result.education?.majorCategory)
         }
 
         @Test
@@ -176,7 +176,7 @@ class TeacherDomainServiceTest {
                     approvedBy = "admin-id",
                 )
 
-            assertEquals("admin-id", result.verification.approvedBy)
+            assertEquals("admin-id", result.verification?.approvedBy)
             assertEquals(UserRoleState.APPROVED, userRole.state)
             verify { userRoleAdaptor.save(userRole) }
         }
@@ -222,7 +222,7 @@ class TeacherDomainServiceTest {
                     reason = "서류 미비",
                 )
 
-            assertEquals("서류 미비", result.verification.rejectionReason)
+            assertEquals("서류 미비", result.verification?.rejectionReason)
             assertEquals(UserRoleState.REJECTED, userRole.state)
             verify { userRoleAdaptor.save(userRole) }
         }

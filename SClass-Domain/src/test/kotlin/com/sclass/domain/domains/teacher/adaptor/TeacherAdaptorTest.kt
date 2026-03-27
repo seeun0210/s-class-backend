@@ -1,6 +1,8 @@
 package com.sclass.domain.domains.teacher.adaptor
 
+import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherDocument
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import io.mockk.every
@@ -146,6 +148,74 @@ class TeacherAdaptorTest {
 
             assertEquals(teacher, result)
             verify { teacherRepository.save(teacher) }
+        }
+    }
+
+    @Nested
+    inner class FindByIdWithUser {
+        @Test
+        fun `존재하는 id로 조회하면 User가 fetch join된 교사를 반환한다`() {
+            val teacher = mockk<Teacher>()
+            every { teacherRepository.findByIdWithUser("teacher-id") } returns teacher
+
+            val result = teacherAdaptor.findByIdWithUser("teacher-id")
+
+            assertEquals(teacher, result)
+        }
+
+        @Test
+        fun `존재하지 않는 id로 조회하면 TeacherNotFoundException이 발생한다`() {
+            every { teacherRepository.findByIdWithUser("unknown-id") } returns null
+
+            assertThrows<TeacherNotFoundException> {
+                teacherAdaptor.findByIdWithUser("unknown-id")
+            }
+        }
+    }
+
+    @Nested
+    inner class FindDocumentsWithFileByTeacherId {
+        @Test
+        fun `교사의 문서 목록을 반환한다`() {
+            val documents = listOf(mockk<TeacherDocument>(), mockk<TeacherDocument>())
+            every { teacherRepository.findByDocumentsWithFileByTeacherId("teacher-id") } returns documents
+
+            val result = teacherAdaptor.findDocumentsWithFileByTeacherId("teacher-id")
+
+            assertEquals(2, result.size)
+            assertEquals(documents, result)
+        }
+
+        @Test
+        fun `문서가 없으면 빈 리스트를 반환한다`() {
+            every { teacherRepository.findByDocumentsWithFileByTeacherId("teacher-id") } returns emptyList()
+
+            val result = teacherAdaptor.findDocumentsWithFileByTeacherId("teacher-id")
+
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class FindOrganizationsByUserId {
+        @Test
+        fun `유저의 소속 기관 목록을 반환한다`() {
+            val organizations = listOf(mockk<OrganizationUser>())
+            every { teacherRepository.findOrganizationByUserId("user-id") } returns organizations
+
+            val result = teacherAdaptor.findOrganizationsByUserId("user-id")
+
+            assertEquals(1, result.size)
+            assertEquals(organizations, result)
+        }
+
+        @Test
+        fun `소속 기관이 없으면 빈 리스트를 반환한다`() {
+            every { teacherRepository.findOrganizationByUserId("user-id") } returns emptyList()
+
+            val result = teacherAdaptor.findOrganizationsByUserId("user-id")
+
+            assertTrue(result.isEmpty())
         }
     }
 }
