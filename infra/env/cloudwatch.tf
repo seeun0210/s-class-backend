@@ -92,6 +92,45 @@ resource "aws_cloudwatch_dashboard" "main" {
             }
           ]]
         }
+      },
+      # Row 3: HTTP Latency (Average + P99)
+      {
+        type   = "metric"
+        x      = 0
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "HTTP Avg Latency (ms)"
+          region = var.aws_region
+          period = 300
+          metrics = [for i, key in local.cw_service_keys : [
+            {
+              expression = "AVG(SEARCH('{SClass/${title(key)},exception,method,outcome,status,uri} MetricName=\"http.server.requests\"', 'Average', 300)) * 1000"
+              id         = "latency_avg${i}"
+              label      = key
+            }
+          ]]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 12
+        width  = 12
+        height = 6
+        properties = {
+          title  = "HTTP P99 Latency (ms)"
+          region = var.aws_region
+          period = 300
+          metrics = [for i, key in local.cw_service_keys : [
+            {
+              expression = "MAX(SEARCH('{SClass/${title(key)},exception,method,outcome,status,uri} MetricName=\"http.server.requests\"', 'p99', 300)) * 1000"
+              id         = "latency_p99${i}"
+              label      = key
+            }
+          ]]
+        }
       }
     ]
   })

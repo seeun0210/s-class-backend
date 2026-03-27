@@ -27,7 +27,7 @@ services = {
   }
 }
 
-cors_allow_origins   = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr"
+cors_allow_origins   = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr,https://s-class-backoffice.pages.dev"
 enable_custom_domain = false
 
 # SMTP (default: smtp.gmail.com:587)

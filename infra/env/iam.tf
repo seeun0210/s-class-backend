@@ -58,6 +58,28 @@ resource "aws_iam_role_policy" "app_runner_cloudwatch" {
   })
 }
 
+resource "aws_iam_role_policy" "app_runner_xray" {
+  name = "${local.name_prefix}-xray-write"
+  role = aws_iam_role.app_runner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "xray:PutTraceSegments",
+          "xray:PutTelemetryRecords",
+          "xray:GetSamplingRules",
+          "xray:GetSamplingTargets",
+          "xray:GetSamplingStatisticSummaries"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy" "app_runner_ssm" {
   name = "${local.name_prefix}-ssm-read"
   role = aws_iam_role.app_runner_instance.id
