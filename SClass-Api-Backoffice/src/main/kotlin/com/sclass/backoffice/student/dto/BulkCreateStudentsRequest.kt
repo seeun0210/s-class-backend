@@ -6,7 +6,11 @@ import jakarta.validation.constraints.Size
 
 data class BulkCreateStudentsRequest(
     @field:NotEmpty
-    @field:Size(max = 100)
+    @field:Size(max = MAX_BULK_SIZE)
     @field:Valid
     val students: List<CreateStudentRequest>,
-)
+) {
+    companion object {
+        const val MAX_BULK_SIZE = 100
+    }
+}
