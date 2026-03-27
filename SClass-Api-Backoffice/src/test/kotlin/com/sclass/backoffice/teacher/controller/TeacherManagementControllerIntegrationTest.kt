@@ -6,11 +6,15 @@ import com.sclass.backoffice.config.ApiIntegrationTest
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import com.sclass.domain.domains.user.domain.AuthProvider
+import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.domain.UserRoleState
 import com.sclass.domain.domains.user.repository.UserRepository
+import com.sclass.domain.domains.user.repository.UserRoleRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -31,6 +35,9 @@ class TeacherManagementControllerIntegrationTest {
     private lateinit var userRepository: UserRepository
 
     @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
     private lateinit var teacherRepository: TeacherRepository
 
     @Autowired
@@ -43,10 +50,12 @@ class TeacherManagementControllerIntegrationTest {
 
     private lateinit var adminToken: String
     private lateinit var teacher: Teacher
+    private lateinit var teacherUser: User
 
     @BeforeEach
     fun setUp() {
         teacherRepository.deleteAll()
+        userRoleRepository.deleteAll()
         userRepository.deleteAll()
 
         val adminUser =
@@ -59,7 +68,7 @@ class TeacherManagementControllerIntegrationTest {
                 ),
             )
 
-        val teacherUser =
+        teacherUser =
             userRepository.save(
                 User(
                     email = "teacher@sclass.com",
@@ -80,14 +89,15 @@ class TeacherManagementControllerIntegrationTest {
         adminToken = "Bearer ${aesTokenEncryptor.encrypt(jwt)}"
     }
 
-    private fun submitTeacherForPending(): Teacher {
-        teacher.verification =
-            com.sclass.domain.domains.teacher.domain.TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.PENDING,
-                submittedAt = java.time.LocalDateTime.now(),
-            )
-        return teacherRepository.save(teacher)
-    }
+    private fun createTeacherRole(state: UserRoleState): UserRole =
+        userRoleRepository.save(
+            UserRole(
+                userId = teacherUser.id,
+                platform = Platform.SUPPORTERS,
+                role = Role.TEACHER,
+                state = state,
+            ),
+        )
 
     @Nested
     inner class CreateTeacher {
@@ -172,16 +182,20 @@ class TeacherManagementControllerIntegrationTest {
     }
 
     @Nested
-    inner class UpdateVerificationStatus {
+    inner class UpdateState {
         @Test
         fun `APPROVED 요청 시 200을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "APPROVED")
+            val body =
+                mapOf(
+                    "state" to "APPROVED",
+                    "platform" to "SUPPORTERS",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -191,13 +205,18 @@ class TeacherManagementControllerIntegrationTest {
 
         @Test
         fun `REJECTED 요청 시 reason과 함께 200을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "REJECTED", "reason" to "서류 미비")
+            val body =
+                mapOf(
+                    "state" to "REJECTED",
+                    "platform" to "SUPPORTERS",
+                    "reason" to "서류 미비",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -207,13 +226,17 @@ class TeacherManagementControllerIntegrationTest {
 
         @Test
         fun `REJECTED 요청 시 reason이 없으면 400을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "REJECTED")
+            val body =
+                mapOf(
+                    "state" to "REJECTED",
+                    "platform" to "SUPPORTERS",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -224,13 +247,17 @@ class TeacherManagementControllerIntegrationTest {
 
         @Test
         fun `DRAFT 상태는 허용되지 않아 400을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "DRAFT")
+            val body =
+                mapOf(
+                    "state" to "DRAFT",
+                    "platform" to "SUPPORTERS",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -241,13 +268,17 @@ class TeacherManagementControllerIntegrationTest {
 
         @Test
         fun `PENDING 상태는 허용되지 않아 400을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "PENDING")
+            val body =
+                mapOf(
+                    "state" to "PENDING",
+                    "platform" to "SUPPORTERS",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -258,13 +289,17 @@ class TeacherManagementControllerIntegrationTest {
 
         @Test
         fun `인증 토큰이 없으면 401을 반환한다`() {
-            submitTeacherForPending()
+            createTeacherRole(UserRoleState.PENDING)
 
-            val body = mapOf("status" to "APPROVED")
+            val body =
+                mapOf(
+                    "state" to "APPROVED",
+                    "platform" to "SUPPORTERS",
+                )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/verification-status")
+                    patch("/api/v1/teachers/${teacher.id}/state")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isUnauthorized)

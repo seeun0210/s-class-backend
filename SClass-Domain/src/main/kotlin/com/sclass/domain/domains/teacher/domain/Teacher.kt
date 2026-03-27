@@ -3,11 +3,11 @@ package com.sclass.domain.domains.teacher.domain
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.teacher.exception.TeacherNotEditableException
-import com.sclass.domain.domains.teacher.exception.TeacherNotPendingException
 import com.sclass.domain.domains.teacher.exception.TeacherNotSubmittableException
 import com.sclass.domain.domains.teacher.exception.TeacherProfileIncompleteException
 import com.sclass.domain.domains.teacher.exception.TeacherRequiredDocumentsMissingException
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.domain.UserRoleState
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
@@ -50,6 +50,7 @@ class Teacher(
     var verification: TeacherVerification = TeacherVerification(),
 ) : BaseTimeEntity() {
     fun updateProfile(
+        state: UserRoleState,
         birthDate: LocalDate,
         selfIntroduction: String?,
         majorCategory: MajorCategory,
@@ -59,8 +60,7 @@ class Teacher(
         address: String,
         residentNumber: String,
     ) {
-        val status = verification.verificationStatus
-        if (status != TeacherVerificationStatus.DRAFT && status != TeacherVerificationStatus.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED) {
             throw TeacherNotEditableException()
         }
         profile = TeacherProfile(birthDate = birthDate, selfIntroduction = selfIntroduction)
@@ -79,47 +79,35 @@ class Teacher(
             )
     }
 
-    fun submitForVerification(
+    fun recordSubmission(
         documents: List<TeacherDocument>,
+        state: UserRoleState,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
-        val status = verification.verificationStatus
-        if (status != TeacherVerificationStatus.DRAFT && status != TeacherVerificationStatus.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED) {
             throw TeacherNotSubmittableException()
         }
         validateProfileComplete()
         validateRequiredDocuments(documents)
-        verification =
-            TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.PENDING,
-                submittedAt = now,
-            )
+        verification = TeacherVerification(submittedAt = now)
     }
 
-    fun approve(
+    fun recordApproval(
         approvedBy: String,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
-        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
         verification =
             TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.APPROVED,
-                submittedAt = verification.submittedAt,
+                submittedAt = verification?.submittedAt,
                 approvedAt = now,
                 approvedBy = approvedBy,
             )
     }
 
-    fun reject(reason: String) {
-        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
+    fun recordRejection(reason: String) {
         verification =
             TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.REJECTED,
-                submittedAt = verification.submittedAt,
+                submittedAt = verification?.submittedAt,
                 rejectionReason = reason,
             )
     }

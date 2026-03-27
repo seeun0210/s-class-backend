@@ -4,12 +4,12 @@ import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.QTeacher.teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.QUser.user
 import com.sclass.domain.domains.user.domain.QUserRole.userRole
+import com.sclass.domain.domains.user.domain.UserRoleState
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -24,7 +24,7 @@ class TeacherCustomRepositoryImpl(
     ): Page<TeacherWithPlatform> {
         val content =
             queryFactory
-                .select(teacher, userRole.platform)
+                .select(teacher, userRole.platform, userRole.state)
                 .from(teacher)
                 .join(teacher.user, user)
                 .join(userRole)
@@ -35,7 +35,7 @@ class TeacherCustomRepositoryImpl(
                     universityContains(condition.university),
                     majorContains(condition.major),
                     majorCategoryEq(condition.majorCategory),
-                    verificationStatusEq(condition.verificationStatus),
+                    stateEq(condition.state),
                     platformEq(condition.platform),
                     submittedAtGoe(condition.submittedAtFrom),
                     submittedAtLoe(condition.submittedAtTo),
@@ -49,6 +49,7 @@ class TeacherCustomRepositoryImpl(
                     TeacherWithPlatform(
                         teacher = tuple.get(teacher) ?: error("Teacher must not be null"),
                         platform = tuple.get(userRole.platform) ?: error("Platform must not be null"),
+                        state = tuple.get(userRole.state) ?: error("State must not be null"),
                     )
                 }
 
@@ -57,13 +58,16 @@ class TeacherCustomRepositoryImpl(
                 .select(teacher.count())
                 .from(teacher)
                 .join(teacher.user, user)
+                .join(userRole)
+                .on(user.id.eq(userRole.userId))
                 .where(
                     nameContains(condition.name),
                     emailContains(condition.email),
                     universityContains(condition.university),
                     majorContains(condition.major),
                     majorCategoryEq(condition.majorCategory),
-                    verificationStatusEq(condition.verificationStatus),
+                    stateEq(condition.state),
+                    platformEq(condition.platform),
                     submittedAtGoe(condition.submittedAtFrom),
                     submittedAtLoe(condition.submittedAtTo),
                     createdAtGoe(condition.createdAtFrom),
@@ -84,8 +88,7 @@ class TeacherCustomRepositoryImpl(
     private fun majorCategoryEq(majorCategory: MajorCategory?): BooleanExpression? =
         majorCategory?.let { teacher.education.majorCategory.eq(it) }
 
-    private fun verificationStatusEq(status: TeacherVerificationStatus?): BooleanExpression? =
-        status?.let { teacher.verification.verificationStatus.eq(it) }
+    private fun stateEq(state: UserRoleState?): BooleanExpression? = state?.let { userRole.state.eq(it) }
 
     private fun platformEq(platform: Platform?): BooleanExpression? = platform?.let { userRole.platform.eq(it) }
 

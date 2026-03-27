@@ -1,8 +1,8 @@
 package com.sclass.domain.domains.teacher.dto
 
 import com.sclass.domain.domains.teacher.domain.MajorCategory
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.UserRoleState
 import java.time.LocalDateTime
 
 data class TeacherSearchCondition(
@@ -11,7 +11,7 @@ data class TeacherSearchCondition(
     val university: String? = null,
     val major: String? = null,
     val majorCategory: MajorCategory? = null,
-    val verificationStatus: TeacherVerificationStatus? = null,
+    val state: UserRoleState? = null,
     val platform: Platform? = null,
     val submittedAtFrom: LocalDateTime? = null,
     val submittedAtTo: LocalDateTime? = null,

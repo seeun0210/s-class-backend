@@ -4,6 +4,7 @@ import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.adaptor.TeacherDocumentAdaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
+import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.User
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.assertThrows
 class TeacherDomainServiceTest {
     private lateinit var teacherAdaptor: TeacherAdaptor
     private lateinit var teacherDocumentAdaptor: TeacherDocumentAdaptor
+    private lateinit var userRoleAdaptor: UserRoleAdaptor
     private lateinit var teacherDomainService: TeacherDomainService
 
     private lateinit var user: User
@@ -25,7 +27,8 @@ class TeacherDomainServiceTest {
     fun setUp() {
         teacherAdaptor = mockk()
         teacherDocumentAdaptor = mockk()
-        teacherDomainService = TeacherDomainService(teacherAdaptor, teacherDocumentAdaptor)
+        userRoleAdaptor = mockk()
+        teacherDomainService = TeacherDomainService(teacherAdaptor, teacherDocumentAdaptor, userRoleAdaptor)
         user = mockk<User>()
         every { user.id } returns "user-id"
     }

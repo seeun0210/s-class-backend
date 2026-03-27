@@ -3,16 +3,16 @@ package com.sclass.backoffice.teacher.controller
 import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.backoffice.teacher.dto.CreateTeacherResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
-import com.sclass.backoffice.teacher.dto.UpdateVerificationStatusRequest
+import com.sclass.backoffice.teacher.dto.UpdateTeacherStateRequest
 import com.sclass.backoffice.teacher.usecase.CreateTeacherUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeachersUseCase
-import com.sclass.backoffice.teacher.usecase.UpdateTeacherVerificationUseCase
+import com.sclass.backoffice.teacher.usecase.UpdateTeacherStateUseCase
 import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.teacher.domain.MajorCategory
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.UserRoleState
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -32,7 +32,7 @@ import java.time.LocalDateTime
 @RequestMapping("/api/v1/teachers")
 class TeacherManagementController(
     private val getTeachersUseCase: GetTeachersUseCase,
-    private val updateTeacherVerificationUseCase: UpdateTeacherVerificationUseCase,
+    private val updateTeacherStateUseCase: UpdateTeacherStateUseCase,
     private val createTeacherUseCase: CreateTeacherUseCase,
 ) {
     @PostMapping
@@ -47,7 +47,7 @@ class TeacherManagementController(
         @RequestParam(required = false) university: String?,
         @RequestParam(required = false) major: String?,
         @RequestParam(required = false) majorCategory: MajorCategory?,
-        @RequestParam(required = false) verificationStatus: TeacherVerificationStatus?,
+        @RequestParam(required = false) state: UserRoleState?,
         @RequestParam(required = false) platform: Platform?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) submittedAtFrom: LocalDateTime?,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) submittedAtTo: LocalDateTime?,
@@ -63,7 +63,7 @@ class TeacherManagementController(
                     university = university,
                     major = major,
                     majorCategory = majorCategory,
-                    verificationStatus = verificationStatus,
+                    state = state,
                     platform = platform,
                     submittedAtFrom = submittedAtFrom,
                     submittedAtTo = submittedAtTo,
@@ -74,13 +74,13 @@ class TeacherManagementController(
             ),
         )
 
-    @PatchMapping("/{teacherId}/verification-status")
-    fun updateVerificationStatus(
+    @PatchMapping("/{teacherId}/state")
+    fun updateState(
         @PathVariable teacherId: String,
-        @RequestBody request: UpdateVerificationStatusRequest,
+        @RequestBody request: UpdateTeacherStateRequest,
         @CurrentUserId userId: String,
     ): ApiResponse<Nothing> {
-        updateTeacherVerificationUseCase.execute(teacherId, request, userId)
+        updateTeacherStateUseCase.execute(teacherId, request, userId)
         return ApiResponse.success()
     }
 }
