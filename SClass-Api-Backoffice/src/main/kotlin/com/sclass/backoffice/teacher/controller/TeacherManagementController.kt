@@ -1,9 +1,12 @@
 package com.sclass.backoffice.teacher.controller
 
+import com.sclass.backoffice.teacher.dto.BulkCreateTeachersRequest
+import com.sclass.backoffice.teacher.dto.BulkCreateTeachersResponse
 import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.backoffice.teacher.dto.CreateTeacherResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
 import com.sclass.backoffice.teacher.dto.UpdateTeacherStateRequest
+import com.sclass.backoffice.teacher.usecase.BulkCreateTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.CreateTeacherUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherStateUseCase
@@ -34,11 +37,17 @@ class TeacherManagementController(
     private val getTeachersUseCase: GetTeachersUseCase,
     private val updateTeacherStateUseCase: UpdateTeacherStateUseCase,
     private val createTeacherUseCase: CreateTeacherUseCase,
+    private val bulkCreateTeachersUseCase: BulkCreateTeachersUseCase,
 ) {
     @PostMapping
     fun createTeacher(
         @Valid @RequestBody request: CreateTeacherRequest,
     ): ApiResponse<CreateTeacherResponse> = ApiResponse.success(createTeacherUseCase.execute(request))
+
+    @PostMapping("/bulk")
+    fun bulkCreateTeachers(
+        @Valid @RequestBody request: BulkCreateTeachersRequest,
+    ): ApiResponse<BulkCreateTeachersResponse> = ApiResponse.success(bulkCreateTeachersUseCase.execute(request))
 
     @GetMapping
     fun getTeachers(
