@@ -4,10 +4,12 @@ import com.sclass.backoffice.student.dto.BulkCreateStudentsRequest
 import com.sclass.backoffice.student.dto.BulkCreateStudentsResponse
 import com.sclass.backoffice.student.dto.CreateStudentRequest
 import com.sclass.backoffice.student.dto.CreateStudentResponse
+import com.sclass.backoffice.student.dto.StudentDetailResponse
 import com.sclass.backoffice.student.dto.StudentPageResponse
 import com.sclass.backoffice.student.dto.UpdateStudentStateRequest
 import com.sclass.backoffice.student.usecase.BulkCreateStudentsUseCase
 import com.sclass.backoffice.student.usecase.CreateStudentUseCase
+import com.sclass.backoffice.student.usecase.GetStudentDetailUseCase
 import com.sclass.backoffice.student.usecase.GetStudentsUseCase
 import com.sclass.backoffice.student.usecase.UpdateStudentStateUseCase
 import com.sclass.common.dto.ApiResponse
@@ -36,6 +38,7 @@ class StudentManagementController(
     private val createStudentUseCase: CreateStudentUseCase,
     private val bulkCreateStudentsUseCase: BulkCreateStudentsUseCase,
     private val getStudentsUseCase: GetStudentsUseCase,
+    private val getStudentDetailUseCase: GetStudentDetailUseCase,
     private val updateStudentStateUseCase: UpdateStudentStateUseCase,
 ) {
     @PostMapping
@@ -75,6 +78,11 @@ class StudentManagementController(
                 pageable,
             ),
         )
+
+    @GetMapping("/{studentId}")
+    fun getStudentDetail(
+        @PathVariable studentId: String,
+    ): ApiResponse<StudentDetailResponse> = ApiResponse.success(getStudentDetailUseCase.execute(studentId))
 
     @PatchMapping("/{studentId}/state")
     fun updateState(
