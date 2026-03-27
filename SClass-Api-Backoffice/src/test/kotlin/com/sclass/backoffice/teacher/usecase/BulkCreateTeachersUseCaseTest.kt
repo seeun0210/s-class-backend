@@ -66,14 +66,67 @@ class BulkCreateTeachersUseCaseTest {
             assertThat(result.failureCount).isEqualTo(0)
             assertThat(result.results).allMatch { it.success }
         }
+
+        @Test
+        fun `성공 건별로 data에 생성 결과가 포함된다`() {
+            every { createTeacherUseCase.execute(any()) } answers {
+                val req = firstArg<CreateTeacherRequest>()
+                CreateTeacherResponse(
+                    teacherId = "tid-${req.email}",
+                    userId = "uid-${req.email}",
+                    email = req.email,
+                    name = req.name,
+                    platform = req.platform,
+                    phoneNumber = "010-1234-5678",
+                )
+            }
+
+            val result =
+                useCase.execute(
+                    BulkCreateTeachersRequest(
+                        teachers =
+                            listOf(
+                                request("a@test.com", "김선생"),
+                                request("b@test.com", "이선생"),
+                                request("c@test.com", "박선생"),
+                            ),
+                    ),
+                )
+
+            assertThat(result.results).hasSize(3)
+
+            result.results[0].let {
+                assertThat(it.row).isEqualTo(1)
+                assertThat(it.email).isEqualTo("a@test.com")
+                assertThat(it.success).isTrue()
+                assertThat(it.data).isNotNull
+                assertThat(it.data!!.email).isEqualTo("a@test.com")
+                assertThat(it.data!!.name).isEqualTo("김선생")
+                assertThat(it.error).isNull()
+            }
+
+            result.results[1].let {
+                assertThat(it.row).isEqualTo(2)
+                assertThat(it.email).isEqualTo("b@test.com")
+                assertThat(it.data!!.name).isEqualTo("이선생")
+            }
+
+            result.results[2].let {
+                assertThat(it.row).isEqualTo(3)
+                assertThat(it.email).isEqualTo("c@test.com")
+                assertThat(it.data!!.name).isEqualTo("박선생")
+            }
+        }
     }
 
     @Nested
     inner class PartialFailure {
         @Test
-        fun `DB 이메일 중복 시 해당 건만 실패한다`() {
+        fun `DB 이메일 중복 시 해당 건만 실패하고 건별 결과가 정확하다`() {
             every { createTeacherUseCase.execute(match { it.email == "a@test.com" }) } returns
                 response("a@test.com")
+            every { createTeacherUseCase.execute(match { it.email == "b@test.com" }) } returns
+                response("b@test.com")
             every { createTeacherUseCase.execute(match { it.email == "dup@test.com" }) } throws
                 UserAlreadyExistsException()
 
@@ -84,16 +137,34 @@ class BulkCreateTeachersUseCaseTest {
                             listOf(
                                 request("a@test.com"),
                                 request("dup@test.com"),
+                                request("b@test.com"),
                             ),
                     ),
                 )
 
-            assertThat(result.totalCount).isEqualTo(2)
-            assertThat(result.successCount).isEqualTo(1)
+            assertThat(result.totalCount).isEqualTo(3)
+            assertThat(result.successCount).isEqualTo(2)
             assertThat(result.failureCount).isEqualTo(1)
-            assertThat(result.results[0].success).isTrue()
-            assertThat(result.results[1].success).isFalse()
-            assertThat(result.results[1].error).isNotBlank()
+
+            result.results[0].let {
+                assertThat(it.row).isEqualTo(1)
+                assertThat(it.success).isTrue()
+                assertThat(it.data).isNotNull
+                assertThat(it.error).isNull()
+            }
+
+            result.results[1].let {
+                assertThat(it.row).isEqualTo(2)
+                assertThat(it.success).isFalse()
+                assertThat(it.data).isNull()
+                assertThat(it.error).isNotBlank()
+            }
+
+            result.results[2].let {
+                assertThat(it.row).isEqualTo(3)
+                assertThat(it.success).isTrue()
+                assertThat(it.data).isNotNull
+            }
         }
     }
 
