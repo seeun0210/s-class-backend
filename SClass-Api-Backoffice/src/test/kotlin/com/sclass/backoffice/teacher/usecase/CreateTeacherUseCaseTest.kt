@@ -2,6 +2,7 @@ package com.sclass.backoffice.teacher.usecase
 
 import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.teacher.domain.TeacherEducation
 import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
@@ -40,6 +41,7 @@ class CreateTeacherUseCaseTest {
                     email = "teacher@example.com",
                     name = "홍길동",
                     platform = Platform.SUPPORTERS,
+                    phoneNumber = "01012345678",
                 )
 
             val savedUser =
@@ -47,6 +49,7 @@ class CreateTeacherUseCaseTest {
                     email = "teacher@example.com",
                     name = "홍길동",
                     authProvider = AuthProvider.EMAIL,
+                    phoneNumber = "010-1234-5678",
                 )
             val teacher = Teacher(user = savedUser)
 
@@ -54,7 +57,7 @@ class CreateTeacherUseCaseTest {
             every {
                 userDomainService.register(capture(userSlot), "12345678", Platform.SUPPORTERS, Role.TEACHER)
             } returns savedUser
-            every { teacherDomainService.register(savedUser) } returns teacher
+            every { teacherDomainService.register(savedUser, any<TeacherEducation>()) } returns teacher
 
             val response = useCase.execute(request)
 
@@ -63,13 +66,14 @@ class CreateTeacherUseCaseTest {
             assertThat(response.email).isEqualTo("teacher@example.com")
             assertThat(response.name).isEqualTo("홍길동")
             assertThat(response.platform).isEqualTo(Platform.SUPPORTERS)
+            assertThat(response.phoneNumber).isEqualTo("010-1234-5678")
 
             assertThat(userSlot.captured.email).isEqualTo("teacher@example.com")
             assertThat(userSlot.captured.name).isEqualTo("홍길동")
             assertThat(userSlot.captured.authProvider).isEqualTo(AuthProvider.EMAIL)
 
             verify(exactly = 1) { userDomainService.register(any(), "12345678", Platform.SUPPORTERS, Role.TEACHER) }
-            verify(exactly = 1) { teacherDomainService.register(savedUser) }
+            verify(exactly = 1) { teacherDomainService.register(savedUser, any<TeacherEducation>()) }
         }
     }
 
@@ -82,6 +86,7 @@ class CreateTeacherUseCaseTest {
                     email = "existing@example.com",
                     name = "홍길동",
                     platform = Platform.LMS,
+                    phoneNumber = "01012345678",
                 )
 
             every {

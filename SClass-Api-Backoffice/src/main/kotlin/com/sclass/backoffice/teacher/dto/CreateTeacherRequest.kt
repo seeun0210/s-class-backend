@@ -17,6 +17,9 @@ data class CreateTeacherRequest(
     @field:NotNull
     val platform: Platform,
 
+    @field:NotBlank
+    val phoneNumber: String,
+
     val university: String? = null,
 
     val major: String? = null,

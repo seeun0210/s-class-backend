@@ -9,6 +9,7 @@ data class CreateTeacherResponse(
     val email: String,
     val name: String,
     val platform: Platform,
+    val phoneNumber: String,
     val university: String? = null,
     val major: String? = null,
     val majorCategory: MajorCategory? = null,

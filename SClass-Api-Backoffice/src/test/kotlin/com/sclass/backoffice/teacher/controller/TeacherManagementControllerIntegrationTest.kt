@@ -108,6 +108,7 @@ class TeacherManagementControllerIntegrationTest {
                     "email" to "newteacher@example.com",
                     "name" to "새선생님",
                     "platform" to "SUPPORTERS",
+                    "phoneNumber" to "01012345678",
                 )
 
             mockMvc
@@ -121,6 +122,7 @@ class TeacherManagementControllerIntegrationTest {
                 .andExpect(jsonPath("$.data.email").value("newteacher@example.com"))
                 .andExpect(jsonPath("$.data.name").value("새선생님"))
                 .andExpect(jsonPath("$.data.platform").value("SUPPORTERS"))
+                .andExpect(jsonPath("$.data.phoneNumber").value("010-1234-5678"))
                 .andExpect(jsonPath("$.data.teacherId").exists())
                 .andExpect(jsonPath("$.data.userId").exists())
         }
@@ -132,6 +134,7 @@ class TeacherManagementControllerIntegrationTest {
                     "email" to "teacher@sclass.com",
                     "name" to "중복선생님",
                     "platform" to "SUPPORTERS",
+                    "phoneNumber" to "01012345678",
                 )
 
             mockMvc
