@@ -51,9 +51,9 @@ class CreateTeacherUseCase(
             name = savedUser.name,
             platform = request.platform,
             phoneNumber = formattedPhone,
-            university = teacher.education.university,
-            major = teacher.education.major,
-            majorCategory = teacher.education.majorCategory,
+            university = teacher.education?.university,
+            major = teacher.education?.major,
+            majorCategory = teacher.education?.majorCategory,
         )
     }
 
