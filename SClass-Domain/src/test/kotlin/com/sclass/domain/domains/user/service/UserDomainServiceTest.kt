@@ -7,6 +7,7 @@ import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.exception.ConflictingRoleException
 import com.sclass.domain.domains.user.exception.InvalidPasswordException
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
@@ -209,6 +210,9 @@ class UserDomainServiceTest {
             every {
                 userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, Platform.SUPPORTERS, Role.STUDENT)
             } returns null
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, Platform.SUPPORTERS, Role.TEACHER)
+            } returns null
             every { userRoleAdaptor.save(any()) } returns mockk()
             every { userAdaptor.save(user) } returns user
 
@@ -297,6 +301,61 @@ class UserDomainServiceTest {
             userDomainService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
 
             verify(exactly = 0) { userRoleAdaptor.save(any()) }
+        }
+
+        @Test
+        fun `같은 플랫폼에 TEACHER가 있는 유저에게 STUDENT 역할을 추가하면 ConflictingRoleException이 발생한다`() {
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
+            } returns null
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.TEACHER)
+            } returns mockk()
+
+            assertThrows<ConflictingRoleException> {
+                userDomainService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
+            }
+        }
+
+        @Test
+        fun `같은 플랫폼에 STUDENT가 있는 유저에게 TEACHER 역할을 추가하면 ConflictingRoleException이 발생한다`() {
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.TEACHER)
+            } returns null
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
+            } returns mockk()
+
+            assertThrows<ConflictingRoleException> {
+                userDomainService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.TEACHER)
+            }
+        }
+
+        @Test
+        fun `다른 플랫폼이면 STUDENT와 TEACHER를 동시에 가질 수 있다`() {
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.LMS, Role.STUDENT)
+            } returns null
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.LMS, Role.TEACHER)
+            } returns null
+            every { userRoleAdaptor.save(any()) } returns mockk()
+
+            userDomainService.ensureUserRole("user-id", Platform.LMS, Role.STUDENT)
+
+            verify(exactly = 1) { userRoleAdaptor.save(any()) }
+        }
+
+        @Test
+        fun `ADMIN 역할은 충돌 검증 없이 추가된다`() {
+            every {
+                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.ADMIN)
+            } returns null
+            every { userRoleAdaptor.save(any()) } returns mockk()
+
+            userDomainService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.ADMIN)
+
+            verify(exactly = 1) { userRoleAdaptor.save(any()) }
         }
     }
 }
