@@ -20,9 +20,6 @@ class StudentDomainService(
         return studentAdaptor.save(Student(user = user))
     }
 
-    @Transactional(readOnly = true)
-    fun findByUserId(userId: String): Student = studentAdaptor.findByUserId(userId)
-
     @Transactional
     fun updateProfile(
         student: Student,

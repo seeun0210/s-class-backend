@@ -58,10 +58,4 @@ class OrganizationDomainService(
         organization.changeLogoUrl(logoUrl)
         return organizationAdaptor.save(organization)
     }
-
-    @Transactional(readOnly = true)
-    fun findByDomain(domain: String): Organization = organizationAdaptor.findByDomain(domain)
-
-    @Transactional(readOnly = true)
-    fun findByInviteCode(inviteCode: String): Organization = organizationAdaptor.findByInviteCode(inviteCode)
 }

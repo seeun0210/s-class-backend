@@ -1,27 +1,27 @@
 package com.sclass.supporters.student.usecase
 
 import com.sclass.common.annotation.UseCase
-import com.sclass.domain.domains.file.service.FileDomainService
+import com.sclass.domain.domains.file.adaptor.FileAdaptor
+import com.sclass.domain.domains.student.adaptor.StudentAdaptor
 import com.sclass.domain.domains.student.adaptor.StudentDocumentAdaptor
 import com.sclass.domain.domains.student.domain.StudentDocument
-import com.sclass.domain.domains.student.service.StudentDomainService
 import com.sclass.supporters.student.dto.StudentDocumentResponse
 import com.sclass.supporters.student.dto.UploadStudentDocumentRequest
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class UploadStudentDocumentUseCase(
-    private val studentDomainService: StudentDomainService,
+    private val studentAdaptor: StudentAdaptor,
     private val studentDocumentAdaptor: StudentDocumentAdaptor,
-    private val fileDomainService: FileDomainService,
+    private val fileAdaptor: FileAdaptor,
 ) {
     @Transactional
     fun execute(
         userId: String,
         request: UploadStudentDocumentRequest,
     ): StudentDocumentResponse {
-        val student = studentDomainService.findByUserId(userId)
-        val file = fileDomainService.findById(request.fileId)
+        val student = studentAdaptor.findByUserId(userId)
+        val file = fileAdaptor.findById(request.fileId)
 
         val existing = studentDocumentAdaptor.findByStudentIdAndDocumentType(student.id, request.documentType)
         if (existing != null) {

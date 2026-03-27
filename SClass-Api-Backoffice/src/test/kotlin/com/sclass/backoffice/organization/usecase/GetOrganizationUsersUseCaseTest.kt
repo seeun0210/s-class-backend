@@ -1,7 +1,9 @@
 package com.sclass.backoffice.organization.usecase
 
+import com.sclass.domain.domains.organization.adaptor.OrganizationAdaptor
+import com.sclass.domain.domains.organization.adaptor.OrganizationUserAdaptor
+import com.sclass.domain.domains.organization.domain.Organization
 import com.sclass.domain.domains.organization.dto.OrganizationUserInfo
-import com.sclass.domain.domains.organization.service.OrganizationUserDomainService
 import com.sclass.domain.domains.user.domain.Role
 import io.mockk.every
 import io.mockk.mockk
@@ -14,13 +16,15 @@ import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
 
 class GetOrganizationUsersUseCaseTest {
-    private lateinit var organizationUserDomainService: OrganizationUserDomainService
+    private lateinit var organizationAdaptor: OrganizationAdaptor
+    private lateinit var organizationUserAdaptor: OrganizationUserAdaptor
     private lateinit var useCase: GetOrganizationUsersUseCase
 
     @BeforeEach
     fun setUp() {
-        organizationUserDomainService = mockk()
-        useCase = GetOrganizationUsersUseCase(organizationUserDomainService)
+        organizationAdaptor = mockk()
+        organizationUserAdaptor = mockk()
+        useCase = GetOrganizationUsersUseCase(organizationAdaptor, organizationUserAdaptor)
     }
 
     @Test
@@ -37,8 +41,9 @@ class GetOrganizationUsersUseCaseTest {
             )
         val page = PageImpl(listOf(userInfo), pageable, 1L)
 
+        every { organizationAdaptor.findById(1L) } returns mockk<Organization>()
         every {
-            organizationUserDomainService.getUsersByRole(1L, Role.TEACHER, pageable)
+            organizationUserAdaptor.findUsersByOrganizationIdAndRole(1L, Role.TEACHER, pageable)
         } returns page
 
         val result = useCase.execute(1L, Role.TEACHER, pageable)
@@ -52,7 +57,8 @@ class GetOrganizationUsersUseCaseTest {
         assertEquals(20, result.size)
         assertEquals(1L, result.totalElements)
         assertEquals(1, result.totalPages)
-        verify { organizationUserDomainService.getUsersByRole(1L, Role.TEACHER, pageable) }
+        verify { organizationAdaptor.findById(1L) }
+        verify { organizationUserAdaptor.findUsersByOrganizationIdAndRole(1L, Role.TEACHER, pageable) }
     }
 
     @Test
@@ -60,8 +66,9 @@ class GetOrganizationUsersUseCaseTest {
         val pageable = PageRequest.of(0, 20)
         val emptyPage = PageImpl<OrganizationUserInfo>(emptyList(), pageable, 0L)
 
+        every { organizationAdaptor.findById(1L) } returns mockk<Organization>()
         every {
-            organizationUserDomainService.getUsersByRole(1L, Role.ADMIN, pageable)
+            organizationUserAdaptor.findUsersByOrganizationIdAndRole(1L, Role.ADMIN, pageable)
         } returns emptyPage
 
         val result = useCase.execute(1L, Role.ADMIN, pageable)
