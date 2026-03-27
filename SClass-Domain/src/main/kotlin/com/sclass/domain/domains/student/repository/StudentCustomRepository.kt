@@ -1,5 +1,8 @@
 package com.sclass.domain.domains.student.repository
 
+import com.sclass.domain.domains.organization.domain.OrganizationUser
+import com.sclass.domain.domains.student.domain.Student
+import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
 import com.sclass.domain.domains.student.dto.StudentWithPlatform
 import org.springframework.data.domain.Page
@@ -10,4 +13,10 @@ interface StudentCustomRepository {
         condition: StudentSearchCondition,
         page: Pageable,
     ): Page<StudentWithPlatform>
+
+    fun findByIdWithUser(id: String): Student?
+
+    fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument>
+
+    fun findOrganizationsByUserId(userId: String): List<OrganizationUser>
 }

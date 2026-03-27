@@ -1,7 +1,9 @@
 package com.sclass.domain.domains.student.adaptor
 
 import com.sclass.common.annotation.Adaptor
+import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.student.domain.Student
+import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
 import com.sclass.domain.domains.student.dto.StudentWithPlatform
 import com.sclass.domain.domains.student.exception.StudentNotFoundException
@@ -29,4 +31,11 @@ class StudentAdaptor(
         condition: StudentSearchCondition,
         pageable: Pageable,
     ): Page<StudentWithPlatform> = studentRepository.searchStudents(condition, pageable)
+
+    fun findByIdWithUser(id: String): Student = studentRepository.findByIdWithUser(id) ?: throw StudentNotFoundException()
+
+    fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
+        studentRepository.findDocumentsWithFileByStudentId(studentId)
+
+    fun findOrganizationsByUserId(userId: String): List<OrganizationUser> = studentRepository.findOrganizationsByUserId(userId)
 }

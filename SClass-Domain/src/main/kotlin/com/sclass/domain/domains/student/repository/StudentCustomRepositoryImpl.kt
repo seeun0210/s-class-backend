@@ -2,7 +2,14 @@ package com.sclass.domain.domains.student.repository
 
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sclass.domain.domains.file.domain.QFile.file
+import com.sclass.domain.domains.organization.domain.OrganizationUser
+import com.sclass.domain.domains.organization.domain.QOrganization.organization
+import com.sclass.domain.domains.organization.domain.QOrganizationUser.organizationUser
 import com.sclass.domain.domains.student.domain.QStudent.student
+import com.sclass.domain.domains.student.domain.QStudentDocument.studentDocument
+import com.sclass.domain.domains.student.domain.Student
+import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
 import com.sclass.domain.domains.student.dto.StudentWithPlatform
 import com.sclass.domain.domains.user.domain.Grade
@@ -71,6 +78,30 @@ class StudentCustomRepositoryImpl(
 
         return PageImpl(content, page, total)
     }
+
+    override fun findByIdWithUser(id: String): Student? =
+        queryFactory
+            .selectFrom(student)
+            .join(student.user, user)
+            .fetchJoin()
+            .where(student.id.eq(id))
+            .fetchOne()
+
+    override fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
+        queryFactory
+            .selectFrom(studentDocument)
+            .join(studentDocument.file, file)
+            .fetchJoin()
+            .where(studentDocument.student.id.eq(studentId))
+            .fetch()
+
+    override fun findOrganizationsByUserId(userId: String): List<OrganizationUser> =
+        queryFactory
+            .selectFrom(organizationUser)
+            .join(organizationUser.organization, organization)
+            .fetchJoin()
+            .where(organizationUser.user.id.eq(userId))
+            .fetch()
 
     private fun nameContains(name: String?): BooleanExpression? = name?.let { user.name.contains(it) }
 
