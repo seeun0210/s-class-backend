@@ -49,17 +49,4 @@ class StudentDomainServiceTest {
             }
         }
     }
-
-    @Nested
-    inner class FindByUserId {
-        @Test
-        fun `userId로 학생을 반환한다`() {
-            val student = mockk<Student>()
-            every { studentAdaptor.findByUserId("user-id") } returns student
-
-            val result = studentDomainService.findByUserId("user-id")
-
-            assertEquals(student, result)
-        }
-    }
 }

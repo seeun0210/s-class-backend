@@ -109,30 +109,4 @@ class OrganizationDomainServiceTest {
             verify { organization.changeLogoUrl("https://logo.png") }
         }
     }
-
-    @Nested
-    inner class FindByDomain {
-        @Test
-        fun `서브도메인으로 기관을 조회한다`() {
-            val organization = mockk<Organization>()
-            every { organizationAdaptor.findByDomain("test.sclass.com") } returns organization
-
-            val result = organizationDomainService.findByDomain("test.sclass.com")
-
-            assertEquals(organization, result)
-        }
-    }
-
-    @Nested
-    inner class FindByInviteCode {
-        @Test
-        fun `초대코드로 기관을 조회한다`() {
-            val organization = mockk<Organization>()
-            every { organizationAdaptor.findByInviteCode("ABC123") } returns organization
-
-            val result = organizationDomainService.findByInviteCode("ABC123")
-
-            assertEquals(organization, result)
-        }
-    }
 }

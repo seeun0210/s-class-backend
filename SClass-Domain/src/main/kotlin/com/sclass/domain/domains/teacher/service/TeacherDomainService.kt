@@ -5,12 +5,8 @@ import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.adaptor.TeacherDocumentAdaptor
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
-import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.teacher.exception.TeacherAlreadyExistsException
 import com.sclass.domain.domains.user.domain.User
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
@@ -26,15 +22,6 @@ class TeacherDomainService(
         }
         return teacherAdaptor.save(Teacher(user = user))
     }
-
-    @Transactional(readOnly = true)
-    fun findByUserId(userId: String): Teacher = teacherAdaptor.findByUserId(userId)
-
-    @Transactional(readOnly = true)
-    fun searchTeachers(
-        condition: TeacherSearchCondition,
-        pageable: Pageable,
-    ): Page<TeacherWithPlatform> = teacherAdaptor.searchTeachers(condition, pageable)
 
     @Transactional
     fun updateProfile(

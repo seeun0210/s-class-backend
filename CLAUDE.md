@@ -91,16 +91,18 @@ domains/{feature}/
 - `findByXxxOrNull` 패턴으로 nullable 조회 제공
 
 ### DomainService
-- 비즈니스 로직이 있을 때만 생성 (단순 CRUD는 Adaptor로 충분)
+- 비즈니스 로직(검증, 상태변경)이 있을 때만 생성 (단순 CRUD는 Adaptor로 충분)
+- 조회(find/query) 메서드는 넣지 않음 — 조회는 Adaptor의 책임
 - Adaptor를 주입받아 사용 (Repository 직접 참조 금지)
 - 같은 도메인 내 다른 Service 참조 가능
 - 도메인 엔티티를 반환 (DTO 아님)
 
 ### UseCase
-- Api 모듈에 위치
-- DomainService/Adaptor를 조합하여 유즈케이스 구현
+- Api 모듈에 위치. **1 API = 1 UseCase** (예외 없이 항상 생성)
+- Controller는 오직 UseCase만 의존 (DomainService/Adaptor 직접 주입 금지)
 - `@Transactional` 선언 (주 트랜잭션 경계)
 - Request DTO → 도메인 호출 → Response DTO 반환
+- 비즈니스 로직이 필요하면 DomainService 호출, 단순 조회는 Adaptor 직접 호출
 
 ### Exception
 ```kotlin
