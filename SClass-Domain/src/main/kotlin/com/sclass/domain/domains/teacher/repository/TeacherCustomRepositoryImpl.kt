@@ -29,9 +29,9 @@ class TeacherCustomRepositoryImpl(
         condition: TeacherSearchCondition,
         page: Pageable,
     ): Page<TeacherWithPlatform> {
-        val content =
+        val tuples =
             queryFactory
-                .select(teacher, userRole.platform, userRole.state)
+                .select(teacher.id, userRole.platform, userRole.state)
                 .from(teacher)
                 .join(teacher.user, user)
                 .join(userRole)
@@ -52,13 +52,30 @@ class TeacherCustomRepositoryImpl(
                 .limit(page.pageSize.toLong())
                 .orderBy(teacher.createdAt.desc())
                 .fetch()
-                .map { tuple ->
-                    TeacherWithPlatform(
-                        teacher = tuple.get(teacher) ?: error("Teacher must not be null"),
-                        platform = tuple.get(userRole.platform) ?: error("Platform must not be null"),
-                        state = tuple.get(userRole.state) ?: error("State must not be null"),
-                    )
-                }
+
+        val teacherIds = tuples.map { it.get(teacher.id)!! }
+        val teachers =
+            if (teacherIds.isEmpty()) {
+                emptyMap()
+            } else {
+                queryFactory
+                    .selectFrom(teacher)
+                    .join(teacher.user, user)
+                    .fetchJoin()
+                    .where(teacher.id.`in`(teacherIds))
+                    .fetch()
+                    .associateBy { it.id }
+            }
+
+        val content =
+            tuples.map { tuple ->
+                val teacherId = tuple.get(teacher.id)!!
+                TeacherWithPlatform(
+                    teacher = teachers[teacherId] ?: error("Teacher must not be null"),
+                    platform = tuple.get(userRole.platform) ?: error("Platform must not be null"),
+                    state = tuple.get(userRole.state) ?: error("State must not be null"),
+                )
+            }
 
         val total =
             queryFactory
