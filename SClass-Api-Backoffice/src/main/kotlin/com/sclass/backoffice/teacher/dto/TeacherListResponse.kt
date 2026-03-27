@@ -29,11 +29,11 @@ data class TeacherListResponse(
                 name = teacher.user.name,
                 email = teacher.user.email,
                 platform = platform,
-                university = teacher.education.university,
-                major = teacher.education.major,
-                majorCategory = teacher.education.majorCategory,
+                university = teacher.education?.university,
+                major = teacher.education?.major,
+                majorCategory = teacher.education?.majorCategory,
                 state = state,
-                submittedAt = teacher.verification.submittedAt,
+                submittedAt = teacher.verification?.submittedAt,
                 createdAt = teacher.createdAt,
             )
     }
