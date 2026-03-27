@@ -36,6 +36,13 @@ open class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadable(e: HttpMessageNotReadableException): ResponseEntity<ApiResponse<Nothing>> {
+        val businessException =
+            generateSequence(e as Throwable) { it.cause }
+                .filterIsInstance<BusinessException>()
+                .firstOrNull()
+        if (businessException != null) {
+            return handleBusinessException(businessException)
+        }
         log.warn("Message not readable: {}", e.message)
         val errorCode = GlobalErrorCode.INVALID_INPUT
         return ResponseEntity

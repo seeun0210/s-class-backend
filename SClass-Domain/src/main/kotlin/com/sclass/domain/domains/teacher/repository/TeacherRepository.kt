@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
-interface TeacherRepository : JpaRepository<Teacher, String> {
+interface TeacherRepository :
+    JpaRepository<Teacher, String>,
+    TeacherCustomRepository {
     fun findByUserId(userId: String): Teacher?
 
     fun existsByUserId(userId: String): Boolean

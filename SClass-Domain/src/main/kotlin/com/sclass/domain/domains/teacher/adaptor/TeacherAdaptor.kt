@@ -3,6 +3,8 @@ package com.sclass.domain.domains.teacher.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
+import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
+import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import org.springframework.data.domain.Page
@@ -28,4 +30,9 @@ class TeacherAdaptor(
         status: TeacherVerificationStatus,
         pageable: Pageable,
     ): Page<Teacher> = teacherRepository.findAllByStatus(status, pageable)
+
+    fun searchTeachers(
+        condition: TeacherSearchCondition,
+        pageable: Pageable,
+    ): Page<TeacherWithPlatform> = teacherRepository.searchTeachers(condition, pageable)
 }

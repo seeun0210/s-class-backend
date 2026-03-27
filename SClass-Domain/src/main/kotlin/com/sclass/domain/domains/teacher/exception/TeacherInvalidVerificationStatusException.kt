@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.teacher.exception
+
+import com.sclass.common.exception.BusinessException
+
+class TeacherInvalidVerificationStatusException : BusinessException(TeacherErrorCode.TEACHER_INVALID_VERIFICATION_STATUS)
