@@ -2,8 +2,8 @@ package com.sclass.backoffice.teacher.dto
 
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.UserRoleState
 import java.time.LocalDateTime
 
 data class TeacherListResponse(
@@ -14,7 +14,7 @@ data class TeacherListResponse(
     val university: String?,
     val major: String?,
     val majorCategory: MajorCategory?,
-    val verificationStatus: TeacherVerificationStatus,
+    val state: UserRoleState,
     val submittedAt: LocalDateTime?,
     val createdAt: LocalDateTime,
 ) {
@@ -22,6 +22,7 @@ data class TeacherListResponse(
         fun from(
             teacher: Teacher,
             platform: Platform,
+            state: UserRoleState,
         ): TeacherListResponse =
             TeacherListResponse(
                 id = teacher.id,
@@ -31,7 +32,7 @@ data class TeacherListResponse(
                 university = teacher.education?.university,
                 major = teacher.education?.major,
                 majorCategory = teacher.education?.majorCategory,
-                verificationStatus = teacher.verification?.verificationStatus ?: TeacherVerificationStatus.DRAFT,
+                state = state,
                 submittedAt = teacher.verification?.submittedAt,
                 createdAt = teacher.createdAt,
             )

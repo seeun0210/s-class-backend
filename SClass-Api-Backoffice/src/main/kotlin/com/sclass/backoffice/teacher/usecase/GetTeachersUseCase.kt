@@ -19,7 +19,7 @@ class GetTeachersUseCase(
     ): TeacherPageResponse {
         val page = teacherAdaptor.searchTeachers(condition, pageable)
         return TeacherPageResponse(
-            content = page.content.map { TeacherListResponse.from(it.teacher, it.platform) },
+            content = page.content.map { TeacherListResponse.from(it.teacher, it.platform, it.state) },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,

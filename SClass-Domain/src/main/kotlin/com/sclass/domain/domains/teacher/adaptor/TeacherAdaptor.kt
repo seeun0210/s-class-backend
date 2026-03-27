@@ -2,7 +2,6 @@ package com.sclass.domain.domains.teacher.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
@@ -25,11 +24,6 @@ class TeacherAdaptor(
     fun existsByUserId(userId: String): Boolean = teacherRepository.existsByUserId(userId)
 
     fun save(teacher: Teacher): Teacher = teacherRepository.save(teacher)
-
-    fun findAllByVerificationStatus(
-        status: TeacherVerificationStatus,
-        pageable: Pageable,
-    ): Page<Teacher> = teacherRepository.findAllByStatus(status, pageable)
 
     fun searchTeachers(
         condition: TeacherSearchCondition,

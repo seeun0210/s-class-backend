@@ -23,6 +23,8 @@ class LoginUseCase(
                 request.role,
             )
 
+        userService.activateIfApproved(user.id, Platform.SUPPORTERS, request.role)
+
         val tokens = tokenService.issueTokens(user.id, request.role, Platform.SUPPORTERS)
         return TokenResponse(
             accessToken = tokens.accessToken,
