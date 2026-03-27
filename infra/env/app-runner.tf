@@ -86,10 +86,30 @@ resource "aws_apprunner_service" "services" {
     }
   }
 
+  observability_configuration {
+    observability_enabled = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.xray.arn
+  }
+
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.services[each.key].arn
 
   tags = {
     Name = "${local.name_prefix}-${each.key}"
+  }
+}
+
+# ──────────────────────────────────────
+# X-Ray Observability Configuration
+# ──────────────────────────────────────
+resource "aws_apprunner_observability_configuration" "xray" {
+  observability_configuration_name = "${local.name_prefix}-xray"
+
+  trace_configuration {
+    vendor = "AWSXRAY"
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-xray"
   }
 }
 
