@@ -85,8 +85,12 @@ class TeacherAssignmentDomainServiceTest {
                 )
 
             assertAll(
+                { assertEquals("student-1", result.studentId) },
+                { assertEquals("teacher-1", result.teacherId) },
                 { assertEquals(Platform.SUPPORTERS, result.platform) },
                 { assertNull(result.organizationId) },
+                { assertEquals("admin-1", result.assignedBy) },
+                { assertNull(result.unassignedAt) },
             )
         }
 
