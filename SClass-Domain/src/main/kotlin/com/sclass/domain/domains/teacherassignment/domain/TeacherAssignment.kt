@@ -1,5 +1,6 @@
 package com.sclass.domain.domains.teacherassignment.domain
 
+import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.domains.user.domain.Platform
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -39,4 +40,11 @@ class TeacherAssignment(
 
     @Column(name = "unassigned_at")
     var unassignedAt: LocalDateTime? = null,
-)
+) : BaseTimeEntity() {
+    fun unassign(now: LocalDateTime = LocalDateTime.now()) {
+        this.unassignedAt = now
+    }
+
+    val isActive: Boolean
+        get() = unassignedAt == null
+}
