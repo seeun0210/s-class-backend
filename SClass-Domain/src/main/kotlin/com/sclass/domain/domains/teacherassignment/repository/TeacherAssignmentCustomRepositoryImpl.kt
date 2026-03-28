@@ -18,7 +18,7 @@ import org.springframework.data.domain.Pageable
 class TeacherAssignmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : TeacherAssignmentCustomRepository {
-    override fun findActiveAssignedStudentsByTeacherId(teacherId: String): List<AssignedStudentInfo> =
+    override fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo> =
         queryFactory
             .select(
                 Projections.constructor(
@@ -35,15 +35,15 @@ class TeacherAssignmentCustomRepositoryImpl(
                 ),
             ).from(teacherAssignment)
             .join(student)
-            .on(student.user.id.eq(teacherAssignment.studentId))
+            .on(student.user.id.eq(teacherAssignment.studentUserId))
             .leftJoin(organization)
             .on(organization.id.eq(teacherAssignment.organizationId))
             .where(
-                teacherAssignment.teacherId.eq(teacherId),
+                teacherAssignment.teacherUserId.eq(teacherUserId),
                 teacherAssignment.unassignedAt.isNull,
             ).fetch()
 
-    override fun findActiveAssignedTeachersByStudentId(studentId: String): List<AssignedTeacherInfo> =
+    override fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo> =
         queryFactory
             .select(
                 Projections.constructor(
@@ -58,11 +58,11 @@ class TeacherAssignmentCustomRepositoryImpl(
                 ),
             ).from(teacherAssignment)
             .join(teacher)
-            .on(teacher.user.id.eq(teacherAssignment.teacherId))
+            .on(teacher.user.id.eq(teacherAssignment.teacherUserId))
             .leftJoin(organization)
             .on(organization.id.eq(teacherAssignment.organizationId))
             .where(
-                teacherAssignment.studentId.eq(studentId),
+                teacherAssignment.studentUserId.eq(studentUserId),
                 teacherAssignment.unassignedAt.isNull,
             ).fetch()
 
@@ -87,9 +87,9 @@ class TeacherAssignmentCustomRepositoryImpl(
                     ),
                 ).from(teacherAssignment)
                 .join(student)
-                .on(student.user.id.eq(teacherAssignment.studentId))
+                .on(student.user.id.eq(teacherAssignment.studentUserId))
                 .join(teacher)
-                .on(teacher.user.id.eq(teacherAssignment.teacherId))
+                .on(teacher.user.id.eq(teacherAssignment.teacherUserId))
                 .leftJoin(organization)
                 .on(
                     organization.id.eq(
@@ -112,9 +112,9 @@ class TeacherAssignmentCustomRepositoryImpl(
                 .select(teacherAssignment.count())
                 .from(teacherAssignment)
                 .join(student)
-                .on(student.user.id.eq(teacherAssignment.studentId))
+                .on(student.user.id.eq(teacherAssignment.studentUserId))
                 .join(teacher)
-                .on(teacher.user.id.eq(teacherAssignment.teacherId))
+                .on(teacher.user.id.eq(teacherAssignment.teacherUserId))
                 .where(
                     teacherAssignment.unassignedAt.isNull,
                     platformEq(condition.platform),

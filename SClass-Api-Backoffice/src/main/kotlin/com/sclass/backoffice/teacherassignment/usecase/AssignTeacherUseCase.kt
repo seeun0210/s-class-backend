@@ -18,12 +18,12 @@ class AssignTeacherUseCase(
         request: AssignTeacherRequest,
         assignedBy: String,
     ) {
-        studentAdaptor.findByUserId(request.studentId)
-        teacherAdaptor.findByUserId(request.teacherId)
+        studentAdaptor.findByUserId(request.studentUserId)
+        teacherAdaptor.findByUserId(request.teacherUserId)
 
         teacherAssignmentDomainService.assign(
-            studentId = request.studentId,
-            teacherId = request.teacherId,
+            studentUserId = request.studentUserId,
+            teacherUserId = request.teacherUserId,
             platform = request.platform,
             organizationId = request.organizationId,
             assignedBy = assignedBy,

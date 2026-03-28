@@ -36,7 +36,7 @@ class TeacherAssignmentDomainServiceTest {
         fun `LMS 플랫폼에 담당 선생님을 배정한다`() {
             val slot = slot<TeacherAssignment>()
             every {
-                teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(
+                teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(
                     "student-1",
                     Platform.LMS,
                     1L,
@@ -46,16 +46,16 @@ class TeacherAssignmentDomainServiceTest {
 
             val result =
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
                 )
 
             assertAll(
-                { assertEquals("student-1", result.studentId) },
-                { assertEquals("teacher-1", result.teacherId) },
+                { assertEquals("student-1", result.studentUserId) },
+                { assertEquals("teacher-1", result.teacherUserId) },
                 { assertEquals(Platform.LMS, result.platform) },
                 { assertEquals(1L, result.organizationId) },
                 { assertEquals("admin-1", result.assignedBy) },
@@ -67,7 +67,7 @@ class TeacherAssignmentDomainServiceTest {
         fun `SUPPORTERS 플랫폼에 담당 선생님을 배정한다`() {
             val slot = slot<TeacherAssignment>()
             every {
-                teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(
+                teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(
                     "student-1",
                     Platform.SUPPORTERS,
                     null,
@@ -77,16 +77,16 @@ class TeacherAssignmentDomainServiceTest {
 
             val result =
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.SUPPORTERS,
                     organizationId = null,
                     assignedBy = "admin-1",
                 )
 
             assertAll(
-                { assertEquals("student-1", result.studentId) },
-                { assertEquals("teacher-1", result.teacherId) },
+                { assertEquals("student-1", result.studentUserId) },
+                { assertEquals("teacher-1", result.teacherUserId) },
                 { assertEquals(Platform.SUPPORTERS, result.platform) },
                 { assertNull(result.organizationId) },
                 { assertEquals("admin-1", result.assignedBy) },
@@ -98,15 +98,15 @@ class TeacherAssignmentDomainServiceTest {
         fun `기존 배정이 있으면 해제하고 새로 배정한다`() {
             val existing =
                 TeacherAssignment(
-                    studentId = "student-1",
-                    teacherId = "old-teacher",
+                    studentUserId = "student-1",
+                    teacherUserId = "old-teacher",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
                 )
             val slot = slot<TeacherAssignment>()
             every {
-                teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(
+                teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(
                     "student-1",
                     Platform.LMS,
                     1L,
@@ -116,8 +116,8 @@ class TeacherAssignmentDomainServiceTest {
 
             val result =
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "new-teacher",
+                    studentUserId = "student-1",
+                    teacherUserId = "new-teacher",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
@@ -125,7 +125,7 @@ class TeacherAssignmentDomainServiceTest {
 
             assertAll(
                 { assertNotNull(existing.unassignedAt) },
-                { assertEquals("new-teacher", result.teacherId) },
+                { assertEquals("new-teacher", result.teacherUserId) },
             )
             verify(exactly = 2) { teacherAssignmentAdaptor.save(any()) }
         }
@@ -134,8 +134,8 @@ class TeacherAssignmentDomainServiceTest {
         fun `LMS인데 organizationId가 null이면 예외가 발생한다`() {
             assertThrows<OrganizationRequiredForLmsException> {
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = null,
                     assignedBy = "admin-1",
@@ -147,8 +147,8 @@ class TeacherAssignmentDomainServiceTest {
         fun `SUPPORTERS인데 organizationId가 있으면 예외가 발생한다`() {
             assertThrows<OrganizationNotAllowedForSupportersException> {
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.SUPPORTERS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
@@ -160,8 +160,8 @@ class TeacherAssignmentDomainServiceTest {
         fun `BACKOFFICE 플랫폼이면 예외가 발생한다`() {
             assertThrows<InvalidPlatformForAssignmentException> {
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.BACKOFFICE,
                     organizationId = null,
                     assignedBy = "admin-1",
@@ -176,14 +176,14 @@ class TeacherAssignmentDomainServiceTest {
         fun `현재 배정을 해제한다`() {
             val existing =
                 TeacherAssignment(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
                 )
             every {
-                teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationId(
+                teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
                     "student-1",
                     Platform.LMS,
                     1L,
@@ -192,7 +192,7 @@ class TeacherAssignmentDomainServiceTest {
             every { teacherAssignmentAdaptor.save(existing) } returns existing
 
             teacherAssignmentDomainService.unassign(
-                studentId = "student-1",
+                studentUserId = "student-1",
                 platform = Platform.LMS,
                 organizationId = 1L,
             )
@@ -204,7 +204,7 @@ class TeacherAssignmentDomainServiceTest {
         @Test
         fun `활성 배정이 없으면 예외가 발생한다`() {
             every {
-                teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationId(
+                teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
                     "student-1",
                     Platform.LMS,
                     1L,
@@ -213,7 +213,7 @@ class TeacherAssignmentDomainServiceTest {
 
             assertThrows<TeacherAssignmentNotFoundException> {
                 teacherAssignmentDomainService.unassign(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
@@ -224,7 +224,7 @@ class TeacherAssignmentDomainServiceTest {
         fun `LMS인데 organizationId가 null이면 예외가 발생한다`() {
             assertThrows<OrganizationRequiredForLmsException> {
                 teacherAssignmentDomainService.unassign(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = null,
                 )

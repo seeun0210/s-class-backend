@@ -37,8 +37,8 @@ class AssignTeacherUseCaseTest {
         fun `학생과 선생님을 검증한 뒤 배정한다`() {
             val request =
                 AssignTeacherRequest(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
@@ -47,8 +47,8 @@ class AssignTeacherUseCaseTest {
             every { teacherAdaptor.findByUserId("teacher-1") } returns mockk()
             every {
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
@@ -61,8 +61,8 @@ class AssignTeacherUseCaseTest {
             verify(exactly = 1) { teacherAdaptor.findByUserId("teacher-1") }
             verify(exactly = 1) {
                 teacherAssignmentDomainService.assign(
-                    studentId = "student-1",
-                    teacherId = "teacher-1",
+                    studentUserId = "student-1",
+                    teacherUserId = "teacher-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                     assignedBy = "admin-1",
@@ -77,8 +77,8 @@ class AssignTeacherUseCaseTest {
         fun `존재하지 않는 학생이면 예외가 발생한다`() {
             val request =
                 AssignTeacherRequest(
-                    studentId = "invalid",
-                    teacherId = "teacher-1",
+                    studentUserId = "invalid",
+                    teacherUserId = "teacher-1",
                     platform = Platform.SUPPORTERS,
                 )
 
@@ -93,8 +93,8 @@ class AssignTeacherUseCaseTest {
         fun `존재하지 않는 선생님이면 예외가 발생한다`() {
             val request =
                 AssignTeacherRequest(
-                    studentId = "student-1",
-                    teacherId = "invalid",
+                    studentUserId = "student-1",
+                    teacherUserId = "invalid",
                     platform = Platform.SUPPORTERS,
                 )
 

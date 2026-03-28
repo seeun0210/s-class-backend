@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull
 
 data class UnassignTeacherRequest(
     @field:NotBlank
-    val studentId: String,
+    val studentUserId: String,
 
     @field:NotNull
     val platform: Platform,

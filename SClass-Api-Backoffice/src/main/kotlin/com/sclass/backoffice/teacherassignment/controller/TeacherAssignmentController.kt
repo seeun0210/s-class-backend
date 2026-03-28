@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/v1/students/teacher-assignments")
+@RequestMapping("/api/v1/teacher-assignments")
 class TeacherAssignmentController(
     private val assignTeacherUseCase: AssignTeacherUseCase,
     private val unassignTeacherUseCase: UnassignTeacherUseCase,

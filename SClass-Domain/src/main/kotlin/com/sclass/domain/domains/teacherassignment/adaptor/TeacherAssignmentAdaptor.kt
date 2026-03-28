@@ -18,54 +18,50 @@ class TeacherAssignmentAdaptor(
 ) {
     fun save(teacherAssignment: TeacherAssignment): TeacherAssignment = teacherAssignmentRepository.save(teacherAssignment)
 
-    fun findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(
-        studentId: String,
+    fun findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(
+        studentUserId: String,
         platform: Platform,
         organizationId: Long?,
     ): TeacherAssignment? =
-        teacherAssignmentRepository.findByStudentIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
-            studentId,
+        teacherAssignmentRepository.findByStudentUserIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
+            studentUserId,
             platform,
             organizationId,
         )
 
-    fun findActiveByStudentIdAndPlatformAndOrganizationId(
-        studentId: String,
+    fun findActiveByStudentUserIdAndPlatformAndOrganizationId(
+        studentUserId: String,
         platform: Platform,
         organizationId: Long?,
     ): TeacherAssignment =
-        findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(studentId, platform, organizationId)
+        findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(studentUserId, platform, organizationId)
             ?: throw TeacherAssignmentNotFoundException()
 
-    fun findAllActiveByStudentId(studentId: String): List<TeacherAssignment> =
-        teacherAssignmentRepository.findAllByStudentIdAndUnassignedAtIsNull(studentId)
+    fun findAllActiveByStudentUserId(studentUserId: String): List<TeacherAssignment> =
+        teacherAssignmentRepository.findAllByStudentUserIdAndUnassignedAtIsNull(studentUserId)
 
-    fun findAllActiveByTeacherId(teacherId: String): List<TeacherAssignment> =
-        teacherAssignmentRepository.findAllByTeacherIdAndUnassignedAtIsNull(teacherId)
+    fun findAllActiveByTeacherUserId(teacherUserId: String): List<TeacherAssignment> =
+        teacherAssignmentRepository.findAllByTeacherUserIdAndUnassignedAtIsNull(teacherUserId)
 
-    fun findAllActiveByTeacherIdAndPlatformAndOrganizationId(
-        teacherId: String,
+    fun findAllActiveByTeacherUserIdAndPlatformAndOrganizationId(
+        teacherUserId: String,
         platform: Platform,
         organizationId: Long?,
     ): List<TeacherAssignment> =
-        teacherAssignmentRepository.findAllByTeacherIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
-            teacherId,
+        teacherAssignmentRepository.findAllByTeacherUserIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
+            teacherUserId,
             platform,
             organizationId,
         )
 
-    fun findActiveAssignedStudentsByTeacherId(teacherId: String): List<AssignedStudentInfo> =
-        teacherAssignmentRepository.findActiveAssignedStudentsByTeacherId(teacherId)
+    fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo> =
+        teacherAssignmentRepository.findActiveAssignedStudentsByTeacherUserId(teacherUserId)
 
-    fun findActiveAssignedTeachersByStudentId(studentId: String): List<AssignedTeacherInfo> =
-        teacherAssignmentRepository.findActiveAssignedTeachersByStudentId(studentId)
+    fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo> =
+        teacherAssignmentRepository.findActiveAssignedTeachersByStudentUserId(studentUserId)
 
     fun searchActiveAssignments(
         condition: TeacherAssignmentSearchCondition,
         pageable: Pageable,
-    ): Page<TeacherAssignmentListInfo> =
-        teacherAssignmentRepository.searchActiveAssignments(
-            condition,
-            pageable,
-        )
+    ): Page<TeacherAssignmentListInfo> = teacherAssignmentRepository.searchActiveAssignments(condition, pageable)
 }
