@@ -74,8 +74,7 @@ class TeacherAssignmentDomainService(
             Platform.LMS -> if (organizationId == null) throw OrganizationRequiredForLmsException()
             Platform.SUPPORTERS ->
                 if (organizationId != null) {
-                    throw
-                    OrganizationNotAllowedForSupportersException()
+                    throw OrganizationNotAllowedForSupportersException()
                 }
             else -> throw InvalidPlatformForAssignmentException()
         }
