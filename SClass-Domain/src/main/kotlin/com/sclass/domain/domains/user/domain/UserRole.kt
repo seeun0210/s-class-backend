@@ -11,9 +11,12 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.SoftDelete
+import org.hibernate.annotations.SoftDeleteType
 import java.time.LocalDateTime
 
 @Entity
+@SoftDelete(strategy = SoftDeleteType.TIMESTAMP, columnName = "deleted_at")
 @Table(
     name = "user_roles",
     uniqueConstraints = [

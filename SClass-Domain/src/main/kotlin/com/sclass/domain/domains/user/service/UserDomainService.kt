@@ -10,6 +10,7 @@ import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.domain.UserRole
 import com.sclass.domain.domains.user.domain.UserRoleState
 import com.sclass.domain.domains.user.exception.ConflictingRoleException
+import com.sclass.domain.domains.user.exception.DuplicateUserRoleException
 import com.sclass.domain.domains.user.exception.InvalidPasswordException
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
@@ -143,6 +144,25 @@ class UserDomainService(
                 ),
             )
         }
+    }
+
+    fun addUserRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ): UserRole {
+        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) != null) {
+            throw DuplicateUserRoleException()
+        }
+        validateNoConflictingRole(userId, platform, role)
+        return userRoleAdaptor.save(
+            UserRole(
+                userId = userId,
+                platform = platform,
+                role = role,
+                state = initialStateFor(role),
+            ),
+        )
     }
 
     private fun validateNoConflictingRole(
