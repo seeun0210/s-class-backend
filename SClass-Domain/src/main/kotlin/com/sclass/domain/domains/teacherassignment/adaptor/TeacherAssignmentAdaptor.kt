@@ -4,9 +4,13 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.teacherassignment.domain.TeacherAssignment
 import com.sclass.domain.domains.teacherassignment.dto.AssignedStudentInfo
 import com.sclass.domain.domains.teacherassignment.dto.AssignedTeacherInfo
+import com.sclass.domain.domains.teacherassignment.dto.TeacherAssignmentListInfo
+import com.sclass.domain.domains.teacherassignment.dto.TeacherAssignmentSearchCondition
 import com.sclass.domain.domains.teacherassignment.exception.TeacherAssignmentNotFoundException
 import com.sclass.domain.domains.teacherassignment.repository.TeacherAssignmentRepository
 import com.sclass.domain.domains.user.domain.Platform
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 @Adaptor
 class TeacherAssignmentAdaptor(
@@ -55,4 +59,13 @@ class TeacherAssignmentAdaptor(
 
     fun findActiveAssignedTeachersByStudentId(studentId: String): List<AssignedTeacherInfo> =
         teacherAssignmentRepository.findActiveAssignedTeachersByStudentId(studentId)
+
+    fun searchActiveAssignments(
+        condition: TeacherAssignmentSearchCondition,
+        pageable: Pageable,
+    ): Page<TeacherAssignmentListInfo> =
+        teacherAssignmentRepository.searchActiveAssignments(
+            condition,
+            pageable,
+        )
 }
