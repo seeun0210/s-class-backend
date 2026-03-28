@@ -126,6 +126,35 @@ class TeacherAssignmentCustomRepositoryImpl(
         return PageImpl(content, pageable, total)
     }
 
+    override fun findActiveAssignedStudentsByTeacherUserId(
+        teacherUserId: String,
+        platform: Platform?,
+    ): List<AssignedStudentInfo> =
+        queryFactory
+            .select(
+                Projections.constructor(
+                    AssignedStudentInfo::class.java,
+                    teacherAssignment.id,
+                    student.user.id,
+                    student.user.name,
+                    student.grade,
+                    student.school,
+                    teacherAssignment.platform,
+                    teacherAssignment.organizationId,
+                    organization.name,
+                    teacherAssignment.assignedAt,
+                ),
+            ).from(teacherAssignment)
+            .join(student)
+            .on(student.user.id.eq(teacherAssignment.studentUserId))
+            .leftJoin(organization)
+            .on(organization.id.eq(teacherAssignment.organizationId))
+            .where(
+                teacherAssignment.teacherUserId.eq(teacherUserId),
+                teacherAssignment.unassignedAt.isNull,
+                platform?.let { teacherAssignment.platform.eq(it) },
+            ).fetch()
+
     private fun platformEq(platform: Platform?) = platform?.let { teacherAssignment.platform.eq(it) }
 
     private fun organizationIdEq(organizationId: Long?) = organizationId?.let { teacherAssignment.organizationId.eq(it) }
