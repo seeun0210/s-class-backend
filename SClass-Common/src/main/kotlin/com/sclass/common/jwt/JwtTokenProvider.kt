@@ -52,7 +52,7 @@ class JwtTokenProvider(
                 .parseSignedClaims(token)
         } catch (e: ExpiredJwtException) {
             throw TokenExpiredException()
-        } catch (e: SecurityException) {
+        } catch (e: io.jsonwebtoken.security.SecurityException) {
             throw InvalidTokenException()
         } catch (e: io.jsonwebtoken.MalformedJwtException) {
             throw InvalidTokenException()
