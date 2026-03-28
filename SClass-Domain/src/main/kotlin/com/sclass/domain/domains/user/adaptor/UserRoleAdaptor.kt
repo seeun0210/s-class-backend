@@ -4,12 +4,15 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.domain.domains.user.repository.UserRoleRepository
 
 @Adaptor
 class UserRoleAdaptor(
     private val userRoleRepository: UserRoleRepository,
 ) {
+    fun findById(id: String): UserRole = userRoleRepository.findById(id).orElseThrow { RoleNotFoundException() }
+
     fun findAllByUserId(userId: String): List<UserRole> = userRoleRepository.findAllByUserId(userId)
 
     fun save(userRole: UserRole): UserRole = userRoleRepository.save(userRole)

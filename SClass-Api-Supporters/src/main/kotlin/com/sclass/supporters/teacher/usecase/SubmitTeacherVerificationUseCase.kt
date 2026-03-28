@@ -29,7 +29,7 @@ class SubmitTeacherVerificationUseCase(
                 ?: throw RoleNotFoundException()
         return TeacherProfileResponse.from(
             teacher = submitted,
-            state = userRole.state,
+            userRole = userRole,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }

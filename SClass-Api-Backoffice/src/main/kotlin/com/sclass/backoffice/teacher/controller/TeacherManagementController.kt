@@ -6,13 +6,10 @@ import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.backoffice.teacher.dto.CreateTeacherResponse
 import com.sclass.backoffice.teacher.dto.TeacherDetailResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
-import com.sclass.backoffice.teacher.dto.UpdateTeacherStateRequest
 import com.sclass.backoffice.teacher.usecase.BulkCreateTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.CreateTeacherUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeacherDetailUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeachersUseCase
-import com.sclass.backoffice.teacher.usecase.UpdateTeacherStateUseCase
-import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
@@ -24,7 +21,6 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -38,7 +34,6 @@ import java.time.LocalDateTime
 class TeacherManagementController(
     private val getTeachersUseCase: GetTeachersUseCase,
     private val getTeacherDetailUseCase: GetTeacherDetailUseCase,
-    private val updateTeacherStateUseCase: UpdateTeacherStateUseCase,
     private val createTeacherUseCase: CreateTeacherUseCase,
     private val bulkCreateTeachersUseCase: BulkCreateTeachersUseCase,
 ) {
@@ -90,14 +85,4 @@ class TeacherManagementController(
     fun getTeacherDetail(
         @PathVariable userId: String,
     ): ApiResponse<TeacherDetailResponse> = ApiResponse.success(getTeacherDetailUseCase.execute(userId))
-
-    @PatchMapping("/{targetUserId}/state")
-    fun updateState(
-        @PathVariable targetUserId: String,
-        @RequestBody request: UpdateTeacherStateRequest,
-        @CurrentUserId userId: String,
-    ): ApiResponse<Nothing> {
-        updateTeacherStateUseCase.execute(targetUserId, request, userId)
-        return ApiResponse.success()
-    }
 }

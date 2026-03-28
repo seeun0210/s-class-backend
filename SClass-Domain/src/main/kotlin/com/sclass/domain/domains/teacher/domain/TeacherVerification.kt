@@ -8,13 +8,4 @@ import java.time.LocalDateTime
 data class TeacherVerification(
     @Column
     val submittedAt: LocalDateTime? = null,
-
-    @Column
-    val approvedAt: LocalDateTime? = null,
-
-    @Column(length = 26)
-    val approvedBy: String? = null,
-
-    @Column(length = 500)
-    val rejectionReason: String? = null,
 )

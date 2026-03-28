@@ -45,7 +45,7 @@ class UpdateTeacherProfileUseCase(
                 ?: throw RoleNotFoundException()
         return TeacherProfileResponse.from(
             teacher = updated,
-            state = userRole.state,
+            userRole = userRole,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }

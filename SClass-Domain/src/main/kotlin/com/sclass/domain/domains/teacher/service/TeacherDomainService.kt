@@ -87,8 +87,7 @@ class TeacherDomainService(
         val userRole =
             userRoleAdaptor.findByUserIdAndPlatformAndRole(teacher.user.id, platform, Role.TEACHER)
                 ?: throw RoleNotFoundException()
-        userRole.changeStateTo(UserRoleState.APPROVED)
-        teacher.recordApproval(approvedBy)
+        userRole.approve(approvedBy)
         userRoleAdaptor.save(userRole)
         return teacherAdaptor.save(teacher)
     }
@@ -102,8 +101,7 @@ class TeacherDomainService(
         val userRole =
             userRoleAdaptor.findByUserIdAndPlatformAndRole(teacher.user.id, platform, Role.TEACHER)
                 ?: throw RoleNotFoundException()
-        userRole.changeStateTo(UserRoleState.REJECTED)
-        teacher.recordRejection(reason)
+        userRole.reject(reason)
         userRoleAdaptor.save(userRole)
         return teacherAdaptor.save(teacher)
     }
