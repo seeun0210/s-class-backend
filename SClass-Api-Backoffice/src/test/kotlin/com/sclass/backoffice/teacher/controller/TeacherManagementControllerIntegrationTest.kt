@@ -8,11 +8,7 @@ import com.sclass.common.jwt.JwtTokenProvider
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import com.sclass.domain.domains.user.domain.AuthProvider
-import com.sclass.domain.domains.user.domain.Platform
-import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
-import com.sclass.domain.domains.user.domain.UserRole
-import com.sclass.domain.domains.user.domain.UserRoleState
 import com.sclass.domain.domains.user.repository.UserRepository
 import com.sclass.domain.domains.user.repository.UserRoleRepository
 import org.junit.jupiter.api.BeforeEach
@@ -21,7 +17,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -88,16 +83,6 @@ class TeacherManagementControllerIntegrationTest {
             )
         adminToken = "Bearer ${aesTokenEncryptor.encrypt(jwt)}"
     }
-
-    private fun createTeacherRole(state: UserRoleState): UserRole =
-        userRoleRepository.save(
-            UserRole(
-                userId = teacherUser.id,
-                platform = Platform.SUPPORTERS,
-                role = Role.TEACHER,
-                state = state,
-            ),
-        )
 
     @Nested
     inner class CreateTeacher {
@@ -274,131 +259,6 @@ class TeacherManagementControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isBadRequest)
-        }
-    }
-
-    @Nested
-    inner class UpdateState {
-        @Test
-        fun `APPROVED 요청 시 200을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "APPROVED",
-                    "platform" to "SUPPORTERS",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.success").value(true))
-        }
-
-        @Test
-        fun `REJECTED 요청 시 reason과 함께 200을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "REJECTED",
-                    "platform" to "SUPPORTERS",
-                    "reason" to "서류 미비",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.success").value(true))
-        }
-
-        @Test
-        fun `REJECTED 요청 시 reason이 없으면 400을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "REJECTED",
-                    "platform" to "SUPPORTERS",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("TEACHER_009"))
-        }
-
-        @Test
-        fun `DRAFT 상태는 허용되지 않아 400을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "DRAFT",
-                    "platform" to "SUPPORTERS",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("TEACHER_010"))
-        }
-
-        @Test
-        fun `PENDING 상태는 허용되지 않아 400을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "PENDING",
-                    "platform" to "SUPPORTERS",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("TEACHER_010"))
-        }
-
-        @Test
-        fun `인증 토큰이 없으면 401을 반환한다`() {
-            createTeacherRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "APPROVED",
-                    "platform" to "SUPPORTERS",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isUnauthorized)
         }
     }
 }

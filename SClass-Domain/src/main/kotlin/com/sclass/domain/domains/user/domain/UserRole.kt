@@ -4,12 +4,14 @@ import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.user.exception.InvalidUserRoleStateTransitionException
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -37,7 +39,23 @@ class UserRole(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var state: UserRoleState = UserRoleState.NORMAL,
+
+    @Embedded
+    var stateDetail: UserRoleStateDetail? = null,
 ) : BaseTimeEntity() {
+    fun approve(
+        approvedBy: String,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
+        changeStateTo(UserRoleState.APPROVED)
+        stateDetail = UserRoleStateDetail(approvedAt = now, approvedBy = approvedBy)
+    }
+
+    fun reject(reason: String) {
+        changeStateTo(UserRoleState.REJECTED)
+        stateDetail = UserRoleStateDetail(rejectionReason = reason)
+    }
+
     fun changeStateTo(newState: UserRoleState) {
         if (!VALID_TRANSITIONS[state].orEmpty().contains(newState)) {
             throw InvalidUserRoleStateTransitionException()

@@ -169,15 +169,14 @@ class TeacherDomainServiceTest {
             every { userRoleAdaptor.save(any()) } returns userRole
             every { teacherAdaptor.save(capture(slot)) } answers { slot.captured }
 
-            val result =
-                teacherDomainService.approve(
-                    teacher = teacher,
-                    platform = Platform.SUPPORTERS,
-                    approvedBy = "admin-id",
-                )
+            teacherDomainService.approve(
+                teacher = teacher,
+                platform = Platform.SUPPORTERS,
+                approvedBy = "admin-id",
+            )
 
-            assertEquals("admin-id", result.verification?.approvedBy)
             assertEquals(UserRoleState.APPROVED, userRole.state)
+            assertEquals("admin-id", userRole.stateDetail?.approvedBy)
             verify { userRoleAdaptor.save(userRole) }
         }
 
@@ -215,15 +214,14 @@ class TeacherDomainServiceTest {
             every { userRoleAdaptor.save(any()) } returns userRole
             every { teacherAdaptor.save(capture(slot)) } answers { slot.captured }
 
-            val result =
-                teacherDomainService.reject(
-                    teacher = teacher,
-                    platform = Platform.SUPPORTERS,
-                    reason = "서류 미비",
-                )
+            teacherDomainService.reject(
+                teacher = teacher,
+                platform = Platform.SUPPORTERS,
+                reason = "서류 미비",
+            )
 
-            assertEquals("서류 미비", result.verification?.rejectionReason)
             assertEquals(UserRoleState.REJECTED, userRole.state)
+            assertEquals("서류 미비", userRole.stateDetail?.rejectionReason)
             verify { userRoleAdaptor.save(userRole) }
         }
 

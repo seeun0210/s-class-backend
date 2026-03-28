@@ -6,12 +6,10 @@ import com.sclass.backoffice.student.dto.CreateStudentRequest
 import com.sclass.backoffice.student.dto.CreateStudentResponse
 import com.sclass.backoffice.student.dto.StudentDetailResponse
 import com.sclass.backoffice.student.dto.StudentPageResponse
-import com.sclass.backoffice.student.dto.UpdateStudentStateRequest
 import com.sclass.backoffice.student.usecase.BulkCreateStudentsUseCase
 import com.sclass.backoffice.student.usecase.CreateStudentUseCase
 import com.sclass.backoffice.student.usecase.GetStudentDetailUseCase
 import com.sclass.backoffice.student.usecase.GetStudentsUseCase
-import com.sclass.backoffice.student.usecase.UpdateStudentStateUseCase
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
 import com.sclass.domain.domains.user.domain.Grade
@@ -23,7 +21,6 @@ import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -39,7 +36,6 @@ class StudentManagementController(
     private val bulkCreateStudentsUseCase: BulkCreateStudentsUseCase,
     private val getStudentsUseCase: GetStudentsUseCase,
     private val getStudentDetailUseCase: GetStudentDetailUseCase,
-    private val updateStudentStateUseCase: UpdateStudentStateUseCase,
 ) {
     @PostMapping
     fun createStudent(
@@ -79,17 +75,8 @@ class StudentManagementController(
             ),
         )
 
-    @GetMapping("/{studentId}")
+    @GetMapping("/{userId}")
     fun getStudentDetail(
-        @PathVariable studentId: String,
-    ): ApiResponse<StudentDetailResponse> = ApiResponse.success(getStudentDetailUseCase.execute(studentId))
-
-    @PatchMapping("/{studentId}/state")
-    fun updateState(
-        @PathVariable studentId: String,
-        @Valid @RequestBody request: UpdateStudentStateRequest,
-    ): ApiResponse<Nothing> {
-        updateStudentStateUseCase.execute(studentId, request)
-        return ApiResponse.success()
-    }
+        @PathVariable userId: String,
+    ): ApiResponse<StudentDetailResponse> = ApiResponse.success(getStudentDetailUseCase.execute(userId))
 }

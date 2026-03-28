@@ -92,26 +92,6 @@ class Teacher(
         verification = TeacherVerification(submittedAt = now)
     }
 
-    fun recordApproval(
-        approvedBy: String,
-        now: LocalDateTime = LocalDateTime.now(),
-    ) {
-        verification =
-            TeacherVerification(
-                submittedAt = verification?.submittedAt,
-                approvedAt = now,
-                approvedBy = approvedBy,
-            )
-    }
-
-    fun recordRejection(reason: String) {
-        verification =
-            TeacherVerification(
-                submittedAt = verification?.submittedAt,
-                rejectionReason = reason,
-            )
-    }
-
     private fun validateProfileComplete() {
         if (profile?.birthDate == null ||
             education?.majorCategory == null ||

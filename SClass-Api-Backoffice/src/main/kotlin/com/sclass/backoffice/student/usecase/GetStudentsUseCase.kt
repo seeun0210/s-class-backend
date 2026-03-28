@@ -19,7 +19,7 @@ class GetStudentsUseCase(
     ): StudentPageResponse {
         val page = studentAdaptor.searchStudents(condition, pageable)
         return StudentPageResponse(
-            content = page.content.map { StudentListResponse.from(it.student, it.platform, it.state) },
+            content = page.content.map { StudentListResponse.from(it.student, it.roles) },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,

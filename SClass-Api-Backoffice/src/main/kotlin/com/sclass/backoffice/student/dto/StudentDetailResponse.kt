@@ -16,6 +16,7 @@ import java.time.LocalDateTime
 
 data class StudentDetailResponse(
     val id: String,
+    val userId: String,
     val name: String,
     val email: String,
     val phoneNumber: String?,
@@ -40,6 +41,7 @@ data class StudentDetailResponse(
             val attributionByOrgId = attributions.associateBy { it.organizationId }
             return StudentDetailResponse(
                 id = student.id,
+                userId = student.user.id,
                 name = student.user.name,
                 email = student.user.email,
                 phoneNumber = student.user.phoneNumber,

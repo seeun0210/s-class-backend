@@ -14,11 +14,11 @@ class GetStudentDetailUseCase(
     private val organizationAttributionAdaptor: OrganizationAttributionAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(studentId: String): StudentDetailResponse {
-        val student = studentAdaptor.findByIdWithUser(studentId)
-        val roles = userRoleAdaptor.findAllByUserId(student.user.id)
+    fun execute(userId: String): StudentDetailResponse {
+        val student = studentAdaptor.findByUserIdWithUser(userId)
+        val roles = userRoleAdaptor.findAllByUserId(userId)
         val documents = studentAdaptor.findDocumentsWithFileByStudentId(student.id)
-        val organizations = studentAdaptor.findOrganizationsByUserId(student.user.id)
+        val organizations = studentAdaptor.findOrganizationsByUserId(userId)
         val attribution = organizationAttributionAdaptor.findByStudentIdOrNull(student.id)
         val attributions = listOfNotNull(attribution)
         return StudentDetailResponse.from(student, roles, documents, organizations, attributions)

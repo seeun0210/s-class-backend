@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface UserRoleRepository : JpaRepository<UserRole, String> {
     fun findAllByUserId(userId: String): List<UserRole>
 
+    fun findAllByUserIdIn(userIds: List<String>): List<UserRole>
+
     fun deleteAllByUserId(userId: String)
 
     fun findByUserIdAndPlatformAndRole(

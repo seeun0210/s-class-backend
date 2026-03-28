@@ -5,7 +5,7 @@ import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
-import com.sclass.domain.domains.student.dto.StudentWithPlatform
+import com.sclass.domain.domains.student.dto.StudentWithRoles
 import com.sclass.domain.domains.student.exception.StudentNotFoundException
 import com.sclass.domain.domains.student.repository.StudentRepository
 import org.springframework.data.domain.Page
@@ -30,9 +30,11 @@ class StudentAdaptor(
     fun searchStudents(
         condition: StudentSearchCondition,
         pageable: Pageable,
-    ): Page<StudentWithPlatform> = studentRepository.searchStudents(condition, pageable)
+    ): Page<StudentWithRoles> = studentRepository.searchStudents(condition, pageable)
 
     fun findByIdWithUser(id: String): Student = studentRepository.findByIdWithUser(id) ?: throw StudentNotFoundException()
+
+    fun findByUserIdWithUser(userId: String): Student = studentRepository.findByUserIdWithUser(userId) ?: throw StudentNotFoundException()
 
     fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
         studentRepository.findDocumentsWithFileByStudentId(studentId)

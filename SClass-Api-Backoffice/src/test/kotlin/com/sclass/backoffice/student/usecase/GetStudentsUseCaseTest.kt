@@ -3,10 +3,12 @@ package com.sclass.backoffice.student.usecase
 import com.sclass.domain.domains.student.adaptor.StudentAdaptor
 import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
-import com.sclass.domain.domains.student.dto.StudentWithPlatform
+import com.sclass.domain.domains.student.dto.StudentWithRoles
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.domain.UserRole
 import com.sclass.domain.domains.user.domain.UserRoleState
 import io.mockk.every
 import io.mockk.mockk
@@ -40,15 +42,21 @@ class GetStudentsUseCaseTest {
                     phoneNumber = "010-1234-5678",
                 )
             val student = Student(user = user)
+            val userRole =
+                UserRole(
+                    userId = user.id,
+                    platform = Platform.SUPPORTERS,
+                    role = Role.STUDENT,
+                    state = UserRoleState.NORMAL,
+                )
             val pageable = PageRequest.of(0, 20)
             val condition = StudentSearchCondition(name = "김학생")
             val page =
                 PageImpl(
                     listOf(
-                        StudentWithPlatform(
+                        StudentWithRoles(
                             student = student,
-                            platform = Platform.SUPPORTERS,
-                            state = UserRoleState.NORMAL,
+                            roles = listOf(userRole),
                         ),
                     ),
                     pageable,
@@ -65,8 +73,10 @@ class GetStudentsUseCaseTest {
             assertThat(result.content).hasSize(1)
             assertThat(result.content[0].name).isEqualTo("김학생")
             assertThat(result.content[0].email).isEqualTo("student@example.com")
-            assertThat(result.content[0].platform).isEqualTo(Platform.SUPPORTERS)
-            assertThat(result.content[0].state).isEqualTo(UserRoleState.NORMAL)
+            assertThat(result.content[0].roles).hasSize(1)
+            assertThat(result.content[0].roles[0].platform).isEqualTo(Platform.SUPPORTERS)
+            assertThat(result.content[0].roles[0].state).isEqualTo(UserRoleState.NORMAL)
+            assertThat(result.content[0].roles[0].userRoleId).isEqualTo(userRole.id)
 
             verify(exactly = 1) { studentAdaptor.searchStudents(condition, pageable) }
         }
@@ -75,7 +85,7 @@ class GetStudentsUseCaseTest {
         fun `결과가 없으면 빈 목록을 반환한다`() {
             val pageable = PageRequest.of(0, 20)
             val condition = StudentSearchCondition()
-            val page = PageImpl<StudentWithPlatform>(emptyList(), pageable, 0L)
+            val page = PageImpl<StudentWithRoles>(emptyList(), pageable, 0L)
 
             every { studentAdaptor.searchStudents(condition, pageable) } returns page
 

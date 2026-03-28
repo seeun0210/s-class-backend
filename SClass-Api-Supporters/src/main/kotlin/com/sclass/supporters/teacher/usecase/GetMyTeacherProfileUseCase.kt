@@ -26,7 +26,7 @@ class GetMyTeacherProfileUseCase(
                 ?: throw RoleNotFoundException()
         return TeacherProfileResponse.from(
             teacher = teacher,
-            state = userRole.state,
+            userRole = userRole,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }

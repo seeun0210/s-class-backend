@@ -19,6 +19,7 @@ import java.time.LocalDateTime
 
 data class TeacherDetailResponse(
     val id: String,
+    val userId: String,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
     val user: TeacherUserInfo,
@@ -39,6 +40,7 @@ data class TeacherDetailResponse(
             organizations: List<OrganizationUser>,
         ) = TeacherDetailResponse(
             id = teacher.id,
+            userId = teacher.user.id,
             createdAt = teacher.createdAt,
             updatedAt = teacher.updatedAt,
             user = TeacherUserInfo.from(teacher.user),

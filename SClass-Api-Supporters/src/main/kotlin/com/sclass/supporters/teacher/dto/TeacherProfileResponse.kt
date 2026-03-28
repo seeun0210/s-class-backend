@@ -2,6 +2,7 @@ package com.sclass.supporters.teacher.dto
 
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.Teacher
+import com.sclass.domain.domains.user.domain.UserRole
 import com.sclass.domain.domains.user.domain.UserRoleState
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -26,7 +27,7 @@ data class TeacherProfileResponse(
     companion object {
         fun from(
             teacher: Teacher,
-            state: UserRoleState,
+            userRole: UserRole,
             documents: List<TeacherDocumentResponse>,
         ): TeacherProfileResponse =
             TeacherProfileResponse(
@@ -41,9 +42,9 @@ data class TeacherProfileResponse(
                 highSchool = teacher.education?.highSchool,
                 address = teacher.personalInfo?.address,
                 residentNumber = teacher.personalInfo?.residentNumber,
-                state = state,
+                state = userRole.state,
                 submittedAt = teacher.verification?.submittedAt,
-                rejectionReason = teacher.verification?.rejectionReason,
+                rejectionReason = userRole.stateDetail?.rejectionReason,
                 documents = documents,
             )
     }
