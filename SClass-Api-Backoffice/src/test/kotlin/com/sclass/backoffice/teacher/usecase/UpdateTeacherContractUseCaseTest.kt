@@ -3,6 +3,7 @@ package com.sclass.backoffice.teacher.usecase
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.domain.TeacherContract
+import com.sclass.domain.domains.teacher.exception.TeacherContractDateInvalidException
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
@@ -14,8 +15,8 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class UpdateTeacherContractUseCaseTest {
     private lateinit var teacherAdaptor: TeacherAdaptor
@@ -35,7 +36,7 @@ class UpdateTeacherContractUseCaseTest {
             val teacher = Teacher(user = user)
             val contract =
                 TeacherContract(
-                    policeCheckAt = LocalDateTime.of(2025, 3, 1, 10, 0),
+                    policeCheckAt = LocalDate.of(2025, 3, 1),
                     contractStartDate = LocalDate.of(2025, 4, 1),
                     contractEndDate = LocalDate.of(2026, 3, 31),
                 )
@@ -45,10 +46,11 @@ class UpdateTeacherContractUseCaseTest {
 
             useCase.execute(user.id, contract)
 
-            assertThat(teacher.contract).isEqualTo(contract)
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDateTime.of(2025, 3, 1, 10, 0))
-            assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
-            assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31))
+            assertAll(
+                { assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1)) },
+                { assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1)) },
+                { assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31)) },
+            )
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
 
@@ -57,7 +59,7 @@ class UpdateTeacherContractUseCaseTest {
             val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
             val existingContract =
                 TeacherContract(
-                    policeCheckAt = LocalDateTime.of(2025, 3, 1, 10, 0),
+                    policeCheckAt = LocalDate.of(2025, 3, 1),
                     contractStartDate = LocalDate.of(2025, 4, 1),
                     contractEndDate = LocalDate.of(2026, 3, 31),
                 )
@@ -69,14 +71,48 @@ class UpdateTeacherContractUseCaseTest {
 
             useCase.execute(user.id, partialUpdate)
 
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDateTime.of(2025, 3, 1, 10, 0))
-            assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
-            assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31))
+            assertAll(
+                { assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1)) },
+                { assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1)) },
+                { assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31)) },
+            )
         }
     }
 
     @Nested
     inner class Failure {
+        @Test
+        fun `계약 시작일이 종료일보다 이후이면 TeacherContractDateInvalidException을 던진다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val teacher = Teacher(user = user)
+            val contract =
+                TeacherContract(
+                    contractStartDate = LocalDate.of(2026, 4, 1),
+                    contractEndDate = LocalDate.of(2025, 3, 31),
+                )
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+
+            assertThatThrownBy { useCase.execute(user.id, contract) }
+                .isInstanceOf(TeacherContractDateInvalidException::class.java)
+        }
+
+        @Test
+        fun `계약 시작일과 종료일이 같으면 TeacherContractDateInvalidException을 던진다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val teacher = Teacher(user = user)
+            val contract =
+                TeacherContract(
+                    contractStartDate = LocalDate.of(2025, 4, 1),
+                    contractEndDate = LocalDate.of(2025, 4, 1),
+                )
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+
+            assertThatThrownBy { useCase.execute(user.id, contract) }
+                .isInstanceOf(TeacherContractDateInvalidException::class.java)
+        }
+
         @Test
         fun `존재하지 않는 유저이면 TeacherNotFoundException을 던진다`() {
             val contract = TeacherContract(contractStartDate = LocalDate.of(2025, 4, 1))
