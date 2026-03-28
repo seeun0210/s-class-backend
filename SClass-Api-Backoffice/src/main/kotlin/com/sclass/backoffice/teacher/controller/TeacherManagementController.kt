@@ -5,15 +5,19 @@ import com.sclass.backoffice.teacher.dto.BulkCreateTeachersResponse
 import com.sclass.backoffice.teacher.dto.CreateTeacherRequest
 import com.sclass.backoffice.teacher.dto.CreateTeacherResponse
 import com.sclass.backoffice.teacher.dto.TeacherDetailResponse
+import com.sclass.backoffice.teacher.dto.TeacherDocumentResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
+import com.sclass.backoffice.teacher.dto.UploadTeacherDocumentRequest
 import com.sclass.backoffice.teacher.usecase.BulkCreateTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.CreateTeacherUseCase
+import com.sclass.backoffice.teacher.usecase.DeleteTeacherDocumentUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeacherDetailUseCase
 import com.sclass.backoffice.teacher.usecase.GetTeachersUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherContractUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherEducationUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherPersonalInfoUseCase
 import com.sclass.backoffice.teacher.usecase.UpdateTeacherProfileUseCase
+import com.sclass.backoffice.teacher.usecase.UploadTeacherDocumentUseCase
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import com.sclass.domain.domains.teacher.domain.TeacherContract
@@ -28,6 +32,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -49,6 +54,8 @@ class TeacherManagementController(
     private val updateTeacherEducationUseCase: UpdateTeacherEducationUseCase,
     private val updateTeacherPersonalInfoUseCase: UpdateTeacherPersonalInfoUseCase,
     private val updateTeacherProfileUseCase: UpdateTeacherProfileUseCase,
+    private val uploadTeacherDocumentUseCase: UploadTeacherDocumentUseCase,
+    private val deleteTeacherDocumentUseCase: DeleteTeacherDocumentUseCase,
 ) {
     @PostMapping
     fun createTeacher(
@@ -133,5 +140,20 @@ class TeacherManagementController(
     ): ApiResponse<Nothing> {
         updateTeacherContractUseCase.execute(userId, request)
         return ApiResponse.success()
+    }
+
+    @PostMapping("/{userId}/documents")
+    fun uploadTeacherDocument(
+        @PathVariable userId: String,
+        @Valid @RequestBody request: UploadTeacherDocumentRequest,
+    ): ApiResponse<TeacherDocumentResponse> = ApiResponse.success(uploadTeacherDocumentUseCase.execute(userId, request))
+
+    @DeleteMapping("/{userId}/documents/{documentId}")
+    fun deleteTeacherDocument(
+        @PathVariable userId: String,
+        @PathVariable documentId: String,
+    ): ApiResponse<Unit> {
+        deleteTeacherDocumentUseCase.execute(userId, documentId)
+        return ApiResponse.success(Unit)
     }
 }

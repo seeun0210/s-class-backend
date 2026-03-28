@@ -5,13 +5,17 @@ import com.sclass.backoffice.student.dto.BulkCreateStudentsResponse
 import com.sclass.backoffice.student.dto.CreateStudentRequest
 import com.sclass.backoffice.student.dto.CreateStudentResponse
 import com.sclass.backoffice.student.dto.StudentDetailResponse
+import com.sclass.backoffice.student.dto.StudentDocumentResponse
 import com.sclass.backoffice.student.dto.StudentPageResponse
 import com.sclass.backoffice.student.dto.UpdateStudentProfileRequest
+import com.sclass.backoffice.student.dto.UploadStudentDocumentRequest
 import com.sclass.backoffice.student.usecase.BulkCreateStudentsUseCase
 import com.sclass.backoffice.student.usecase.CreateStudentUseCase
+import com.sclass.backoffice.student.usecase.DeleteStudentDocumentUseCase
 import com.sclass.backoffice.student.usecase.GetStudentDetailUseCase
 import com.sclass.backoffice.student.usecase.GetStudentsUseCase
 import com.sclass.backoffice.student.usecase.UpdateStudentProfileUseCase
+import com.sclass.backoffice.student.usecase.UploadStudentDocumentUseCase
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
 import com.sclass.domain.domains.user.domain.Grade
@@ -22,6 +26,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -40,6 +45,8 @@ class StudentManagementController(
     private val getStudentsUseCase: GetStudentsUseCase,
     private val getStudentDetailUseCase: GetStudentDetailUseCase,
     private val updateStudentProfileUseCase: UpdateStudentProfileUseCase,
+    private val uploadStudentDocumentUseCase: UploadStudentDocumentUseCase,
+    private val deleteStudentDocumentUseCase: DeleteStudentDocumentUseCase,
 ) {
     @PostMapping
     fun createStudent(
@@ -91,5 +98,20 @@ class StudentManagementController(
     ): ApiResponse<Nothing> {
         updateStudentProfileUseCase.execute(userId, request)
         return ApiResponse.success()
+    }
+
+    @PostMapping("/{userId}/documents")
+    fun uploadStudentDocument(
+        @PathVariable userId: String,
+        @Valid @RequestBody request: UploadStudentDocumentRequest,
+    ): ApiResponse<StudentDocumentResponse> = ApiResponse.success(uploadStudentDocumentUseCase.execute(userId, request))
+
+    @DeleteMapping("/{userId}/documents/{documentId}")
+    fun deleteStudentDocument(
+        @PathVariable userId: String,
+        @PathVariable documentId: String,
+    ): ApiResponse<Unit> {
+        deleteStudentDocumentUseCase.execute(userId, documentId)
+        return ApiResponse.success(Unit)
     }
 }
