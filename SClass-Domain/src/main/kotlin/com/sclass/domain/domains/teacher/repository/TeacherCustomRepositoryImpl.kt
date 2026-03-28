@@ -109,6 +109,14 @@ class TeacherCustomRepositoryImpl(
             .where(teacher.id.eq(id))
             .fetchOne()
 
+    override fun findByUserIdWithUser(userId: String): Teacher? =
+        queryFactory
+            .selectFrom(teacher)
+            .join(teacher.user, user)
+            .fetchJoin()
+            .where(user.id.eq(userId))
+            .fetchOne()
+
     override fun findByDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument> =
         queryFactory
             .selectFrom(teacherDocument)

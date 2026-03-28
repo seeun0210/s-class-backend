@@ -78,12 +78,12 @@ class GetTeacherDetailUseCaseTest {
             val organization = Organization(id = 1L, name = "테스트 학원", domain = "test.sclass.com", logoUrl = "https://example.com/logo.png")
             val organizations = listOf(OrganizationUser(user = user, organization = organization))
 
-            every { teacherAdaptor.findByIdWithUser(teacher.id) } returns teacher
+            every { teacherAdaptor.findByUserIdWithUser(user.id) } returns teacher
             every { userRoleAdaptor.findAllByUserId(user.id) } returns roles
             every { teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id) } returns documents
             every { teacherAdaptor.findOrganizationsByUserId(user.id) } returns organizations
 
-            val response = useCase.execute(teacher.id)
+            val response = useCase.execute(user.id)
 
             assertThat(response.id).isEqualTo(teacher.id)
             assertThat(response.user.name).isEqualTo("홍길동")
@@ -114,12 +114,12 @@ class GetTeacherDetailUseCaseTest {
                 )
             val teacher = Teacher(user = user)
 
-            every { teacherAdaptor.findByIdWithUser(teacher.id) } returns teacher
+            every { teacherAdaptor.findByUserIdWithUser(user.id) } returns teacher
             every { userRoleAdaptor.findAllByUserId(user.id) } returns emptyList()
             every { teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id) } returns emptyList()
             every { teacherAdaptor.findOrganizationsByUserId(user.id) } returns emptyList()
 
-            val response = useCase.execute(teacher.id)
+            val response = useCase.execute(user.id)
 
             assertThat(response.id).isEqualTo(teacher.id)
             assertThat(response.roles).isEmpty()
@@ -131,8 +131,8 @@ class GetTeacherDetailUseCaseTest {
     @Nested
     inner class TeacherNotFound {
         @Test
-        fun `존재하지 않는 teacherId이면 TeacherNotFoundException이 발생한다`() {
-            every { teacherAdaptor.findByIdWithUser("unknown-id") } throws TeacherNotFoundException()
+        fun `존재하지 않는 userId이면 TeacherNotFoundException이 발생한다`() {
+            every { teacherAdaptor.findByUserIdWithUser("unknown-id") } throws TeacherNotFoundException()
 
             assertThatThrownBy { useCase.execute("unknown-id") }
                 .isInstanceOf(TeacherNotFoundException::class.java)

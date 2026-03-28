@@ -8,6 +8,7 @@ import java.time.LocalDateTime
 
 data class TeacherListResponse(
     val id: String,
+    val userId: String,
     val name: String,
     val email: String,
     val platform: Platform,
@@ -26,6 +27,7 @@ data class TeacherListResponse(
         ): TeacherListResponse =
             TeacherListResponse(
                 id = teacher.id,
+                userId = teacher.user.id,
                 name = teacher.user.name,
                 email = teacher.user.email,
                 platform = platform,

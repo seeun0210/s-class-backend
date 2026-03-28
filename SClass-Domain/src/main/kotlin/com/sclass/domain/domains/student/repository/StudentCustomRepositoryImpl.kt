@@ -104,6 +104,14 @@ class StudentCustomRepositoryImpl(
             .where(student.id.eq(id))
             .fetchOne()
 
+    override fun findByUserIdWithUser(userId: String): Student? =
+        queryFactory
+            .selectFrom(student)
+            .join(student.user, user)
+            .fetchJoin()
+            .where(user.id.eq(userId))
+            .fetchOne()
+
     override fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
         queryFactory
             .selectFrom(studentDocument)

@@ -68,13 +68,13 @@ class GetStudentDetailUseCaseTest {
                     source = AttributionSource.INVITE_CODE,
                 )
 
-            every { studentAdaptor.findByIdWithUser(student.id) } returns student
+            every { studentAdaptor.findByUserIdWithUser(user.id) } returns student
             every { userRoleAdaptor.findAllByUserId(user.id) } returns roles
             every { studentAdaptor.findDocumentsWithFileByStudentId(student.id) } returns emptyList()
             every { studentAdaptor.findOrganizationsByUserId(user.id) } returns organizations
             every { organizationAttributionAdaptor.findByStudentIdOrNull(student.id) } returns attribution
 
-            val response = useCase.execute(student.id)
+            val response = useCase.execute(user.id)
 
             assertThat(response.id).isEqualTo(student.id)
             assertThat(response.name).isEqualTo("김학생")
@@ -101,13 +101,13 @@ class GetStudentDetailUseCaseTest {
                 )
             val student = Student(user = user)
 
-            every { studentAdaptor.findByIdWithUser(student.id) } returns student
+            every { studentAdaptor.findByUserIdWithUser(user.id) } returns student
             every { userRoleAdaptor.findAllByUserId(user.id) } returns emptyList()
             every { studentAdaptor.findDocumentsWithFileByStudentId(student.id) } returns emptyList()
             every { studentAdaptor.findOrganizationsByUserId(user.id) } returns emptyList()
             every { organizationAttributionAdaptor.findByStudentIdOrNull(student.id) } returns null
 
-            val response = useCase.execute(student.id)
+            val response = useCase.execute(user.id)
 
             assertThat(response.id).isEqualTo(student.id)
             assertThat(response.roles).isEmpty()
@@ -119,8 +119,8 @@ class GetStudentDetailUseCaseTest {
     @Nested
     inner class StudentNotFound {
         @Test
-        fun `존재하지 않는 studentId이면 StudentNotFoundException이 발생한다`() {
-            every { studentAdaptor.findByIdWithUser("unknown-id") } throws StudentNotFoundException()
+        fun `존재하지 않는 userId이면 StudentNotFoundException이 발생한다`() {
+            every { studentAdaptor.findByUserIdWithUser("unknown-id") } throws StudentNotFoundException()
 
             assertThatThrownBy { useCase.execute("unknown-id") }
                 .isInstanceOf(StudentNotFoundException::class.java)

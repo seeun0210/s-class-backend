@@ -34,6 +34,8 @@ class StudentAdaptor(
 
     fun findByIdWithUser(id: String): Student = studentRepository.findByIdWithUser(id) ?: throw StudentNotFoundException()
 
+    fun findByUserIdWithUser(userId: String): Student = studentRepository.findByUserIdWithUser(userId) ?: throw StudentNotFoundException()
+
     fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
         studentRepository.findDocumentsWithFileByStudentId(studentId)
 

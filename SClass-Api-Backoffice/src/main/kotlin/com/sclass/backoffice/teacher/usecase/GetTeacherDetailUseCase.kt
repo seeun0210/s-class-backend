@@ -12,11 +12,11 @@ class GetTeacherDetailUseCase(
     private val userRoleAdaptor: UserRoleAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(teacherId: String): TeacherDetailResponse {
-        val teacher = teacherAdaptor.findByIdWithUser(teacherId)
-        val roles = userRoleAdaptor.findAllByUserId(teacher.user.id)
+    fun execute(userId: String): TeacherDetailResponse {
+        val teacher = teacherAdaptor.findByUserIdWithUser(userId)
+        val roles = userRoleAdaptor.findAllByUserId(userId)
         val documents = teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id)
-        val organizations = teacherAdaptor.findOrganizationsByUserId(teacher.user.id)
+        val organizations = teacherAdaptor.findOrganizationsByUserId(userId)
         return TeacherDetailResponse.from(teacher, roles, documents, organizations)
     }
 }

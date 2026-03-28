@@ -24,7 +24,7 @@ class UpdateStudentStateUseCaseTest {
     private lateinit var userRoleAdaptor: UserRoleAdaptor
     private lateinit var useCase: UpdateStudentStateUseCase
 
-    private val studentId = "student-id"
+    private val userId = "user-id"
 
     @BeforeEach
     fun setUp() {
@@ -47,9 +47,9 @@ class UpdateStudentStateUseCaseTest {
                     state = UserRoleState.NORMAL,
                 )
 
-            every { studentAdaptor.findById(studentId) } returns student
+            every { studentAdaptor.findByUserId(userId) } returns student
             every {
-                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
+                userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, Platform.SUPPORTERS, Role.STUDENT)
             } returns userRole
 
             val request =
@@ -58,7 +58,7 @@ class UpdateStudentStateUseCaseTest {
                     platform = Platform.SUPPORTERS,
                 )
 
-            useCase.execute(studentId, request)
+            useCase.execute(userId, request)
 
             assertThat(userRole.state).isEqualTo(UserRoleState.REJECTED)
         }
@@ -68,7 +68,7 @@ class UpdateStudentStateUseCaseTest {
     inner class StudentNotFound {
         @Test
         fun `학생이 존재하지 않으면 StudentNotFoundException이 발생한다`() {
-            every { studentAdaptor.findById(studentId) } throws StudentNotFoundException()
+            every { studentAdaptor.findByUserId(userId) } throws StudentNotFoundException()
 
             val request =
                 UpdateStudentStateRequest(
@@ -76,7 +76,7 @@ class UpdateStudentStateUseCaseTest {
                     platform = Platform.SUPPORTERS,
                 )
 
-            assertThatThrownBy { useCase.execute(studentId, request) }
+            assertThatThrownBy { useCase.execute(userId, request) }
                 .isInstanceOf(StudentNotFoundException::class.java)
         }
     }
@@ -88,9 +88,9 @@ class UpdateStudentStateUseCaseTest {
             val user = mockk<User> { every { id } returns "user-id" }
             val student = mockk<Student> { every { this@mockk.user } returns user }
 
-            every { studentAdaptor.findById(studentId) } returns student
+            every { studentAdaptor.findByUserId(userId) } returns student
             every {
-                userRoleAdaptor.findByUserIdAndPlatformAndRole("user-id", Platform.SUPPORTERS, Role.STUDENT)
+                userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, Platform.SUPPORTERS, Role.STUDENT)
             } returns null
 
             val request =
@@ -99,7 +99,7 @@ class UpdateStudentStateUseCaseTest {
                     platform = Platform.SUPPORTERS,
                 )
 
-            assertThatThrownBy { useCase.execute(studentId, request) }
+            assertThatThrownBy { useCase.execute(userId, request) }
                 .isInstanceOf(RoleNotFoundException::class.java)
         }
     }

@@ -13,11 +13,11 @@ class UpdateTeacherStateUseCase(
 ) {
     @Transactional
     fun execute(
-        teacherId: String,
+        targetUserId: String,
         request: UpdateTeacherStateRequest,
         userId: String,
     ) {
-        val teacher = teacherAdaptor.findById(teacherId)
+        val teacher = teacherAdaptor.findByUserId(targetUserId)
         if (request.isApproved) {
             teacherDomainService.approve(teacher, request.platform, userId)
         } else {

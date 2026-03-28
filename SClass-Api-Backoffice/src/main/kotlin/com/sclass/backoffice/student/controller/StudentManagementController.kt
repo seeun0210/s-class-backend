@@ -79,17 +79,17 @@ class StudentManagementController(
             ),
         )
 
-    @GetMapping("/{studentId}")
+    @GetMapping("/{userId}")
     fun getStudentDetail(
-        @PathVariable studentId: String,
-    ): ApiResponse<StudentDetailResponse> = ApiResponse.success(getStudentDetailUseCase.execute(studentId))
+        @PathVariable userId: String,
+    ): ApiResponse<StudentDetailResponse> = ApiResponse.success(getStudentDetailUseCase.execute(userId))
 
-    @PatchMapping("/{studentId}/state")
+    @PatchMapping("/{userId}/state")
     fun updateState(
-        @PathVariable studentId: String,
+        @PathVariable userId: String,
         @Valid @RequestBody request: UpdateStudentStateRequest,
     ): ApiResponse<Nothing> {
-        updateStudentStateUseCase.execute(studentId, request)
+        updateStudentStateUseCase.execute(userId, request)
         return ApiResponse.success()
     }
 }

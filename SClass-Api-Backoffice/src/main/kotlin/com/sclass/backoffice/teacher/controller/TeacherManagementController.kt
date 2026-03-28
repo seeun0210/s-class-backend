@@ -86,18 +86,18 @@ class TeacherManagementController(
             ),
         )
 
-    @GetMapping("/{teacherId}")
+    @GetMapping("/{userId}")
     fun getTeacherDetail(
-        @PathVariable teacherId: String,
-    ): ApiResponse<TeacherDetailResponse> = ApiResponse.success(getTeacherDetailUseCase.execute(teacherId))
+        @PathVariable userId: String,
+    ): ApiResponse<TeacherDetailResponse> = ApiResponse.success(getTeacherDetailUseCase.execute(userId))
 
-    @PatchMapping("/{teacherId}/state")
+    @PatchMapping("/{targetUserId}/state")
     fun updateState(
-        @PathVariable teacherId: String,
+        @PathVariable targetUserId: String,
         @RequestBody request: UpdateTeacherStateRequest,
         @CurrentUserId userId: String,
     ): ApiResponse<Nothing> {
-        updateTeacherStateUseCase.execute(teacherId, request, userId)
+        updateTeacherStateUseCase.execute(targetUserId, request, userId)
         return ApiResponse.success()
     }
 }

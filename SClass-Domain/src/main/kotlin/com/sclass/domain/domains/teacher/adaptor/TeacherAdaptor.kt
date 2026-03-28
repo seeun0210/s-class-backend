@@ -34,6 +34,8 @@ class TeacherAdaptor(
 
     fun findByIdWithUser(id: String): Teacher = teacherRepository.findByIdWithUser(id) ?: throw TeacherNotFoundException()
 
+    fun findByUserIdWithUser(userId: String): Teacher = teacherRepository.findByUserIdWithUser(userId) ?: throw TeacherNotFoundException()
+
     fun findDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument> =
         teacherRepository.findByDocumentsWithFileByTeacherId(teacherId)
 

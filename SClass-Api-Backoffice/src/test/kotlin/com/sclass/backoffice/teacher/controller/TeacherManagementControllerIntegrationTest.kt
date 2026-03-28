@@ -291,7 +291,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -312,7 +312,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -332,7 +332,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -353,7 +353,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -374,7 +374,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -395,7 +395,7 @@ class TeacherManagementControllerIntegrationTest {
 
             mockMvc
                 .perform(
-                    patch("/api/v1/teachers/${teacher.id}/state")
+                    patch("/api/v1/teachers/${teacherUser.id}/state")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isUnauthorized)

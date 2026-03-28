@@ -16,6 +16,8 @@ interface StudentCustomRepository {
 
     fun findByIdWithUser(id: String): Student?
 
+    fun findByUserIdWithUser(userId: String): Student?
+
     fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument>
 
     fun findOrganizationsByUserId(userId: String): List<OrganizationUser>

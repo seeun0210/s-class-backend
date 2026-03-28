@@ -18,7 +18,7 @@ class UpdateTeacherStateUseCaseTest {
     private lateinit var teacherDomainService: TeacherDomainService
     private lateinit var useCase: UpdateTeacherStateUseCase
 
-    private val teacherId = "teacher-id"
+    private val targetUserId = "target-user-id"
     private val userId = "admin-user-id"
 
     @BeforeEach
@@ -33,7 +33,7 @@ class UpdateTeacherStateUseCaseTest {
         @Test
         fun `APPROVED 요청 시 teacherDomainService의 approve를 호출한다`() {
             val teacher = mockk<Teacher>()
-            every { teacherAdaptor.findById(teacherId) } returns teacher
+            every { teacherAdaptor.findByUserId(targetUserId) } returns teacher
 
             val request =
                 UpdateTeacherStateRequest(
@@ -41,7 +41,7 @@ class UpdateTeacherStateUseCaseTest {
                     platform = Platform.SUPPORTERS,
                 )
 
-            useCase.execute(teacherId, request, userId)
+            useCase.execute(targetUserId, request, userId)
 
             verify { teacherDomainService.approve(teacher, Platform.SUPPORTERS, userId) }
         }
@@ -52,7 +52,7 @@ class UpdateTeacherStateUseCaseTest {
         @Test
         fun `REJECTED 요청 시 teacherDomainService의 reject를 호출한다`() {
             val teacher = mockk<Teacher>()
-            every { teacherAdaptor.findById(teacherId) } returns teacher
+            every { teacherAdaptor.findByUserId(targetUserId) } returns teacher
 
             val request =
                 UpdateTeacherStateRequest(
@@ -61,7 +61,7 @@ class UpdateTeacherStateUseCaseTest {
                     reason = "서류 미비",
                 )
 
-            useCase.execute(teacherId, request, userId)
+            useCase.execute(targetUserId, request, userId)
 
             verify { teacherDomainService.reject(teacher, Platform.SUPPORTERS, "서류 미비") }
         }

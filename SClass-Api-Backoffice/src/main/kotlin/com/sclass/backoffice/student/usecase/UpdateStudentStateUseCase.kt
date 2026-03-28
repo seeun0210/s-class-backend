@@ -15,13 +15,13 @@ class UpdateStudentStateUseCase(
 ) {
     @Transactional
     fun execute(
-        studentId: String,
+        userId: String,
         request: UpdateStudentStateRequest,
     ) {
-        val student = studentAdaptor.findById(studentId)
+        val student = studentAdaptor.findByUserId(userId)
         val userRole =
             userRoleAdaptor.findByUserIdAndPlatformAndRole(
-                userId = student.user.id,
+                userId = userId,
                 platform = request.platform,
                 role = Role.STUDENT,
             ) ?: throw RoleNotFoundException()
