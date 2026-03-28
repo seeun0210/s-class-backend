@@ -49,6 +49,22 @@ class UpdateStudentProfileUseCaseTest {
             assertThat(student.parentPhoneNumber).isEqualTo("010-9876-5432")
             verify(exactly = 1) { studentAdaptor.save(student) }
         }
+
+        @Test
+        fun `일부 필드만 보내면 나머지 기존 값이 유지된다`() {
+            val user = User(email = "student@example.com", name = "김학생", authProvider = AuthProvider.EMAIL)
+            val student = Student(user = user, grade = Grade.MIDDLE_3, school = "기존학교", parentPhoneNumber = "010-1111-2222")
+            val request = UpdateStudentProfileRequest(grade = Grade.HIGH_1, school = null, parentPhoneNumber = null)
+
+            every { studentAdaptor.findByUserId(user.id) } returns student
+            every { studentAdaptor.save(student) } returns student
+
+            useCase.execute(user.id, request)
+
+            assertThat(student.grade).isEqualTo(Grade.HIGH_1)
+            assertThat(student.school).isEqualTo("기존학교")
+            assertThat(student.parentPhoneNumber).isEqualTo("010-1111-2222")
+        }
     }
 
     @Nested

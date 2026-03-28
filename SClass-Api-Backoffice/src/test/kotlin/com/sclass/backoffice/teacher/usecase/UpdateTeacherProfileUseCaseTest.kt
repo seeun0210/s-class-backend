@@ -44,6 +44,22 @@ class UpdateTeacherProfileUseCaseTest {
             assertThat(teacher.profile?.selfIntroduction).isEqualTo("안녕하세요")
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
+
+        @Test
+        fun `일부 필드만 보내면 나머지 기존 값이 유지된다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val existingProfile = TeacherProfile(birthDate = LocalDate.of(1990, 1, 1), selfIntroduction = "기존 소개")
+            val teacher = Teacher(user = user, profile = existingProfile)
+            val partialUpdate = TeacherProfile(selfIntroduction = "새 소개")
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+            every { teacherAdaptor.save(teacher) } returns teacher
+
+            useCase.execute(user.id, partialUpdate)
+
+            assertThat(teacher.profile?.birthDate).isEqualTo(LocalDate.of(1990, 1, 1))
+            assertThat(teacher.profile?.selfIntroduction).isEqualTo("새 소개")
+        }
     }
 
     @Nested

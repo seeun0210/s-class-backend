@@ -15,7 +15,13 @@ class UpdateTeacherPersonalInfoUseCase(
         personalInfo: TeacherPersonalInfo,
     ) {
         val teacher = teacherAdaptor.findByUserId(userId)
-        teacher.updatePersonalInfo(personalInfo)
+        val updatedPersonalInfo =
+            (teacher.personalInfo ?: TeacherPersonalInfo()).copy(
+                address = personalInfo.address ?: teacher.personalInfo?.address,
+                residentNumber = personalInfo.residentNumber ?: teacher.personalInfo?.residentNumber,
+                bankAccount = personalInfo.bankAccount ?: teacher.personalInfo?.bankAccount,
+            )
+        teacher.updatePersonalInfo(updatedPersonalInfo)
         teacherAdaptor.save(teacher)
     }
 }

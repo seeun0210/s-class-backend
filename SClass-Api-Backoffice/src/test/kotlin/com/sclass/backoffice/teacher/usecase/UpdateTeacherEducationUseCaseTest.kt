@@ -52,6 +52,30 @@ class UpdateTeacherEducationUseCaseTest {
             assertThat(teacher.education?.highSchool).isEqualTo("한영외고")
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
+
+        @Test
+        fun `일부 필드만 보내면 나머지 기존 값이 유지된다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val existingEducation =
+                TeacherEducation(
+                    majorCategory = MajorCategory.ENGINEERING,
+                    university = "서울대학교",
+                    major = "컴퓨터공학",
+                    highSchool = "한영외고",
+                )
+            val teacher = Teacher(user = user, education = existingEducation)
+            val partialUpdate = TeacherEducation(university = "연세대학교")
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+            every { teacherAdaptor.save(teacher) } returns teacher
+
+            useCase.execute(user.id, partialUpdate)
+
+            assertThat(teacher.education?.majorCategory).isEqualTo(MajorCategory.ENGINEERING)
+            assertThat(teacher.education?.university).isEqualTo("연세대학교")
+            assertThat(teacher.education?.major).isEqualTo("컴퓨터공학")
+            assertThat(teacher.education?.highSchool).isEqualTo("한영외고")
+        }
     }
 
     @Nested

@@ -49,6 +49,28 @@ class UpdateTeacherPersonalInfoUseCaseTest {
             assertThat(teacher.personalInfo?.bankAccount).isEqualTo("국민은행 123-456-789")
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
+
+        @Test
+        fun `일부 필드만 보내면 나머지 기존 값이 유지된다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val existingInfo =
+                TeacherPersonalInfo(
+                    address = "서울시 강남구",
+                    residentNumber = "900101-1234567",
+                    bankAccount = "국민은행 123-456-789",
+                )
+            val teacher = Teacher(user = user, personalInfo = existingInfo)
+            val partialUpdate = TeacherPersonalInfo(bankAccount = "신한은행 987-654-321")
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+            every { teacherAdaptor.save(teacher) } returns teacher
+
+            useCase.execute(user.id, partialUpdate)
+
+            assertThat(teacher.personalInfo?.address).isEqualTo("서울시 강남구")
+            assertThat(teacher.personalInfo?.residentNumber).isEqualTo("900101-1234567")
+            assertThat(teacher.personalInfo?.bankAccount).isEqualTo("신한은행 987-654-321")
+        }
     }
 
     @Nested

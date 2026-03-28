@@ -15,9 +15,9 @@ class UpdateStudentProfileUseCase(
         request: UpdateStudentProfileRequest,
     ) {
         val student = studentAdaptor.findByUserId(userId)
-        student.grade = request.grade
-        student.school = request.school
-        student.parentPhoneNumber = request.parentPhoneNumber
+        student.grade = request.grade ?: student.grade
+        student.school = request.school ?: student.school
+        student.parentPhoneNumber = request.parentPhoneNumber ?: student.parentPhoneNumber
         studentAdaptor.save(student)
     }
 }

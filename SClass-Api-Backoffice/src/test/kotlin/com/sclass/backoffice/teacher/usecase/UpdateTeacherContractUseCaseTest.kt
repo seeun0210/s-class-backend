@@ -51,6 +51,28 @@ class UpdateTeacherContractUseCaseTest {
             assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31))
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
+
+        @Test
+        fun `일부 필드만 보내면 나머지 기존 값이 유지된다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val existingContract =
+                TeacherContract(
+                    policeCheckAt = LocalDateTime.of(2025, 3, 1, 10, 0),
+                    contractStartDate = LocalDate.of(2025, 4, 1),
+                    contractEndDate = LocalDate.of(2026, 3, 31),
+                )
+            val teacher = Teacher(user = user, contract = existingContract)
+            val partialUpdate = TeacherContract(contractEndDate = LocalDate.of(2027, 3, 31))
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+            every { teacherAdaptor.save(teacher) } returns teacher
+
+            useCase.execute(user.id, partialUpdate)
+
+            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDateTime.of(2025, 3, 1, 10, 0))
+            assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
+            assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31))
+        }
     }
 
     @Nested

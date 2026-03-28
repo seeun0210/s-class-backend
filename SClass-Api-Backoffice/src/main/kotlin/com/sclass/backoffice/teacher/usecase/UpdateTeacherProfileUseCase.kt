@@ -15,7 +15,12 @@ class UpdateTeacherProfileUseCase(
         profile: TeacherProfile,
     ) {
         val teacher = teacherAdaptor.findByUserId(userId)
-        teacher.updateTeacherProfile(profile)
+        val updatedProfile =
+            (teacher.profile ?: TeacherProfile()).copy(
+                birthDate = profile.birthDate ?: teacher.profile?.birthDate,
+                selfIntroduction = profile.selfIntroduction ?: teacher.profile?.selfIntroduction,
+            )
+        teacher.updateTeacherProfile(updatedProfile)
         teacherAdaptor.save(teacher)
     }
 }

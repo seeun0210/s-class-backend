@@ -15,7 +15,13 @@ class UpdateTeacherContractUseCase(
         contract: TeacherContract,
     ) {
         val teacher = teacherAdaptor.findByUserId(userId)
-        teacher.updateContract(contract)
+        val updatedContract =
+            (teacher.contract ?: TeacherContract()).copy(
+                policeCheckAt = contract.policeCheckAt ?: teacher.contract?.policeCheckAt,
+                contractStartDate = contract.contractStartDate ?: teacher.contract?.contractStartDate,
+                contractEndDate = contract.contractEndDate ?: teacher.contract?.contractEndDate,
+            )
+        teacher.updateContract(updatedContract)
         teacherAdaptor.save(teacher)
     }
 }
