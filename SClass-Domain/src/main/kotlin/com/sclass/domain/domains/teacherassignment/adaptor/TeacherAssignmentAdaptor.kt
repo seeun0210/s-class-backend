@@ -2,6 +2,8 @@ package com.sclass.domain.domains.teacherassignment.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.teacherassignment.domain.TeacherAssignment
+import com.sclass.domain.domains.teacherassignment.dto.AssignedStudentInfo
+import com.sclass.domain.domains.teacherassignment.dto.AssignedTeacherInfo
 import com.sclass.domain.domains.teacherassignment.exception.TeacherAssignmentNotFoundException
 import com.sclass.domain.domains.teacherassignment.repository.TeacherAssignmentRepository
 import com.sclass.domain.domains.user.domain.Platform
@@ -47,4 +49,10 @@ class TeacherAssignmentAdaptor(
             platform,
             organizationId,
         )
+
+    fun findActiveAssignedStudentsByTeacherId(teacherId: String): List<AssignedStudentInfo> =
+        teacherAssignmentRepository.findActiveAssignedStudentsByTeacherId(teacherId)
+
+    fun findActiveAssignedTeachersByStudentId(studentId: String): List<AssignedTeacherInfo> =
+        teacherAssignmentRepository.findActiveAssignedTeachersByStudentId(studentId)
 }

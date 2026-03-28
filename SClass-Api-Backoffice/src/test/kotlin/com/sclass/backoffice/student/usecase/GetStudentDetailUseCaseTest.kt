@@ -8,6 +8,8 @@ import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.student.adaptor.StudentAdaptor
 import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.exception.StudentNotFoundException
+import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
+import com.sclass.domain.domains.teacherassignment.dto.AssignedTeacherInfo
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
@@ -22,11 +24,13 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 
 class GetStudentDetailUseCaseTest {
     private lateinit var studentAdaptor: StudentAdaptor
     private lateinit var userRoleAdaptor: UserRoleAdaptor
     private lateinit var organizationAttributionAdaptor: OrganizationAttributionAdaptor
+    private lateinit var teacherAssignmentAdaptor: TeacherAssignmentAdaptor
     private lateinit var useCase: GetStudentDetailUseCase
 
     @BeforeEach
@@ -34,7 +38,14 @@ class GetStudentDetailUseCaseTest {
         studentAdaptor = mockk()
         userRoleAdaptor = mockk()
         organizationAttributionAdaptor = mockk()
-        useCase = GetStudentDetailUseCase(studentAdaptor, userRoleAdaptor, organizationAttributionAdaptor)
+        teacherAssignmentAdaptor = mockk()
+        useCase =
+            GetStudentDetailUseCase(
+                studentAdaptor,
+                userRoleAdaptor,
+                organizationAttributionAdaptor,
+                teacherAssignmentAdaptor,
+            )
     }
 
     @Nested
@@ -68,11 +79,26 @@ class GetStudentDetailUseCaseTest {
                     source = AttributionSource.INVITE_CODE,
                 )
 
+            val assignedAt = LocalDateTime.of(2026, 3, 1, 10, 0)
+            val assignedTeachers =
+                listOf(
+                    AssignedTeacherInfo(
+                        assignmentId = 1L,
+                        teacherUserId = "teacher-user-id",
+                        teacherName = "홍선생",
+                        platform = Platform.SUPPORTERS,
+                        organizationId = 1L,
+                        organizationName = "테스트 학원",
+                        assignedAt = assignedAt,
+                    ),
+                )
+
             every { studentAdaptor.findByUserIdWithUser(user.id) } returns student
             every { userRoleAdaptor.findAllByUserId(user.id) } returns roles
             every { studentAdaptor.findDocumentsWithFileByStudentId(student.id) } returns emptyList()
             every { studentAdaptor.findOrganizationsByUserId(user.id) } returns organizations
             every { organizationAttributionAdaptor.findByStudentIdOrNull(student.id) } returns attribution
+            every { teacherAssignmentAdaptor.findActiveAssignedTeachersByStudentId(user.id) } returns assignedTeachers
 
             val response = useCase.execute(user.id)
 
@@ -89,6 +115,14 @@ class GetStudentDetailUseCaseTest {
             assertThat(response.organizations[0].name).isEqualTo("테스트 학원")
             assertThat(response.organizations[0].attribution).isNotNull
             assertThat(response.organizations[0].attribution!!.source).isEqualTo(AttributionSource.INVITE_CODE)
+            assertThat(response.assignments).hasSize(1)
+            assertThat(response.assignments[0].assignmentId).isEqualTo(1L)
+            assertThat(response.assignments[0].teacherUserId).isEqualTo("teacher-user-id")
+            assertThat(response.assignments[0].teacherName).isEqualTo("홍선생")
+            assertThat(response.assignments[0].platform).isEqualTo(Platform.SUPPORTERS)
+            assertThat(response.assignments[0].organizationId).isEqualTo(1L)
+            assertThat(response.assignments[0].organizationName).isEqualTo("테스트 학원")
+            assertThat(response.assignments[0].assignedAt).isEqualTo(assignedAt)
         }
 
         @Test
@@ -106,6 +140,7 @@ class GetStudentDetailUseCaseTest {
             every { studentAdaptor.findDocumentsWithFileByStudentId(student.id) } returns emptyList()
             every { studentAdaptor.findOrganizationsByUserId(user.id) } returns emptyList()
             every { organizationAttributionAdaptor.findByStudentIdOrNull(student.id) } returns null
+            every { teacherAssignmentAdaptor.findActiveAssignedTeachersByStudentId(user.id) } returns emptyList()
 
             val response = useCase.execute(user.id)
 
@@ -113,6 +148,7 @@ class GetStudentDetailUseCaseTest {
             assertThat(response.roles).isEmpty()
             assertThat(response.documents).isEmpty()
             assertThat(response.organizations).isEmpty()
+            assertThat(response.assignments).isEmpty()
         }
     }
 
