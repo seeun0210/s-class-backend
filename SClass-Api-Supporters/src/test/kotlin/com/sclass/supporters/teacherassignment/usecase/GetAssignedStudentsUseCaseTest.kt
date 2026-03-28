@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import org.junit.jupiter.api.assertThrows
 import java.time.LocalDateTime
 
@@ -69,8 +70,19 @@ class GetAssignedStudentsUseCaseTest {
             val result = useCase.execute(teacherUserId)
 
             assertEquals(1, result.size)
-            assertEquals("김학생", result[0].studentName)
-            assertEquals(1, result[0].documents.size)
+            val studentResponse = result[0]
+            assertAll(
+                { assertEquals(1L, studentResponse.assignmentId) },
+                { assertEquals(studentUserId, studentResponse.studentUserId) },
+                { assertEquals("김학생", studentResponse.studentName) },
+                { assertEquals(Grade.HIGH_1, studentResponse.grade) },
+                { assertEquals("테스트고", studentResponse.school) },
+                { assertEquals(Platform.SUPPORTERS, studentResponse.platform) },
+                { assertEquals(null, studentResponse.organizationId) },
+                { assertEquals(null, studentResponse.organizationName) },
+                { assertEquals(assignedAt, studentResponse.assignedAt) },
+                { assertEquals(1, studentResponse.documents.size) },
+            )
         }
 
         @Test
