@@ -22,6 +22,5 @@ class UpdateUserRoleStateUseCase(
             UserRoleState.REJECTED -> userRole.reject(requireNotNull(request.reason))
             else -> error("Unreachable")
         }
-        userRoleAdaptor.save(userRole)
     }
 }
