@@ -64,7 +64,7 @@ class GetAssignedStudentsUseCaseTest {
                 teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherUserId(teacherUserId, Platform.LMS)
             } returns assignedStudents
             every {
-                studentAdaptor.findDocumentsWithFileByUserIds(listOf(studentUserId))
+                studentAdaptor.findAcademicDocumentsWithFileByUserIds(listOf(studentUserId))
             } returns mapOf(studentUserId to listOf(document))
 
             val result = useCase.execute(teacherUserId)
@@ -97,7 +97,7 @@ class GetAssignedStudentsUseCaseTest {
             val result = useCase.execute(teacherUserId)
 
             assertEquals(0, result.size)
-            verify(exactly = 0) { studentAdaptor.findDocumentsWithFileByUserIds(any()) }
+            verify(exactly = 0) { studentAdaptor.findAcademicDocumentsWithFileByUserIds(any()) }
         }
     }
 

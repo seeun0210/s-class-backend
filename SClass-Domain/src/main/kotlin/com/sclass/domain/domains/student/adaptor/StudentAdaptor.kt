@@ -39,8 +39,8 @@ class StudentAdaptor(
     fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument> =
         studentRepository.findDocumentsWithFileByStudentId(studentId)
 
-    fun findDocumentsWithFileByUserIds(userIds: List<String>): Map<String, List<StudentDocument>> =
-        studentRepository.findDocumentsWithFileByUserIds(userIds)
+    fun findAcademicDocumentsWithFileByUserIds(userIds: List<String>): Map<String, List<StudentDocument>> =
+        studentRepository.findAcademicDocumentsWithFileByUserIds(userIds)
 
     fun findOrganizationsByUserId(userId: String): List<OrganizationUser> = studentRepository.findOrganizationsByUserId(userId)
 }

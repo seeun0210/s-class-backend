@@ -24,7 +24,7 @@ class GetAssignedStudentsUseCase(
         if (assignedStudents.isEmpty()) return emptyList()
 
         val documentsByUserId =
-            studentAdaptor.findDocumentsWithFileByUserIds(assignedStudents.map { it.studentUserId })
+            studentAdaptor.findAcademicDocumentsWithFileByUserIds(assignedStudents.map { it.studentUserId })
 
         return assignedStudents.map { info ->
             AssignedStudentResponse.from(info, documentsByUserId[info.studentUserId] ?: emptyList())
