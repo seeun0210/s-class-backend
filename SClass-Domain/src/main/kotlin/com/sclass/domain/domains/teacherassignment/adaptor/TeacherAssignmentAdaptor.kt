@@ -59,9 +59,6 @@ class TeacherAssignmentAdaptor(
             organizationId,
         )
 
-    fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo> =
-        teacherAssignmentRepository.findActiveAssignedStudentsByTeacherUserId(teacherUserId)
-
     fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo> =
         teacherAssignmentRepository.findActiveAssignedTeachersByStudentUserId(studentUserId)
 

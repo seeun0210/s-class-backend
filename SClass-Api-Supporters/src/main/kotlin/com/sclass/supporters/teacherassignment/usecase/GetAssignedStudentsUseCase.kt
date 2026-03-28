@@ -18,12 +18,16 @@ class GetAssignedStudentsUseCase(
     fun execute(currentUserId: String): List<AssignedStudentResponse> {
         teacherAdaptor.findByUserId(currentUserId)
 
-        val assignedStudents = teacherAssignedAdaptor.findActiveAssignedStudentsByTeacherUserId(currentUserId, Platform.SUPPORTERS)
+        val assignedStudents =
+            teacherAssignedAdaptor.findActiveAssignedStudentsByTeacherUserId(currentUserId, Platform.SUPPORTERS)
+
+        if (assignedStudents.isEmpty()) return emptyList()
+
+        val documentsByUserId =
+            studentAdaptor.findDocumentsWithFileByUserIds(assignedStudents.map { it.studentUserId })
 
         return assignedStudents.map { info ->
-            val student = studentAdaptor.findByUserId(info.studentUserId)
-            val documents = studentAdaptor.findDocumentsWithFileByStudentId(student.id)
-            AssignedStudentResponse.from(info, documents)
+            AssignedStudentResponse.from(info, documentsByUserId[info.studentUserId] ?: emptyList())
         }
     }
 }

@@ -137,6 +137,22 @@ class StudentCustomRepositoryImpl(
             .where(studentDocument.student.id.eq(studentId))
             .fetch()
 
+    override fun findDocumentsWithFileByUserIds(userIds: List<String>): Map<String, List<StudentDocument>> {
+        if (userIds.isEmpty()) return emptyMap()
+
+        val documents =
+            queryFactory
+                .selectFrom(studentDocument)
+                .join(studentDocument.student, student)
+                .fetchJoin()
+                .join(studentDocument.file, file)
+                .fetchJoin()
+                .where(student.user.id.`in`(userIds))
+                .fetch()
+
+        return documents.groupBy { it.student.user.id }
+    }
+
     override fun findOrganizationsByUserId(userId: String): List<OrganizationUser> =
         queryFactory
             .selectFrom(organizationUser)

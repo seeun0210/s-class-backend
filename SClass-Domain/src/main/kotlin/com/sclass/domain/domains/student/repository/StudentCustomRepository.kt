@@ -20,5 +20,7 @@ interface StudentCustomRepository {
 
     fun findDocumentsWithFileByStudentId(studentId: String): List<StudentDocument>
 
+    fun findDocumentsWithFileByUserIds(userIds: List<String>): Map<String, List<StudentDocument>>
+
     fun findOrganizationsByUserId(userId: String): List<OrganizationUser>
 }

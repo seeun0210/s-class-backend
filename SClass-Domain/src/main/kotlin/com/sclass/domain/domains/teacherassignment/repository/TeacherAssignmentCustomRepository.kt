@@ -9,7 +9,10 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface TeacherAssignmentCustomRepository {
-    fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo>
+    fun findActiveAssignedStudentsByTeacherUserId(
+        teacherUserId: String,
+        platform: Platform? = null,
+    ): List<AssignedStudentInfo>
 
     fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo>
 
@@ -17,9 +20,4 @@ interface TeacherAssignmentCustomRepository {
         condition: TeacherAssignmentSearchCondition,
         pageable: Pageable,
     ): Page<TeacherAssignmentListInfo>
-
-    fun findActiveAssignedStudentsByTeacherUserId(
-        teacherUserId: String,
-        platform: Platform? = null,
-    ): List<AssignedStudentInfo>
 }
