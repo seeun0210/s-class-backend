@@ -127,5 +127,5 @@ class OrganizationUserCustomRepositoryImpl(
 
     private fun emailContains(email: String?): BooleanExpression? = email?.let { user.email.contains(it) }
 
-    private fun roleEq(role: Role?): BooleanExpression = role?.let { userRole.role.eq(it) } ?: userRole.role.isNotNull
+    private fun roleEq(role: Role?): BooleanExpression? = role?.let { userRole.role.eq(it) }
 }
