@@ -2,7 +2,7 @@ package com.sclass.backoffice.teacherassignment.dto
 
 import com.sclass.domain.domains.user.domain.Platform
 import jakarta.validation.constraints.NotBlank
-import software.amazon.awssdk.annotations.NotNull
+import jakarta.validation.constraints.NotNull
 
 data class UnassignTeacherRequest(
     @field:NotBlank
