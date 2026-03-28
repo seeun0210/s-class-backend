@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 class UpdateTeacherContractUseCaseTest {
     private lateinit var teacherAdaptor: TeacherAdaptor
@@ -35,7 +34,7 @@ class UpdateTeacherContractUseCaseTest {
             val teacher = Teacher(user = user)
             val contract =
                 TeacherContract(
-                    policeCheckAt = LocalDateTime.of(2025, 3, 1, 10, 0),
+                    policeCheckAt = LocalDate.of(2025, 3, 1),
                     contractStartDate = LocalDate.of(2025, 4, 1),
                     contractEndDate = LocalDate.of(2026, 3, 31),
                 )
@@ -46,7 +45,7 @@ class UpdateTeacherContractUseCaseTest {
             useCase.execute(user.id, contract)
 
             assertThat(teacher.contract).isEqualTo(contract)
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDateTime.of(2025, 3, 1, 10, 0))
+            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1))
             assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
             assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31))
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
@@ -57,7 +56,7 @@ class UpdateTeacherContractUseCaseTest {
             val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
             val existingContract =
                 TeacherContract(
-                    policeCheckAt = LocalDateTime.of(2025, 3, 1, 10, 0),
+                    policeCheckAt = LocalDate.of(2025, 3, 1),
                     contractStartDate = LocalDate.of(2025, 4, 1),
                     contractEndDate = LocalDate.of(2026, 3, 31),
                 )
@@ -69,7 +68,7 @@ class UpdateTeacherContractUseCaseTest {
 
             useCase.execute(user.id, partialUpdate)
 
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDateTime.of(2025, 3, 1, 10, 0))
+            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1))
             assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
             assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31))
         }
