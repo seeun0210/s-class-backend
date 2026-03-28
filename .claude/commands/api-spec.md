@@ -92,7 +92,7 @@
 **성공 (200)**
 ```json
 {
-  "code": "SUCCESS",
+  "success": true,
   "data": {
     "id": "01HXXXXXXXXXXXXXXXXX",
     "field1": "example"
@@ -133,6 +133,18 @@ curl -X POST '{{BASE_URL}}/api/v1/xxx' \
 |---|------|
 | VALUE_1 | 설명 |
 | VALUE_2 | 설명 |
+
+---
+
+## ✏️ DTO 변경 사항
+
+### SomeRequestDto
+- `newField` (`String`): 필드 추가됨. (설명)
+- `oldField` (`Int`): `String`에서 타입 변경됨.
+
+### SomeResponseDto
+- `removedField`: 필드 삭제됨.
+
 ```
 
 ## 규칙
@@ -142,7 +154,7 @@ curl -X POST '{{BASE_URL}}/api/v1/xxx' \
 - Controller 변경이 없으면 (DTO만 변경 등) "DTO 변경 사항" 섹션으로 별도 정리
 - Enum 값이 DTO 필드 타입으로 사용되면 가능한 값 목록을 해당 필드 설명에 인라인으로 포함
 - cURL 예시의 값은 의미 있는 예시값 사용 (email → "user@example.com", name → "홍길동" 등)
-- `ApiResponse<T>` 래핑을 반영하여 Response 예시에 `code`, `data` 구조 포함
+- `ApiResponse<T>` 래핑을 반영하여 Response 예시에 `success`, `data` 구조 포함
 - 페이징 응답인 경우 `Page<T>` 구조도 반영
 - 변경 사항이 없으면 "현재 브랜치에 API 변경 사항이 없습니다." 출력
 
