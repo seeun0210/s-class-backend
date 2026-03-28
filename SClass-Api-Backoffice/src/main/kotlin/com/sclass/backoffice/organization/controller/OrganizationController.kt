@@ -1,12 +1,16 @@
 package com.sclass.backoffice.organization.controller
 
 import com.sclass.backoffice.organization.dto.CreateOrganizationRequest
+import com.sclass.backoffice.organization.dto.CreateOrganizationUserRequest
 import com.sclass.backoffice.organization.dto.OrganizationPageResponse
 import com.sclass.backoffice.organization.dto.OrganizationResponse
+import com.sclass.backoffice.organization.dto.OrganizationUserCreateResponse
 import com.sclass.backoffice.organization.dto.OrganizationUserPageResponse
 import com.sclass.backoffice.organization.dto.OrganizationUserStatsResponse
 import com.sclass.backoffice.organization.dto.UpdateOrganizationSettingsRequest
+import com.sclass.backoffice.organization.usecase.AddOrganizationUserUseCase
 import com.sclass.backoffice.organization.usecase.CreateOrganizationUseCase
+import com.sclass.backoffice.organization.usecase.CreateOrganizationUserUseCase
 import com.sclass.backoffice.organization.usecase.GetOrganizationStatsUseCase
 import com.sclass.backoffice.organization.usecase.GetOrganizationUseCase
 import com.sclass.backoffice.organization.usecase.GetOrganizationUsersUseCase
@@ -38,6 +42,8 @@ class OrganizationController(
     private val updateOrganizationSettingsUseCase: UpdateOrganizationSettingsUseCase,
     private val getOrganizationUsersUseCase: GetOrganizationUsersUseCase,
     private val getOrganizationStatsUseCase: GetOrganizationStatsUseCase,
+    private val createOrganizationUserUseCase: CreateOrganizationUserUseCase,
+    private val addOrganizationUserUseCase: AddOrganizationUserUseCase,
 ) {
     @GetMapping
     fun getOrganizations(
@@ -80,4 +86,16 @@ class OrganizationController(
     fun getOrganizationStats(
         @PathVariable organizationId: Long,
     ): ApiResponse<OrganizationUserStatsResponse> = success(getOrganizationStatsUseCase.execute(organizationId))
+
+    @PutMapping("/{organizationId}/users/{userId}")
+    fun addOrganizationUser(
+        @PathVariable organizationId: Long,
+        @PathVariable userId: String,
+    ): ApiResponse<OrganizationUserCreateResponse> = success(addOrganizationUserUseCase.execute(organizationId, userId))
+
+    @PostMapping("/{organizationId}/users")
+    fun createOrganizationUser(
+        @PathVariable organizationId: Long,
+        @Valid @RequestBody request: CreateOrganizationUserRequest,
+    ): ApiResponse<OrganizationUserCreateResponse> = success(createOrganizationUserUseCase.execute(organizationId, request))
 }

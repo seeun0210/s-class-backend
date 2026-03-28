@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.organization.exception
+
+import com.sclass.common.exception.BusinessException
+
+class OrganizationUserAlreadyExistsException : BusinessException(OrganizationErrorCode.ORGANIZATION_USER_ALREADY_EXISTS)
