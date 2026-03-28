@@ -18,7 +18,10 @@ import org.springframework.data.domain.Pageable
 class TeacherAssignmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : TeacherAssignmentCustomRepository {
-    override fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo> =
+    override fun findActiveAssignedStudentsByTeacherUserId(
+        teacherUserId: String,
+        platform: Platform?,
+    ): List<AssignedStudentInfo> =
         queryFactory
             .select(
                 Projections.constructor(
@@ -41,6 +44,7 @@ class TeacherAssignmentCustomRepositoryImpl(
             .where(
                 teacherAssignment.teacherUserId.eq(teacherUserId),
                 teacherAssignment.unassignedAt.isNull,
+                platform?.let { teacherAssignment.platform.eq(it) },
             ).fetch()
 
     override fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo> =

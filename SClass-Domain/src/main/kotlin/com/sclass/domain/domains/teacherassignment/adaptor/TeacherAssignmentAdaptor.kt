@@ -37,6 +37,11 @@ class TeacherAssignmentAdaptor(
         findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(studentUserId, platform, organizationId)
             ?: throw TeacherAssignmentNotFoundException()
 
+    fun findActiveAssignedStudentsByTeacherUserId(
+        teacherUserId: String,
+        platform: Platform? = null,
+    ): List<AssignedStudentInfo> = teacherAssignmentRepository.findActiveAssignedStudentsByTeacherUserId(teacherUserId, platform)
+
     fun findAllActiveByStudentUserId(studentUserId: String): List<TeacherAssignment> =
         teacherAssignmentRepository.findAllByStudentUserIdAndUnassignedAtIsNull(studentUserId)
 
@@ -53,9 +58,6 @@ class TeacherAssignmentAdaptor(
             platform,
             organizationId,
         )
-
-    fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo> =
-        teacherAssignmentRepository.findActiveAssignedStudentsByTeacherUserId(teacherUserId)
 
     fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo> =
         teacherAssignmentRepository.findActiveAssignedTeachersByStudentUserId(studentUserId)
