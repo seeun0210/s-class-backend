@@ -15,6 +15,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import java.time.LocalDate
 
 class UpdateTeacherContractUseCaseTest {
@@ -45,10 +46,11 @@ class UpdateTeacherContractUseCaseTest {
 
             useCase.execute(user.id, contract)
 
-            assertThat(teacher.contract).isEqualTo(contract)
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1))
-            assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
-            assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31))
+            assertAll(
+                { assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1)) },
+                { assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1)) },
+                { assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2026, 3, 31)) },
+            )
             verify(exactly = 1) { teacherAdaptor.save(teacher) }
         }
 
@@ -69,9 +71,11 @@ class UpdateTeacherContractUseCaseTest {
 
             useCase.execute(user.id, partialUpdate)
 
-            assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1))
-            assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1))
-            assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31))
+            assertAll(
+                { assertThat(teacher.contract?.policeCheckAt).isEqualTo(LocalDate.of(2025, 3, 1)) },
+                { assertThat(teacher.contract?.contractStartDate).isEqualTo(LocalDate.of(2025, 4, 1)) },
+                { assertThat(teacher.contract?.contractEndDate).isEqualTo(LocalDate.of(2027, 3, 31)) },
+            )
         }
     }
 
