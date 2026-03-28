@@ -98,8 +98,11 @@ class CreateOrganizationUserUseCaseTest {
         val result = useCase.execute(1L, request)
 
         assertAll(
+            { assertEquals("ou-id", result.organizationUserId) },
             { assertEquals("user-id", result.userId) },
             { assertEquals("new@example.com", result.email) },
+            { assertEquals("신규유저", result.name) },
+            { assertEquals(1L, result.organizationId) },
         )
     }
 }
