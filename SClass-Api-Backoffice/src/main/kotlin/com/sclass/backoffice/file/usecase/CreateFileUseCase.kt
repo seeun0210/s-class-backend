@@ -26,7 +26,8 @@ class CreateFileUseCase(
     ): PresignedUrlResponse {
         val fileId = Ulid.generate()
         val directoryPath = generateDirectoryPath(fileType)
-        val storedFilename = "$directoryPath/${fileId}_$originalFilename"
+        val sanitizedFilename = originalFilename.replace(Regex("[/\\\\]"), "_")
+        val storedFilename = "$directoryPath/${fileId}_$sanitizedFilename"
 
         val file =
             File.create(

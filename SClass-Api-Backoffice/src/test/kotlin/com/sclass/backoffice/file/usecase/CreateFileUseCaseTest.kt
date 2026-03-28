@@ -9,6 +9,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -113,5 +114,44 @@ class CreateFileUseCaseTest {
                 contentType = "image/png",
             )
         }
+    }
+
+    @Test
+    fun `파일명에 슬래시가 포함되면 언더스코어로 치환된다`() {
+        val fileSlot = slot<File>()
+        every { fileAdaptor.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://presigned"
+
+        val result =
+            useCase.execute(
+                uploadedBy = "user-123",
+                originalFilename = "path/to/report.pdf",
+                contentType = "application/pdf",
+                fileSize = 1024L,
+                fileType = FileType.PLAN,
+            )
+
+        assertFalse(result.storedFilename.substringAfterLast("/").contains("/"))
+        assertTrue(result.storedFilename.endsWith("_path_to_report.pdf"))
+        assertEquals("path/to/report.pdf", fileSlot.captured.originalFilename)
+    }
+
+    @Test
+    fun `파일명에 백슬래시가 포함되면 언더스코어로 치환된다`() {
+        val fileSlot = slot<File>()
+        every { fileAdaptor.save(capture(fileSlot)) } answers { fileSlot.captured }
+        every { s3Service.generatePresignedPutUrl(any(), any()) } returns "https://presigned"
+
+        val result =
+            useCase.execute(
+                uploadedBy = "user-123",
+                originalFilename = "path\\to\\report.pdf",
+                contentType = "application/pdf",
+                fileSize = 1024L,
+                fileType = FileType.PLAN,
+            )
+
+        assertTrue(result.storedFilename.endsWith("_path_to_report.pdf"))
+        assertEquals("path\\to\\report.pdf", fileSlot.captured.originalFilename)
     }
 }
