@@ -1,0 +1,49 @@
+name: Auto Close Parent Issue
+
+on:
+  issues:
+    types: [closed]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  close-parent:
+    name: Close parent if all sub-issues are closed
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Check and close parent issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+
+          # 부모 이슈 조회
+          PARENT=$(gh api "repos/$OWNER/$REPO/issues/$ISSUE_NUMBER/parent" 2>/dev/null) || exit 0
+
+          PARENT_NUMBER=$(echo "$PARENT" | jq -r '.number')
+          PARENT_STATE=$(echo "$PARENT" | jq -r '.state')
+
+          if [ "$PARENT_NUMBER" = "null" ] || [ "$PARENT_STATE" = "closed" ]; then
+            echo "No parent issue or already closed"
+            exit 0
+          fi
+
+          # 부모의 모든 sub-issues 조회
+          SUB_ISSUES=$(gh api "repos/$OWNER/$REPO/issues/$PARENT_NUMBER/sub_issues?per_page=100")
+
+          TOTAL=$(echo "$SUB_ISSUES" | jq 'length')
+          OPEN=$(echo "$SUB_ISSUES" | jq '[.[] | select(.state == "open")] | length')
+
+          echo "Parent #$PARENT_NUMBER: $OPEN open / $TOTAL total sub-issues"
+
+          if [ "$OPEN" -eq 0 ] && [ "$TOTAL" -gt 0 ]; then
+            gh issue close "$PARENT_NUMBER" -R "$OWNER/$REPO" \
+              -c "All sub-issues have been closed. Auto-closing parent issue."
+            echo "Closed parent issue #$PARENT_NUMBER"
+          fi
