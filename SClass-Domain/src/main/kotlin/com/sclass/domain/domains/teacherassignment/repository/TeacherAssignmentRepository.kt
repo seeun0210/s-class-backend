@@ -4,7 +4,9 @@ import com.sclass.domain.domains.teacherassignment.domain.TeacherAssignment
 import com.sclass.domain.domains.user.domain.Platform
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface TeacherAssignmentRepository : JpaRepository<TeacherAssignment, Long> {
+interface TeacherAssignmentRepository :
+    JpaRepository<TeacherAssignment, Long>,
+    TeacherAssignmentCustomRepository {
     fun findByStudentIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
         studentId: String,
         platform: Platform,

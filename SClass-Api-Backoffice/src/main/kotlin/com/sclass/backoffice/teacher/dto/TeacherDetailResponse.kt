@@ -10,6 +10,8 @@ import com.sclass.domain.domains.teacher.domain.TeacherEducation
 import com.sclass.domain.domains.teacher.domain.TeacherPersonalInfo
 import com.sclass.domain.domains.teacher.domain.TeacherProfile
 import com.sclass.domain.domains.teacher.domain.TeacherVerification
+import com.sclass.domain.domains.teacherassignment.dto.AssignedStudentInfo
+import com.sclass.domain.domains.user.domain.Grade
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
@@ -31,6 +33,7 @@ data class TeacherDetailResponse(
     val roles: List<TeacherRoleResponse>,
     val documents: List<TeacherDocumentDetailResponse>,
     val organizations: List<TeacherOrganizationResponse>,
+    val assignments: List<TeacherAssignedStudentResponse>,
 ) {
     companion object {
         fun from(
@@ -38,6 +41,7 @@ data class TeacherDetailResponse(
             roles: List<UserRole>,
             documents: List<TeacherDocument>,
             organizations: List<OrganizationUser>,
+            assignments: List<AssignedStudentInfo>,
         ) = TeacherDetailResponse(
             id = teacher.id,
             userId = teacher.user.id,
@@ -52,6 +56,7 @@ data class TeacherDetailResponse(
             roles = roles.map { TeacherRoleResponse.from(it) },
             documents = documents.map { TeacherDocumentDetailResponse.from(it) },
             organizations = organizations.map { TeacherOrganizationResponse.from(it) },
+            assignments = assignments.map { TeacherAssignedStudentResponse.from(it) },
         )
     }
 }
@@ -133,6 +138,33 @@ data class TeacherOrganizationResponse(
                 name = organizationUser.organization.name,
                 domain = organizationUser.organization.domain,
                 logoUrl = organizationUser.organization.logoUrl,
+            )
+    }
+}
+
+data class TeacherAssignedStudentResponse(
+    val assignmentId: Long,
+    val studentUserId: String,
+    val studentName: String,
+    val grade: Grade?,
+    val school: String?,
+    val platform: Platform,
+    val organizationId: Long?,
+    val organizationName: String?,
+    val assignedAt: LocalDateTime,
+) {
+    companion object {
+        fun from(info: AssignedStudentInfo) =
+            TeacherAssignedStudentResponse(
+                assignmentId = info.assignmentId,
+                studentUserId = info.studentUserId,
+                studentName = info.studentName,
+                grade = info.grade,
+                school = info.school,
+                platform = info.platform,
+                organizationId = info.organizationId,
+                organizationName = info.organizationName,
+                assignedAt = info.assignedAt,
             )
     }
 }
