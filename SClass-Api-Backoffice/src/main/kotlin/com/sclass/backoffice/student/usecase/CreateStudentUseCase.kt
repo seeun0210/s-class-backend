@@ -42,7 +42,7 @@ class CreateStudentUseCase(
                     student = student,
                     grade = request.grade,
                     school = request.school,
-                    parentPhoneNumber = request.parentPhoneNumber,
+                    parentPhoneNumber = request.parentPhoneNumber?.let { User.formatPhoneNumber(it) },
                 )
         }
 

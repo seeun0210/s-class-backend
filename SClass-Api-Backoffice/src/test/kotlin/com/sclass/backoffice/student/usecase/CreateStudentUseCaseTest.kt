@@ -88,7 +88,7 @@ class CreateStudentUseCaseTest {
                     phoneNumber = "01012345678",
                     grade = Grade.HIGH_1,
                     school = "서울고등학교",
-                    parentPhoneNumber = "01098765432",
+                    parentPhoneNumber = "010-9876-5432",
                 )
 
             val savedUser =
@@ -109,14 +109,14 @@ class CreateStudentUseCaseTest {
             } returns savedUser
             every { studentDomainService.register(savedUser) } returns student
             every {
-                studentDomainService.updateProfile(student, Grade.HIGH_1, "서울고등학교", "01098765432")
+                studentDomainService.updateProfile(student, Grade.HIGH_1, "서울고등학교", "010-9876-5432")
             } returns updatedStudent
 
             val response = useCase.execute(request)
 
             assertThat(response.grade).isEqualTo(Grade.HIGH_1)
             assertThat(response.school).isEqualTo("서울고등학교")
-            verify(exactly = 1) { studentDomainService.updateProfile(student, Grade.HIGH_1, "서울고등학교", "01098765432") }
+            verify(exactly = 1) { studentDomainService.updateProfile(student, Grade.HIGH_1, "서울고등학교", "010-9876-5432") }
         }
     }
 
