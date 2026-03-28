@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.teacherassignment.exception
+
+import com.sclass.common.exception.BusinessException
+
+class TeacherAssignmentNotFoundException : BusinessException(TeacherAssignmentErrorCode.TEACHER_ASSIGNMENT_NOT_FOUND)

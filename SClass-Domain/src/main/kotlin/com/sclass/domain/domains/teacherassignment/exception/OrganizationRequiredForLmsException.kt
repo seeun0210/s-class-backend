@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.teacherassignment.exception
+
+import com.sclass.common.exception.BusinessException
+
+class OrganizationRequiredForLmsException : BusinessException(TeacherAssignmentErrorCode.ORGANIZATION_REQUIRED_FOR_LMS)
