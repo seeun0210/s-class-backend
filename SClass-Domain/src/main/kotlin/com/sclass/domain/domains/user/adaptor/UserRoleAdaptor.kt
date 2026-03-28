@@ -17,6 +17,8 @@ class UserRoleAdaptor(
 
     fun save(userRole: UserRole): UserRole = userRoleRepository.save(userRole)
 
+    fun delete(id: String) = userRoleRepository.deleteById(id)
+
     fun deleteAllByUserId(userId: String) = userRoleRepository.deleteAllByUserId(userId)
 
     fun findByUserIdAndPlatformAndRole(
