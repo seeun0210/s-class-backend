@@ -9,11 +9,18 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "teacher_assignments")
+@Table(
+    name = "teacher_assignments",
+    indexes = [
+        Index(name = "idx_ta_teacher_id", columnList = "teacher_id, unassigned_at"),
+        Index(name = "idx_ta_student_id", columnList = "student_id, unassigned_at"),
+    ],
+)
 class TeacherAssignment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
