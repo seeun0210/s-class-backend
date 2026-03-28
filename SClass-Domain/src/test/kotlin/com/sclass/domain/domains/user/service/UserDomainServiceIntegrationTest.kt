@@ -4,6 +4,9 @@ import com.sclass.domain.config.DomainTestConfig
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.user.domain.UserRoleState
+import com.sclass.domain.domains.user.exception.ConflictingRoleException
+import com.sclass.domain.domains.user.exception.DuplicateUserRoleException
 import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
 import com.sclass.domain.domains.user.repository.UserRepository
 import com.sclass.domain.domains.user.repository.UserRoleRepository
@@ -171,5 +174,97 @@ class UserDomainServiceIntegrationTest {
         // then
         val roles = userRoleRepository.findAllByUserId(user.id)
         assertThat(roles).hasSize(1)
+    }
+
+    @Test
+    fun `addUserRole로 새 역할을 추가한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-add-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "addrole@example.com",
+                name = "역할추가유저",
+                phoneNumber = "01011111111",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when
+        val newRole = userDomainService.addUserRole(user.id, Platform.LMS, Role.STUDENT)
+
+        // then
+        assertThat(newRole.userId).isEqualTo(user.id)
+        assertThat(newRole.platform).isEqualTo(Platform.LMS)
+        assertThat(newRole.role).isEqualTo(Role.STUDENT)
+        assertThat(newRole.state).isEqualTo(UserRoleState.NORMAL)
+
+        val roles = userRoleRepository.findAllByUserId(user.id)
+        assertThat(roles).hasSize(2)
+    }
+
+    @Test
+    fun `addUserRole로 TEACHER 역할 추가 시 DRAFT 상태로 생성된다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-teacher-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "teacher-role@example.com",
+                name = "선생역할유저",
+                phoneNumber = "01022222222",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when
+        val newRole = userDomainService.addUserRole(user.id, Platform.LMS, Role.TEACHER)
+
+        // then
+        assertThat(newRole.state).isEqualTo(UserRoleState.DRAFT)
+    }
+
+    @Test
+    fun `addUserRole로 중복 역할 추가 시 DuplicateUserRoleException이 발생한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-dup-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "duprole@example.com",
+                name = "중복역할유저",
+                phoneNumber = "01033333333",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when & then
+        assertThatThrownBy {
+            userDomainService.addUserRole(user.id, Platform.SUPPORTERS, Role.STUDENT)
+        }.isInstanceOf(DuplicateUserRoleException::class.java)
+    }
+
+    @Test
+    fun `addUserRole로 같은 플랫폼에 STUDENT와 TEACHER를 동시에 추가하면 ConflictingRoleException이 발생한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-conflict-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "conflict@example.com",
+                name = "충돌역할유저",
+                phoneNumber = "01044444444",
+                profileImageUrl = null,
+                platform = Platform.LMS,
+                role = Role.STUDENT,
+            )
+
+        // when & then
+        assertThatThrownBy {
+            userDomainService.addUserRole(user.id, Platform.LMS, Role.TEACHER)
+        }.isInstanceOf(ConflictingRoleException::class.java)
     }
 }

@@ -151,7 +151,7 @@ class UserDomainService(
         platform: Platform,
         role: Role,
     ): UserRole {
-        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) !== null) {
+        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) != null) {
             throw DuplicateUserRoleException()
         }
         validateNoConflictingRole(userId, platform, role)
