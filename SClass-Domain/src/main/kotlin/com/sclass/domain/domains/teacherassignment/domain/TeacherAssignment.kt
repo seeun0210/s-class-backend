@@ -34,7 +34,7 @@ class TeacherAssignment(
     @Column(name = "assigned_by", nullable = false, length = 26)
     val assignedBy: String,
 
-    @Column(name = "assigned_at", nullable = false)
+    @Column(name = "assigned_at", nullable = false, updatable = false)
     val assignedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "unassigned_at")
