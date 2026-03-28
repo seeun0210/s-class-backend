@@ -88,7 +88,7 @@ class CreateStudentUseCaseTest {
                     phoneNumber = "01012345678",
                     grade = Grade.HIGH_1,
                     school = "서울고등학교",
-                    parentPhoneNumber = "010-9876-5432",
+                    parentPhoneNumber = "01098765432",
                 )
 
             val savedUser =
