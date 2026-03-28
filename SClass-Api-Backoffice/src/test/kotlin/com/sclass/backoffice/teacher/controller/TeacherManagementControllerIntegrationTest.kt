@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.sclass.backoffice.config.ApiIntegrationTest
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.domain.domains.student.repository.StudentRepository
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import com.sclass.domain.domains.user.domain.AuthProvider
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -36,6 +38,9 @@ class TeacherManagementControllerIntegrationTest {
     private lateinit var teacherRepository: TeacherRepository
 
     @Autowired
+    private lateinit var studentRepository: StudentRepository
+
+    @Autowired
     private lateinit var jwtTokenProvider: JwtTokenProvider
 
     @Autowired
@@ -49,6 +54,7 @@ class TeacherManagementControllerIntegrationTest {
 
     @BeforeEach
     fun setUp() {
+        studentRepository.deleteAll()
         teacherRepository.deleteAll()
         userRoleRepository.deleteAll()
         userRepository.deleteAll()
@@ -259,6 +265,189 @@ class TeacherManagementControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isBadRequest)
+        }
+    }
+
+    @Nested
+    inner class UpdateTeacherProfile {
+        @Test
+        fun `선생님 프로필 수정 성공 시 200을 반환한다`() {
+            val body = mapOf("birthDate" to "1990-01-01", "selfIntroduction" to "안녕하세요")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/profile")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.success").value(true))
+        }
+
+        @Test
+        fun `존재하지 않는 유저이면 404를 반환한다`() {
+            val body = mapOf("birthDate" to "1990-01-01")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/invalid-user-id/profile")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isNotFound)
+        }
+
+        @Test
+        fun `인증 토큰이 없으면 401을 반환한다`() {
+            val body = mapOf("birthDate" to "1990-01-01")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isUnauthorized)
+        }
+    }
+
+    @Nested
+    inner class UpdateTeacherEducation {
+        @Test
+        fun `선생님 학력 수정 성공 시 200을 반환한다`() {
+            val body =
+                mapOf(
+                    "majorCategory" to "ENGINEERING",
+                    "university" to "서울대학교",
+                    "major" to "컴퓨터공학",
+                    "highSchool" to "한영외고",
+                )
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/education")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.success").value(true))
+        }
+
+        @Test
+        fun `존재하지 않는 유저이면 404를 반환한다`() {
+            val body = mapOf("university" to "서울대학교")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/invalid-user-id/education")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isNotFound)
+        }
+
+        @Test
+        fun `인증 토큰이 없으면 401을 반환한다`() {
+            val body = mapOf("university" to "서울대학교")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/education")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isUnauthorized)
+        }
+    }
+
+    @Nested
+    inner class UpdateTeacherPersonalInfo {
+        @Test
+        fun `선생님 개인정보 수정 성공 시 200을 반환한다`() {
+            val body =
+                mapOf(
+                    "address" to "서울시 강남구",
+                    "residentNumber" to "900101-1234567",
+                    "bankAccount" to "국민은행 123-456-789",
+                )
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/personal-info")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.success").value(true))
+        }
+
+        @Test
+        fun `존재하지 않는 유저이면 404를 반환한다`() {
+            val body = mapOf("address" to "서울시 강남구")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/invalid-user-id/personal-info")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isNotFound)
+        }
+
+        @Test
+        fun `인증 토큰이 없으면 401을 반환한다`() {
+            val body = mapOf("address" to "서울시 강남구")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/personal-info")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isUnauthorized)
+        }
+    }
+
+    @Nested
+    inner class UpdateTeacherContract {
+        @Test
+        fun `선생님 계약 정보 수정 성공 시 200을 반환한다`() {
+            val body =
+                mapOf(
+                    "contractStartDate" to "2025-04-01",
+                    "contractEndDate" to "2026-03-31",
+                )
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/contract")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isOk)
+                .andExpect(jsonPath("$.success").value(true))
+        }
+
+        @Test
+        fun `존재하지 않는 유저이면 404를 반환한다`() {
+            val body = mapOf("contractStartDate" to "2025-04-01")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/invalid-user-id/contract")
+                        .header("Authorization", adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isNotFound)
+        }
+
+        @Test
+        fun `인증 토큰이 없으면 401을 반환한다`() {
+            val body = mapOf("contractStartDate" to "2025-04-01")
+
+            mockMvc
+                .perform(
+                    patch("/api/v1/teachers/${teacherUser.id}/contract")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)),
+                ).andExpect(status().isUnauthorized)
         }
     }
 }
