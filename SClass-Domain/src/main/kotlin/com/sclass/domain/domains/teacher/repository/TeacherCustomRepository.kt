@@ -4,7 +4,7 @@ import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.domain.TeacherDocument
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
-import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
+import com.sclass.domain.domains.teacher.dto.TeacherWithRoles
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
@@ -12,7 +12,7 @@ interface TeacherCustomRepository {
     fun searchTeachers(
         condition: TeacherSearchCondition,
         page: Pageable,
-    ): Page<TeacherWithPlatform>
+    ): Page<TeacherWithRoles>
 
     fun findByIdWithUser(id: String): Teacher?
 

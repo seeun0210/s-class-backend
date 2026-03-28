@@ -12,7 +12,7 @@ import com.sclass.domain.domains.teacher.domain.QTeacherDocument.teacherDocument
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.domain.TeacherDocument
 import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
-import com.sclass.domain.domains.teacher.dto.TeacherWithPlatform
+import com.sclass.domain.domains.teacher.dto.TeacherWithRoles
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.QUser.user
 import com.sclass.domain.domains.user.domain.QUserRole.userRole
@@ -28,10 +28,12 @@ class TeacherCustomRepositoryImpl(
     override fun searchTeachers(
         condition: TeacherSearchCondition,
         page: Pageable,
-    ): Page<TeacherWithPlatform> {
-        val tuples =
+    ): Page<TeacherWithRoles> {
+        // Step 1: DISTINCT teacher IDs with filters + pagination
+        val teacherIds =
             queryFactory
-                .select(teacher.id, userRole.platform, userRole.state)
+                .select(teacher.id)
+                .distinct()
                 .from(teacher)
                 .join(teacher.user, user)
                 .join(userRole)
@@ -48,38 +50,51 @@ class TeacherCustomRepositoryImpl(
                     submittedAtLoe(condition.submittedAtTo),
                     createdAtGoe(condition.createdAtFrom),
                     createdAtLoe(condition.createdAtTo),
-                ).offset(page.offset)
+                ).orderBy(teacher.createdAt.desc())
+                .offset(page.offset)
                 .limit(page.pageSize.toLong())
-                .orderBy(teacher.createdAt.desc())
                 .fetch()
 
-        val teacherIds = tuples.map { it.get(teacher.id)!! }
+        // Step 2: Batch load Teachers with User
         val teachers =
             if (teacherIds.isEmpty()) {
-                emptyMap()
+                emptyList()
             } else {
                 queryFactory
                     .selectFrom(teacher)
                     .join(teacher.user, user)
                     .fetchJoin()
                     .where(teacher.id.`in`(teacherIds))
+                    .orderBy(teacher.createdAt.desc())
                     .fetch()
-                    .associateBy { it.id }
             }
 
+        // Step 3: Batch load UserRoles by userIds
+        val userIds = teachers.map { it.user.id }
+        val rolesByUserId =
+            if (userIds.isEmpty()) {
+                emptyMap()
+            } else {
+                queryFactory
+                    .selectFrom(userRole)
+                    .where(userRole.userId.`in`(userIds))
+                    .fetch()
+                    .groupBy { it.userId }
+            }
+
+        // Step 4: Combine into TeacherWithRoles
         val content =
-            tuples.map { tuple ->
-                val teacherId = tuple.get(teacher.id)!!
-                TeacherWithPlatform(
-                    teacher = teachers[teacherId] ?: error("Teacher must not be null"),
-                    platform = tuple.get(userRole.platform) ?: error("Platform must not be null"),
-                    state = tuple.get(userRole.state) ?: error("State must not be null"),
+            teachers.map { t ->
+                TeacherWithRoles(
+                    teacher = t,
+                    roles = rolesByUserId[t.user.id] ?: emptyList(),
                 )
             }
 
+        // Count query: COUNT(DISTINCT teacher.id)
         val total =
             queryFactory
-                .select(teacher.count())
+                .select(teacher.id.countDistinct())
                 .from(teacher)
                 .join(teacher.user, user)
                 .join(userRole)

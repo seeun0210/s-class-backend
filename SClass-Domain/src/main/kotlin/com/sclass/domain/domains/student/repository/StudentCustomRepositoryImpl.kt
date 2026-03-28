@@ -11,7 +11,7 @@ import com.sclass.domain.domains.student.domain.QStudentDocument.studentDocument
 import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.student.dto.StudentSearchCondition
-import com.sclass.domain.domains.student.dto.StudentWithPlatform
+import com.sclass.domain.domains.student.dto.StudentWithRoles
 import com.sclass.domain.domains.user.domain.Grade
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.QUser.user
@@ -29,10 +29,12 @@ class StudentCustomRepositoryImpl(
     override fun searchStudents(
         condition: StudentSearchCondition,
         page: Pageable,
-    ): Page<StudentWithPlatform> {
-        val tuples =
+    ): Page<StudentWithRoles> {
+        // Step 1: DISTINCT student IDs with filters + pagination
+        val studentIds =
             queryFactory
-                .select(student.id, userRole.platform, userRole.state)
+                .select(student.id)
+                .distinct()
                 .from(student)
                 .join(student.user, user)
                 .join(userRole)
@@ -46,38 +48,53 @@ class StudentCustomRepositoryImpl(
                     platformEq(condition.platform),
                     createdAtGoe(condition.createdAtFrom),
                     createdAtLoe(condition.createdAtTo),
-                ).offset(page.offset)
+                ).orderBy(student.createdAt.desc())
+                .offset(page.offset)
                 .limit(page.pageSize.toLong())
-                .orderBy(student.createdAt.desc())
                 .fetch()
 
-        val studentIds = tuples.map { it.get(student.id)!! }
+        // Step 2: Batch load Students with User
         val students =
             if (studentIds.isEmpty()) {
-                emptyMap()
+                emptyList()
             } else {
                 queryFactory
                     .selectFrom(student)
                     .join(student.user, user)
                     .fetchJoin()
                     .where(student.id.`in`(studentIds))
+                    .orderBy(student.createdAt.desc())
                     .fetch()
-                    .associateBy { it.id }
             }
 
+        // Step 3: Batch load UserRoles by userIds (STUDENT role only)
+        val userIds = students.map { it.user.id }
+        val rolesByUserId =
+            if (userIds.isEmpty()) {
+                emptyMap()
+            } else {
+                queryFactory
+                    .selectFrom(userRole)
+                    .where(
+                        userRole.userId.`in`(userIds),
+                        userRole.role.eq(Role.STUDENT),
+                    ).fetch()
+                    .groupBy { it.userId }
+            }
+
+        // Step 4: Combine into StudentWithRoles
         val content =
-            tuples.map { tuple ->
-                val studentId = tuple.get(student.id)!!
-                StudentWithPlatform(
-                    student = students[studentId] ?: error("Student must not be null"),
-                    platform = tuple.get(userRole.platform) ?: error("Platform must not be null"),
-                    state = tuple.get(userRole.state) ?: error("State must not be null"),
+            students.map { s ->
+                StudentWithRoles(
+                    student = s,
+                    roles = rolesByUserId[s.user.id] ?: emptyList(),
                 )
             }
 
+        // Count query: COUNT(DISTINCT student.id)
         val total =
             queryFactory
-                .select(student.count())
+                .select(student.id.countDistinct())
                 .from(student)
                 .join(student.user, user)
                 .join(userRole)
