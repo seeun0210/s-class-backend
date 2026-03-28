@@ -14,8 +14,8 @@ class TeacherAssignmentDomainService(
     private val teacherAssignmentAdaptor: TeacherAssignmentAdaptor,
 ) {
     fun assign(
-        studentId: String,
-        teacherId: String,
+        studentUserId: String,
+        teacherUserId: String,
         platform: Platform,
         organizationId: Long?,
         assignedBy: String,
@@ -25,8 +25,8 @@ class TeacherAssignmentDomainService(
         val now = LocalDateTime.now()
 
         val existing =
-            teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationIdOrNull(
-                studentId,
+            teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationIdOrNull(
+                studentUserId,
                 platform,
                 organizationId,
             )
@@ -38,8 +38,8 @@ class TeacherAssignmentDomainService(
 
         val assignment =
             TeacherAssignment(
-                studentId = studentId,
-                teacherId = teacherId,
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
                 platform = platform,
                 organizationId = organizationId,
                 assignedBy = assignedBy,
@@ -49,15 +49,15 @@ class TeacherAssignmentDomainService(
     }
 
     fun unassign(
-        studentId: String,
+        studentUserId: String,
         platform: Platform,
         organizationId: Long?,
     ) {
         validatePlatformOrganization(platform, organizationId)
 
         val assignment =
-            teacherAssignmentAdaptor.findActiveByStudentIdAndPlatformAndOrganizationId(
-                studentId,
+            teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
+                studentUserId,
                 platform,
                 organizationId,
             )

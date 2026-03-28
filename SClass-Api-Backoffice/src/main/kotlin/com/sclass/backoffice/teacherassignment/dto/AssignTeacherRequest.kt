@@ -6,10 +6,10 @@ import jakarta.validation.constraints.NotNull
 
 data class AssignTeacherRequest(
     @field:NotBlank
-    val studentId: String,
+    val studentUserId: String,
 
     @field:NotBlank
-    val teacherId: String,
+    val teacherUserId: String,
 
     @field:NotNull
     val platform: Platform,

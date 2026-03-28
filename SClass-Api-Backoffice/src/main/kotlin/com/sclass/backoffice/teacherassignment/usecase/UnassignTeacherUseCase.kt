@@ -12,7 +12,7 @@ class UnassignTeacherUseCase(
     @Transactional
     fun execute(request: UnassignTeacherRequest) {
         teacherAssignmentDomainService.unassign(
-            studentId = request.studentId,
+            studentUserId = request.studentUserId,
             platform = request.platform,
             organizationId = request.organizationId,
         )

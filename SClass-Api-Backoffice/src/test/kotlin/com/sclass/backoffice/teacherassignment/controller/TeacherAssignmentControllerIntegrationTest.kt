@@ -126,8 +126,8 @@ class TeacherAssignmentControllerIntegrationTest {
         fun `배정 후 검색 목록에 노출된다`() {
             val assignBody =
                 mapOf(
-                    "studentId" to studentUser.id,
-                    "teacherId" to teacherUser.id,
+                    "studentUserId" to studentUser.id,
+                    "teacherUserId" to teacherUser.id,
                     "platform" to "LMS",
                     "organizationId" to organization.id,
                 )
@@ -135,7 +135,7 @@ class TeacherAssignmentControllerIntegrationTest {
             // 배정
             mockMvc
                 .perform(
-                    post("/api/v1/students/teacher-assignments")
+                    post("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(assignBody)),
@@ -145,7 +145,7 @@ class TeacherAssignmentControllerIntegrationTest {
             // 검색 목록에서 확인
             mockMvc
                 .perform(
-                    get("/api/v1/students/teacher-assignments")
+                    get("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.success").value(true))
@@ -163,15 +163,15 @@ class TeacherAssignmentControllerIntegrationTest {
         fun `해제 후 검색 목록에서 제거된다`() {
             val assignBody =
                 mapOf(
-                    "studentId" to studentUser.id,
-                    "teacherId" to teacherUser.id,
+                    "studentUserId" to studentUser.id,
+                    "teacherUserId" to teacherUser.id,
                     "platform" to "SUPPORTERS",
                 )
 
             // 배정
             mockMvc
                 .perform(
-                    post("/api/v1/students/teacher-assignments")
+                    post("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(assignBody)),
@@ -180,7 +180,7 @@ class TeacherAssignmentControllerIntegrationTest {
             // 검색 목록에서 확인 (1건)
             mockMvc
                 .perform(
-                    get("/api/v1/students/teacher-assignments")
+                    get("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.data.totalElements").value(1))
@@ -188,13 +188,13 @@ class TeacherAssignmentControllerIntegrationTest {
             // 해제
             val unassignBody =
                 mapOf(
-                    "studentId" to studentUser.id,
+                    "studentUserId" to studentUser.id,
                     "platform" to "SUPPORTERS",
                 )
 
             mockMvc
                 .perform(
-                    delete("/api/v1/students/teacher-assignments")
+                    delete("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(unassignBody)),
@@ -204,7 +204,7 @@ class TeacherAssignmentControllerIntegrationTest {
             // 검색 목록에서 제거 확인 (0건)
             mockMvc
                 .perform(
-                    get("/api/v1/students/teacher-assignments")
+                    get("/api/v1/teacher-assignments")
                         .header("Authorization", adminToken),
                 ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.data.totalElements").value(0))

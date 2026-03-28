@@ -19,7 +19,7 @@ class GetTeacherDetailUseCase(
         val roles = userRoleAdaptor.findAllByUserId(userId)
         val documents = teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id)
         val organizations = teacherAdaptor.findOrganizationsByUserId(userId)
-        val assignments = teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherId(userId)
+        val assignments = teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherUserId(userId)
         return TeacherDetailResponse.from(teacher, roles, documents, organizations, assignments)
     }
 }

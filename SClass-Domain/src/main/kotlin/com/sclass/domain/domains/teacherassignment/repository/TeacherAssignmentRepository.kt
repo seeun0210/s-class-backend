@@ -7,18 +7,18 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface TeacherAssignmentRepository :
     JpaRepository<TeacherAssignment, Long>,
     TeacherAssignmentCustomRepository {
-    fun findByStudentIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
-        studentId: String,
+    fun findByStudentUserIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
+        studentUserId: String,
         platform: Platform,
         organizationId: Long?,
     ): TeacherAssignment?
 
-    fun findAllByStudentIdAndUnassignedAtIsNull(studentId: String): List<TeacherAssignment>
+    fun findAllByStudentUserIdAndUnassignedAtIsNull(studentUserId: String): List<TeacherAssignment>
 
-    fun findAllByTeacherIdAndUnassignedAtIsNull(teacherId: String): List<TeacherAssignment>
+    fun findAllByTeacherUserIdAndUnassignedAtIsNull(teacherUserId: String): List<TeacherAssignment>
 
-    fun findAllByTeacherIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
-        teacherId: String,
+    fun findAllByTeacherUserIdAndPlatformAndOrganizationIdAndUnassignedAtIsNull(
+        teacherUserId: String,
         platform: Platform,
         organizationId: Long?,
     ): List<TeacherAssignment>

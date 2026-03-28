@@ -17,8 +17,8 @@ import java.time.LocalDateTime
 @Table(
     name = "teacher_assignments",
     indexes = [
-        Index(name = "idx_ta_teacher_id", columnList = "teacher_id, unassigned_at"),
-        Index(name = "idx_ta_student_id", columnList = "student_id, unassigned_at"),
+        Index(name = "idx_ta_teacher_user_id", columnList = "teacher_user_id, unassigned_at"),
+        Index(name = "idx_ta_student_user_id", columnList = "student_user_id, unassigned_at"),
     ],
 )
 class TeacherAssignment(
@@ -26,11 +26,11 @@ class TeacherAssignment(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
 
-    @Column(name = "student_id", nullable = false, length = 26)
-    val studentId: String,
+    @Column(name = "student_user_id", nullable = false, length = 26)
+    val studentUserId: String,
 
-    @Column(name = "teacher_id", nullable = false, length = 26)
-    val teacherId: String,
+    @Column(name = "teacher_user_id", nullable = false, length = 26)
+    val teacherUserId: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

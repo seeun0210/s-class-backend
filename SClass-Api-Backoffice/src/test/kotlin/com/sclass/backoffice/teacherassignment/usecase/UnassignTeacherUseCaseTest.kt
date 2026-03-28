@@ -30,14 +30,14 @@ class UnassignTeacherUseCaseTest {
         fun `배정을 해제한다`() {
             val request =
                 UnassignTeacherRequest(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
 
             every {
                 teacherAssignmentDomainService.unassign(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
@@ -47,7 +47,7 @@ class UnassignTeacherUseCaseTest {
 
             verify(exactly = 1) {
                 teacherAssignmentDomainService.unassign(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
@@ -61,14 +61,14 @@ class UnassignTeacherUseCaseTest {
         fun `활성 배정이 없으면 예외가 발생한다`() {
             val request =
                 UnassignTeacherRequest(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )
 
             every {
                 teacherAssignmentDomainService.unassign(
-                    studentId = "student-1",
+                    studentUserId = "student-1",
                     platform = Platform.LMS,
                     organizationId = 1L,
                 )

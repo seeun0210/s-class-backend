@@ -8,9 +8,9 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface TeacherAssignmentCustomRepository {
-    fun findActiveAssignedStudentsByTeacherId(teacherId: String): List<AssignedStudentInfo>
+    fun findActiveAssignedStudentsByTeacherUserId(teacherUserId: String): List<AssignedStudentInfo>
 
-    fun findActiveAssignedTeachersByStudentId(studentId: String): List<AssignedTeacherInfo>
+    fun findActiveAssignedTeachersByStudentUserId(studentUserId: String): List<AssignedTeacherInfo>
 
     fun searchActiveAssignments(
         condition: TeacherAssignmentSearchCondition,

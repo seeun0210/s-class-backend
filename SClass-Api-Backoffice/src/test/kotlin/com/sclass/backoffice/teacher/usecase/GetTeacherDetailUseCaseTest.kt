@@ -105,7 +105,7 @@ class GetTeacherDetailUseCaseTest {
             every { userRoleAdaptor.findAllByUserId(user.id) } returns roles
             every { teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id) } returns documents
             every { teacherAdaptor.findOrganizationsByUserId(user.id) } returns organizations
-            every { teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherId(user.id) } returns assignedStudents
+            every { teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherUserId(user.id) } returns assignedStudents
 
             val response = useCase.execute(user.id)
 
@@ -155,7 +155,7 @@ class GetTeacherDetailUseCaseTest {
             every { userRoleAdaptor.findAllByUserId(user.id) } returns emptyList()
             every { teacherAdaptor.findDocumentsWithFileByTeacherId(teacher.id) } returns emptyList()
             every { teacherAdaptor.findOrganizationsByUserId(user.id) } returns emptyList()
-            every { teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherId(user.id) } returns emptyList()
+            every { teacherAssignmentAdaptor.findActiveAssignedStudentsByTeacherUserId(user.id) } returns emptyList()
 
             val response = useCase.execute(user.id)
 

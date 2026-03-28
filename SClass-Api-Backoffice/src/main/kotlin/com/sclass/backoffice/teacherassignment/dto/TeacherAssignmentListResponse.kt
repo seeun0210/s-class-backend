@@ -6,9 +6,9 @@ import java.time.LocalDateTime
 
 data class TeacherAssignmentListResponse(
     val id: Long,
-    val studentId: String,
+    val studentUserId: String,
     val studentName: String,
-    val teacherId: String,
+    val teacherUserId: String,
     val teacherName: String,
     val platform: Platform,
     val organizationId: Long?,
@@ -19,9 +19,9 @@ data class TeacherAssignmentListResponse(
         fun from(info: TeacherAssignmentListInfo): TeacherAssignmentListResponse =
             TeacherAssignmentListResponse(
                 id = info.assignmentId,
-                studentId = info.studentUserId,
+                studentUserId = info.studentUserId,
                 studentName = info.studentName,
-                teacherId = info.teacherUserId,
+                teacherUserId = info.teacherUserId,
                 teacherName = info.teacherName,
                 platform = info.platform,
                 organizationId = info.organizationId,

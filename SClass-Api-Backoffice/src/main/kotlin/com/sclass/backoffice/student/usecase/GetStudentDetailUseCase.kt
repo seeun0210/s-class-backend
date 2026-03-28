@@ -23,7 +23,7 @@ class GetStudentDetailUseCase(
         val organizations = studentAdaptor.findOrganizationsByUserId(userId)
         val attribution = organizationAttributionAdaptor.findByStudentIdOrNull(student.id)
         val attributions = listOfNotNull(attribution)
-        val assignments = teacherAssignmentAdaptor.findActiveAssignedTeachersByStudentId(userId)
+        val assignments = teacherAssignmentAdaptor.findActiveAssignedTeachersByStudentUserId(userId)
         return StudentDetailResponse.from(student, roles, documents, organizations, attributions, assignments)
     }
 }
