@@ -1,19 +1,15 @@
-package com.sclass.backoffice.userrole.controller
+package com.sclass.backoffice.student.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.sclass.backoffice.config.ApiIntegrationTest
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.repository.StudentRepository
-import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import com.sclass.domain.domains.user.domain.AuthProvider
-import com.sclass.domain.domains.user.domain.Platform
-import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
-import com.sclass.domain.domains.user.domain.UserRole
-import com.sclass.domain.domains.user.domain.UserRoleState
 import com.sclass.domain.domains.user.repository.UserRepository
 import com.sclass.domain.domains.user.repository.UserRoleRepository
 import org.junit.jupiter.api.BeforeEach
@@ -27,7 +23,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @ApiIntegrationTest
-class UserRoleControllerIntegrationTest {
+class StudentManagementControllerIntegrationTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
@@ -38,10 +34,10 @@ class UserRoleControllerIntegrationTest {
     private lateinit var userRoleRepository: UserRoleRepository
 
     @Autowired
-    private lateinit var teacherRepository: TeacherRepository
+    private lateinit var studentRepository: StudentRepository
 
     @Autowired
-    private lateinit var studentRepository: StudentRepository
+    private lateinit var teacherRepository: TeacherRepository
 
     @Autowired
     private lateinit var jwtTokenProvider: JwtTokenProvider
@@ -52,12 +48,13 @@ class UserRoleControllerIntegrationTest {
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
     private lateinit var adminToken: String
-    private lateinit var teacherUser: User
+    private lateinit var student: Student
+    private lateinit var studentUser: User
 
     @BeforeEach
     fun setUp() {
-        studentRepository.deleteAll()
         teacherRepository.deleteAll()
+        studentRepository.deleteAll()
         userRoleRepository.deleteAll()
         userRepository.deleteAll()
 
@@ -71,17 +68,17 @@ class UserRoleControllerIntegrationTest {
                 ),
             )
 
-        teacherUser =
+        studentUser =
             userRepository.save(
                 User(
-                    email = "teacher@sclass.com",
-                    name = "선생님",
+                    email = "student@sclass.com",
+                    name = "학생",
                     authProvider = AuthProvider.EMAIL,
                     hashedPassword = "hashed",
                 ),
             )
 
-        teacherRepository.save(Teacher(user = teacherUser))
+        student = studentRepository.save(Student(user = studentUser))
 
         val jwt =
             jwtTokenProvider.generateAccessToken(
@@ -92,30 +89,20 @@ class UserRoleControllerIntegrationTest {
         adminToken = "Bearer ${aesTokenEncryptor.encrypt(jwt)}"
     }
 
-    private fun createUserRole(state: UserRoleState): UserRole =
-        userRoleRepository.save(
-            UserRole(
-                userId = teacherUser.id,
-                platform = Platform.SUPPORTERS,
-                role = Role.TEACHER,
-                state = state,
-            ),
-        )
-
     @Nested
-    inner class UpdateState {
+    inner class UpdateStudentProfile {
         @Test
-        fun `APPROVED 요청 시 200을 반환한다`() {
-            val userRole = createUserRole(UserRoleState.PENDING)
-
+        fun `학생 프로필 수정 성공 시 200을 반환한다`() {
             val body =
                 mapOf(
-                    "state" to "APPROVED",
+                    "grade" to "HIGH_1",
+                    "school" to "한영외고",
+                    "parentPhoneNumber" to "010-9876-5432",
                 )
 
             mockMvc
                 .perform(
-                    patch("/api/v1/user-roles/${userRole.id}/state")
+                    patch("/api/v1/students/${studentUser.id}/profile")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
@@ -124,77 +111,25 @@ class UserRoleControllerIntegrationTest {
         }
 
         @Test
-        fun `REJECTED 요청 시 reason과 함께 200을 반환한다`() {
-            val userRole = createUserRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "REJECTED",
-                    "reason" to "서류 미비",
-                )
+        fun `존재하지 않는 유저이면 404를 반환한다`() {
+            val body = mapOf("grade" to "HIGH_1")
 
             mockMvc
                 .perform(
-                    patch("/api/v1/user-roles/${userRole.id}/state")
+                    patch("/api/v1/students/invalid-user-id/profile")
                         .header("Authorization", adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isOk)
-                .andExpect(jsonPath("$.success").value(true))
-        }
-
-        @Test
-        fun `REJECTED 요청 시 reason이 없으면 400을 반환한다`() {
-            val userRole = createUserRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "REJECTED",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/user-roles/${userRole.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("USER_007"))
-        }
-
-        @Test
-        fun `DRAFT 상태는 허용되지 않아 400을 반환한다`() {
-            val userRole = createUserRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "DRAFT",
-                )
-
-            mockMvc
-                .perform(
-                    patch("/api/v1/user-roles/${userRole.id}/state")
-                        .header("Authorization", adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)),
-                ).andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error.code").value("USER_006"))
+                ).andExpect(status().isNotFound)
         }
 
         @Test
         fun `인증 토큰이 없으면 401을 반환한다`() {
-            val userRole = createUserRole(UserRoleState.PENDING)
-
-            val body =
-                mapOf(
-                    "state" to "APPROVED",
-                )
+            val body = mapOf("grade" to "HIGH_1")
 
             mockMvc
                 .perform(
-                    patch("/api/v1/user-roles/${userRole.id}/state")
+                    patch("/api/v1/students/${studentUser.id}/profile")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)),
                 ).andExpect(status().isUnauthorized)

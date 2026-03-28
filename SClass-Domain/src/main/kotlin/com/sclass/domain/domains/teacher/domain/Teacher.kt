@@ -92,6 +92,22 @@ class Teacher(
         verification = TeacherVerification(submittedAt = now)
     }
 
+    fun updateTeacherProfile(profile: TeacherProfile) {
+        this.profile = profile
+    }
+
+    fun updateEducation(education: TeacherEducation) {
+        this.education = education
+    }
+
+    fun updatePersonalInfo(personalInfo: TeacherPersonalInfo) {
+        this.personalInfo = personalInfo
+    }
+
+    fun updateContract(contract: TeacherContract) {
+        this.contract = contract
+    }
+
     private fun validateProfileComplete() {
         if (profile?.birthDate == null ||
             education?.majorCategory == null ||
