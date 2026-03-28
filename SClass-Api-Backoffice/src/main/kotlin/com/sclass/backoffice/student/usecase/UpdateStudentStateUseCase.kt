@@ -18,7 +18,7 @@ class UpdateStudentStateUseCase(
         userId: String,
         request: UpdateStudentStateRequest,
     ) {
-        val student = studentAdaptor.findByUserId(userId)
+        studentAdaptor.findByUserId(userId)
         val userRole =
             userRoleAdaptor.findByUserIdAndPlatformAndRole(
                 userId = userId,
