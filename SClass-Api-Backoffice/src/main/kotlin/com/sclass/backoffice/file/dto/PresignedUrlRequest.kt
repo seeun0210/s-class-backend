@@ -9,7 +9,7 @@ data class PresignedUrlRequest(
     @field:NotBlank
     val originalFilename: String,
 
-    @field:NotBlank
+    @field:NotNull
     val fileType: FileType,
 
     @field:NotBlank
