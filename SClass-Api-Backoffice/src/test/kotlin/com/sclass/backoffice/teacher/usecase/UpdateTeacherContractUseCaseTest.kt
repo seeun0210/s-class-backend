@@ -3,6 +3,7 @@ package com.sclass.backoffice.teacher.usecase
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.domain.Teacher
 import com.sclass.domain.domains.teacher.domain.TeacherContract
+import com.sclass.domain.domains.teacher.exception.TeacherContractDateInvalidException
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
@@ -76,6 +77,38 @@ class UpdateTeacherContractUseCaseTest {
 
     @Nested
     inner class Failure {
+        @Test
+        fun `계약 시작일이 종료일보다 이후이면 TeacherContractDateInvalidException을 던진다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val teacher = Teacher(user = user)
+            val contract =
+                TeacherContract(
+                    contractStartDate = LocalDate.of(2026, 4, 1),
+                    contractEndDate = LocalDate.of(2025, 3, 31),
+                )
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+
+            assertThatThrownBy { useCase.execute(user.id, contract) }
+                .isInstanceOf(TeacherContractDateInvalidException::class.java)
+        }
+
+        @Test
+        fun `계약 시작일과 종료일이 같으면 TeacherContractDateInvalidException을 던진다`() {
+            val user = User(email = "teacher@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL)
+            val teacher = Teacher(user = user)
+            val contract =
+                TeacherContract(
+                    contractStartDate = LocalDate.of(2025, 4, 1),
+                    contractEndDate = LocalDate.of(2025, 4, 1),
+                )
+
+            every { teacherAdaptor.findByUserId(user.id) } returns teacher
+
+            assertThatThrownBy { useCase.execute(user.id, contract) }
+                .isInstanceOf(TeacherContractDateInvalidException::class.java)
+        }
+
         @Test
         fun `존재하지 않는 유저이면 TeacherNotFoundException을 던진다`() {
             val contract = TeacherContract(contractStartDate = LocalDate.of(2025, 4, 1))

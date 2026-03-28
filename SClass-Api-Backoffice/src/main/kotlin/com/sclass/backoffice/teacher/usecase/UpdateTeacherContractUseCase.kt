@@ -3,6 +3,7 @@ package com.sclass.backoffice.teacher.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
 import com.sclass.domain.domains.teacher.domain.TeacherContract
+import com.sclass.domain.domains.teacher.exception.TeacherContractDateInvalidException
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
@@ -21,6 +22,13 @@ class UpdateTeacherContractUseCase(
                 contractStartDate = contract.contractStartDate ?: teacher.contract?.contractStartDate,
                 contractEndDate = contract.contractEndDate ?: teacher.contract?.contractEndDate,
             )
+
+        val start = updatedContract.contractStartDate
+        val end = updatedContract.contractEndDate
+        if (start != null && end != null && !start.isBefore(end)) {
+            throw TeacherContractDateInvalidException()
+        }
+
         teacher.updateContract(updatedContract)
         teacherAdaptor.save(teacher)
     }
