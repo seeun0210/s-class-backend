@@ -26,6 +26,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import java.time.LocalDateTime
 
 class GetTeacherDetailUseCaseTest {
@@ -126,15 +127,18 @@ class GetTeacherDetailUseCaseTest {
             assertThat(response.organizations[0].domain).isEqualTo("test.sclass.com")
             assertThat(response.organizations[0].logoUrl).isEqualTo("https://example.com/logo.png")
             assertThat(response.assignments).hasSize(1)
-            assertThat(response.assignments[0].assignmentId).isEqualTo(1L)
-            assertThat(response.assignments[0].studentUserId).isEqualTo("student-user-id")
-            assertThat(response.assignments[0].studentName).isEqualTo("김학생")
-            assertThat(response.assignments[0].grade).isEqualTo(Grade.HIGH_1)
-            assertThat(response.assignments[0].school).isEqualTo("테스트고등학교")
-            assertThat(response.assignments[0].platform).isEqualTo(Platform.SUPPORTERS)
-            assertThat(response.assignments[0].organizationId).isEqualTo(1L)
-            assertThat(response.assignments[0].organizationName).isEqualTo("테스트 학원")
-            assertThat(response.assignments[0].assignedAt).isEqualTo(assignedAt)
+            val assignment = response.assignments[0]
+            assertAll(
+                { assertThat(assignment.assignmentId).isEqualTo(1L) },
+                { assertThat(assignment.studentUserId).isEqualTo("student-user-id") },
+                { assertThat(assignment.studentName).isEqualTo("김학생") },
+                { assertThat(assignment.grade).isEqualTo(Grade.HIGH_1) },
+                { assertThat(assignment.school).isEqualTo("테스트고등학교") },
+                { assertThat(assignment.platform).isEqualTo(Platform.SUPPORTERS) },
+                { assertThat(assignment.organizationId).isEqualTo(1L) },
+                { assertThat(assignment.organizationName).isEqualTo("테스트 학원") },
+                { assertThat(assignment.assignedAt).isEqualTo(assignedAt) },
+            )
         }
 
         @Test

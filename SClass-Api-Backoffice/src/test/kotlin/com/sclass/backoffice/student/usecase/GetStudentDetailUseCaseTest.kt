@@ -24,6 +24,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import java.time.LocalDateTime
 
 class GetStudentDetailUseCaseTest {
@@ -116,13 +117,16 @@ class GetStudentDetailUseCaseTest {
             assertThat(response.organizations[0].attribution).isNotNull
             assertThat(response.organizations[0].attribution!!.source).isEqualTo(AttributionSource.INVITE_CODE)
             assertThat(response.assignments).hasSize(1)
-            assertThat(response.assignments[0].assignmentId).isEqualTo(1L)
-            assertThat(response.assignments[0].teacherUserId).isEqualTo("teacher-user-id")
-            assertThat(response.assignments[0].teacherName).isEqualTo("홍선생")
-            assertThat(response.assignments[0].platform).isEqualTo(Platform.SUPPORTERS)
-            assertThat(response.assignments[0].organizationId).isEqualTo(1L)
-            assertThat(response.assignments[0].organizationName).isEqualTo("테스트 학원")
-            assertThat(response.assignments[0].assignedAt).isEqualTo(assignedAt)
+            val assignment = response.assignments[0]
+            assertAll(
+                { assertThat(assignment.assignmentId).isEqualTo(1L) },
+                { assertThat(assignment.teacherUserId).isEqualTo("teacher-user-id") },
+                { assertThat(assignment.teacherName).isEqualTo("홍선생") },
+                { assertThat(assignment.platform).isEqualTo(Platform.SUPPORTERS) },
+                { assertThat(assignment.organizationId).isEqualTo(1L) },
+                { assertThat(assignment.organizationName).isEqualTo("테스트 학원") },
+                { assertThat(assignment.assignedAt).isEqualTo(assignedAt) },
+            )
         }
 
         @Test
