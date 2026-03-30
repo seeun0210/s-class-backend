@@ -1,6 +1,7 @@
 package com.sclass.supporters.config
 
 import com.sclass.common.jwt.CurrentUserIdArgumentResolver
+import com.sclass.common.jwt.CurrentUserRoleArgumentResolver
 import com.sclass.common.jwt.JwtAuthInterceptor
 import com.sclass.common.jwt.PlatformAuthInterceptor
 import com.sclass.domain.domains.user.domain.Platform
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class WebConfig(
     private val jwtAuthInterceptor: JwtAuthInterceptor,
     private val currentUserIdArgumentResolver: CurrentUserIdArgumentResolver,
+    private val currentUserRoleArgumentResolver: CurrentUserRoleArgumentResolver,
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry
@@ -27,5 +29,6 @@ class WebConfig(
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
         resolvers.add(currentUserIdArgumentResolver)
+        resolvers.add(currentUserRoleArgumentResolver)
     }
 }
