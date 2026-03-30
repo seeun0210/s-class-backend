@@ -25,17 +25,18 @@ class CreateCommissionUseCase(
         studentUserId: String,
         request: CreateCommissionRequest,
     ): CommissionResponse {
-        teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
-            studentUserId = studentUserId,
-            platform = Platform.SUPPORTERS,
-            organizationId = null,
-        )
+        val assignment =
+            teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
+                studentUserId = studentUserId,
+                platform = Platform.SUPPORTERS,
+                organizationId = null,
+            )
 
         val commission =
             commissionAdaptor.save(
                 Commission(
                     studentUserId = studentUserId,
-                    teacherUserId = request.teacherUserId,
+                    teacherUserId = assignment.teacherUserId,
                     outputFormat = request.outputFormat,
                     activityType = request.activityType,
                     guideInfo =

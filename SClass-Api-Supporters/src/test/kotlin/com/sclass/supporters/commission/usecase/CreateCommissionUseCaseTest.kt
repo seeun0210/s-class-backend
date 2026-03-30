@@ -40,32 +40,31 @@ class CreateCommissionUseCaseTest {
         useCase = CreateCommissionUseCase(commissionAdaptor, commissionFileAdaptor, teacherAssignmentAdaptor, fileAdaptor)
     }
 
-    private fun createRequest(
-        teacherUserId: String = "teacher-user-id-00000000001",
-        fileIds: List<String>? = null,
-    ) = CreateCommissionRequest(
-        teacherUserId = teacherUserId,
-        outputFormat = OutputFormat.REPORT,
-        activityType = ActivityType.CAREER_EXPLORATION,
-        guideInfo =
-            GuideInfoRequest(
-                subject = "미시경제학",
-                volume = "A4 3매 이내",
-                requiredElements = "신문 기사 활용",
-                gradingCriteria = "경제학 기본원리 반영의 일관성(10), 경제 현상 분석의 체계성(30)",
-                teacherEmphasis = "수요·공급 이론을 반드시 포함",
-            ),
-        fileIds = fileIds,
-    )
+    private fun createRequest(fileIds: List<String>? = null) =
+        CreateCommissionRequest(
+            outputFormat = OutputFormat.REPORT,
+            activityType = ActivityType.CAREER_EXPLORATION,
+            guideInfo =
+                GuideInfoRequest(
+                    subject = "미시경제학",
+                    volume = "A4 3매 이내",
+                    requiredElements = "신문 기사 활용",
+                    gradingCriteria = "경제학 기본원리 반영의 일관성(10), 경제 현상 분석의 체계성(30)",
+                    teacherEmphasis = "수요·공급 이론을 반드시 포함",
+                ),
+            fileIds = fileIds,
+        )
 
     private fun mockTeacherAssignment() {
+        val assignment = mockk<TeacherAssignment>()
+        every { assignment.teacherUserId } returns "teacher-user-id-00000000001"
         every {
             teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
                 studentUserId = any(),
                 platform = Platform.SUPPORTERS,
                 organizationId = null,
             )
-        } returns mockk<TeacherAssignment>()
+        } returns assignment
     }
 
     @Test

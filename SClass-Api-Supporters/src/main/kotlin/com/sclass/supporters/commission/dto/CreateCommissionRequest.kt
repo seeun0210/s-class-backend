@@ -7,9 +7,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 data class CreateCommissionRequest(
-    @field:NotBlank
-    val teacherUserId: String,
-
     @field:NotNull
     val outputFormat: OutputFormat,
 
