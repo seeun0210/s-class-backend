@@ -2,6 +2,7 @@ package com.sclass.supporters.commission.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.BusinessException
+import com.sclass.common.exception.GlobalErrorCode
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionTopicAdaptor
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
@@ -22,7 +23,7 @@ class SelectTopicUseCase(
         request: SelectTopicRequest,
     ): CommissionTopicResponse {
         if (!request.isSelected) {
-            throw BusinessException(CommissionErrorCode.INVALID_STATUS_TRANSITION)
+            throw BusinessException(GlobalErrorCode.INVALID_INPUT)
         }
 
         val commission = commissionAdaptor.findById(commissionId)
