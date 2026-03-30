@@ -14,6 +14,7 @@ import com.sclass.supporters.commission.dto.SelectTopicRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
+import com.sclass.supporters.commission.usecase.GetCommissionTopicsUseCase
 import com.sclass.supporters.commission.usecase.ProposeTopicsUseCase
 import com.sclass.supporters.commission.usecase.SelectTopicUseCase
 import jakarta.validation.Valid
@@ -33,6 +34,7 @@ class CommissionController(
     private val getCommissionListUseCase: GetCommissionListUseCase,
     private val selectTopicUseCase: SelectTopicUseCase,
     private val proposeTopicsUseCase: ProposeTopicsUseCase,
+    private val getCommissionTopicsUseCase: GetCommissionTopicsUseCase,
 ) {
     @PostMapping
     fun create(
@@ -59,6 +61,12 @@ class CommissionController(
         @PathVariable topicId: Long,
         @Valid @RequestBody request: SelectTopicRequest,
     ): ApiResponse<CommissionTopicResponse> = ApiResponse.success(selectTopicUseCase.execute(userId, commissionId, topicId, request))
+
+    @GetMapping("/{commissionId}/topics")
+    fun getTopics(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+    ): ApiResponse<CommissionTopicListResponse> = ApiResponse.success(getCommissionTopicsUseCase.execute(userId, commissionId))
 
     @PostMapping("/{commissionId}/topics")
     fun proposeTopics(
