@@ -14,6 +14,7 @@ import com.sclass.supporters.commission.dto.MessageResponse
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
 import com.sclass.supporters.commission.dto.SelectTopicRequest
 import com.sclass.supporters.commission.dto.SendMessageRequest
+import com.sclass.supporters.commission.dto.TransitionStatusRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
@@ -22,6 +23,7 @@ import com.sclass.supporters.commission.usecase.GetMessagesUseCase
 import com.sclass.supporters.commission.usecase.ProposeTopicsUseCase
 import com.sclass.supporters.commission.usecase.SelectTopicUseCase
 import com.sclass.supporters.commission.usecase.SendMessageUseCase
+import com.sclass.supporters.commission.usecase.TransitionCommissionStatusUseCase
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -42,6 +44,7 @@ class CommissionController(
     private val getCommissionTopicsUseCase: GetCommissionTopicsUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
+    private val transitionCommissionStatusUseCase: TransitionCommissionStatusUseCase,
 ) {
     @PostMapping
     fun create(
@@ -94,4 +97,18 @@ class CommissionController(
         @CurrentUserId userId: String,
         @PathVariable commissionId: Long,
     ): ApiResponse<MessageListResponse> = ApiResponse.success(getMessagesUseCase.execute(userId, commissionId))
+
+    @PatchMapping("/{commissionId}/status")
+    fun updateStatus(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+        @Valid @RequestBody request: TransitionStatusRequest,
+    ): ApiResponse<CommissionResponse> =
+        ApiResponse.success(
+            transitionCommissionStatusUseCase.execute(
+                userId,
+                commissionId,
+                request,
+            ),
+        )
 }

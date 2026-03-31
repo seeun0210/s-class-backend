@@ -72,7 +72,7 @@ class Commission(
         this.status = CommissionStatus.COMPLETED
     }
 
-    fun reject(reason: String) {
+    fun reject() {
         validateStatusTransition(CommissionStatus.REJECTED)
         this.status = CommissionStatus.REJECTED
     }
@@ -91,11 +91,12 @@ class Commission(
                 CommissionStatus.TOPIC_SELECTED -> setOf(CommissionStatus.TOPIC_PROPOSED)
                 CommissionStatus.IN_PROGRESS -> setOf(CommissionStatus.TOPIC_SELECTED)
                 CommissionStatus.COMPLETED -> setOf(CommissionStatus.IN_PROGRESS)
-                CommissionStatus.REJECTED ->
+                CommissionStatus.REJECTED -> {
                     setOf(
                         CommissionStatus.REQUESTED,
                         CommissionStatus.ADDITIONAL_INFO_REQUESTED,
                     )
+                }
                 CommissionStatus.CANCELLED ->
                     setOf(
                         CommissionStatus.REQUESTED,
