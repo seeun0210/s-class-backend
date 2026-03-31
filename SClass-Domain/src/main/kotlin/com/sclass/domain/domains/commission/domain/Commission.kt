@@ -85,8 +85,8 @@ class Commission(
     private fun validateStatusTransition(target: CommissionStatus) {
         val allowed =
             when (target) {
-                CommissionStatus.REQUESTED -> setOf(CommissionStatus.ADDITIONAL_INFO_REQUESTED)
-                CommissionStatus.ADDITIONAL_INFO_REQUESTED -> setOf(CommissionStatus.REQUESTED)
+                CommissionStatus.REQUESTED -> setOf(CommissionStatus.ADDITIONAL_INFO_REQUESTED, CommissionStatus.REQUESTED)
+                CommissionStatus.ADDITIONAL_INFO_REQUESTED -> setOf(CommissionStatus.REQUESTED, CommissionStatus.ADDITIONAL_INFO_REQUESTED)
                 CommissionStatus.TOPIC_PROPOSED -> setOf(CommissionStatus.REQUESTED)
                 CommissionStatus.TOPIC_SELECTED -> setOf(CommissionStatus.TOPIC_PROPOSED)
                 CommissionStatus.IN_PROGRESS -> setOf(CommissionStatus.TOPIC_SELECTED)
