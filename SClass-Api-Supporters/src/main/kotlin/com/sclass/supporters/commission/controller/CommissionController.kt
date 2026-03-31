@@ -9,14 +9,19 @@ import com.sclass.supporters.commission.dto.CommissionResponse
 import com.sclass.supporters.commission.dto.CommissionTopicListResponse
 import com.sclass.supporters.commission.dto.CommissionTopicResponse
 import com.sclass.supporters.commission.dto.CreateCommissionRequest
+import com.sclass.supporters.commission.dto.MessageListResponse
+import com.sclass.supporters.commission.dto.MessageResponse
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
 import com.sclass.supporters.commission.dto.SelectTopicRequest
+import com.sclass.supporters.commission.dto.SendMessageRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionTopicsUseCase
+import com.sclass.supporters.commission.usecase.GetMessagesUseCase
 import com.sclass.supporters.commission.usecase.ProposeTopicsUseCase
 import com.sclass.supporters.commission.usecase.SelectTopicUseCase
+import com.sclass.supporters.commission.usecase.SendMessageUseCase
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -35,6 +40,8 @@ class CommissionController(
     private val selectTopicUseCase: SelectTopicUseCase,
     private val proposeTopicsUseCase: ProposeTopicsUseCase,
     private val getCommissionTopicsUseCase: GetCommissionTopicsUseCase,
+    private val sendMessageUseCase: SendMessageUseCase,
+    private val getMessagesUseCase: GetMessagesUseCase,
 ) {
     @PostMapping
     fun create(
@@ -74,4 +81,17 @@ class CommissionController(
         @PathVariable commissionId: Long,
         @Valid @RequestBody request: ProposeTopicsRequest,
     ): ApiResponse<CommissionTopicListResponse> = ApiResponse.success(proposeTopicsUseCase.execute(userId, commissionId, request))
+
+    @PostMapping("/{commissionId}/messages")
+    fun sendMessage(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+        @Valid @RequestBody request: SendMessageRequest,
+    ): ApiResponse<MessageResponse> = ApiResponse.success(sendMessageUseCase.execute(userId, commissionId, request))
+
+    @GetMapping("/{commissionId}/messages")
+    fun getMessages(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+    ): ApiResponse<MessageListResponse> = ApiResponse.success(getMessagesUseCase.execute(userId, commissionId))
 }
