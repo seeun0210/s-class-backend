@@ -88,6 +88,38 @@ class SendMessageUseCaseTest {
     }
 
     @Test
+    fun `선생님이 연속으로 메시지를 보내도 정상 동작한다`() {
+        val commission = createCommission(status = CommissionStatus.ADDITIONAL_INFO_REQUESTED)
+        every { commissionAdaptor.findById(1L) } returns commission
+
+        val messageSlot = slot<Message>()
+        every { messageAdaptor.save(capture(messageSlot)) } answers { messageSlot.captured }
+
+        val result = useCase.execute(teacherUserId, 1L, SendMessageRequest(content = "추가로 이것도 부탁드립니다"))
+
+        assertAll(
+            { assertEquals("추가로 이것도 부탁드립니다", result.content) },
+            { assertEquals(CommissionStatus.ADDITIONAL_INFO_REQUESTED, commission.status) },
+        )
+    }
+
+    @Test
+    fun `학생이 연속으로 메시지를 보내도 정상 동작한다`() {
+        val commission = createCommission(status = CommissionStatus.REQUESTED)
+        every { commissionAdaptor.findById(1L) } returns commission
+
+        val messageSlot = slot<Message>()
+        every { messageAdaptor.save(capture(messageSlot)) } answers { messageSlot.captured }
+
+        val result = useCase.execute(studentUserId, 1L, SendMessageRequest(content = "추가 자료 더 보냅니다"))
+
+        assertAll(
+            { assertEquals("추가 자료 더 보냅니다", result.content) },
+            { assertEquals(CommissionStatus.REQUESTED, commission.status) },
+        )
+    }
+
+    @Test
     fun `관련 없는 유저가 메시지를 보내면 예외가 발생한다`() {
         val commission = createCommission()
         every { commissionAdaptor.findById(1L) } returns commission
