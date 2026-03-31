@@ -70,7 +70,7 @@ class SendMessageUseCase(
         val allowed =
             when {
                 type == MessageType.ADDITIONAL_INFO_REQUEST && isTeacher ->
-                    status == CommissionStatus.REQUESTED
+                    status in setOf(CommissionStatus.REQUESTED, CommissionStatus.TOPIC_SELECTED, CommissionStatus.IN_PROGRESS)
 
                 type == MessageType.ADDITIONAL_INFO_RESPONSE && !isTeacher ->
                     status == CommissionStatus.ADDITIONAL_INFO_REQUESTED

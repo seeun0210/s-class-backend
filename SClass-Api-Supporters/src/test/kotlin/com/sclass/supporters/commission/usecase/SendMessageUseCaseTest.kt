@@ -170,21 +170,51 @@ class SendMessageUseCaseTest {
         )
     }
 
-    // --- 허용되지 않은 상태에서 메시지 전송 시 예외 ---
+    // --- 선생님 추가 자료 요청 (TOPIC_SELECTED, IN_PROGRESS → 상태 변경 없음) ---
 
     @Test
-    fun `선생님이 TOPIC_SELECTED에서 추가 정보 요청하면 예외가 발생한다`() {
+    fun `선생님이 TOPIC_SELECTED에서 추가 자료 요청하면 상태 변경 없이 메시지가 저장된다`() {
         val commission = createCommission(status = CommissionStatus.TOPIC_SELECTED)
         every { commissionAdaptor.findById(1L) } returns commission
 
-        assertThrows<BusinessException> {
+        val messageSlot = slot<Message>()
+        every { messageAdaptor.save(capture(messageSlot)) } answers { messageSlot.captured }
+
+        val result =
             useCase.execute(
                 teacherUserId,
                 1L,
-                SendMessageRequest(type = MessageType.ADDITIONAL_INFO_REQUEST, content = "test"),
+                SendMessageRequest(type = MessageType.ADDITIONAL_INFO_REQUEST, content = "추가 자료 보내주세요"),
             )
-        }
+
+        assertAll(
+            { assertEquals(MessageType.ADDITIONAL_INFO_REQUEST, result.type) },
+            { assertEquals(CommissionStatus.TOPIC_SELECTED, commission.status) },
+        )
     }
+
+    @Test
+    fun `선생님이 IN_PROGRESS에서 추가 자료 요청하면 상태 변경 없이 메시지가 저장된다`() {
+        val commission = createCommission(status = CommissionStatus.IN_PROGRESS)
+        every { commissionAdaptor.findById(1L) } returns commission
+
+        val messageSlot = slot<Message>()
+        every { messageAdaptor.save(capture(messageSlot)) } answers { messageSlot.captured }
+
+        val result =
+            useCase.execute(
+                teacherUserId,
+                1L,
+                SendMessageRequest(type = MessageType.ADDITIONAL_INFO_REQUEST, content = "추가 자료 보내주세요"),
+            )
+
+        assertAll(
+            { assertEquals(MessageType.ADDITIONAL_INFO_REQUEST, result.type) },
+            { assertEquals(CommissionStatus.IN_PROGRESS, commission.status) },
+        )
+    }
+
+    // --- 허용되지 않은 상태에서 메시지 전송 시 예외 ---
 
     @Test
     fun `학생이 REQUESTED에서 응답하면 예외가 발생한다`() {
