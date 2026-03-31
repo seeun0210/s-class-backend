@@ -39,7 +39,7 @@ class TransitionCommissionStatusUseCase(
             CommissionStatus.REJECTED -> {
                 validateTeacher(commission, userId)
                 commission.reject()
-                request.reason?.let {
+                request.reason?.takeIf { it.isNotBlank() }?.let {
                     messageAdaptor.save(
                         Message(
                             commission = commission,
@@ -65,8 +65,7 @@ class TransitionCommissionStatusUseCase(
         userId: String,
     ) {
         if (commission.teacherUserId != userId) {
-            throw
-            BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
+            throw BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
         }
     }
 
@@ -75,8 +74,7 @@ class TransitionCommissionStatusUseCase(
         userId: String,
     ) {
         if (commission.studentUserId != userId) {
-            throw
-            BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
+            throw BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
         }
     }
 }
