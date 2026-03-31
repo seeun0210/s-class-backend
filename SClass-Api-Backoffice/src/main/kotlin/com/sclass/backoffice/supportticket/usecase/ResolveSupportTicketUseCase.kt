@@ -1,8 +1,10 @@
 package com.sclass.backoffice.supportticket.usecase
 
+import com.sclass.backoffice.supportticket.dto.CommissionFileInfo
 import com.sclass.backoffice.supportticket.dto.ResolveSupportTicketRequest
 import com.sclass.backoffice.supportticket.dto.SupportTicketDetailResponse
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionSupportTicketAdaptor
 import com.sclass.domain.domains.student.adaptor.StudentAdaptor
 import com.sclass.domain.domains.student.domain.StudentDocumentType
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class ResolveSupportTicketUseCase(
     private val commissionSupportTicketAdaptor: CommissionSupportTicketAdaptor,
+    private val commissionFileAdaptor: CommissionFileAdaptor,
     private val userAdaptor: UserAdaptor,
     private val studentAdaptor: StudentAdaptor,
 ) {
@@ -29,7 +32,11 @@ class ResolveSupportTicketUseCase(
             studentAdaptor
                 .findDocumentsWithFileByStudentId(student.id)
                 .firstOrNull { it.documentType == StudentDocumentType.TRANSCRIPT }
+        val commissionFiles =
+            commissionFileAdaptor
+                .findByCommissionId(ticket.commission.id)
+                .map { CommissionFileInfo.from(it) }
 
-        return SupportTicketDetailResponse.from(ticket, teacherUser, student, transcript)
+        return SupportTicketDetailResponse.from(ticket, teacherUser, student, transcript, commissionFiles)
     }
 }

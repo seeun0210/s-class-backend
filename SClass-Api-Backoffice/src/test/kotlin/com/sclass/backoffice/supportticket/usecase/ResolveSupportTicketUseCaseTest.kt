@@ -1,6 +1,7 @@
 package com.sclass.backoffice.supportticket.usecase
 
 import com.sclass.backoffice.supportticket.dto.ResolveSupportTicketRequest
+import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionSupportTicketAdaptor
 import com.sclass.domain.domains.commission.domain.ActivityType
 import com.sclass.domain.domains.commission.domain.Commission
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test
 
 class ResolveSupportTicketUseCaseTest {
     private lateinit var commissionSupportTicketAdaptor: CommissionSupportTicketAdaptor
+    private lateinit var commissionFileAdaptor: CommissionFileAdaptor
     private lateinit var userAdaptor: UserAdaptor
     private lateinit var studentAdaptor: StudentAdaptor
     private lateinit var useCase: ResolveSupportTicketUseCase
@@ -34,9 +36,10 @@ class ResolveSupportTicketUseCaseTest {
     @BeforeEach
     fun setUp() {
         commissionSupportTicketAdaptor = mockk()
+        commissionFileAdaptor = mockk()
         userAdaptor = mockk()
         studentAdaptor = mockk()
-        useCase = ResolveSupportTicketUseCase(commissionSupportTicketAdaptor, userAdaptor, studentAdaptor)
+        useCase = ResolveSupportTicketUseCase(commissionSupportTicketAdaptor, commissionFileAdaptor, userAdaptor, studentAdaptor)
     }
 
     @Test
@@ -71,6 +74,7 @@ class ResolveSupportTicketUseCaseTest {
         val student = Student(id = "student-id-0000000000001", user = studentUser)
 
         every { commissionSupportTicketAdaptor.findById(1L) } returns ticket
+        every { commissionFileAdaptor.findByCommissionId(1L) } returns emptyList()
         every { userAdaptor.findById(teacherUserId) } returns teacherUser
         every { studentAdaptor.findByUserIdWithUser(studentUserId) } returns student
         every { studentAdaptor.findDocumentsWithFileByStudentId("student-id-0000000000001") } returns emptyList()

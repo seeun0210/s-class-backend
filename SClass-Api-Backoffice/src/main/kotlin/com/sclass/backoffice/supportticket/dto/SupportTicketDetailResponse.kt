@@ -1,8 +1,13 @@
 package com.sclass.backoffice.supportticket.dto
 
+import com.sclass.domain.domains.commission.domain.ActivityType
+import com.sclass.domain.domains.commission.domain.CommissionFile
+import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.CommissionSupportTicket
+import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.domain.domains.commission.domain.SupportTicketType
 import com.sclass.domain.domains.commission.domain.TicketStatus
+import com.sclass.domain.domains.file.domain.FileType
 import com.sclass.domain.domains.student.domain.Student
 import com.sclass.domain.domains.student.domain.StudentDocument
 import com.sclass.domain.domains.user.domain.Grade
@@ -18,6 +23,8 @@ data class SupportTicketDetailResponse(
     val response: String?,
     val teacher: TeacherSummary,
     val student: StudentDetail,
+    val commission: CommissionInfo,
+    val commissionFiles: List<CommissionFileInfo>,
     val createdAt: LocalDateTime?,
 ) {
     companion object {
@@ -26,6 +33,7 @@ data class SupportTicketDetailResponse(
             teacherUser: User,
             student: Student,
             transcript: StudentDocument?,
+            commissionFiles: List<CommissionFileInfo>,
         ) = SupportTicketDetailResponse(
             id = ticket.id,
             commissionId = ticket.commission.id,
@@ -35,10 +43,82 @@ data class SupportTicketDetailResponse(
             response = ticket.response,
             teacher = TeacherSummary.from(teacherUser),
             student = StudentDetail.from(student, transcript),
+            commission = CommissionInfo.from(ticket),
+            commissionFiles = commissionFiles,
             createdAt = ticket.createdAt,
         )
     }
 }
+
+data class CommissionInfo(
+    val id: Long,
+    val studentUserId: String,
+    val teacherUserId: String,
+    val outputFormat: OutputFormat,
+    val activityType: ActivityType,
+    val status: CommissionStatus,
+    val guideInfo: GuideInfoInfo,
+) {
+    companion object {
+        fun from(ticket: CommissionSupportTicket): CommissionInfo =
+            CommissionInfo(
+                id = ticket.commission.id,
+                studentUserId = ticket.commission.studentUserId,
+                teacherUserId = ticket.commission.teacherUserId,
+                outputFormat = ticket.commission.outputFormat,
+                activityType = ticket.commission.activityType,
+                status = ticket.commission.status,
+                guideInfo =
+                    GuideInfoInfo(
+                        subject = ticket.commission.guideInfo.subject,
+                        volume = ticket.commission.guideInfo.volume,
+                        requiredElements = ticket.commission.guideInfo.requiredElements,
+                        gradingCriteria = ticket.commission.guideInfo.gradingCriteria,
+                        teacherEmphasis = ticket.commission.guideInfo.teacherEmphasis,
+                    ),
+            )
+    }
+}
+
+data class GuideInfoInfo(
+    val subject: String,
+    val volume: String,
+    val requiredElements: String?,
+    val gradingCriteria: String,
+    val teacherEmphasis: String,
+)
+
+data class CommissionFileInfo(
+    val id: Long,
+    val fileMeta: FileMetaInfo,
+) {
+    companion object {
+        fun from(commissionFile: CommissionFile): CommissionFileInfo =
+            CommissionFileInfo(
+                id = commissionFile.id,
+                fileMeta =
+                    FileMetaInfo(
+                        id = commissionFile.file.id,
+                        originalFilename = commissionFile.file.originalFilename,
+                        mimeType = commissionFile.file.mimeType,
+                        fileSize = commissionFile.file.fileSize,
+                        fileType = commissionFile.file.fileType,
+                        uploadedBy = commissionFile.file.uploadedBy,
+                        createdAt = commissionFile.file.createdAt,
+                    ),
+            )
+    }
+}
+
+data class FileMetaInfo(
+    val id: String,
+    val originalFilename: String,
+    val mimeType: String,
+    val fileSize: Long,
+    val fileType: FileType,
+    val uploadedBy: String,
+    val createdAt: LocalDateTime,
+)
 
 data class TeacherSummary(
     val userId: String,
@@ -84,6 +164,8 @@ data class StudentDetail(
 
 data class TranscriptInfo(
     val id: String,
+    val documentId: String,
+    val fileId: String,
     val originalFilename: String,
     val mimeType: String,
     val fileSize: Long,
@@ -92,6 +174,8 @@ data class TranscriptInfo(
         fun from(document: StudentDocument) =
             TranscriptInfo(
                 id = document.id,
+                documentId = document.id,
+                fileId = document.file.id,
                 originalFilename = document.file.originalFilename,
                 mimeType = document.file.mimeType,
                 fileSize = document.file.fileSize,
