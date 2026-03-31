@@ -9,17 +9,22 @@ import com.sclass.supporters.commission.dto.CommissionResponse
 import com.sclass.supporters.commission.dto.CommissionTopicListResponse
 import com.sclass.supporters.commission.dto.CommissionTopicResponse
 import com.sclass.supporters.commission.dto.CreateCommissionRequest
+import com.sclass.supporters.commission.dto.CreateSupportTicketRequest
 import com.sclass.supporters.commission.dto.MessageListResponse
 import com.sclass.supporters.commission.dto.MessageResponse
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
 import com.sclass.supporters.commission.dto.SelectTopicRequest
 import com.sclass.supporters.commission.dto.SendMessageRequest
+import com.sclass.supporters.commission.dto.SupportTicketListResponse
+import com.sclass.supporters.commission.dto.SupportTicketResponse
 import com.sclass.supporters.commission.dto.TransitionStatusRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
+import com.sclass.supporters.commission.usecase.CreateSupportTicketUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionTopicsUseCase
 import com.sclass.supporters.commission.usecase.GetMessagesUseCase
+import com.sclass.supporters.commission.usecase.GetSupportTicketsUseCase
 import com.sclass.supporters.commission.usecase.ProposeTopicsUseCase
 import com.sclass.supporters.commission.usecase.SelectTopicUseCase
 import com.sclass.supporters.commission.usecase.SendMessageUseCase
@@ -45,6 +50,8 @@ class CommissionController(
     private val sendMessageUseCase: SendMessageUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
     private val transitionCommissionStatusUseCase: TransitionCommissionStatusUseCase,
+    private val createSupportTicketUseCase: CreateSupportTicketUseCase,
+    private val getSupportTicketsUseCase: GetSupportTicketsUseCase,
 ) {
     @PostMapping
     fun create(
@@ -111,4 +118,17 @@ class CommissionController(
                 request,
             ),
         )
+
+    @PostMapping("/{commissionId}/support-tickets")
+    fun createSupportTicket(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+        @Valid @RequestBody request: CreateSupportTicketRequest,
+    ): ApiResponse<SupportTicketResponse> = ApiResponse.success(createSupportTicketUseCase.execute(userId, commissionId, request))
+
+    @GetMapping("/{commissionId}/support-tickets")
+    fun getSupportTickets(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+    ): ApiResponse<SupportTicketListResponse> = ApiResponse.success(getSupportTicketsUseCase.execute(userId, commissionId))
 }
