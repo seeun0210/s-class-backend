@@ -1,5 +1,6 @@
 package com.sclass.backoffice.supportticket.usecase
 
+import com.sclass.backoffice.supportticket.dto.ResolveSupportTicketRequest
 import com.sclass.domain.domains.commission.adaptor.CommissionSupportTicketAdaptor
 import com.sclass.domain.domains.commission.domain.ActivityType
 import com.sclass.domain.domains.commission.domain.Commission
@@ -16,6 +17,7 @@ import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -73,9 +75,14 @@ class ResolveSupportTicketUseCaseTest {
         every { studentAdaptor.findByUserIdWithUser(studentUserId) } returns student
         every { studentAdaptor.findDocumentsWithFileByStudentId("student-id-0000000000001") } returns emptyList()
 
-        val result = useCase.execute(1L)
+        val request = ResolveSupportTicketRequest(response = "경제학 관련 주제 3건 등록했습니다")
+        val result = useCase.execute(1L, request)
 
-        assertEquals(TicketStatus.RESOLVED, result.status)
-        assertEquals(TicketStatus.RESOLVED, ticket.status)
+        assertAll(
+            { assertEquals(TicketStatus.RESOLVED, result.status) },
+            { assertEquals("경제학 관련 주제 3건 등록했습니다", result.response) },
+            { assertEquals(TicketStatus.RESOLVED, ticket.status) },
+            { assertEquals("경제학 관련 주제 3건 등록했습니다", ticket.response) },
+        )
     }
 }

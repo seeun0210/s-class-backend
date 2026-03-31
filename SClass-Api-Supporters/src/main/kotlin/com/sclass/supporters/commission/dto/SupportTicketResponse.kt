@@ -11,6 +11,7 @@ data class SupportTicketResponse(
     val type: SupportTicketType,
     val reason: String,
     val status: TicketStatus,
+    val response: String?,
     val createdAt: LocalDateTime?,
 ) {
     companion object {
@@ -21,6 +22,7 @@ data class SupportTicketResponse(
                 type = ticket.type,
                 reason = ticket.reason,
                 status = ticket.status,
+                response = ticket.response,
                 createdAt = ticket.createdAt,
             )
     }

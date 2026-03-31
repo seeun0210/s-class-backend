@@ -1,5 +1,6 @@
 package com.sclass.backoffice.supportticket.usecase
 
+import com.sclass.backoffice.supportticket.dto.ResolveSupportTicketRequest
 import com.sclass.backoffice.supportticket.dto.SupportTicketDetailResponse
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.commission.adaptor.CommissionSupportTicketAdaptor
@@ -15,9 +16,12 @@ class ResolveSupportTicketUseCase(
     private val studentAdaptor: StudentAdaptor,
 ) {
     @Transactional
-    fun execute(ticketId: Long): SupportTicketDetailResponse {
+    fun execute(
+        ticketId: Long,
+        request: ResolveSupportTicketRequest,
+    ): SupportTicketDetailResponse {
         val ticket = commissionSupportTicketAdaptor.findById(ticketId)
-        ticket.resolve()
+        ticket.resolve(request.response)
 
         val teacherUser = userAdaptor.findById(ticket.commission.teacherUserId)
         val student = studentAdaptor.findByUserIdWithUser(ticket.commission.studentUserId)

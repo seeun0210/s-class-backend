@@ -34,8 +34,12 @@ class CommissionSupportTicket(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: TicketStatus = TicketStatus.OPEN,
+
+    @Column(columnDefinition = "TEXT")
+    var response: String? = null,
 ) : BaseTimeEntity() {
-    fun resolve() {
+    fun resolve(response: String) {
         this.status = TicketStatus.RESOLVED
+        this.response = response
     }
 }
