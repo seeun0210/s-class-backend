@@ -8,6 +8,7 @@ import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.commission.domain.Message
+import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.supporters.commission.dto.TransitionStatusRequest
 import io.mockk.every
@@ -115,6 +116,7 @@ class TransitionCommissionStatusUseCaseTest {
 
         assertAll(
             { assertEquals(CommissionStatus.REJECTED, commission.status) },
+            { assertEquals(MessageType.REJECTION_REASON, messageSlot.captured.type) },
             { assertEquals("분량 부족", messageSlot.captured.content) },
             { assertEquals(teacherUserId, messageSlot.captured.senderId) },
         )

@@ -8,6 +8,7 @@ import com.sclass.domain.domains.commission.adaptor.MessageAdaptor
 import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.Message
+import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.CommissionResponse
 import com.sclass.supporters.commission.dto.TransitionStatusRequest
@@ -41,9 +42,9 @@ class TransitionCommissionStatusUseCase(
                 request.reason?.let {
                     messageAdaptor.save(
                         Message(
-                            commission =
-                            commission,
+                            commission = commission,
                             senderId = userId,
+                            type = MessageType.REJECTION_REASON,
                             content = it,
                         ),
                     )

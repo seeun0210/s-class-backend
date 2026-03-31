@@ -8,6 +8,7 @@ import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.commission.domain.Message
+import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import io.mockk.every
 import io.mockk.mockk
@@ -54,8 +55,20 @@ class GetMessagesUseCaseTest {
         every { commissionAdaptor.findById(1L) } returns commission
         every { messageAdaptor.findByCommissionId(1L) } returns
             listOf(
-                Message(id = 1L, commission = commission, senderId = teacherUserId, content = "추가 자료 부탁"),
-                Message(id = 2L, commission = commission, senderId = studentUserId, content = "첨부합니다"),
+                Message(
+                    id = 1L,
+                    commission = commission,
+                    senderId = teacherUserId,
+                    type = MessageType.ADDITIONAL_INFO_REQUEST,
+                    content = "추가 자료 부탁",
+                ),
+                Message(
+                    id = 2L,
+                    commission = commission,
+                    senderId = studentUserId,
+                    type = MessageType.ADDITIONAL_INFO_RESPONSE,
+                    content = "첨부합니다",
+                ),
             )
 
         val result = useCase.execute(studentUserId, 1L)
