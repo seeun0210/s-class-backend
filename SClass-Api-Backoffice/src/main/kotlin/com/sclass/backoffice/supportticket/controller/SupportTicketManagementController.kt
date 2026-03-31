@@ -4,24 +4,35 @@ import com.sclass.backoffice.supportticket.dto.ResolveSupportTicketRequest
 import com.sclass.backoffice.supportticket.dto.SupportTicketDetailResponse
 import com.sclass.backoffice.supportticket.dto.SupportTicketListResponse
 import com.sclass.backoffice.supportticket.usecase.GetOpenSupportTicketsUseCase
+import com.sclass.backoffice.supportticket.usecase.GetSupportTicketDetailUseCase
 import com.sclass.backoffice.supportticket.usecase.ResolveSupportTicketUseCase
 import com.sclass.common.dto.ApiResponse
+import com.sclass.domain.domains.commission.domain.TicketStatus
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/v1/support-tickets")
 class SupportTicketManagementController(
     private val getOpenSupportTicketsUseCase: GetOpenSupportTicketsUseCase,
+    private val getSupportTicketDetailUseCase: GetSupportTicketDetailUseCase,
     private val resolveSupportTicketUseCase: ResolveSupportTicketUseCase,
 ) {
     @GetMapping
-    fun getOpenTickets(): ApiResponse<SupportTicketListResponse> = ApiResponse.success(getOpenSupportTicketsUseCase.execute())
+    fun getTickets(
+        @RequestParam status: TicketStatus = TicketStatus.OPEN,
+    ): ApiResponse<SupportTicketListResponse> = ApiResponse.success(getOpenSupportTicketsUseCase.execute(status))
+
+    @GetMapping("/{ticketId}")
+    fun getTicketDetail(
+        @PathVariable ticketId: Long,
+    ): ApiResponse<SupportTicketDetailResponse> = ApiResponse.success(getSupportTicketDetailUseCase.execute(ticketId))
 
     @PatchMapping("/{ticketId}/resolve")
     fun resolveTicket(

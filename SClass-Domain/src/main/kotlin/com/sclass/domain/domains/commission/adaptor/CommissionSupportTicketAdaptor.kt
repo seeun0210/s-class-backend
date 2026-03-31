@@ -3,6 +3,7 @@ package com.sclass.domain.domains.commission.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.commission.domain.CommissionSupportTicket
 import com.sclass.domain.domains.commission.domain.TicketStatus
+import com.sclass.domain.domains.commission.dto.SupportTicketWithUsers
 import com.sclass.domain.domains.commission.exception.CommissionSupportTicketNotFoundException
 import com.sclass.domain.domains.commission.repository.CommissionSupportTicketRepository
 
@@ -19,4 +20,7 @@ class CommissionSupportTicketAdaptor(
         commissionSupportTicketRepository.findByCommissionId(commissionId)
 
     fun findByStatus(status: TicketStatus): List<CommissionSupportTicket> = commissionSupportTicketRepository.findByStatus(status)
+
+    fun findByStatusWithUsers(status: TicketStatus): List<SupportTicketWithUsers> =
+        commissionSupportTicketRepository.findByStatusWithUsers(status)
 }
