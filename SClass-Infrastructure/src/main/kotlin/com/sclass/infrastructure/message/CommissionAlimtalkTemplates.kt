@@ -37,7 +37,7 @@ class CommissionAlimtalkTemplates(
                 "■ 탐구분야: $subject\n" +
                 "■ 접수일시: $createdAt\n\n" +
                 "앱에서 의뢰 내용을 확인하고 응답해 주세요.\n\n" +
-                "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
+                "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다. ",
         buttons = listOf(teacherButton(commissionId)),
     )
 
