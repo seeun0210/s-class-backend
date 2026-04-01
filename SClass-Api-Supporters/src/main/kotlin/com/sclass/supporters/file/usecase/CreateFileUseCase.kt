@@ -2,9 +2,9 @@ package com.sclass.supporters.file.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.common.vo.Ulid
+import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.file.domain.File
 import com.sclass.domain.domains.file.domain.FileType
-import com.sclass.domain.domains.file.service.FileDomainService
 import com.sclass.infrastructure.s3.S3Service
 import com.sclass.supporters.file.dto.PresignedUrlResponse
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter
 @UseCase
 class CreateFileUseCase(
     private val s3Service: S3Service,
-    private val fileDomainService: FileDomainService,
+    private val fileAdaptor: FileAdaptor,
 ) {
     @Transactional
     fun execute(
@@ -38,7 +38,7 @@ class CreateFileUseCase(
                 fileType = fileType,
                 uploadedBy = uploadedBy,
             )
-        fileDomainService.save(file)
+        fileAdaptor.save(file)
 
         val presignedUrl =
             s3Service.generatePresignedPutUrl(

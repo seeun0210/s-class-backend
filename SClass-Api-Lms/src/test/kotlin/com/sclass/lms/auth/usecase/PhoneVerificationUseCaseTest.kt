@@ -6,7 +6,7 @@ import com.sclass.domain.domains.verification.domain.VerificationChannel
 import com.sclass.domain.domains.verification.exception.VerificationCodeMismatchException
 import com.sclass.domain.domains.verification.exception.VerificationSendRateLimitException
 import com.sclass.domain.domains.verification.service.VerificationDomainService
-import com.sclass.infrastructure.message.MessageSender
+import com.sclass.infrastructure.message.VerificationCodeSender
 import com.sclass.lms.auth.dto.SendPhoneCodeRequest
 import com.sclass.lms.auth.dto.VerifyPhoneCodeRequest
 import io.mockk.every
@@ -24,7 +24,7 @@ import java.time.LocalDateTime
 class PhoneVerificationUseCaseTest {
     private lateinit var verificationService: VerificationDomainService
     private lateinit var tokenService: TokenDomainService
-    private lateinit var messageSender: MessageSender
+    private lateinit var messageSender: VerificationCodeSender
     private lateinit var useCase: PhoneVerificationUseCase
 
     @BeforeEach
@@ -32,7 +32,7 @@ class PhoneVerificationUseCaseTest {
         verificationService = mockk()
         tokenService = mockk()
         messageSender = mockk()
-        useCase = PhoneVerificationUseCase(verificationService, tokenService, messageSender, messageSender)
+        useCase = PhoneVerificationUseCase(verificationService, tokenService, messageSender)
     }
 
     @Test

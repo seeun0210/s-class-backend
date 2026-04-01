@@ -5,10 +5,16 @@ dependencies {
     api(project(":SClass-Common"))
     api("org.springframework.boot:spring-boot-starter")
 
-    // AWS S3 + SSM Parameter Store
+    // AWS S3 + SSM Parameter Store + CloudWatch
     api(platform("software.amazon.awssdk:bom:2.31.15"))
     api("software.amazon.awssdk:s3")
     api("software.amazon.awssdk:ssm")
+    api("software.amazon.awssdk:cloudwatch")
+
+    // Micrometer CloudWatch Registry
+    api("io.micrometer:micrometer-registry-cloudwatch2")
+
+    api("org.springframework.boot:spring-boot-starter-quartz")
 
     // GCP Cloud Storage
     implementation(platform("com.google.cloud:libraries-bom:26.55.0"))

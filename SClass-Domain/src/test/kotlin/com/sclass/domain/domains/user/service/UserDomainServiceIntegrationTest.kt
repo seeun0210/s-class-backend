@@ -4,9 +4,13 @@ import com.sclass.domain.config.DomainTestConfig
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.user.domain.UserRoleState
+import com.sclass.domain.domains.user.exception.ConflictingRoleException
+import com.sclass.domain.domains.user.exception.DuplicateUserRoleException
 import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
 import com.sclass.domain.domains.user.repository.UserRepository
 import com.sclass.domain.domains.user.repository.UserRoleRepository
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -31,6 +35,9 @@ class UserDomainServiceIntegrationTest {
 
     @Autowired
     private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
+    private lateinit var em: EntityManager
 
     @Test
     fun `registerWithOAuth로 유저를 등록하면 DB에 User와 UserRole이 저장된다`() {
@@ -171,5 +178,130 @@ class UserDomainServiceIntegrationTest {
         // then
         val roles = userRoleRepository.findAllByUserId(user.id)
         assertThat(roles).hasSize(1)
+    }
+
+    @Test
+    fun `addUserRole로 새 역할을 추가한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-add-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "addrole@example.com",
+                name = "역할추가유저",
+                phoneNumber = "01011111111",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when
+        val newRole = userDomainService.addUserRole(user.id, Platform.LMS, Role.STUDENT)
+
+        // then
+        assertThat(newRole.userId).isEqualTo(user.id)
+        assertThat(newRole.platform).isEqualTo(Platform.LMS)
+        assertThat(newRole.role).isEqualTo(Role.STUDENT)
+        assertThat(newRole.state).isEqualTo(UserRoleState.NORMAL)
+
+        val roles = userRoleRepository.findAllByUserId(user.id)
+        assertThat(roles).hasSize(2)
+    }
+
+    @Test
+    fun `addUserRole로 TEACHER 역할 추가 시 DRAFT 상태로 생성된다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-teacher-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "teacher-role@example.com",
+                name = "선생역할유저",
+                phoneNumber = "01022222222",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when
+        val newRole = userDomainService.addUserRole(user.id, Platform.LMS, Role.TEACHER)
+
+        // then
+        assertThat(newRole.state).isEqualTo(UserRoleState.DRAFT)
+    }
+
+    @Test
+    fun `addUserRole로 중복 역할 추가 시 DuplicateUserRoleException이 발생한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-dup-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "duprole@example.com",
+                name = "중복역할유저",
+                phoneNumber = "01033333333",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+
+        // when & then
+        assertThatThrownBy {
+            userDomainService.addUserRole(user.id, Platform.SUPPORTERS, Role.STUDENT)
+        }.isInstanceOf(DuplicateUserRoleException::class.java)
+    }
+
+    @Test
+    fun `addUserRole로 같은 플랫폼에 STUDENT와 TEACHER를 동시에 추가하면 ConflictingRoleException이 발생한다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-conflict-role",
+                authProvider = AuthProvider.GOOGLE,
+                email = "conflict@example.com",
+                name = "충돌역할유저",
+                phoneNumber = "01044444444",
+                profileImageUrl = null,
+                platform = Platform.LMS,
+                role = Role.STUDENT,
+            )
+
+        // when & then
+        assertThatThrownBy {
+            userDomainService.addUserRole(user.id, Platform.LMS, Role.TEACHER)
+        }.isInstanceOf(ConflictingRoleException::class.java)
+    }
+
+    @Test
+    fun `UserRole 삭제 시 soft delete되어 deleted_at이 기록된다`() {
+        // given
+        val user =
+            userDomainService.registerWithOAuth(
+                oauthId = "google-soft-delete",
+                authProvider = AuthProvider.GOOGLE,
+                email = "softdelete@example.com",
+                name = "소프트삭제유저",
+                phoneNumber = "01055555555",
+                profileImageUrl = null,
+                platform = Platform.SUPPORTERS,
+                role = Role.STUDENT,
+            )
+        val roleId = userRoleRepository.findAllByUserId(user.id)[0].id
+
+        // when
+        userRoleRepository.deleteById(roleId)
+        em.flush()
+
+        // then — JPA 조회에서는 필터링되어 안 보임
+        val roles = userRoleRepository.findAllByUserId(user.id)
+        assertThat(roles).isEmpty()
+
+        // then — 네이티브 쿼리로 deleted_at이 세팅되었는지 확인
+        val deletedAt =
+            em
+                .createNativeQuery("SELECT deleted_at FROM user_roles WHERE id = :id")
+                .setParameter("id", roleId)
+                .singleResult
+        assertThat(deletedAt).isNotNull()
     }
 }

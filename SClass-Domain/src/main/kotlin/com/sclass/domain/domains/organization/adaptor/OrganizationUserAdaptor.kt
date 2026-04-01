@@ -3,6 +3,7 @@ package com.sclass.domain.domains.organization.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.organization.dto.OrganizationUserInfo
+import com.sclass.domain.domains.organization.dto.OrganizationUserSearchCondition
 import com.sclass.domain.domains.organization.exception.OrganizationUserNotFoundException
 import com.sclass.domain.domains.organization.repository.OrganizationUserRepository
 import com.sclass.domain.domains.user.domain.Role
@@ -42,6 +43,12 @@ class OrganizationUserAdaptor(
         role: Role,
         pageable: Pageable,
     ): Page<OrganizationUserInfo> = organizationUserRepository.findUsersByOrganizationIdAndRole(organizationId, role, pageable)
+
+    fun searchByOrganizationId(
+        organizationId: Long,
+        condition: OrganizationUserSearchCondition,
+        pageable: Pageable,
+    ): Page<OrganizationUserInfo> = organizationUserRepository.searchByOrganizationId(organizationId, condition, pageable)
 
     fun countByOrganizationIdGroupByRole(organizationId: Long): Map<Role, Long> =
         organizationUserRepository.countByOrganizationIdGroupByRole(organizationId)

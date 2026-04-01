@@ -34,20 +34,23 @@ resource "aws_apprunner_service" "services" {
         port = each.value.port
 
         runtime_environment_variables = {
-          AWS_REGION         = var.aws_region
-          SERVER_PORT        = each.value.port
-          DATASOURCE_URL     = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
-          DDL_AUTO           = "update"  # TODO: prod 테이블 생성 후 validate로 복원
-          S3_BUCKET          = aws_s3_bucket.main.id
-          S3_REGION          = var.aws_region
-          CORS_ALLOW_ORIGINS = var.cors_allow_origins
-          SMTP_ENABLED       = "true"
-          SMTP_HOST          = var.smtp_host
-          SMTP_PORT          = var.smtp_port
-          ALIMTALK_ENABLED        = "true"
-          ALIMTALK_PLUS_FRIEND_ID = "@학생부종합전형"
-          JWT_ACCESS_EXP     = var.jwt_access_exp
-          JWT_REFRESH_EXP    = var.jwt_refresh_exp
+          AWS_REGION                 = var.aws_region
+          SERVER_PORT                = each.value.port
+          DATASOURCE_URL             = "jdbc:mysql://${local.shared.rds_endpoint}/${var.db_name}"
+          DDL_AUTO                   = "update" # TODO: prod 테이블 생성 후 validate로 복원
+          S3_BUCKET                  = aws_s3_bucket.main.id
+          S3_REGION                  = var.aws_region
+          CORS_ALLOW_ORIGINS         = var.cors_allow_origins
+          SMTP_ENABLED               = "true"
+          SMTP_HOST                  = var.smtp_host
+          SMTP_PORT                  = var.smtp_port
+          CLOUDWATCH_METRICS_ENABLED = "true"
+          CLOUDWATCH_NAMESPACE       = "SClass/${title(each.key)}"
+          ALIMTALK_ENABLED           = "true"
+          ALIMTALK_PLUS_FRIEND_ID    = "@학생부종합전형"
+          ALIMTALK_APP_BASE_URL      = var.alimtalk_app_base_url
+          JWT_ACCESS_EXP             = var.jwt_access_exp
+          JWT_REFRESH_EXP            = var.jwt_refresh_exp
         }
 
         runtime_environment_secrets = {
@@ -84,10 +87,30 @@ resource "aws_apprunner_service" "services" {
     }
   }
 
+  observability_configuration {
+    observability_enabled = true
+    observability_configuration_arn = aws_apprunner_observability_configuration.xray.arn
+  }
+
   auto_scaling_configuration_arn = aws_apprunner_auto_scaling_configuration_version.services[each.key].arn
 
   tags = {
     Name = "${local.name_prefix}-${each.key}"
+  }
+}
+
+# ──────────────────────────────────────
+# X-Ray Observability Configuration
+# ──────────────────────────────────────
+resource "aws_apprunner_observability_configuration" "xray" {
+  observability_configuration_name = "${local.name_prefix}-xray"
+
+  trace_configuration {
+    vendor = "AWSXRAY"
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-xray"
   }
 }
 

@@ -1,8 +1,11 @@
 package com.sclass.domain.domains.teacher.adaptor
 
 import com.sclass.common.annotation.Adaptor
+import com.sclass.domain.domains.organization.domain.OrganizationUser
 import com.sclass.domain.domains.teacher.domain.Teacher
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
+import com.sclass.domain.domains.teacher.domain.TeacherDocument
+import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
+import com.sclass.domain.domains.teacher.dto.TeacherWithRoles
 import com.sclass.domain.domains.teacher.exception.TeacherNotFoundException
 import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import org.springframework.data.domain.Page
@@ -24,8 +27,17 @@ class TeacherAdaptor(
 
     fun save(teacher: Teacher): Teacher = teacherRepository.save(teacher)
 
-    fun findAllByVerificationStatus(
-        status: TeacherVerificationStatus,
+    fun searchTeachers(
+        condition: TeacherSearchCondition,
         pageable: Pageable,
-    ): Page<Teacher> = teacherRepository.findAllByStatus(status, pageable)
+    ): Page<TeacherWithRoles> = teacherRepository.searchTeachers(condition, pageable)
+
+    fun findByIdWithUser(id: String): Teacher = teacherRepository.findByIdWithUser(id) ?: throw TeacherNotFoundException()
+
+    fun findByUserIdWithUser(userId: String): Teacher = teacherRepository.findByUserIdWithUser(userId) ?: throw TeacherNotFoundException()
+
+    fun findDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument> =
+        teacherRepository.findByDocumentsWithFileByTeacherId(teacherId)
+
+    fun findOrganizationsByUserId(userId: String): List<OrganizationUser> = teacherRepository.findOrganizationByUserId(userId)
 }

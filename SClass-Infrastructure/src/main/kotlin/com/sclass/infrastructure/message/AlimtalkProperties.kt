@@ -9,4 +9,5 @@ data class AlimtalkProperties(
     val accessKey: String = "",
     val secretKey: String = "",
     val plusFriendId: String = "",
+    val appBaseUrl: String = "",
 )

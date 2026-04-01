@@ -4,7 +4,7 @@ import com.sclass.backoffice.teacher.dto.TeacherListResponse
 import com.sclass.backoffice.teacher.dto.TeacherPageResponse
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
-import com.sclass.domain.domains.teacher.domain.TeacherVerificationStatus
+import com.sclass.domain.domains.teacher.dto.TeacherSearchCondition
 import org.springframework.data.domain.Pageable
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,12 +14,12 @@ class GetTeachersUseCase(
 ) {
     @Transactional(readOnly = true)
     fun execute(
-        status: TeacherVerificationStatus,
+        condition: TeacherSearchCondition,
         pageable: Pageable,
     ): TeacherPageResponse {
-        val page = teacherAdaptor.findAllByVerificationStatus(status, pageable)
+        val page = teacherAdaptor.searchTeachers(condition, pageable)
         return TeacherPageResponse(
-            content = page.content.map { TeacherListResponse.from(it) },
+            content = page.content.map { TeacherListResponse.from(it.teacher, it.roles) },
             totalElements = page.totalElements,
             totalPages = page.totalPages,
             currentPage = page.number,

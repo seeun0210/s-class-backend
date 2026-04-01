@@ -10,6 +10,8 @@ data class OrganizationUserResponse(
     val role: String,
     val profileImageUrl: String?,
     val createdAt: LocalDateTime,
+    val source: String?,
+    val originService: String?,
 ) {
     companion object {
         fun from(info: OrganizationUserInfo): OrganizationUserResponse =
@@ -20,6 +22,8 @@ data class OrganizationUserResponse(
                 role = info.role?.name ?: "UNKNOWN",
                 profileImageUrl = info.profileImageUrl,
                 createdAt = info.createdAt,
+                source = info.source?.name,
+                originService = info.originService,
             )
     }
 }

@@ -1,6 +1,8 @@
 package com.sclass.domain.domains.student.adaptor
 
 import com.sclass.domain.domains.student.domain.Student
+import com.sclass.domain.domains.student.dto.StudentSearchCondition
+import com.sclass.domain.domains.student.dto.StudentWithRoles
 import com.sclass.domain.domains.student.exception.StudentNotFoundException
 import com.sclass.domain.domains.student.repository.StudentRepository
 import io.mockk.every
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import java.util.Optional
 
 class StudentAdaptorTest {
@@ -146,6 +150,43 @@ class StudentAdaptorTest {
 
             assertEquals(student, result)
             verify { studentRepository.save(student) }
+        }
+    }
+
+    @Nested
+    inner class SearchStudents {
+        @Test
+        fun `검색 조건과 페이지 정보를 repository에 위임한다`() {
+            val condition = StudentSearchCondition(name = "홍길동")
+            val pageable = PageRequest.of(0, 20)
+            val studentWithRoles =
+                mockk<StudentWithRoles> {
+                    every { student } returns mockk()
+                    every { roles } returns emptyList()
+                }
+            val page = PageImpl(listOf(studentWithRoles), pageable, 1L)
+
+            every { studentRepository.searchStudents(condition, pageable) } returns page
+
+            val result = studentAdaptor.searchStudents(condition, pageable)
+
+            assertEquals(1, result.totalElements)
+            assertEquals(1, result.content.size)
+            verify { studentRepository.searchStudents(condition, pageable) }
+        }
+
+        @Test
+        fun `결과가 없으면 빈 페이지를 반환한다`() {
+            val condition = StudentSearchCondition()
+            val pageable = PageRequest.of(0, 20)
+            val page = PageImpl<StudentWithRoles>(emptyList(), pageable, 0L)
+
+            every { studentRepository.searchStudents(condition, pageable) } returns page
+
+            val result = studentAdaptor.searchStudents(condition, pageable)
+
+            assertEquals(0, result.totalElements)
+            assertTrue(result.content.isEmpty())
         }
     }
 }

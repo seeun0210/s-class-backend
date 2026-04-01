@@ -28,6 +28,14 @@ spring:
           auth: true
           starttls:
             enable: true
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org.quartz.threadPool.threadCount: 5
+      org.quartz.jobStore.isClustered: true
+      org.quartz.jobStore.clusterCheckinInterval: 20000
 
 cors:
   allow:
@@ -58,6 +66,25 @@ alimtalk:
   access-key: ${ALIMTALK_ACCESS_KEY:}
   secret-key: ${ALIMTALK_SECRET_KEY:}
   plus-friend-id: ${ALIMTALK_PLUS_FRIEND_ID:}
+  app-base-url: ${ALIMTALK_APP_BASE_URL:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: never
+  auth:
+    username: ${ACTUATOR_USERNAME:admin}
+    password: ${ACTUATOR_PASSWORD:changeme}
+  cloudwatch:
+    metrics:
+      enabled: ${CLOUDWATCH_METRICS_ENABLED:false}
+      namespace: ${CLOUDWATCH_NAMESPACE:SClass/Supporters}
+      step: ${CLOUDWATCH_STEP:60}
+      region: ${AWS_REGION:ap-northeast-1}
 
 cloud:
   aws:

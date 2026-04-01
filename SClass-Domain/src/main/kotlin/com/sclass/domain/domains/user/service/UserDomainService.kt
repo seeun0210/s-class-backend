@@ -8,6 +8,9 @@ import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.domain.UserRoleState
+import com.sclass.domain.domains.user.exception.ConflictingRoleException
+import com.sclass.domain.domains.user.exception.DuplicateUserRoleException
 import com.sclass.domain.domains.user.exception.InvalidPasswordException
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.domain.domains.user.exception.UserAlreadyExistsException
@@ -38,6 +41,7 @@ class UserDomainService(
                 userId = savedUser.id,
                 platform = platform,
                 role = role,
+                state = initialStateFor(role),
             ),
         )
 
@@ -117,6 +121,7 @@ class UserDomainService(
                 userId = savedUser.id,
                 platform = platform,
                 role = role,
+                state = initialStateFor(role),
             ),
         )
 
@@ -129,13 +134,67 @@ class UserDomainService(
         role: Role,
     ) {
         if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) == null) {
+            validateNoConflictingRole(userId, platform, role)
             userRoleAdaptor.save(
                 UserRole(
                     userId = userId,
                     platform = platform,
                     role = role,
+                    state = initialStateFor(role),
                 ),
             )
         }
     }
+
+    fun addUserRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ): UserRole {
+        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) != null) {
+            throw DuplicateUserRoleException()
+        }
+        validateNoConflictingRole(userId, platform, role)
+        return userRoleAdaptor.save(
+            UserRole(
+                userId = userId,
+                platform = platform,
+                role = role,
+                state = initialStateFor(role),
+            ),
+        )
+    }
+
+    private fun validateNoConflictingRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ) {
+        val conflicting = CONFLICTING_ROLES[role] ?: return
+        if (userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, conflicting) != null) {
+            throw ConflictingRoleException()
+        }
+    }
+
+    companion object {
+        private val CONFLICTING_ROLES =
+            mapOf(
+                Role.STUDENT to Role.TEACHER,
+                Role.TEACHER to Role.STUDENT,
+            )
+    }
+
+    fun activateIfApproved(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ) {
+        val userRole = userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) ?: return
+        if (userRole.state == UserRoleState.APPROVED) {
+            userRole.changeStateTo(UserRoleState.NORMAL)
+            userRoleAdaptor.save(userRole)
+        }
+    }
+
+    private fun initialStateFor(role: Role): UserRoleState = if (role == Role.TEACHER) UserRoleState.DRAFT else UserRoleState.NORMAL
 }

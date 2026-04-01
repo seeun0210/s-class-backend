@@ -15,4 +15,7 @@ enum class TeacherErrorCode(
     TEACHER_PROFILE_INCOMPLETE("TEACHER_006", "필수 프로필 정보가 모두 입력되지 않았습니다", 400),
     TEACHER_REQUIRED_DOCUMENTS_MISSING("TEACHER_007", "필수 서류가 모두 업로드되지 않았습니다", 400),
     TEACHER_NOT_PENDING("TEACHER_008", "승인 대기 상태가 아닙니다", 400),
+    TEACHER_REJECT_REASON_REQUIRED("TEACHER_009", "반려 사유는 필수입니다", 400),
+    TEACHER_INVALID_VERIFICATION_STATUS("TEACHER_010", "승인 또는 반려 상태만 지정할 수 있습니다", 400),
+    TEACHER_CONTRACT_DATE_INVALID("TEACHER_011", "계약 시작일은 종료일보다 이전이어야 합니다", 400),
 }

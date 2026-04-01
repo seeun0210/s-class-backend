@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.teacherassignment.exception
+
+import com.sclass.common.exception.BusinessException
+
+class InvalidPlatformForAssignmentException : BusinessException(TeacherAssignmentErrorCode.INVALID_PLATFORM_FOR_ASSIGNMENT)

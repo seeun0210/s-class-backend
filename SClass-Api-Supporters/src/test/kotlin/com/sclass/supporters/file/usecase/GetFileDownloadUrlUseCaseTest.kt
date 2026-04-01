@@ -1,10 +1,10 @@
 package com.sclass.supporters.file.usecase
 
 import com.sclass.domain.common.vo.Ulid
+import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.file.domain.File
 import com.sclass.domain.domains.file.domain.FileType
 import com.sclass.domain.domains.file.exception.FileNotFoundException
-import com.sclass.domain.domains.file.service.FileDomainService
 import com.sclass.infrastructure.s3.S3Service
 import io.mockk.every
 import io.mockk.mockk
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class GetFileDownloadUrlUseCaseTest {
-    private lateinit var fileDomainService: FileDomainService
+    private lateinit var fileAdaptor: FileAdaptor
     private lateinit var s3Service: S3Service
     private lateinit var useCase: GetFileDownloadUrlUseCase
 
@@ -22,9 +22,9 @@ class GetFileDownloadUrlUseCaseTest {
 
     @BeforeEach
     fun setUp() {
-        fileDomainService = mockk()
+        fileAdaptor = mockk()
         s3Service = mockk()
-        useCase = GetFileDownloadUrlUseCase(fileDomainService, s3Service)
+        useCase = GetFileDownloadUrlUseCase(fileAdaptor, s3Service)
     }
 
     @Test
@@ -39,7 +39,7 @@ class GetFileDownloadUrlUseCaseTest {
                 fileType = FileType.PLAN,
                 uploadedBy = "user-123",
             )
-        every { fileDomainService.findById(fileId) } returns file
+        every { fileAdaptor.findById(fileId) } returns file
         every { s3Service.generatePresignedGetUrl(key = file.storedFilename) } returns "https://s3.example.com/download"
 
         val result = useCase.execute(fileId)
@@ -51,7 +51,7 @@ class GetFileDownloadUrlUseCaseTest {
 
     @Test
     fun `존재하지 않는 파일 조회 시 FileNotFoundException 발생`() {
-        every { fileDomainService.findById(fileId) } throws FileNotFoundException()
+        every { fileAdaptor.findById(fileId) } throws FileNotFoundException()
 
         assertThrows<FileNotFoundException> {
             useCase.execute(fileId)

@@ -3,11 +3,11 @@ package com.sclass.domain.domains.teacher.domain
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.teacher.exception.TeacherNotEditableException
-import com.sclass.domain.domains.teacher.exception.TeacherNotPendingException
 import com.sclass.domain.domains.teacher.exception.TeacherNotSubmittableException
 import com.sclass.domain.domains.teacher.exception.TeacherProfileIncompleteException
 import com.sclass.domain.domains.teacher.exception.TeacherRequiredDocumentsMissingException
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.domain.domains.user.domain.UserRoleState
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
@@ -35,21 +35,22 @@ class Teacher(
     val user: User,
 
     @Embedded
-    var profile: TeacherProfile = TeacherProfile(),
+    var profile: TeacherProfile? = null,
 
     @Embedded
-    var education: TeacherEducation = TeacherEducation(),
+    var education: TeacherEducation? = null,
 
     @Embedded
-    var personalInfo: TeacherPersonalInfo = TeacherPersonalInfo(),
+    var personalInfo: TeacherPersonalInfo? = null,
 
     @Embedded
-    var contract: TeacherContract = TeacherContract(),
+    var contract: TeacherContract? = null,
 
     @Embedded
-    var verification: TeacherVerification = TeacherVerification(),
+    var verification: TeacherVerification? = null,
 ) : BaseTimeEntity() {
     fun updateProfile(
+        state: UserRoleState,
         birthDate: LocalDate,
         selfIntroduction: String?,
         majorCategory: MajorCategory,
@@ -59,8 +60,7 @@ class Teacher(
         address: String,
         residentNumber: String,
     ) {
-        val status = verification.verificationStatus
-        if (status != TeacherVerificationStatus.DRAFT && status != TeacherVerificationStatus.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED && state != UserRoleState.PENDING) {
             throw TeacherNotEditableException()
         }
         profile = TeacherProfile(birthDate = birthDate, selfIntroduction = selfIntroduction)
@@ -75,63 +75,47 @@ class Teacher(
             TeacherPersonalInfo(
                 address = address,
                 residentNumber = residentNumber,
-                bankAccount = personalInfo.bankAccount,
+                bankAccount = personalInfo?.bankAccount,
             )
     }
 
-    fun submitForVerification(
+    fun recordSubmission(
         documents: List<TeacherDocument>,
+        state: UserRoleState,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
-        val status = verification.verificationStatus
-        if (status != TeacherVerificationStatus.DRAFT && status != TeacherVerificationStatus.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED && state != UserRoleState.PENDING) {
             throw TeacherNotSubmittableException()
         }
         validateProfileComplete()
         validateRequiredDocuments(documents)
-        verification =
-            TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.PENDING,
-                submittedAt = now,
-            )
+        verification = TeacherVerification(submittedAt = now)
     }
 
-    fun approve(
-        approvedBy: String,
-        now: LocalDateTime = LocalDateTime.now(),
-    ) {
-        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
-        verification =
-            TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.APPROVED,
-                submittedAt = verification.submittedAt,
-                approvedAt = now,
-                approvedBy = approvedBy,
-            )
+    fun updateTeacherProfile(profile: TeacherProfile) {
+        this.profile = profile
     }
 
-    fun reject(reason: String) {
-        if (verification.verificationStatus != TeacherVerificationStatus.PENDING) {
-            throw TeacherNotPendingException()
-        }
-        verification =
-            TeacherVerification(
-                verificationStatus = TeacherVerificationStatus.REJECTED,
-                submittedAt = verification.submittedAt,
-                rejectionReason = reason,
-            )
+    fun updateEducation(education: TeacherEducation) {
+        this.education = education
+    }
+
+    fun updatePersonalInfo(personalInfo: TeacherPersonalInfo) {
+        this.personalInfo = personalInfo
+    }
+
+    fun updateContract(contract: TeacherContract) {
+        this.contract = contract
     }
 
     private fun validateProfileComplete() {
-        if (profile.birthDate == null ||
-            education.majorCategory == null ||
-            education.university.isNullOrBlank() ||
-            education.major.isNullOrBlank() ||
-            education.highSchool.isNullOrBlank() ||
-            personalInfo.address.isNullOrBlank() ||
-            personalInfo.residentNumber.isNullOrBlank()
+        if (profile?.birthDate == null ||
+            education?.majorCategory == null ||
+            education?.university.isNullOrBlank() ||
+            education?.major.isNullOrBlank() ||
+            education?.highSchool.isNullOrBlank() ||
+            personalInfo?.address.isNullOrBlank() ||
+            personalInfo?.residentNumber.isNullOrBlank()
         ) {
             throw TeacherProfileIncompleteException()
         }

@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 open class GlobalExceptionHandler {
@@ -36,10 +37,26 @@ open class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadable(e: HttpMessageNotReadableException): ResponseEntity<ApiResponse<Nothing>> {
+        val businessException =
+            generateSequence(e as Throwable) { it.cause }
+                .filterIsInstance<BusinessException>()
+                .firstOrNull()
+        if (businessException != null) {
+            return handleBusinessException(businessException)
+        }
         log.warn("Message not readable: {}", e.message)
         val errorCode = GlobalErrorCode.INVALID_INPUT
         return ResponseEntity
             .badRequest()
+            .body(ApiResponse.error(ErrorResponse.of(errorCode)))
+    }
+
+    @ExceptionHandler(NoResourceFoundException::class)
+    fun handleNoResourceFound(e: NoResourceFoundException): ResponseEntity<ApiResponse<Nothing>> {
+        log.warn("Resource not found: {}", e.resourcePath)
+        val errorCode = GlobalErrorCode.NOT_FOUND
+        return ResponseEntity
+            .status(errorCode.httpStatus)
             .body(ApiResponse.error(ErrorResponse.of(errorCode)))
     }
 
