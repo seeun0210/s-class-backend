@@ -11,6 +11,7 @@ import com.sclass.domain.domains.commission.domain.Message
 import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.supporters.commission.dto.SendMessageRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -19,10 +20,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.context.ApplicationEventPublisher
 
 class SendMessageUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var messageAdaptor: MessageAdaptor
+    private lateinit var eventPublisher: ApplicationEventPublisher
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: SendMessageUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -32,7 +36,9 @@ class SendMessageUseCaseTest {
     fun setUp() {
         commissionAdaptor = mockk()
         messageAdaptor = mockk()
-        useCase = SendMessageUseCase(commissionAdaptor, messageAdaptor)
+        eventPublisher = mockk(relaxed = true)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase = SendMessageUseCase(commissionAdaptor, messageAdaptor, eventPublisher, commissionReminderScheduler)
     }
 
     private fun createCommission(

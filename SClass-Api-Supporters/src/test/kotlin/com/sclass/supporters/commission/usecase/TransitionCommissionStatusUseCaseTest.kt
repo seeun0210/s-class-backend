@@ -11,6 +11,7 @@ import com.sclass.domain.domains.commission.domain.Message
 import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.supporters.commission.dto.TransitionStatusRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.assertThrows
 class TransitionCommissionStatusUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var messageAdaptor: MessageAdaptor
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: TransitionCommissionStatusUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -33,7 +35,8 @@ class TransitionCommissionStatusUseCaseTest {
     fun setUp() {
         commissionAdaptor = mockk()
         messageAdaptor = mockk()
-        useCase = TransitionCommissionStatusUseCase(commissionAdaptor, messageAdaptor)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase = TransitionCommissionStatusUseCase(commissionAdaptor, messageAdaptor, commissionReminderScheduler)
     }
 
     private fun createCommission(

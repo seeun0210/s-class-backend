@@ -11,12 +11,17 @@ import com.sclass.domain.domains.commission.domain.MessageType
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.MessageResponse
 import com.sclass.supporters.commission.dto.SendMessageRequest
+import com.sclass.supporters.commission.event.AdditionalInfoRequestedEvent
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class SendMessageUseCase(
     private val commissionAdaptor: CommissionAdaptor,
     private val messageAdaptor: MessageAdaptor,
+    private val eventPublisher: ApplicationEventPublisher,
+    private val commissionReminderScheduler: CommissionReminderScheduler,
 ) {
     @Transactional
     fun execute(
@@ -58,6 +63,19 @@ class SendMessageUseCase(
                     content = request.content,
                 ),
             )
+
+        if (isTeacher && request.type == MessageType.ADDITIONAL_INFO_REQUEST) {
+            commissionReminderScheduler.cancelNoRespReminders(commissionId)
+            eventPublisher.publishEvent(
+                AdditionalInfoRequestedEvent(
+                    studentUserId = commission.studentUserId,
+                    requestContent = request.content,
+                    commissionId = commissionId.toString(),
+                ),
+            )
+        }
+
+        commissionReminderScheduler.resetInactiveReminder(commissionId)
 
         return MessageResponse.from(message)
     }

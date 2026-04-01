@@ -11,6 +11,7 @@ import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
 import com.sclass.supporters.commission.dto.TopicRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -20,10 +21,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.context.ApplicationEventPublisher
 
 class ProposeTopicsUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var commissionTopicAdaptor: CommissionTopicAdaptor
+    private lateinit var eventPublisher: ApplicationEventPublisher
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: ProposeTopicsUseCase
 
     private val teacherUserId = "teacher-user-id-00000000001"
@@ -33,7 +37,9 @@ class ProposeTopicsUseCaseTest {
     fun setUp() {
         commissionAdaptor = mockk()
         commissionTopicAdaptor = mockk()
-        useCase = ProposeTopicsUseCase(commissionAdaptor, commissionTopicAdaptor)
+        eventPublisher = mockk(relaxed = true)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase = ProposeTopicsUseCase(commissionAdaptor, commissionTopicAdaptor, eventPublisher, commissionReminderScheduler)
     }
 
     private fun createCommission(

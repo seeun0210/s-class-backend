@@ -10,6 +10,7 @@ import com.sclass.domain.domains.commission.domain.CommissionTopic
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.supporters.commission.dto.SelectTopicRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.assertThrows
 class SelectTopicUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var commissionTopicAdaptor: CommissionTopicAdaptor
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: SelectTopicUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -31,7 +33,8 @@ class SelectTopicUseCaseTest {
     fun setUp() {
         commissionAdaptor = mockk()
         commissionTopicAdaptor = mockk()
-        useCase = SelectTopicUseCase(commissionAdaptor, commissionTopicAdaptor)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase = SelectTopicUseCase(commissionAdaptor, commissionTopicAdaptor, commissionReminderScheduler)
     }
 
     private fun createCommission(
