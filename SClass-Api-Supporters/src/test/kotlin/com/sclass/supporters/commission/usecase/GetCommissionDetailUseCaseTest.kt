@@ -2,12 +2,16 @@ package com.sclass.supporters.commission.usecase
 
 import com.sclass.common.exception.BusinessException
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
+import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.domain.ActivityType
 import com.sclass.domain.domains.commission.domain.Commission
+import com.sclass.domain.domains.commission.domain.CommissionFile
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.domain.domains.commission.exception.CommissionNotFoundException
+import com.sclass.domain.domains.file.domain.File
+import com.sclass.domain.domains.file.domain.FileType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -18,6 +22,7 @@ import org.junit.jupiter.api.assertThrows
 
 class GetCommissionDetailUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
+    private lateinit var commissionFileAdaptor: CommissionFileAdaptor
     private lateinit var useCase: GetCommissionDetailUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -26,7 +31,8 @@ class GetCommissionDetailUseCaseTest {
     @BeforeEach
     fun setUp() {
         commissionAdaptor = mockk()
-        useCase = GetCommissionDetailUseCase(commissionAdaptor)
+        commissionFileAdaptor = mockk()
+        useCase = GetCommissionDetailUseCase(commissionAdaptor, commissionFileAdaptor)
     }
 
     private fun createCommission(id: Long = 1L) =
@@ -50,6 +56,7 @@ class GetCommissionDetailUseCaseTest {
     fun `학생이 본인 의뢰를 조회하면 CommissionResponse를 반환한다`() {
         val commission = createCommission()
         every { commissionAdaptor.findById(1L) } returns commission
+        every { commissionFileAdaptor.findByCommissionId(1L) } returns emptyList()
 
         val result = useCase.execute(studentUserId, 1L)
 
@@ -64,6 +71,7 @@ class GetCommissionDetailUseCaseTest {
     fun `선생님이 담당 의뢰를 조회하면 CommissionResponse를 반환한다`() {
         val commission = createCommission()
         every { commissionAdaptor.findById(1L) } returns commission
+        every { commissionFileAdaptor.findByCommissionId(1L) } returns emptyList()
 
         val result = useCase.execute(teacherUserId, 1L)
 
@@ -87,5 +95,47 @@ class GetCommissionDetailUseCaseTest {
         assertThrows<CommissionNotFoundException> {
             useCase.execute(studentUserId, 999L)
         }
+    }
+
+    @Test
+    fun `의뢰 상세 조회 시 첨부파일 메타 정보를 함께 반환한다`() {
+        val commission = createCommission()
+        val file =
+            File.create(
+                id = "01HZXN7YV2J3D4K5M6N7P8Q9RA",
+                originalFilename = "report.pdf",
+                storedFilename = "commissions/01HZXN7YV2J3D4K5M6N7P8Q9RA_report.pdf",
+                mimeType = "application/pdf",
+                fileSize = 1024L,
+                fileType = FileType.REPORT,
+                uploadedBy = studentUserId,
+            )
+        val commissionFile = CommissionFile(id = 10L, commission = commission, file = file)
+
+        every { commissionAdaptor.findById(1L) } returns commission
+        every { commissionFileAdaptor.findByCommissionId(1L) } returns listOf(commissionFile)
+
+        val result = useCase.execute(studentUserId, 1L)
+
+        assertAll(
+            { assertEquals(1, result.commissionFiles.size) },
+            { assertEquals(10L, result.commissionFiles.first().id) },
+            {
+                assertEquals(
+                    file.id,
+                    result.commissionFiles
+                        .first()
+                        .fileMeta.id,
+                )
+            },
+            {
+                assertEquals(
+                    file.originalFilename,
+                    result.commissionFiles
+                        .first()
+                        .fileMeta.originalFilename,
+                )
+            },
+        )
     }
 }

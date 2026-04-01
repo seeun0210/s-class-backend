@@ -3,6 +3,7 @@ package com.sclass.supporters.commission.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.BusinessException
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
+import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.CommissionResponse
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class GetCommissionDetailUseCase(
     private val commissionAdaptor: CommissionAdaptor,
+    private val commissionFileAdaptor: CommissionFileAdaptor,
 ) {
     @Transactional(readOnly = true)
     fun execute(
@@ -22,6 +24,8 @@ class GetCommissionDetailUseCase(
             throw BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
         }
 
-        return CommissionResponse.from(commission)
+        val commissionFiles = commissionFileAdaptor.findByCommissionId(commissionId)
+
+        return CommissionResponse.from(commission, commissionFiles)
     }
 }
