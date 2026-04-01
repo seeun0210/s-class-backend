@@ -43,7 +43,7 @@ class ResolveSupportTicketUseCase(
         eventPublisher.publishEvent(
             TicketResolvedEvent(
                 teacherUserId = teacherUser.id,
-                ticketType = ticket.type.name,
+                ticketType = ticket.type.label,
                 commissionId = ticket.commission.id.toString(),
             ),
         )
