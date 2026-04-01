@@ -61,17 +61,17 @@ class CommissionReminderScheduler(
     }
 
     fun resetInactiveReminder(commissionId: Long) {
-        reminderScheduler.cancel("inactive_$commissionId", "COMM_INACTIVE")
+        val now = LocalDateTime.now()
         reminderScheduler.schedule(
             jobKey = "inactive_$commissionId",
             group = "COMM_INACTIVE",
             jobClass = CommissionInactiveReminderJob::class.java,
-            triggerAt = LocalDateTime.now().plusDays(7),
+            triggerAt = now.plusDays(7),
             jobData =
                 JobDataMap(
                     mapOf(
                         "commissionId" to commissionId,
-                        "lastActivityAt" to LocalDateTime.now().toString(),
+                        "lastActivityAt" to now.toString(),
                     ),
                 ),
         )

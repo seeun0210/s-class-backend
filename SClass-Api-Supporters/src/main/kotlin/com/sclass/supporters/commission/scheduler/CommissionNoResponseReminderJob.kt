@@ -20,7 +20,7 @@ class CommissionNoResponseReminderJob : QuartzJobBean() {
     override fun executeInternal(context: JobExecutionContext) {
         val data = context.mergedJobDataMap
         val commissionId = data.getLong("commissionId")
-        val elapsedTime = data.getString("elapsedTime")
+        val elapsedTime = data.getString("elapsedTime") ?: return
 
         val commission =
             commissionAdaptor.findByIdOrNull(commissionId)

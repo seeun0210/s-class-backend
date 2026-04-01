@@ -23,9 +23,9 @@ class CommissionInactiveReminderJob : QuartzJobBean() {
         val data = context.mergedJobDataMap
         val commissionId = data.getLong("commissionId")
         val lastActivityAt =
-            LocalDateTime
-                .parse(data.getString("lastActivityAt"))
-                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            data.getString("lastActivityAt")?.let {
+                LocalDateTime.parse(it).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            } ?: return
 
         val commission =
             commissionAdaptor.findByIdOrNull(commissionId)
