@@ -21,7 +21,7 @@ jobs:
         with:
           ref: develop
           path: develop
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.BLOG_SYNC_PAT }}
 
       - name: Parse posts and update README
         run: |
