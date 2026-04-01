@@ -9,12 +9,14 @@ class CommissionAlimtalkTemplates(
     private val teacherBaseUrl = "$appBaseUrl/teacher/commissions"
     private val studentBaseUrl = "$appBaseUrl/student/commissions"
 
-    private fun teacherButton(commissionId: String) =
-        AlimtalkRequest.Button(
-            name = "의뢰 확인하기",
-            linkMobile = "$teacherBaseUrl/$commissionId",
-            linkPc = "$teacherBaseUrl/$commissionId",
-        )
+    private fun teacherButton(
+        name: String = "요청확인하기",
+        commissionId: String,
+    ) = AlimtalkRequest.Button(
+        name = name,
+        linkMobile = "$teacherBaseUrl/$commissionId",
+        linkPc = "$teacherBaseUrl/$commissionId",
+    )
 
     private fun studentButton(
         name: String = "의뢰 확인하기",
@@ -41,7 +43,7 @@ class CommissionAlimtalkTemplates(
                 "■ 접수일시: $createdAt\n\n" +
                 "앱에서 의뢰 내용을 확인하고 응답해 주세요.\n\n" +
                 "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
-        buttons = listOf(teacherButton(commissionId)),
+        buttons = listOf(teacherButton(commissionId = commissionId)),
     )
 
     fun topicSuggested(
@@ -69,7 +71,7 @@ class CommissionAlimtalkTemplates(
                 "선생님께서 탐구 주제 보강을 요청하셨습니다.\n\n" +
                 "■ 요청내용: $requestContent\n\n" +
                 "앱에서 요청 내용을 확인하고 답변해 주세요.",
-        buttons = listOf(studentButton(commissionId = commissionId)),
+        buttons = listOf(studentButton(name = "요청 확인하기", commissionId = commissionId)),
     )
 
     fun ticketResolved(
@@ -83,7 +85,7 @@ class CommissionAlimtalkTemplates(
                 "$teacherName 선생님, 안녕하세요.\n\n" +
                 "선생님의 $ticketType 요청이 처리 완료되었습니다.\n\n" +
                 "앱에서 처리 결과를 확인해 주세요.",
-        buttons = listOf(teacherButton(commissionId)),
+        buttons = listOf(teacherButton(name = "처리 결과 확인하기", commissionId = commissionId)),
     )
 
     fun noResponseReminder(
@@ -99,7 +101,7 @@ class CommissionAlimtalkTemplates(
                 "$studentName 학생의 탐구 의뢰가 배정된 지 ${elapsedTime}이 지났습니다.\n\n" +
                 "학생이 선생님의 응답을 기다리고 있습니다. 앱에서 확인해 주세요.\n\n" +
                 "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
-        buttons = listOf(teacherButton(commissionId)),
+        buttons = listOf(teacherButton(name = "의뢰 확인하기", commissionId = commissionId)),
     )
 
     fun inactivityReminder(
@@ -117,6 +119,6 @@ class CommissionAlimtalkTemplates(
                 "마지막 활동: $lastActivityAt\n\n" +
                 "앱에서 의뢰 진행 상황을 확인해 주세요.\n\n" +
                 "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
-        buttons = listOf(teacherButton(commissionId)),
+        buttons = listOf(teacherButton(name = "의뢰 확인하기", commissionId = commissionId)),
     )
 }
