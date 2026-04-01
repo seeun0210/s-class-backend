@@ -20,6 +20,7 @@ class CommissionNotificationEventListener(
         val phoneNumber = teacher.phoneNumber ?: return
         commissionNotificationSender.sendCommissionAssigned(
             phoneNumber = phoneNumber,
+            teacherName = teacher.name,
             studentName = student.name,
             subject = event.subject,
             createdAt = event.createdAt,

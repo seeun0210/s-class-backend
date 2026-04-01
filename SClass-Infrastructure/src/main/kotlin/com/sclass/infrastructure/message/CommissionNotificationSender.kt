@@ -3,6 +3,7 @@ package com.sclass.infrastructure.message
 interface CommissionNotificationSender {
     fun sendCommissionAssigned(
         phoneNumber: String,
+        teacherName: String,
         studentName: String,
         subject: String,
         createdAt: String,

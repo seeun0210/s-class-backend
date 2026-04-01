@@ -26,6 +26,7 @@ class CommissionAlimtalkTemplates(
     )
 
     fun commissionAssigned(
+        teacherName: String,
         studentName: String,
         subject: String,
         createdAt: String,
@@ -33,11 +34,13 @@ class CommissionAlimtalkTemplates(
     ) = AlimtalkTemplate(
         templateCode = "CMSNEWASSIGNED",
         content =
-            "$studentName 학생의 탐구 의뢰가 선생님께 배정되었습니다.\n\n" +
+            "[S클래스] 새로운 탐구 의뢰가 배정되었습니다\n\n" +
+                "$teacherName 선생님, 안녕하세요.\n\n" +
+                "$studentName 학생의 탐구 의뢰가 선생님께 배정되었습니다.\n\n" +
                 "■ 탐구분야: $subject\n" +
                 "■ 접수일시: $createdAt\n\n" +
                 "앱에서 의뢰 내용을 확인하고 응답해 주세요.\n\n" +
-                "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다. ",
+                "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
         buttons = listOf(teacherButton(commissionId)),
     )
 
