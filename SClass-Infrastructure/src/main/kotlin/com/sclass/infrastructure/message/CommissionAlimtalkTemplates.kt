@@ -3,15 +3,17 @@ package com.sclass.infrastructure.message
 import com.sclass.infrastructure.message.dto.AlimtalkRequest
 import com.sclass.infrastructure.message.dto.AlimtalkTemplate
 
-object CommissionAlimtalkTemplates {
-    private const val TEACHER_BASE_URL = "https://sclass.aura.co.kr/teacher/commissions"
-    private const val STUDENT_BASE_URL = "https://sclass.aura.co.kr/student/commissions"
+class CommissionAlimtalkTemplates(
+    appBaseUrl: String,
+) {
+    private val teacherBaseUrl = "$appBaseUrl/teacher/commissions"
+    private val studentBaseUrl = "$appBaseUrl/student/commissions"
 
     private fun teacherButton(commissionId: String) =
         AlimtalkRequest.Button(
             name = "의뢰 확인하기",
-            linkMobile = "$TEACHER_BASE_URL/$commissionId",
-            linkPc = "$TEACHER_BASE_URL/$commissionId",
+            linkMobile = "$teacherBaseUrl/$commissionId",
+            linkPc = "$teacherBaseUrl/$commissionId",
         )
 
     private fun studentButton(
@@ -19,8 +21,8 @@ object CommissionAlimtalkTemplates {
         commissionId: String,
     ) = AlimtalkRequest.Button(
         name = name,
-        linkMobile = "$STUDENT_BASE_URL/$commissionId",
-        linkPc = "$STUDENT_BASE_URL/$commissionId",
+        linkMobile = "$studentBaseUrl/$commissionId",
+        linkPc = "$studentBaseUrl/$commissionId",
     )
 
     fun commissionAssigned(

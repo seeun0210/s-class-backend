@@ -58,6 +58,7 @@ alimtalk:
   access-key: ${ALIMTALK_ACCESS_KEY:}
   secret-key: ${ALIMTALK_SECRET_KEY:}
   plus-friend-id: ${ALIMTALK_PLUS_FRIEND_ID:}
+  app-base-url: ${ALIMTALK_APP_BASE_URL:}
 
 management:
   endpoints:

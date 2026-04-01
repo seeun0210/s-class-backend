@@ -17,7 +17,6 @@ class PhoneVerificationUseCase(
     private val verificationService: VerificationDomainService,
     private val tokenService: TokenDomainService,
     private val messageSender: VerificationCodeSender,
-    sender: VerificationCodeSender,
 ) {
     @Transactional
     fun sendCode(request: SendPhoneCodeRequest): SendPhoneCodeResponse {

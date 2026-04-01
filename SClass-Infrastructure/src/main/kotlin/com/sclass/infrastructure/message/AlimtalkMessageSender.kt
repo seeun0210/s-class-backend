@@ -20,6 +20,8 @@ class AlimtalkMessageSender(
     private val alimtalkProperties: AlimtalkProperties,
 ) : VerificationCodeSender,
     CommissionNotificationSender {
+    private val commissionTemplates = CommissionAlimtalkTemplates(alimtalkProperties.appBaseUrl)
+
     override fun sendVerificationCode(
         phoneNumber: String,
         code: String,
@@ -34,7 +36,7 @@ class AlimtalkMessageSender(
         commissionId: String,
     ) = sendTemplate(
         phoneNumber,
-        CommissionAlimtalkTemplates.commissionAssigned(
+        commissionTemplates.commissionAssigned(
             teacherName,
             studentName,
             subject,
@@ -47,21 +49,21 @@ class AlimtalkMessageSender(
         phoneNumber: String,
         studentName: String,
         commissionId: String,
-    ) = sendTemplate(phoneNumber, CommissionAlimtalkTemplates.topicSuggested(studentName, commissionId))
+    ) = sendTemplate(phoneNumber, commissionTemplates.topicSuggested(studentName, commissionId))
 
     override fun sendAdditionalInfoRequested(
         phoneNumber: String,
         studentName: String,
         requestContent: String,
         commissionId: String,
-    ) = sendTemplate(phoneNumber, CommissionAlimtalkTemplates.additionalInfoRequested(studentName, requestContent, commissionId))
+    ) = sendTemplate(phoneNumber, commissionTemplates.additionalInfoRequested(studentName, requestContent, commissionId))
 
     override fun sendTicketResolved(
         phoneNumber: String,
         teacherName: String,
         ticketType: String,
         commissionId: String,
-    ) = sendTemplate(phoneNumber, CommissionAlimtalkTemplates.ticketResolved(teacherName, ticketType, commissionId))
+    ) = sendTemplate(phoneNumber, commissionTemplates.ticketResolved(teacherName, ticketType, commissionId))
 
     override fun sendNoResponseReminder(
         phoneNumber: String,
@@ -71,7 +73,7 @@ class AlimtalkMessageSender(
         commissionId: String,
     ) = sendTemplate(
         phoneNumber,
-        CommissionAlimtalkTemplates.noResponseReminder(
+        commissionTemplates.noResponseReminder(
             teacherName,
             studentName,
             elapsedTime,
@@ -88,7 +90,7 @@ class AlimtalkMessageSender(
         commissionId: String,
     ) = sendTemplate(
         phoneNumber,
-        CommissionAlimtalkTemplates.inactivityReminder(
+        commissionTemplates.inactivityReminder(
             teacherName,
             studentName,
             inactiveDays,
@@ -140,7 +142,7 @@ class AlimtalkMessageSender(
                 .block()
 
         if (response?.statusCode != "202") {
-            throw RuntimeException("알림톡 발송에 실패했습니다")
+            throw RuntimeException("알림톡 발송에 실패했습니다: $response")
         }
     }
 

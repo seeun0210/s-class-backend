@@ -32,7 +32,7 @@ class PhoneVerificationUseCaseTest {
         verificationService = mockk()
         tokenService = mockk()
         messageSender = mockk()
-        useCase = PhoneVerificationUseCase(verificationService, tokenService, messageSender, messageSender)
+        useCase = PhoneVerificationUseCase(verificationService, tokenService, messageSender)
     }
 
     @Test
