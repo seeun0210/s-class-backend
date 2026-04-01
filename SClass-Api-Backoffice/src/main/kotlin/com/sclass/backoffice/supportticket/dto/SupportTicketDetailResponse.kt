@@ -61,22 +61,26 @@ data class CommissionInfo(
 ) {
     companion object {
         fun from(ticket: CommissionSupportTicket): CommissionInfo =
-            CommissionInfo(
-                id = ticket.commission.id,
-                studentUserId = ticket.commission.studentUserId,
-                teacherUserId = ticket.commission.teacherUserId,
-                outputFormat = ticket.commission.outputFormat,
-                activityType = ticket.commission.activityType,
-                status = ticket.commission.status,
-                guideInfo =
-                    GuideInfoInfo(
-                        subject = ticket.commission.guideInfo.subject,
-                        volume = ticket.commission.guideInfo.volume,
-                        requiredElements = ticket.commission.guideInfo.requiredElements,
-                        gradingCriteria = ticket.commission.guideInfo.gradingCriteria,
-                        teacherEmphasis = ticket.commission.guideInfo.teacherEmphasis,
-                    ),
-            )
+            with(ticket.commission) {
+                CommissionInfo(
+                    id = id,
+                    studentUserId = studentUserId,
+                    teacherUserId = teacherUserId,
+                    outputFormat = outputFormat,
+                    activityType = activityType,
+                    status = status,
+                    guideInfo =
+                        with(guideInfo) {
+                            GuideInfoInfo(
+                                subject = subject,
+                                volume = volume,
+                                requiredElements = requiredElements,
+                                gradingCriteria = gradingCriteria,
+                                teacherEmphasis = teacherEmphasis,
+                            )
+                        },
+                )
+            }
     }
 }
 
