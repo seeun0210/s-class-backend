@@ -21,7 +21,12 @@
 <body>
 <div class="container">
   <h1>S-Class Backend</h1>
-  <p class="subtitle">Troubleshooting & DevOps Notes</p>
+  <p class="subtitle">Troubleshooting, ADR & DevOps Notes</p>
+  <div class="card">
+    <h2><a href="adr-async-alimtalk-2026-04-02.html">ADR: 알림톡 비동기 발송 아키텍처</a></h2>
+    <p>@Async + @TransactionalEventListener(AFTER_COMMIT) 패턴 선택 근거, 트레이드오프, 업그레이드 기준</p>
+    <span class="date">2026-04-02</span>
+  </div>
   <div class="card">
     <h2><a href="troubleshooting-2026-03-25.html">App Runner 배포 실패 - Gradle 전이 의존성 & IAM 권한</a></h2>
     <p>EnvironmentPostProcessor 클래스 로딩 실패, IAM 정책 부트스트랩, Managed Policy 전환</p>
