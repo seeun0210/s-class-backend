@@ -9,6 +9,11 @@
 - **Auth**: JWT (AES-256-GCM) + BCrypt
 - **Lint**: ktlint 1.5.0
 
+## Engineering Blog
+
+<!-- BLOG_POSTS_START -->
+<!-- BLOG_POSTS_END -->
+
 ## Module Structure
 
 ```
@@ -53,8 +58,3 @@ SClass-Batch            # 배치 처리
 ## CI/CD & Git Flow
 
 ![CI/CD & Git Flow](cicd-git-flow.svg)
-
-## Engineering Blog
-
-<!-- BLOG_POSTS_START -->
-<!-- BLOG_POSTS_END -->
