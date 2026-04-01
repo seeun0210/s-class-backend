@@ -48,6 +48,7 @@ resource "aws_apprunner_service" "services" {
           CLOUDWATCH_NAMESPACE       = "SClass/${title(each.key)}"
           ALIMTALK_ENABLED           = "true"
           ALIMTALK_PLUS_FRIEND_ID    = "@학생부종합전형"
+          ALIMTALK_APP_BASE_URL      = var.alimtalk_app_base_url
           JWT_ACCESS_EXP             = var.jwt_access_exp
           JWT_REFRESH_EXP            = var.jwt_refresh_exp
         }

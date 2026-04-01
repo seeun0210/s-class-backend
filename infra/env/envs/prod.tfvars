@@ -28,6 +28,7 @@ services = {
 }
 
 cors_allow_origins   = "https://aura.co.kr,https://app.aura.co.kr,https://lms.aura.co.kr,https://backoffice.aura.co.kr"
+alimtalk_app_base_url = "https://sclass.aura.co.kr"
 enable_custom_domain = false
 
 # SMTP (default: smtp.gmail.com:587)

@@ -8,5 +8,13 @@ data class AlimtalkRequest(
     data class Message(
         val to: String,
         val content: String,
+        val buttons: List<Button>? = null,
+    )
+
+    data class Button(
+        val type: String = "WL",
+        val name: String,
+        val linkMobile: String,
+        val linkPc: String,
     )
 }

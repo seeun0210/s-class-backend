@@ -2,7 +2,7 @@ package com.sclass.infrastructure.message
 
 import com.sclass.infrastructure.message.dto.AlimtalkRequest
 import com.sclass.infrastructure.message.dto.AlimtalkResponse
-import org.slf4j.LoggerFactory
+import com.sclass.infrastructure.message.dto.AlimtalkTemplate
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpMethod
@@ -18,16 +18,97 @@ import javax.crypto.spec.SecretKeySpec
 class AlimtalkMessageSender(
     @param:Qualifier("alimtalkWebClient") private val alimtalkWebClient: WebClient,
     private val alimtalkProperties: AlimtalkProperties,
-) : MessageSender {
-    companion object {
-        private const val PHONE_VERIFY_TEMPLATE_CODE = "sclassPhoneVerify"
-    }
-
-    private val log = LoggerFactory.getLogger(javaClass)
+) : VerificationCodeSender,
+    CommissionNotificationSender {
+    private val commissionTemplates = CommissionAlimtalkTemplates(alimtalkProperties.appBaseUrl)
 
     override fun sendVerificationCode(
         phoneNumber: String,
         code: String,
+    ) = sendTemplate(phoneNumber, VerificationTemplate.verificationCode(code))
+
+    override fun sendCommissionAssigned(
+        phoneNumber: String,
+        teacherName: String,
+        studentName: String,
+        subject: String,
+        createdAt: String,
+        commissionId: String,
+    ) = sendTemplate(
+        phoneNumber,
+        commissionTemplates.commissionAssigned(
+            teacherName,
+            studentName,
+            subject,
+            createdAt,
+            commissionId,
+        ),
+    )
+
+    override fun sendTopicSuggested(
+        phoneNumber: String,
+        studentName: String,
+        commissionId: String,
+    ) = sendTemplate(phoneNumber, commissionTemplates.topicSuggested(studentName, commissionId))
+
+    override fun sendAdditionalInfoRequested(
+        phoneNumber: String,
+        studentName: String,
+        requestContent: String,
+        commissionId: String,
+    ) = sendTemplate(phoneNumber, commissionTemplates.additionalInfoRequested(studentName, requestContent, commissionId))
+
+    override fun sendTicketResolved(
+        phoneNumber: String,
+        teacherName: String,
+        ticketType: String,
+        commissionId: String,
+    ) = sendTemplate(phoneNumber, commissionTemplates.ticketResolved(teacherName, ticketType, commissionId))
+
+    override fun sendNoResponseReminder(
+        phoneNumber: String,
+        teacherName: String,
+        studentName: String,
+        elapsedTime: String,
+        commissionId: String,
+    ) = sendTemplate(
+        phoneNumber,
+        commissionTemplates.noResponseReminder(
+            teacherName,
+            studentName,
+            elapsedTime,
+            commissionId,
+        ),
+    )
+
+    override fun sendInactivityReminder(
+        phoneNumber: String,
+        teacherName: String,
+        studentName: String,
+        inactiveDays: Int,
+        lastActivityAt: String,
+        commissionId: String,
+    ) = sendTemplate(
+        phoneNumber,
+        commissionTemplates.inactivityReminder(
+            teacherName,
+            studentName,
+            inactiveDays,
+            lastActivityAt,
+            commissionId,
+        ),
+    )
+
+    private fun sendTemplate(
+        to: String,
+        template: AlimtalkTemplate,
+    ) = send(to = to, templateCode = template.templateCode, content = template.content, buttons = template.buttons)
+
+    private fun send(
+        to: String,
+        templateCode: String,
+        content: String,
+        buttons: List<AlimtalkRequest.Button>? = null,
     ) {
         val timestamp = System.currentTimeMillis().toString()
         val url = "/alimtalk/v2/services/${alimtalkProperties.serviceId}/messages"
@@ -36,15 +117,17 @@ class AlimtalkMessageSender(
         val requestBody =
             AlimtalkRequest(
                 plusFriendId = alimtalkProperties.plusFriendId,
-                templateCode = PHONE_VERIFY_TEMPLATE_CODE,
+                templateCode = templateCode,
                 messages =
                     listOf(
                         AlimtalkRequest.Message(
-                            to = phoneNumber.replace("-", ""),
-                            content = "[S-Class] 휴대전화 인증번호 안내\n\n인증번호는 $code 입니다. 5분 이내에 입력해주세요.\n\n본인이 요청하지 않았다면 이 메시지를 무시해주세요.",
+                            to = to.replace("-", ""),
+                            content = content,
+                            buttons = buttons,
                         ),
                     ),
             )
+
         val response =
             alimtalkWebClient
                 .post()
@@ -59,8 +142,7 @@ class AlimtalkMessageSender(
                 .block()
 
         if (response?.statusCode != "202") {
-            log.error("[알림톡] 발송 실패: {}", response)
-            throw RuntimeException("알림톡 발송에 실패했습니다")
+            throw RuntimeException("알림톡 발송에 실패했습니다: $response")
         }
     }
 
@@ -69,16 +151,9 @@ class AlimtalkMessageSender(
         timestamp: String,
     ): String {
         val message = "${HttpMethod.POST.name()} $url\n$timestamp\n${alimtalkProperties.accessKey}"
-
-        val signingKey =
-            SecretKeySpec(
-                alimtalkProperties.secretKey.toByteArray(Charsets.UTF_8),
-                "HmacSHA256",
-            )
+        val signingKey = SecretKeySpec(alimtalkProperties.secretKey.toByteArray(Charsets.UTF_8), "HmacSHA256")
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(signingKey)
-
-        val rawHmac = mac.doFinal(message.toByteArray(Charsets.UTF_8))
-        return Base64.getEncoder().encodeToString(rawHmac)
+        return Base64.getEncoder().encodeToString(mac.doFinal(message.toByteArray(Charsets.UTF_8)))
     }
 }

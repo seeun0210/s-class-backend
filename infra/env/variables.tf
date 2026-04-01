@@ -160,3 +160,8 @@ variable "alimtalk_secret_key" {
   sensitive = true
   default   = ""
 }
+
+variable "alimtalk_app_base_url" {
+  type    = string
+  default = ""
+}
