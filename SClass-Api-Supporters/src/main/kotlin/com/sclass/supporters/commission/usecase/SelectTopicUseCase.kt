@@ -8,12 +8,14 @@ import com.sclass.domain.domains.commission.adaptor.CommissionTopicAdaptor
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.CommissionTopicResponse
 import com.sclass.supporters.commission.dto.SelectTopicRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class SelectTopicUseCase(
     private val commissionAdaptor: CommissionAdaptor,
     private val commissionTopicAdaptor: CommissionTopicAdaptor,
+    private val commissionReminderScheduler: CommissionReminderScheduler,
 ) {
     @Transactional
     fun execute(
@@ -40,6 +42,8 @@ class SelectTopicUseCase(
 
         commission.selectTopic()
         topic.select()
+
+        commissionReminderScheduler.resetInactiveReminder(commissionId)
 
         return CommissionTopicResponse.from(topic)
     }

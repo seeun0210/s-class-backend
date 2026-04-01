@@ -20,6 +20,7 @@ com.sclass.common/
 - `@UseCase` — Api 모듈의 유즈케이스 클래스에 사용
 - `@DomainService` — Domain 모듈의 비즈니스 로직 클래스에 사용
 - `@Adaptor` — Domain 모듈의 데이터 접근 래퍼에 사용
+- `@EventHandler` - Api모듈 트랜잭션 이벤트 리스너. AFTER_COMMIT 비동기 알림 처리
 - 모두 내부적으로 `@Component` 포함
 
 ### JWT

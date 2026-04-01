@@ -12,6 +12,7 @@ import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.domain.domains.commission.domain.SupportTicketType
 import com.sclass.domain.domains.commission.domain.TicketStatus
 import com.sclass.supporters.commission.dto.CreateSupportTicketRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.assertThrows
 class CreateSupportTicketUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var commissionSupportTicketAdaptor: CommissionSupportTicketAdaptor
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: CreateSupportTicketUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -33,7 +35,8 @@ class CreateSupportTicketUseCaseTest {
     fun setUp() {
         commissionAdaptor = mockk()
         commissionSupportTicketAdaptor = mockk()
-        useCase = CreateSupportTicketUseCase(commissionAdaptor, commissionSupportTicketAdaptor)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase = CreateSupportTicketUseCase(commissionAdaptor, commissionSupportTicketAdaptor, commissionReminderScheduler)
     }
 
     private fun createCommission(id: Long = 1L) =

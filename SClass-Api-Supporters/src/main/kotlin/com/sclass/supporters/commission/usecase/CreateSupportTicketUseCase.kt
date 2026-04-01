@@ -8,12 +8,14 @@ import com.sclass.domain.domains.commission.domain.CommissionSupportTicket
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.CreateSupportTicketRequest
 import com.sclass.supporters.commission.dto.SupportTicketResponse
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class CreateSupportTicketUseCase(
     private val commissionAdaptor: CommissionAdaptor,
     private val commissionSupportTicketAdaptor: CommissionSupportTicketAdaptor,
+    private val commissionReminderScheduler: CommissionReminderScheduler,
 ) {
     @Transactional
     fun execute(
@@ -35,6 +37,9 @@ class CreateSupportTicketUseCase(
                     reason = request.reason,
                 ),
             )
+
+        commissionReminderScheduler.cancelNoRespReminders(commissionId)
+        commissionReminderScheduler.resetInactiveReminder(commissionId)
 
         return SupportTicketResponse.from(ticket)
     }

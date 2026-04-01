@@ -29,7 +29,6 @@ class AlimtalkMessageSender(
 
     override fun sendCommissionAssigned(
         phoneNumber: String,
-        teacherName: String,
         studentName: String,
         subject: String,
         createdAt: String,
@@ -37,7 +36,6 @@ class AlimtalkMessageSender(
     ) = sendTemplate(
         phoneNumber,
         commissionTemplates.commissionAssigned(
-            teacherName,
             studentName,
             subject,
             createdAt,

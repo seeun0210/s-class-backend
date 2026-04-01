@@ -8,12 +8,17 @@ import com.sclass.domain.domains.commission.domain.CommissionTopic
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.supporters.commission.dto.CommissionTopicListResponse
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
+import com.sclass.supporters.commission.event.TopicSuggestedEvent
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class ProposeTopicsUseCase(
     private val commissionAdaptor: CommissionAdaptor,
     private val commissionTopicAdaptor: CommissionTopicAdaptor,
+    private val eventPublisher: ApplicationEventPublisher,
+    private val commissionReminderScheduler: CommissionReminderScheduler,
 ) {
     @Transactional
     fun execute(
@@ -40,6 +45,16 @@ class ProposeTopicsUseCase(
                     )
                 },
             )
+
+        commissionReminderScheduler.cancelNoRespReminders(commissionId)
+        commissionReminderScheduler.resetInactiveReminder(commissionId)
+
+        eventPublisher.publishEvent(
+            TopicSuggestedEvent(
+                studentUserId = commission.studentUserId,
+                commissionId = commissionId.toString(),
+            ),
+        )
 
         return CommissionTopicListResponse.from(topics)
     }

@@ -70,7 +70,7 @@ class UserRole(
         private val VALID_TRANSITIONS =
             mapOf(
                 UserRoleState.DRAFT to setOf(UserRoleState.PENDING),
-                UserRoleState.PENDING to setOf(UserRoleState.APPROVED, UserRoleState.REJECTED),
+                UserRoleState.PENDING to setOf(UserRoleState.APPROVED, UserRoleState.REJECTED, UserRoleState.PENDING),
                 UserRoleState.REJECTED to setOf(UserRoleState.PENDING),
                 UserRoleState.APPROVED to setOf(UserRoleState.NORMAL),
             )

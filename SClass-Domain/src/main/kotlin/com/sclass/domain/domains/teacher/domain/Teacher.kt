@@ -60,7 +60,7 @@ class Teacher(
         address: String,
         residentNumber: String,
     ) {
-        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED && state != UserRoleState.PENDING) {
             throw TeacherNotEditableException()
         }
         profile = TeacherProfile(birthDate = birthDate, selfIntroduction = selfIntroduction)
@@ -84,7 +84,7 @@ class Teacher(
         state: UserRoleState,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
-        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED) {
+        if (state != UserRoleState.DRAFT && state != UserRoleState.REJECTED && state != UserRoleState.PENDING) {
             throw TeacherNotSubmittableException()
         }
         validateProfileComplete()

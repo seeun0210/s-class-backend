@@ -11,7 +11,11 @@ import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdap
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.supporters.commission.dto.CommissionResponse
 import com.sclass.supporters.commission.dto.CreateCommissionRequest
+import com.sclass.supporters.commission.event.CommissionAssignedEvent
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
+import java.time.format.DateTimeFormatter
 
 @UseCase
 class CreateCommissionUseCase(
@@ -19,6 +23,8 @@ class CreateCommissionUseCase(
     private val commissionFileAdaptor: CommissionFileAdaptor,
     private val teacherAssignmentAdaptor: TeacherAssignmentAdaptor,
     private val fileAdaptor: FileAdaptor,
+    private val eventPublisher: ApplicationEventPublisher,
+    private val commissionReminderScheduler: CommissionReminderScheduler,
 ) {
     @Transactional
     fun execute(
@@ -56,6 +62,19 @@ class CreateCommissionUseCase(
                 files.map { CommissionFile(commission = commission, file = it) },
             )
         }
+
+        commissionReminderScheduler.scheduleNoRespReminders(commission.id, commission.createdAt)
+        commissionReminderScheduler.resetInactiveReminder(commission.id)
+
+        eventPublisher.publishEvent(
+            CommissionAssignedEvent(
+                teacherUserId = commission.teacherUserId,
+                studentUserId = studentUserId,
+                commissionId = commission.id.toString(),
+                subject = commission.guideInfo.subject,
+                createdAt = commission.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+            ),
+        )
 
         return CommissionResponse.from(commission)
     }

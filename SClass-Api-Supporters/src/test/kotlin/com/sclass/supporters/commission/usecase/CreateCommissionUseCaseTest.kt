@@ -14,6 +14,7 @@ import com.sclass.domain.domains.teacherassignment.exception.TeacherAssignmentNo
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.supporters.commission.dto.CreateCommissionRequest
 import com.sclass.supporters.commission.dto.GuideInfoRequest
+import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -23,12 +24,15 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.context.ApplicationEventPublisher
 
 class CreateCommissionUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
     private lateinit var commissionFileAdaptor: CommissionFileAdaptor
     private lateinit var teacherAssignmentAdaptor: TeacherAssignmentAdaptor
     private lateinit var fileAdaptor: FileAdaptor
+    private lateinit var eventPublisher: ApplicationEventPublisher
+    private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var useCase: CreateCommissionUseCase
 
     @BeforeEach
@@ -37,7 +41,17 @@ class CreateCommissionUseCaseTest {
         commissionFileAdaptor = mockk()
         teacherAssignmentAdaptor = mockk()
         fileAdaptor = mockk()
-        useCase = CreateCommissionUseCase(commissionAdaptor, commissionFileAdaptor, teacherAssignmentAdaptor, fileAdaptor)
+        eventPublisher = mockk(relaxed = true)
+        commissionReminderScheduler = mockk(relaxed = true)
+        useCase =
+            CreateCommissionUseCase(
+                commissionAdaptor,
+                commissionFileAdaptor,
+                teacherAssignmentAdaptor,
+                fileAdaptor,
+                eventPublisher,
+                commissionReminderScheduler,
+            )
     }
 
     private fun createRequest(fileIds: List<String>? = null) =

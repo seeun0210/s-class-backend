@@ -22,12 +22,14 @@ import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.context.ApplicationEventPublisher
 
 class ResolveSupportTicketUseCaseTest {
     private lateinit var commissionSupportTicketAdaptor: CommissionSupportTicketAdaptor
     private lateinit var commissionFileAdaptor: CommissionFileAdaptor
     private lateinit var userAdaptor: UserAdaptor
     private lateinit var studentAdaptor: StudentAdaptor
+    private lateinit var eventPublisher: ApplicationEventPublisher
     private lateinit var useCase: ResolveSupportTicketUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -39,7 +41,15 @@ class ResolveSupportTicketUseCaseTest {
         commissionFileAdaptor = mockk()
         userAdaptor = mockk()
         studentAdaptor = mockk()
-        useCase = ResolveSupportTicketUseCase(commissionSupportTicketAdaptor, commissionFileAdaptor, userAdaptor, studentAdaptor)
+        eventPublisher = mockk(relaxed = true)
+        useCase =
+            ResolveSupportTicketUseCase(
+                commissionSupportTicketAdaptor,
+                commissionFileAdaptor,
+                userAdaptor,
+                studentAdaptor,
+                eventPublisher,
+            )
     }
 
     @Test
