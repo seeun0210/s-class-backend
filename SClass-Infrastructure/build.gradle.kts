@@ -14,6 +14,8 @@ dependencies {
     // Micrometer CloudWatch Registry
     api("io.micrometer:micrometer-registry-cloudwatch2")
 
+    api("org.springframework.boot:spring-boot-starter-quartz")
+
     // GCP Cloud Storage
     implementation(platform("com.google.cloud:libraries-bom:26.55.0"))
     implementation("com.google.cloud:google-cloud-storage")
