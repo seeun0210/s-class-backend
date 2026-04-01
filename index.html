@@ -49,6 +49,8 @@
 
   .post-card.type-adr { --accent-from: #d2a8ff; --accent-to: #58a6ff; }
   .post-card.type-debug { --accent-from: #f85149; --accent-to: #ffa657; }
+  .post-card.type-arch { --accent-from: #58a6ff; --accent-to: #3fb950; }
+  .badge-arch { background: rgba(88,166,255,.12); color: var(--blue); border: 1px solid rgba(88,166,255,.2); }
 
   .post-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
   .post-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; letter-spacing: .5px; text-transform: uppercase; }
@@ -125,6 +127,22 @@
     <div class="post-bottom">
       <span class="read">읽기 →</span>
       <span class="mins">약 6분</span>
+    </div>
+  </a>
+
+  <a class="post-card type-arch" href="architecture-monorepo-2026-03-08.html">
+    <div class="post-top">
+      <span class="post-badge badge-arch">아키텍처</span>
+      <span class="post-date">2026. 03. 08</span>
+    </div>
+    <h2>MSA로 시작했다가 Modular Monolith로 바꾼 이야기</h2>
+    <p class="excerpt">
+      7개 레포 MSA로 출발했다. 중복 코드, 다수 레포 동시 변경, 월 20만원 인프라 비용 — <strong>직접 운영하면서 문제들이 쌓였다.</strong>
+      서비스 규모에 맞지 않는 구조라고 판단하고, Domain 추상화 기반 Modular Monolith로 전환한 과정.
+    </p>
+    <div class="post-bottom">
+      <span class="read">읽기 →</span>
+      <span class="mins">약 7분</span>
     </div>
   </a>
 
