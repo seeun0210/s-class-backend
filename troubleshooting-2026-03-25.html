@@ -3,200 +3,242 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Troubleshooting: App Runner 배포 실패</title>
+<title>App Runner에서 앱이 뜨질 않는다 — S-Class Dev Log</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0d1117; color: #c9d1d9; line-height: 1.7; padding: 40px 20px; }
-  .container { max-width: 860px; margin: 0 auto; }
-  .back { color: #58a6ff; text-decoration: none; font-size: 14px; }
-  .back:hover { text-decoration: underline; }
-  h1 { font-size: 28px; color: #f0f6fc; margin-top: 12px; margin-bottom: 8px; }
-  .date { color: #8b949e; font-size: 14px; margin-bottom: 32px; }
-  h2 { font-size: 20px; color: #58a6ff; margin-top: 40px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #21262d; }
-  h3 { font-size: 16px; color: #d2a8ff; margin-top: 24px; margin-bottom: 12px; }
-  p { margin-bottom: 12px; }
-  ul, ol { margin: 12px 0 12px 24px; }
-  li { margin-bottom: 6px; }
-  code { background: #161b22; padding: 2px 6px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: #e6edf3; }
-  pre { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 12px 0; }
-  pre code { background: none; padding: 0; }
-  .error-box { background: #1c1214; border: 1px solid #f8514966; border-radius: 8px; padding: 16px; margin: 12px 0; }
-  .error-box code { color: #f85149; }
-  .success-box { background: #12261e; border: 1px solid #3fb95066; border-radius: 8px; padding: 16px; margin: 12px 0; }
-  .success-box code { color: #3fb950; }
-  .info-box { background: #0c2d6b33; border: 1px solid #58a6ff44; border-radius: 8px; padding: 16px; margin: 12px 0; }
-  .timeline { position: relative; margin: 20px 0 20px 16px; padding-left: 24px; border-left: 2px solid #30363d; }
-  .timeline-item { position: relative; margin-bottom: 24px; }
-  .timeline-item::before { content: ''; position: absolute; left: -31px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #30363d; background: #0d1117; }
-  .timeline-item.error::before { border-color: #f85149; background: #f8514933; }
-  .timeline-item.fix::before { border-color: #3fb950; background: #3fb95033; }
-  .timeline-item.info::before { border-color: #58a6ff; background: #58a6ff33; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 6px; }
-  .tag-error { background: #f8514922; color: #f85149; }
-  .tag-fix { background: #3fb95022; color: #3fb950; }
-  .tag-insight { background: #d2a8ff22; color: #d2a8ff; }
-  .arrow { color: #3fb950; }
-  strong { color: #f0f6fc; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-  th, td { text-align: left; padding: 10px 12px; border: 1px solid #21262d; }
-  th { background: #161b22; color: #f0f6fc; font-size: 14px; }
-  td { font-size: 14px; }
+  :root {
+    --bg: #0d1117; --surface: #161b22;
+    --border: #21262d; --border2: #30363d;
+    --text: #c9d1d9; --muted: #8b949e; --bright: #f0f6fc;
+    --blue: #58a6ff; --purple: #d2a8ff; --green: #3fb950;
+    --red: #f85149; --yellow: #e3b341; --orange: #ffa657;
+  }
+  body { font-family: 'Noto Sans KR', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(13,17,23,.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+  .nav-wrap { max-width: 780px; margin: 0 auto; padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 14px; font-weight: 700; color: var(--bright); text-decoration: none; }
+  .nav-logo em { font-style: normal; color: var(--blue); }
+  .nav-back { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .15s; }
+  .nav-back:hover { color: var(--bright); }
+  .post { max-width: 720px; margin: 0 auto; padding: 56px 24px 100px; }
+  .post-header { margin-bottom: 48px; }
+  .post-badges { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; letter-spacing: .5px; text-transform: uppercase; }
+  .badge-debug { background: rgba(248,81,73,.1); color: var(--red); border: 1px solid rgba(248,81,73,.2); }
+  .badge-devops { background: rgba(63,185,80,.1); color: var(--green); border: 1px solid rgba(63,185,80,.2); }
+  .post-header h1 { font-size: 32px; font-weight: 700; color: var(--bright); line-height: 1.3; letter-spacing: -.5px; margin-bottom: 16px; }
+  .post-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); padding-top: 16px; border-top: 1px solid var(--border); }
+  .post-body { font-size: 15px; }
+  .post-body p { margin-bottom: 18px; }
+  .post-body h2 { font-size: 22px; font-weight: 700; color: var(--bright); margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); letter-spacing: -.3px; }
+  .post-body h3 { font-size: 17px; font-weight: 700; color: var(--purple); margin: 28px 0 12px; }
+  .post-body ul, .post-body ol { margin: 12px 0 18px 24px; }
+  .post-body li { margin-bottom: 8px; }
+  .post-body strong { color: var(--bright); font-weight: 600; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; background: var(--surface); color: var(--orange); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--border); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; margin: 20px 0; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 13px; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 18px 20px; margin: 24px 0; display: flex; gap: 12px; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { font-size: 14px; line-height: 1.7; }
+  .callout-body strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .callout.info { background: rgba(88,166,255,.07); border: 1px solid rgba(88,166,255,.2); }
+  .callout.info .callout-body strong { color: var(--blue); }
+  .callout.error { background: rgba(248,81,73,.07); border: 1px solid rgba(248,81,73,.2); }
+  .callout.error .callout-body strong { color: var(--red); }
+  .callout.good { background: rgba(63,185,80,.07); border: 1px solid rgba(63,185,80,.2); }
+  .callout.good .callout-body strong { color: var(--green); }
+  .callout.key { background: rgba(227,179,65,.07); border: 1px solid rgba(227,179,65,.2); }
+  .callout.key .callout-body strong { color: var(--yellow); }
+
+  /* TIMELINE */
+  .timeline { margin: 28px 0; position: relative; padding-left: 28px; border-left: 2px solid var(--border2); }
+  .tl-item { position: relative; margin-bottom: 32px; }
+  .tl-item::before { content: ''; position: absolute; left: -35px; top: 7px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border2); background: var(--bg); }
+  .tl-item.err::before { border-color: var(--red); background: rgba(248,81,73,.2); }
+  .tl-item.fix::before { border-color: var(--green); background: rgba(63,185,80,.2); }
+  .tl-item.aha::before { border-color: var(--yellow); background: rgba(227,179,65,.2); }
+  .tl-label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 6px; }
+  .tl-item.err .tl-label { color: var(--red); }
+  .tl-item.fix .tl-label { color: var(--green); }
+  .tl-item.aha .tl-label { color: var(--yellow); }
+  .tl-item h3 { font-size: 15px; font-weight: 600; color: var(--bright); margin-bottom: 8px; }
+  .tl-item p { font-size: 14px; color: var(--text); margin-bottom: 8px; }
+
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  th, td { padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--surface); color: var(--bright); font-weight: 600; font-size: 13px; }
+  .post-footer-nav { margin-top: 60px; padding-top: 32px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .post-footer-nav a { font-size: 13px; color: var(--blue); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--blue); text-decoration: none; }
 </style>
 </head>
 <body>
-<div class="container">
 
-<a class="back" href="index.html">&larr; Back</a>
-<h1>App Runner 배포 실패 트러블슈팅</h1>
-<p class="date">2026-03-25 | S-Class Backend</p>
+<nav>
+  <div class="nav-wrap">
+    <a class="nav-logo" href="index.html">S-Class <em>Dev Log</em></a>
+    <a class="nav-back" href="index.html">← 목록으로</a>
+  </div>
+</nav>
 
-<h2>증상</h2>
-<div class="error-box">
-  <p>App Runner에서 Docker 이미지 pull 성공 후 애플리케이션 시작 실패</p>
-  <pre><code>Failed to configure a DataSource: 'url' attribute is not specified
-Reason: Failed to determine a suitable driver class</code></pre>
-  <p>상태: <code>ROLLBACK_SUCCEEDED</code> &mdash; 이전 버전으로 자동 롤백</p>
-</div>
-
-<h2>디버깅 타임라인</h2>
-<div class="timeline">
-
-  <div class="timeline-item error">
-    <span class="tag tag-error">ERROR</span>
-    <strong>apprunner:ListServices 권한 거부</strong>
-    <p>CD 워크플로우에서 <code>aws apprunner list-services</code> 호출 시 <code>AccessDeniedException</code></p>
-    <div class="info-box">
-      <strong>원인:</strong> <code>ListServices</code>는 특정 서비스 ARN으로 제한 불가 &mdash; <code>Resource = "*"</code> 필요
+<article class="post">
+  <div class="post-header">
+    <div class="post-badges">
+      <span class="badge badge-debug">트러블슈팅</span>
+      <span class="badge badge-devops">DevOps</span>
+    </div>
+    <h1>App Runner에서 앱이 뜨질 않는다 — 로그도 없이</h1>
+    <div class="post-meta">
+      <span>2026. 03. 25</span>
+      <span>·</span>
+      <span>약 6분</span>
     </div>
   </div>
 
-  <div class="timeline-item fix">
-    <span class="tag tag-fix">FIX</span>
-    <strong>ListServices를 별도 Statement로 분리</strong>
-    <pre><code>{
-  "Sid": "AppRunnerList",
-  "Action": ["apprunner:ListServices"],
-  "Resource": "*"
-}</code></pre>
-  </div>
+  <div class="post-body">
 
-  <div class="timeline-item error">
-    <span class="tag tag-error">ERROR</span>
-    <strong>Terraform state S3 접근 불가</strong>
-    <p>Infrastructure 워크플로우에서 <code>s3:GetObject</code> on terraform state 버킷 거부</p>
-    <div class="info-box">
-      <strong>문제:</strong> 닭과 달걀 &mdash; deployer에 S3 권한을 추가하려면 terraform이 필요하지만, terraform을 실행하려면 S3 권한이 필요
+    <p>Docker 이미지 pull은 성공했다. App Runner 콘솔엔 <code>ROLLBACK_SUCCEEDED</code>만 뜬다. 로그를 보니 <code>Failed to configure a DataSource</code>. 이상하다. 로컬에서는 잘 됐는데.</p>
+
+    <div class="callout error">
+      <span class="callout-icon">🔴</span>
+      <div class="callout-body">
+        <strong>증상</strong>
+        App Runner 배포 시 앱 시작 실패 → 자동 롤백<br>
+        <code>Failed to configure a DataSource: 'url' attribute is not specified</code>
+      </div>
     </div>
-  </div>
 
-  <div class="timeline-item fix">
-    <span class="tag tag-fix">FIX</span>
-    <strong>로컬에서 terraform apply로 bootstrap</strong>
-    <p>S3, DynamoDB(state lock) 권한을 로컬 terraform으로 직접 적용</p>
-  </div>
+    <p>원인을 찾기까지 꽤 많이 돌아갔다. 겪은 순서대로 기록한다.</p>
 
-  <div class="timeline-item error">
-    <span class="tag tag-error">ERROR</span>
-    <strong>IAM 인라인 정책 2KB 제한 초과</strong>
-    <pre><code>LimitExceeded: Maximum policy size of 2048 bytes exceeded for user</code></pre>
-  </div>
+    <h2>디버깅 타임라인</h2>
 
-  <div class="timeline-item fix">
-    <span class="tag tag-fix">FIX</span>
-    <strong>인라인 정책 <span class="arrow">&rarr;</span> Managed Policy로 전환</strong>
-    <p><code>aws_iam_user_policy</code> (2KB) <span class="arrow">&rarr;</span> <code>aws_iam_policy</code> + <code>aws_iam_user_policy_attachment</code> (6KB)</p>
-  </div>
+    <div class="timeline">
 
-  <div class="timeline-item error">
-    <span class="tag tag-error">ERROR</span>
-    <strong>ssm:DescribeParameters 권한 거부</strong>
-    <p>Terraform이 SSM Parameter metadata 조회 시 필요한 권한 누락</p>
-  </div>
+      <div class="tl-item err">
+        <div class="tl-label">Error 1</div>
+        <h3>apprunner:ListServices 권한 거부</h3>
+        <p>CD 워크플로우에서 <code>aws apprunner list-services</code> 호출 시 <code>AccessDeniedException</code>.</p>
+        <div class="callout info">
+          <span class="callout-icon">💡</span>
+          <div class="callout-body"><strong>원인</strong><code>ListServices</code>는 특정 ARN으로 제한 불가 — <code>Resource: "*"</code> 필요</div>
+        </div>
+      </div>
 
-  <div class="timeline-item fix">
-    <span class="tag tag-fix">FIX</span>
-    <strong>SSMDescribe Statement 추가 (Resource: *)</strong>
-  </div>
+      <div class="tl-item fix">
+        <div class="tl-label">Fix 1</div>
+        <h3>ListServices를 별도 Statement로 분리</h3>
+        <pre><code>{ "Sid": "AppRunnerList", "Action": ["apprunner:ListServices"], "Resource": "*" }</code></pre>
+      </div>
 
-  <div class="timeline-item error">
-    <span class="tag tag-error">ERROR</span>
-    <strong>App Runner 앱 시작 실패 - DataSource 설정 오류</strong>
-    <p><code>ParameterStorePropertySource</code> (EnvironmentPostProcessor)의 로그가 전혀 출력되지 않음</p>
-    <div class="info-box">
-      <strong>의심 1:</strong> <code>AWS_REGION</code> 환경변수 누락 <span class="arrow">&rarr;</span> 추가했지만 해결 안 됨<br>
-      <strong>의심 2:</strong> VPC Endpoint 필요? <span class="arrow">&rarr;</span> NAT Instance 경유로 가능해야 함
-    </div>
-  </div>
+      <div class="tl-item err">
+        <div class="tl-label">Error 2</div>
+        <h3>Terraform state S3 접근 불가</h3>
+        <p>Infrastructure 워크플로우에서 <code>s3:GetObject</code> 권한 거부.</p>
+        <div class="callout info">
+          <span class="callout-icon">🐣</span>
+          <div class="callout-body"><strong>닭과 달걀</strong>deployer에 S3 권한을 추가하려면 Terraform이 필요하지만, Terraform을 실행하려면 S3 권한이 필요하다.</div>
+        </div>
+      </div>
 
-  <div class="timeline-item info">
-    <span class="tag tag-insight">INSIGHT</span>
-    <strong>EnvironmentPostProcessor 자체가 호출되지 않음</strong>
-    <p>로깅 코드를 추가했지만 <code>Loading SSM parameters...</code> 로그가 없음 &mdash; 클래스 로딩 자체가 실패</p>
-  </div>
+      <div class="tl-item fix">
+        <div class="tl-label">Fix 2</div>
+        <h3>로컬에서 terraform apply로 bootstrap</h3>
+        <p>S3, DynamoDB(state lock) 권한을 로컬에서 직접 적용. 이후 CI에서 정상 동작.</p>
+      </div>
 
-  <div class="timeline-item info">
-    <span class="tag tag-insight">INSIGHT</span>
-    <strong>bootJar 내부 분석</strong>
-    <pre><code>$ unzip -l *.jar | grep "aws.*ssm"
+      <div class="tl-item err">
+        <div class="tl-label">Error 3</div>
+        <h3>IAM 인라인 정책 2KB 제한 초과</h3>
+        <pre><code>LimitExceeded: Maximum policy size of 2048 bytes exceeded for user</code></pre>
+      </div>
+
+      <div class="tl-item fix">
+        <div class="tl-label">Fix 3</div>
+        <h3>인라인 정책 → Managed Policy 전환</h3>
+        <p><code>aws_iam_user_policy</code>(2KB 한도) → <code>aws_iam_policy</code> + <code>aws_iam_user_policy_attachment</code>(6KB)</p>
+      </div>
+
+      <div class="tl-item err">
+        <div class="tl-label">Error 4</div>
+        <h3>ssm:DescribeParameters 권한 거부</h3>
+        <p>Terraform이 SSM Parameter metadata 조회 시 권한 누락. 이것도 <code>Resource: "*"</code> 필요.</p>
+      </div>
+
+      <div class="tl-item err">
+        <div class="tl-label">본론 시작</div>
+        <h3>App Runner 앱 시작 실패 — DataSource 설정 오류</h3>
+        <p>여기까지 해결하고 배포했는데, 앱이 뜨질 않는다. <code>ParameterStorePropertySource</code>의 로그가 전혀 없다.</p>
+        <p>의심 1: <code>AWS_REGION</code> 누락 → 추가해봤지만 해결 안 됨<br>
+        의심 2: VPC Endpoint 필요? → NAT Instance 경유로 SSM 접근 가능해야 함</p>
+      </div>
+
+      <div class="tl-item aha">
+        <div class="tl-label">실마리</div>
+        <h3>EnvironmentPostProcessor 자체가 호출되지 않는다</h3>
+        <p>로그 코드를 추가했지만 <strong>"Loading SSM parameters..."</strong> 한 줄도 없었다. 클래스 로딩 자체가 실패하고 있었다.</p>
+      </div>
+
+      <div class="tl-item aha">
+        <div class="tl-label">발견</div>
+        <h3>bootJar 안에 AWS SDK JAR이 없다</h3>
+        <pre><code>$ unzip -l *.jar | grep "aws.*ssm"
 (결과 없음!)
 
 $ unzip -l *.jar | grep "SClass-Infrastructure"
 BOOT-INF/lib/SClass-Infrastructure-0.0.1-SNAPSHOT-plain.jar</code></pre>
-    <p>Infrastructure JAR은 포함되어 있지만, <strong>AWS SSM SDK JAR이 bootJar에 없음</strong></p>
-  </div>
+        <p>Infrastructure JAR은 있는데 <strong>AWS SSM SDK JAR이 bootJar에 포함되지 않고 있었다.</strong></p>
+      </div>
 
-  <div class="timeline-item fix">
-    <span class="tag tag-fix">ROOT CAUSE FIX</span>
-    <strong>implementation <span class="arrow">&rarr;</span> api 스코프 변경</strong>
-    <p><code>SClass-Infrastructure/build.gradle.kts</code>에서 의존성 스코프 변경</p>
-    <pre><code>// Before (전이 의존성 전파 안 됨)
+      <div class="tl-item fix">
+        <div class="tl-label">Root Cause Fix</div>
+        <h3>implementation → api 스코프 변경</h3>
+        <pre><code>// Before — 전이 의존성 전파 안 됨
 implementation("software.amazon.awssdk:ssm")
 
-// After (bootJar에 포함됨)
+// After — bootJar에 포함됨
 api("software.amazon.awssdk:ssm")</code></pre>
+      </div>
+
+    </div>
+
+    <h2>근본 원인</h2>
+
+    <div class="callout good">
+      <span class="callout-icon">🔑</span>
+      <div class="callout-body">
+        <strong>핵심</strong>
+        Gradle 멀티모듈에서 <code>implementation</code>은 전이 의존성을 전파하지 않는다.<br><br>
+        <code>SClass-Infrastructure</code>가 <code>implementation</code>으로 AWS SDK를 선언하면, 이를 의존하는 <code>SClass-Api-Supporters</code>의 bootJar에 AWS SDK JAR이 포함되지 않는다.<br><br>
+        결과: <code>ParameterStorePropertySource</code>가 <code>SsmClient</code> 클래스를 못 찾아 조용히 실패 → SSM 값 미주입 → DataSource 설정 없음 → 앱 시작 실패
+      </div>
+    </div>
+
+    <h2>교훈</h2>
+
+    <table>
+      <tr><th>주제</th><th>배운 것</th></tr>
+      <tr><td><code>implementation</code> vs <code>api</code></td><td>런타임에 다른 모듈이 사용해야 하는 의존성은 <code>api</code>로 선언</td></tr>
+      <tr><td><code>EnvironmentPostProcessor</code></td><td>클래스 로딩 실패 시 로그 없이 무시됨. 디버깅이 매우 어려움</td></tr>
+      <tr><td>IAM List/Describe API</td><td><code>ListServices</code>, <code>DescribeParameters</code> 등은 <code>Resource: "*"</code>로만 동작</td></tr>
+      <tr><td>IAM 인라인 정책</td><td>2048바이트 제한 — 권한이 많으면 Managed Policy 사용</td></tr>
+      <tr><td>Terraform IAM bootstrap</td><td>deployer 권한 추가는 닭과 달걀 — 로컬에서 직접 적용 필요</td></tr>
+      <tr><td>bootJar 디버깅</td><td><code>unzip -l *.jar | grep "라이브러리"</code>로 의존성 포함 여부 확인</td></tr>
+    </table>
+
   </div>
 
-</div>
+  <div class="post-footer-nav">
+    <a href="index.html">← 목록으로</a>
+    <a href="adr-async-alimtalk-2026-04-02.html">알림톡 아키텍처 결정 →</a>
+  </div>
+</article>
 
-<h2>근본 원인</h2>
-<div class="success-box">
-  <p>Gradle 멀티모듈에서 <code>implementation</code> 스코프는 <strong>전이 의존성을 전파하지 않습니다.</strong></p>
-  <p><code>SClass-Infrastructure</code>가 <code>implementation</code>으로 AWS SDK를 선언하면, 이를 의존하는 <code>SClass-Api-Supporters</code>의 bootJar에 AWS SDK JAR이 포함되지 않습니다.</p>
-  <p>결과: <code>ParameterStorePropertySource</code>가 <code>SsmClient</code> 클래스를 찾지 못해 <code>EnvironmentPostProcessor</code>가 조용히 실패 &rarr; SSM 값 미주입 &rarr; DataSource 설정 실패</p>
-</div>
+<footer>
+  S-Class Backend · <a href="https://github.com/seeun0210/s-class-backend" target="_blank">github.com/seeun0210/s-class-backend</a>
+</footer>
 
-<h2>교훈</h2>
-<table>
-  <tr>
-    <th>주제</th>
-    <th>교훈</th>
-  </tr>
-  <tr>
-    <td><code>implementation</code> vs <code>api</code></td>
-    <td>라이브러리 모듈에서 다른 모듈이 런타임에 사용해야 하는 의존성은 반드시 <code>api</code>로 선언</td>
-  </tr>
-  <tr>
-    <td><code>EnvironmentPostProcessor</code></td>
-    <td>클래스 로딩 실패 시 로그 없이 무시됨 &mdash; 디버깅이 매우 어려움</td>
-  </tr>
-  <tr>
-    <td>IAM List/Describe API</td>
-    <td><code>ListServices</code>, <code>DescribeParameters</code> 등은 <code>Resource = "*"</code>로만 동작</td>
-  </tr>
-  <tr>
-    <td>IAM 인라인 정책</td>
-    <td>2048바이트 제한 &mdash; 권한이 많으면 Managed Policy 사용</td>
-  </tr>
-  <tr>
-    <td>Terraform IAM bootstrap</td>
-    <td>deployer 권한 추가는 닭과 달걀 문제 &mdash; 로컬에서 직접 적용 필요</td>
-  </tr>
-  <tr>
-    <td>bootJar 디버깅</td>
-    <td><code>unzip -l *.jar | grep "라이브러리"</code>로 의존성 포함 여부 확인</td>
-  </tr>
-</table>
-
-</div>
 </body>
 </html>
