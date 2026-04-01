@@ -97,6 +97,23 @@
 
 <div class="posts">
 
+  <a class="post-card type-arch" href="quartz-dynamic-scheduler-2026-04-02.html">
+    <div class="post-top">
+      <span class="post-badge badge-arch">아키텍처</span>
+      <span class="post-badge badge-devops">DevOps</span>
+      <span class="post-date">2026. 04. 02</span>
+    </div>
+    <h2>@Scheduled 대신 Quartz — 동적 스케줄과 취소가 필요했다</h2>
+    <p class="excerpt">
+      72시간 마감 안에 4번 리마인더, 선생님이 응답하면 즉시 취소. <strong>@Scheduled 폴링으로는 개별 취소가 안 된다.</strong>
+      Quartz JDBC Store로 스케줄 상태를 외부화하고, 도메인 모델을 깔끔하게 유지한 과정.
+    </p>
+    <div class="post-bottom">
+      <span class="read">읽기 →</span>
+      <span class="mins">약 5분</span>
+    </div>
+  </a>
+
   <a class="post-card type-adr" href="adr-async-alimtalk-2026-04-02.html">
     <div class="post-top">
       <span class="post-badge badge-adr">아키텍처 결정</span>
@@ -104,12 +121,12 @@
     </div>
     <h2>알림톡, 트랜잭션이 끝난 뒤에 보내야 한다</h2>
     <p class="excerpt">
-      Commission이 저장되자마자 알림을 쏘면 어떻게 될까? 저장이 <strong>실패해도 알림이 나간다.</strong>
-      @TransactionalEventListener + @Async 조합을 고른 이유, 그리고 이 방식이 언제 한계에 부딪히는지.
+      NCP 장애가 나도 API는 성공해야 한다. <strong>알림은 부가 기능이고, 장애 도메인은 격리되어야 한다.</strong>
+      @TransactionalEventListener + @Async 조합을 고른 이유, 그리고 언제 Outbox 패턴이 필요해지는지.
     </p>
     <div class="post-bottom">
       <span class="read">읽기 →</span>
-      <span class="mins">약 3분</span>
+      <span class="mins">약 4분</span>
     </div>
   </a>
 

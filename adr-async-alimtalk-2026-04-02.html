@@ -118,16 +118,43 @@ fun handle(event: CommissionAssignedEvent) {
     commissionNotificationSender.sendCommissionAssigned(...)
 }</code></pre>
 
-    <h2>왜 @Async도 붙였나</h2>
+    <h2>왜 @Async도 붙였나 — 장애 도메인 격리</h2>
 
-    <p><code>@TransactionalEventListener</code>만 쓰면 NCP API 호출이 끝날 때까지 HTTP 응답이 블로킹된다. NCP 응답이 수백ms씩 걸릴 수 있으니 클라이언트 입장에서 불필요한 지연이다.</p>
+    <p>알림은 <strong>부가 기능</strong>이다. 의뢰 배정 API의 본질은 Commission을 DB에 저장하는 것이고, 알림톡은 그것을 선생님에게 알려주는 편의 수단이다. 이 둘은 서로 독립적이어야 한다.</p>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>API 성공 ≠ 알림 성공</strong>
+        NCP 서버가 일시 다운되거나, 응답이 5초씩 걸리거나, 전화번호가 없어서 알림을 건너뛰어도 — Commission 저장 자체는 성공이다. 클라이언트에게 500을 돌려줄 이유가 없다.
+      </div>
+    </div>
+
+    <p><code>@Async</code>가 없으면 NCP API 호출이 끝날 때까지 HTTP 응답이 블로킹된다. 더 심각한 건 NCP에서 예외가 발생하면 그게 그대로 클라이언트에게 전파된다는 점이다.</p>
+
+    <pre><code>// ❌ @Async 없이
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+fun handle(event: CommissionAssignedEvent) {
+    commissionNotificationSender.sendCommissionAssigned(...)
+    // NCP 예외 → 커밋은 됐는데 클라이언트에 500 전달
+    // NCP 응답 300ms → HTTP 응답도 300ms 지연
+}
+
+// ✅ @Async 붙이면
+@Async
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+fun handle(event: CommissionAssignedEvent) {
+    commissionNotificationSender.sendCommissionAssigned(...)
+    // 별도 스레드에서 실행 → 예외는 로그에만 기록
+    // HTTP 응답은 즉시 반환
+}</code></pre>
 
     <div class="callout why">
       <span class="callout-icon">💡</span>
       <div class="callout-body">
         <strong>두 어노테이션이 하는 일</strong>
-        <code>@TransactionalEventListener(AFTER_COMMIT)</code> — 커밋 성공 후에만 실행<br><br>
-        <code>@Async</code> — 별도 스레드에서 실행, HTTP 응답 블로킹 없음
+        <code>@TransactionalEventListener(AFTER_COMMIT)</code> — 커밋 성공 후에만 실행 (유령 알림 방지)<br><br>
+        <code>@Async</code> — 별도 스레드에서 실행, 알림 장애가 API 응답으로 전파되지 않음
       </div>
     </div>
 

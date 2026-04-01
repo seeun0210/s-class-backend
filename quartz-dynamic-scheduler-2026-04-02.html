@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@Scheduled 대신 Quartz — 동적 스케줄과 취소 — S-Class Dev Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d1117; --surface: #161b22;
+    --border: #21262d; --border2: #30363d;
+    --text: #c9d1d9; --muted: #8b949e; --bright: #f0f6fc;
+    --blue: #58a6ff; --purple: #d2a8ff; --green: #3fb950;
+    --red: #f85149; --yellow: #e3b341; --orange: #ffa657;
+  }
+  body { font-family: 'Noto Sans KR', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(13,17,23,.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+  .nav-wrap { max-width: 780px; margin: 0 auto; padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 14px; font-weight: 700; color: var(--bright); text-decoration: none; }
+  .nav-logo em { font-style: normal; color: var(--blue); }
+  .nav-back { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .15s; }
+  .nav-back:hover { color: var(--bright); }
+  .post { max-width: 720px; margin: 0 auto; padding: 56px 24px 100px; }
+  .post-header { margin-bottom: 48px; }
+  .post-badges { display: flex; gap: 8px; margin-bottom: 20px; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; letter-spacing: .5px; text-transform: uppercase; }
+  .badge-arch { background: rgba(88,166,255,.12); color: var(--blue); border: 1px solid rgba(88,166,255,.2); }
+  .badge-devops { background: rgba(63,185,80,.1); color: var(--green); border: 1px solid rgba(63,185,80,.2); }
+  .post-header h1 { font-size: 32px; font-weight: 700; color: var(--bright); line-height: 1.3; letter-spacing: -.5px; margin-bottom: 16px; }
+  .post-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); padding-top: 16px; border-top: 1px solid var(--border); }
+  .post-meta a { color: var(--blue); text-decoration: none; }
+  .post-body { font-size: 15px; }
+  .post-body p { margin-bottom: 18px; }
+  .post-body h2 { font-size: 22px; font-weight: 700; color: var(--bright); margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); letter-spacing: -.3px; }
+  .post-body h3 { font-size: 17px; font-weight: 700; color: var(--blue); margin: 28px 0 12px; }
+  .post-body ul, .post-body ol { margin: 12px 0 18px 24px; }
+  .post-body li { margin-bottom: 8px; }
+  .post-body strong { color: var(--bright); font-weight: 600; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; background: var(--surface); color: var(--orange); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--border); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; margin: 20px 0; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 13px; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 18px 20px; margin: 24px 0; display: flex; gap: 12px; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { font-size: 14px; line-height: 1.7; }
+  .callout-body strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .callout.why { background: rgba(88,166,255,.07); border: 1px solid rgba(88,166,255,.2); }
+  .callout.why .callout-body strong { color: var(--blue); }
+  .callout.warn { background: rgba(248,81,73,.07); border: 1px solid rgba(248,81,73,.2); }
+  .callout.warn .callout-body strong { color: var(--red); }
+  .callout.good { background: rgba(63,185,80,.07); border: 1px solid rgba(63,185,80,.2); }
+  .callout.good .callout-body strong { color: var(--green); }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  th, td { padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--surface); color: var(--bright); font-weight: 600; font-size: 13px; }
+  td code { font-size: 12px; }
+  .timeline { margin: 24px 0; display: flex; flex-direction: column; gap: 0; }
+  .timeline-item { display: flex; gap: 16px; align-items: flex-start; }
+  .timeline-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 6px; }
+  .timeline-dot.warn { background: var(--orange); }
+  .timeline-line { width: 2px; background: var(--border2); flex: 1; min-height: 24px; }
+  .timeline-content { padding-bottom: 20px; }
+  .timeline-time { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 4px; font-family: 'SF Mono', monospace; }
+  .timeline-time.warn { color: var(--orange); }
+  .timeline-desc { font-size: 14px; color: var(--text); }
+  .post-footer-nav { margin-top: 60px; padding-top: 32px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .post-footer-nav a { font-size: 13px; color: var(--blue); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-wrap">
+    <a class="nav-logo" href="index.html">S-Class <em>Dev Log</em></a>
+    <a class="nav-back" href="index.html">← 목록으로</a>
+  </div>
+</nav>
+
+<article class="post">
+  <div class="post-header">
+    <div class="post-badges">
+      <span class="badge badge-arch">아키텍처</span>
+      <span class="badge badge-devops">DevOps</span>
+    </div>
+    <h1>@Scheduled 대신 Quartz — 동적 스케줄과 취소가 필요했다</h1>
+    <div class="post-meta">
+      <span>2026. 04. 02</span>
+      <span>·</span>
+      <span>약 5분</span>
+      <span>·</span>
+      <a href="https://github.com/seeun0210/s-class-backend/pull/131" target="_blank">PR #131</a>
+    </div>
+  </div>
+
+  <div class="post-body">
+
+    <p>Commission이 배정된 후 선생님이 아무 반응이 없으면 어떻게 해야 할까? 72시간의 마감이 있고, 그 안에 여러 번 리마인더를 보내야 한다. 그리고 선생님이 응답하면 <strong>예정된 알림을 모두 취소</strong>해야 한다.</p>
+
+    <p>처음엔 <code>@Scheduled</code>로 구현하는 방법을 떠올렸다. 하지만 금방 한계가 보였다.</p>
+
+    <h2>@Scheduled 방식의 문제</h2>
+
+    <p>Spring의 <code>@Scheduled</code>는 고정된 주기로 메서드를 반복 실행한다. 리마인더를 구현하려면 이렇게 해야 한다.</p>
+
+    <pre><code>@Scheduled(fixedDelay = 60_000) // 매 1분마다 실행
+fun checkAndSendNoRespReminder() {
+    val threshold = LocalDateTime.now().minusHours(8)
+    val commissions = commissionAdaptor.findUnrespondedBefore(threshold)
+    for (commission in commissions) {
+        if (!commission.noRespFirstReminderSent) {
+            alimtalkSender.send(...)
+            commission.markFirstReminderSent()
+        }
+    }
+}</code></pre>
+
+    <div class="callout warn">
+      <span class="callout-icon">🔴</span>
+      <div class="callout-body">
+        <strong>문제점</strong>
+        1분마다 미응답 의뢰 전체를 DB에서 조회한다. 의뢰가 많아질수록 쿼리 비용이 선형 증가하고, 이미 처리된 건도 매번 조회에 포함된다.
+      </div>
+    </div>
+
+    <p>더 큰 문제는 <strong>취소</strong>다. "8시간 리마인더는 보냈지만, 60시간 리마인더는 취소해야 한다"는 상태를 DB 컬럼으로 관리해야 한다. <code>noRespFirstReminderSent</code>, <code>noRespSecondReminderSent</code>… Commission 엔티티가 알림 상태 추적 테이블이 되어버린다.</p>
+
+    <h2>필요한 것: 생성 시점에 스케줄 등록, 응답 시 즉시 취소</h2>
+
+    <p>Commission이 생성될 때 4개의 리마인더 시점이 이미 확정된다.</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-time">T + 8h</div>
+          <div class="timeline-desc">첫 번째 리마인더 — 배정 8시간 후</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot warn"></div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-time warn">T + 60h</div>
+          <div class="timeline-desc">마감 12시간 전 (72h 마감 기준)</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot warn"></div><div class="timeline-line"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-time warn">T + 64h</div>
+          <div class="timeline-desc">마감 8시간 전</div>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-left"><div class="timeline-dot warn"></div></div>
+        <div class="timeline-content">
+          <div class="timeline-time warn">T + 71h</div>
+          <div class="timeline-desc">마감 1시간 전 — 마지막 알림</div>
+        </div>
+      </div>
+    </div>
+
+    <p>선생님이 응답하는 순간 (주제 제안, 티켓 생성, 추가 자료 요청 등) 아직 발화되지 않은 모든 트리거를 삭제한다. Quartz는 이것을 <strong>Job 삭제 하나로</strong> 해결한다.</p>
+
+    <h2>구현: ReminderScheduler 추상화</h2>
+
+    <p>Infrastructure 모듈에 Quartz 래퍼를 만들었다. Commission 도메인 로직과 Quartz API 세부 사항을 분리하기 위해서다.</p>
+
+    <pre><code>// SClass-Infrastructure
+@Component
+class ReminderScheduler(private val scheduler: Scheduler) {
+
+    // 단일 트리거
+    fun schedule(
+        jobKey: String, group: String,
+        jobClass: Class&lt;out Job&gt;,
+        triggerAt: LocalDateTime,
+        jobData: JobDataMap = JobDataMap(),
+    ) { ... }
+
+    // 다중 트리거 — 1 Job, N Triggers
+    fun scheduleMultiple(
+        jobKey: String, group: String,
+        jobClass: Class&lt;out Job&gt;,
+        triggers: List&lt;Pair&lt;LocalDateTime, JobDataMap&gt;&gt;,
+    ) { ... }
+
+    // Job 삭제 (연결된 모든 Trigger 포함)
+    fun cancel(jobKey: String, group: String) {
+        scheduler.deleteJob(JobKey.jobKey(jobKey, group))
+    }
+}</code></pre>
+
+    <p>Commission 도메인의 스케줄러는 이 위에서 Commission에 특화된 로직만 담당한다.</p>
+
+    <pre><code>// SClass-Api-Supporters
+@Component
+class CommissionReminderScheduler(
+    private val reminderScheduler: ReminderScheduler,
+) {
+    fun scheduleNoRespReminders(commissionId: Long, createdAt: LocalDateTime) {
+        val triggers = listOf(
+            createdAt.plusHours(8)  to jobData("8시간"),
+            createdAt.plusHours(60) to jobData("60시간 (마감 12h 전)"),
+            createdAt.plusHours(64) to jobData("64시간 (마감 8h 전)"),
+            createdAt.plusHours(71) to jobData("71시간 (마감 1h 전)"),
+        )
+        reminderScheduler.scheduleMultiple(
+            jobKey = "noResp_$commissionId",
+            group  = "COMM_NO_RESP",
+            jobClass = CommissionNoResponseReminderJob::class.java,
+            triggers = triggers,
+        )
+    }
+
+    fun cancelNoRespReminders(commissionId: Long) {
+        reminderScheduler.cancel("noResp_$commissionId", "COMM_NO_RESP")
+    }
+
+    fun resetInactiveReminder(commissionId: Long) {
+        // 기존 job 삭제 후 7일 후로 재등록
+        reminderScheduler.schedule(
+            jobKey   = "inactive_$commissionId",
+            group    = "COMM_INACTIVE",
+            jobClass = CommissionInactiveReminderJob::class.java,
+            triggerAt = LocalDateTime.now().plusDays(7),
+            jobData  = JobDataMap(mapOf("commissionId" to commissionId, ...)),
+        )
+    }
+}</code></pre>
+
+    <h3>활동 리마인더는 매 활동마다 리셋</h3>
+
+    <p>비활동 리마인더는 "마지막 활동으로부터 7일"이다. 선생님이 주제를 제안하거나, 학생이 메시지를 보내거나, 티켓이 생성되는 순간마다 <code>resetInactiveReminder()</code>가 호출되어 7일 카운트가 처음부터 다시 시작된다.</p>
+
+    <h2>Job 클래스: Spring Bean 주입이 되는 Quartz Job</h2>
+
+    <p>Quartz는 기본적으로 <code>JobFactory</code>가 Job 인스턴스를 new로 생성하기 때문에 <code>@Autowired</code>가 동작하지 않는다. Spring Boot의 <code>QuartzJobBean</code>을 상속하면 Spring ApplicationContext에서 Bean을 주입받을 수 있다.</p>
+
+    <pre><code>class CommissionNoResponseReminderJob : QuartzJobBean() {
+    @Autowired lateinit var commissionAdaptor: CommissionAdaptor
+    @Autowired lateinit var userAdaptor: UserAdaptor
+    @Autowired lateinit var commissionNotificationSender: CommissionNotificationSender
+
+    override fun executeInternal(context: JobExecutionContext) {
+        val map = context.mergedJobDataMap
+        val commissionId = map.getLong("commissionId")
+        val elapsedTime  = map.getString("elapsedTime")
+
+        val commission = commissionAdaptor.findById(commissionId)
+        val teacher    = userAdaptor.findById(commission.teacherUserId)
+        val student    = userAdaptor.findById(commission.studentUserId)
+
+        val phoneNumber = teacher.phoneNumber ?: return
+        commissionNotificationSender.sendNoResponseReminder(
+            phoneNumber = phoneNumber,
+            teacherName = teacher.name,
+            studentName = student.name,
+            elapsedTime = elapsedTime,
+            commissionId = commissionId.toString(),
+        )
+    }
+}</code></pre>
+
+    <h2>JDBC Store: 서버 재시작에도 살아있는 스케줄</h2>
+
+    <p>In-memory Job Store를 쓰면 서버가 재시작될 때 등록된 스케줄이 모두 사라진다. T+60h 리마인더가 등록돼 있었는데 T+40h에 배포가 나가면 그 알림은 영원히 발화되지 않는다.</p>
+
+    <p>JDBC Store는 <code>QRTZ_*</code> 테이블에 Job과 Trigger를 저장한다. 서버가 재시작되어도 등록된 스케줄은 DB에 남아 있고, 재시작 후 Quartz가 다시 읽어 들인다.</p>
+
+    <pre><code># application.yaml
+spring:
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always  # QRTZ_* 테이블 자동 생성
+    properties:
+      org.quartz.threadPool.threadCount: 5</code></pre>
+
+    <div class="callout why">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>initialize-schema: always</strong>
+        dev 환경에서는 편리하지만 prod에서는 <code>never</code>로 설정하고 Flyway/Liquibase로 직접 관리하는 것을 권장한다. 실수로 테이블이 재생성되면 등록된 모든 Job이 날아간다.
+      </div>
+    </div>
+
+    <h2>@Scheduled vs Quartz 비교</h2>
+
+    <table>
+      <tr><th></th><th>@Scheduled (polling)</th><th>Quartz (push)</th></tr>
+      <tr><td>DB 조회</td><td>매 분 전체 조회</td><td>생성 시 1회 등록</td></tr>
+      <tr><td>개별 취소</td><td>상태 컬럼 필요</td><td><code>scheduler.deleteJob()</code></td></tr>
+      <tr><td>정확한 발화 시간</td><td>polling interval 오차</td><td>등록한 시간 그대로</td></tr>
+      <tr><td>서버 재시작</td><td>상태 컬럼 기반으로 재처리</td><td>JDBC Store 자동 유지</td></tr>
+      <tr><td>복잡도</td><td>낮음 (어노테이션 하나)</td><td>의존성 + 설정 필요</td></tr>
+    </table>
+
+    <p>단순한 배치성 작업이라면 <code>@Scheduled</code>로 충분하다. 하지만 <strong>개별 엔티티마다 다른 시간에 발화하고, 조건에 따라 취소가 필요한 경우</strong>는 Quartz가 맞다.</p>
+
+    <div class="callout good">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>결론</strong>
+        리마인더 로직에서 <code>@Scheduled</code>를 선택했다면 Commission 엔티티에 알림 상태 컬럼이 6개 이상 생겼을 것이다. Quartz JDBC Store로 스케줄 상태를 외부화하고 도메인 모델을 깔끔하게 유지했다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="post-footer-nav">
+    <a href="adr-async-alimtalk-2026-04-02.html">← 알림톡 비동기 설계</a>
+    <a href="index.html">목록으로 →</a>
+  </div>
+</article>
+
+<footer>
+  S-Class Backend · <a href="https://github.com/seeun0210/s-class-backend" target="_blank">github.com/seeun0210/s-class-backend</a>
+</footer>
+
+</body>
+</html>
