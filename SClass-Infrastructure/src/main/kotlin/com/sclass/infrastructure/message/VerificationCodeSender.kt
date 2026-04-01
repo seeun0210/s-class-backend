@@ -1,6 +1,6 @@
 package com.sclass.infrastructure.message
 
-interface MessageSender {
+interface VerificationCodeSender {
     fun sendVerificationCode(
         phoneNumber: String,
         code: String,

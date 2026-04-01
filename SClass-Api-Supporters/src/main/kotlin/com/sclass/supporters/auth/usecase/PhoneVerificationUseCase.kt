@@ -5,7 +5,7 @@ import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.verification.domain.VerificationChannel
 import com.sclass.domain.domains.verification.service.VerificationDomainService
-import com.sclass.infrastructure.message.MessageSender
+import com.sclass.infrastructure.message.VerificationCodeSender
 import com.sclass.supporters.auth.dto.SendPhoneCodeRequest
 import com.sclass.supporters.auth.dto.SendPhoneCodeResponse
 import com.sclass.supporters.auth.dto.VerifyPhoneCodeRequest
@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional
 class PhoneVerificationUseCase(
     private val verificationService: VerificationDomainService,
     private val tokenService: TokenDomainService,
-    private val messageSender: MessageSender,
-    sender: MessageSender,
+    private val messageSender: VerificationCodeSender,
+    sender: VerificationCodeSender,
 ) {
     @Transactional
     fun sendCode(request: SendPhoneCodeRequest): SendPhoneCodeResponse {
