@@ -24,6 +24,8 @@ jobs:
 
       - name: Build & Test & Coverage
         run: ./gradlew build koverXmlReport --no-daemon
+        env:
+          GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=512m"
 
       - name: Add coverage report to PR
         if: github.event_name == 'pull_request'
