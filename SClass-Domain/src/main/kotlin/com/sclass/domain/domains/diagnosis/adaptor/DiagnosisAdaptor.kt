@@ -12,4 +12,7 @@ class DiagnosisAdaptor(
     fun save(diagnosis: Diagnosis): Diagnosis = diagnosisRepository.save(diagnosis)
 
     fun findById(id: String): Diagnosis = diagnosisRepository.findById(id).orElseThrow { DiagnosisNotFoundException() }
+
+    fun findByRequestIdOrNull(requestId: String): Diagnosis =
+        diagnosisRepository.findByRequestId(requestId) ?: throw DiagnosisNotFoundException()
 }

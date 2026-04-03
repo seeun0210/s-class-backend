@@ -19,8 +19,10 @@ class AlimtalkMessageSender(
     @param:Qualifier("alimtalkWebClient") private val alimtalkWebClient: WebClient,
     private val alimtalkProperties: AlimtalkProperties,
 ) : VerificationCodeSender,
-    CommissionNotificationSender {
+    CommissionNotificationSender,
+    DiagnosisNotificationSender {
     private val commissionTemplates = CommissionAlimtalkTemplates(alimtalkProperties.appBaseUrl)
+    private val diagnosisTemplates = DiagnosisAlimtalkTemplates()
 
     override fun sendVerificationCode(
         phoneNumber: String,
@@ -98,6 +100,12 @@ class AlimtalkMessageSender(
             commissionId,
         ),
     )
+
+    override fun sendDiagnosisCompleted(
+        phoneNumber: String,
+        studentName: String,
+        resultUrl: String,
+    ) = sendTemplate(phoneNumber, diagnosisTemplates.diagnosisCompleted(studentName, resultUrl))
 
     private fun sendTemplate(
         to: String,

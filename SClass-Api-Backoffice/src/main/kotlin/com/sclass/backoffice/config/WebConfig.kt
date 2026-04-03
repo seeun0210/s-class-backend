@@ -18,7 +18,7 @@ class WebConfig(
         registry
             .addInterceptor(jwtAuthInterceptor)
             .addPathPatterns("/api/**")
-            .excludePathPatterns("/api/v1/auth/**", "/api/v1/oauth/**")
+            .excludePathPatterns("/api/v1/auth/**", "/api/v1/oauth/**", "/api/report-webhooks/**")
         registry
             .addInterceptor(PlatformAuthInterceptor(Platform.BACKOFFICE.name))
             .addPathPatterns("/api/**")
