@@ -1,0 +1,107 @@
+package com.sclass.backoffice.webhook.listenner
+
+import com.sclass.backoffice.webhook.event.DiagnosisCompletedNotificationEvent
+import com.sclass.backoffice.webhook.event.DiagnosisRequestedEvent
+import com.sclass.backoffice.webhook.event.SurveyReportCompletedEvent
+import com.sclass.backoffice.webhook.event.SurveyReportFailedEvent
+import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
+import com.sclass.common.annotation.EventHandler
+import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
+import com.sclass.infrastructure.report.ReportServiceClient
+import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.context.event.EventListener
+import org.springframework.scheduling.annotation.Async
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
+import org.springframework.transaction.support.TransactionTemplate
+
+@EventHandler
+@ConditionalOnBean(ReportServiceClient::class)
+class DiagnosisEventListener(
+    private val diagnosisAdaptor: DiagnosisAdaptor,
+    private val reportServiceClient: ReportServiceClient,
+    private val eventPublisher: ApplicationEventPublisher,
+    transactionManager: PlatformTransactionManager,
+) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+    private val tx = TransactionTemplate(transactionManager)
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun handleDiagnosisRequested(event: DiagnosisRequestedEvent) {
+        // 트랜잭션 1: PROCESSING 저장 후 즉시 커밋 (DB 커넥션 반환)
+        val diagnosis =
+            tx.execute {
+                val d = diagnosisAdaptor.findById(event.diagnosisId)
+                d.markProcessing()
+                diagnosisAdaptor.save(d)
+                d
+            }!!
+
+        // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유)
+        try {
+            reportServiceClient.createSurveyReport(
+                requestId = event.requestId,
+                studentName = event.studentName,
+                answers = event.answers,
+                callbackUrl = event.callbackUrl,
+                callbackSecret = diagnosis.callbackSecret,
+            )
+        } catch (e: Exception) {
+            logger.error("[diagnosis] report-service 호출 실패 diagnosisId=${diagnosis.id}: ${e.message}")
+            eventPublisher.publishEvent(
+                SurveyReportFailedEvent(
+                    diagnosisId = diagnosis.id,
+                    errorCode = "REPORT_SERVICE_ERROR",
+                    retryable = true,
+                ),
+            )
+            return
+        }
+
+        // API 성공 후 알림 이벤트 발행 (DiagnosisNotificationEventListener에서 @Async 처리)
+        eventPublisher.publishEvent(
+            SurveySubmittedNotificationEvent(
+                studentPhone = diagnosis.studentPhone,
+                parentPhone = diagnosis.parentPhone,
+                studentName = event.studentName,
+                submittedAt = event.submittedAt,
+            ),
+        )
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    fun handleCompleted(event: SurveyReportCompletedEvent) {
+        val resultUrl =
+            tx.execute {
+                val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
+                diagnosis.complete(event.reportData)
+                diagnosisAdaptor.save(diagnosis)
+                diagnosis.resultUrl!!
+            }!!
+
+        eventPublisher.publishEvent(
+            DiagnosisCompletedNotificationEvent(
+                studentPhone = event.studentPhone,
+                parentPhone = event.parentPhone,
+                studentName = event.studentName,
+                resultUrl = resultUrl,
+            ),
+        )
+    }
+
+    @Async
+    @EventListener
+    fun handleFailed(event: SurveyReportFailedEvent) {
+        tx.execute {
+            val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
+            diagnosis.fail()
+            diagnosisAdaptor.save(diagnosis)
+        }
+        logger.error("[diagnosis] 진단 실패 diagnosisId=${event.diagnosisId} errorCode=${event.errorCode} retryable=${event.retryable}")
+    }
+}

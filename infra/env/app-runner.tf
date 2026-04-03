@@ -51,6 +51,8 @@ resource "aws_apprunner_service" "services" {
           ALIMTALK_APP_BASE_URL      = var.alimtalk_app_base_url
           JWT_ACCESS_EXP             = var.jwt_access_exp
           JWT_REFRESH_EXP            = var.jwt_refresh_exp
+          REPORT_SERVICE_ENABLED     = each.key == "backoffice-api" ? "true" : "false"
+          REPORT_SERVICE_BASE_URL    = each.key == "backoffice-api" ? var.report_service_base_url : ""
         }
 
         runtime_environment_secrets = {

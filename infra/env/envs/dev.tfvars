@@ -27,7 +27,8 @@ services = {
   }
 }
 
-cors_allow_origins   = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr,https://s-class-backoffice.pages.dev"
+cors_allow_origins      = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr,https://s-class-backoffice.pages.dev,https://report-service-452628026107.asia-northeast3.run.app"
+report_service_base_url = "https://report-service-452628026107.asia-northeast3.run.app"
 alimtalk_app_base_url = "https://sclass.aura.co.kr"
 enable_custom_domain = false
 

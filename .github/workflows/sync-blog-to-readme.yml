@@ -1,0 +1,85 @@
+name: Sync blog posts to README
+
+on:
+  push:
+    branches: [gh-pages]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          path: develop
+          token: ${{ secrets.BLOG_SYNC_PAT }}
+
+      - name: Parse posts and update README
+        run: |
+          python3 - <<'EOF'
+          import os, re
+
+          PAGES_DIR = "gh-pages"
+          README_PATH = "develop/README.md"
+          BASE_URL = "https://seeun0210.github.io/s-class-backend"
+          MARKER_START = "<!-- BLOG_POSTS_START -->"
+          MARKER_END = "<!-- BLOG_POSTS_END -->"
+
+          posts = []
+          for fname in os.listdir(PAGES_DIR):
+              if fname == "index.html" or not fname.endswith(".html"):
+                  continue
+              content = open(f"{PAGES_DIR}/{fname}").read()
+
+              title_m = re.search(r"<title>(.+?) — S-Class Dev Log</title>", content)
+              date_m = re.search(r"<span>(\d{4}\. \d{2}\. \d{2})</span>", content)
+              badge_m = re.findall(r'class="badge[^"]*">([^<]+)</span>', content)
+
+              if not title_m or not date_m:
+                  continue
+
+              title = title_m.group(1).strip()
+              date = date_m.group(1).replace(". ", "-").replace(".", "").strip()
+              badges = [b.strip() for b in badge_m[:2] if b.strip()]
+              url = f"{BASE_URL}/{fname}"
+              posts.append((date, title, badges, url))
+
+          posts.sort(key=lambda x: x[0], reverse=True)
+
+          lines = []
+          for date, title, badges, url in posts:
+              tag_str = " · ".join(f"`{b}`" for b in badges) + " · " if badges else ""
+              lines.append(f"- [{title}]({url}) — {tag_str}{date}")
+
+          block = "\n".join(lines)
+
+          readme = open(README_PATH).read()
+          new_readme = re.sub(
+              rf"{re.escape(MARKER_START)}.*?{re.escape(MARKER_END)}",
+              f"{MARKER_START}\n{block}\n{MARKER_END}",
+              readme,
+              flags=re.DOTALL,
+          )
+
+          open(README_PATH, "w").write(new_readme)
+          print(f"Updated README with {len(posts)} posts")
+          EOF
+
+      - name: Commit and push
+        working-directory: develop
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --staged --quiet && echo "No changes" && exit 0
+          git commit -m "docs: 블로그 포스트 목록 자동 업데이트"
+          git push
