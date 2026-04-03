@@ -15,8 +15,6 @@ class UpdateWebhookStatusUseCase(
         request: UpdateWebhookStatusRequest,
     ) {
         val webhook = webhookAdaptor.findById(id)
-        if (webhook.status != request.status) {
-            webhook.toggleStatus()
-        }
+        webhook.status = request.status
     }
 }
