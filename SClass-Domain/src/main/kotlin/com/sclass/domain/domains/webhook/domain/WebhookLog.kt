@@ -28,6 +28,9 @@ class WebhookLog(
 
     @Column(columnDefinition = "TEXT")
     var errorMessage: String? = null,
+
+    @Column(length = 26)
+    var diagnosisId: String? = null,
 ) : BaseTimeEntity() {
     fun markProcessing() {
         status = WebhookLogStatus.PROCESSING
@@ -40,5 +43,9 @@ class WebhookLog(
     fun markFailed(error: String) {
         status = WebhookLogStatus.FAILED
         errorMessage = error
+    }
+
+    fun linkDiagnosis(diagnosisId: String) {
+        this.diagnosisId = diagnosisId
     }
 }

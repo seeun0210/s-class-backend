@@ -16,9 +16,6 @@ class Diagnosis(
     @Column(length = 26)
     val id: String = Ulid.generate(),
 
-    @Column(length = 26, nullable = false)
-    val webhookLogId: String,
-
     @Column(nullable = false)
     val studentName: String,
 
@@ -27,7 +24,7 @@ class Diagnosis(
     val parentPhone: String?,
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    val formData: String,
+    val requestData: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
