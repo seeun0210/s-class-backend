@@ -20,7 +20,6 @@ class ReportServiceClient(
         answers: Map<String, String>,
         callbackUrl: String,
         callbackSecret: String,
-        onError: (Throwable) -> Unit = { e -> logger.error("[report-service] 호출 실패: ${e.message}") },
     ) {
         val request =
             CreateSurveyReportRequest(
@@ -40,10 +39,7 @@ class ReportServiceClient(
             .retrieve()
             .bodyToMono(String::class.java)
             .timeout(Duration.ofSeconds(30))
-            .subscribe(
-                { /* 동기 응답 무시, 결과는 콜백으로 */ },
-                onError,
-            )
+            .block()
     }
 
     companion object {
