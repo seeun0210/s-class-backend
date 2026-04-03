@@ -37,6 +37,13 @@ class DiagnosisEventListener(
             callbackUrl = event.callbackUrl,
             callbackSecret = diagnosis.callbackSecret,
         )
+
+        diagnosis.studentPhone?.let {
+            diagnosisNotificationSender.sendSurveySubmitted(it, event.studentName, event.submittedAt)
+        }
+        diagnosis.parentPhone?.let {
+            diagnosisNotificationSender.sendSurveySubmittedToParent(it, event.studentName)
+        }
     }
 
     @Async

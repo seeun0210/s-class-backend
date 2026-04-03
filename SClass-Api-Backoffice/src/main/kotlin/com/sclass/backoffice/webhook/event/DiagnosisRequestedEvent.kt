@@ -6,4 +6,5 @@ data class DiagnosisRequestedEvent(
     val studentName: String,
     val answers: Map<String, String>,
     val callbackUrl: String,
+    val submittedAt: String,
 )

@@ -75,6 +75,7 @@ class ReceiveWebhookUseCase(
                 studentName = extracted.studentName,
                 answers = payload.answers,
                 callbackUrl = callbackUrl,
+                submittedAt = payload.submittedAt,
             ),
         )
     }

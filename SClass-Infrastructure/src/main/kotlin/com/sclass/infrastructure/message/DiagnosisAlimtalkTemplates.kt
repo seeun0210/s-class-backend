@@ -4,6 +4,27 @@ import com.sclass.infrastructure.message.dto.AlimtalkRequest
 import com.sclass.infrastructure.message.dto.AlimtalkTemplate
 
 class DiagnosisAlimtalkTemplates {
+    fun surveySubmitted(
+        studentName: String,
+        submittedAt: String,
+    ) = AlimtalkTemplate(
+        templateCode = "SURVEYSUBMITTED",
+        content =
+            "안녕하세요, $studentName 님!\n\n" +
+                "제출하신 입시 진단 설문이 정상적으로 접수되었습니다.\n\n" +
+                "■ 제출 일시: $submittedAt\n\n" +
+                "진단이 완료되면 결과 확인 링크를 알림톡으로 보내드리겠습니다.",
+    )
+
+    fun surveySubmittedParent(studentName: String) =
+        AlimtalkTemplate(
+            templateCode = "SURVEYSUBMITTEDPARENT",
+            content =
+                "안녕하세요, $studentName 학생 학부모님!\n\n" +
+                    "자녀의 진단 설문이 정상적으로 접수되었습니다.\n\n" +
+                    "진단이 완료되면 결과 확인 링크를 알림톡으로 보내드리겠습니다.",
+        )
+
     fun diagnosisCompleted(
         studentName: String,
         resultUrl: String,

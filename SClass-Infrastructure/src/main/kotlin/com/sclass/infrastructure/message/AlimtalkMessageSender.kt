@@ -101,6 +101,17 @@ class AlimtalkMessageSender(
         ),
     )
 
+    override fun sendSurveySubmitted(
+        phoneNumber: String,
+        studentName: String,
+        submittedAt: String,
+    ) = sendTemplate(phoneNumber, diagnosisTemplates.surveySubmitted(studentName, submittedAt))
+
+    override fun sendSurveySubmittedToParent(
+        phoneNumber: String,
+        studentName: String,
+    ) = sendTemplate(phoneNumber, diagnosisTemplates.surveySubmittedParent(studentName))
+
     override fun sendDiagnosisCompleted(
         phoneNumber: String,
         studentName: String,
