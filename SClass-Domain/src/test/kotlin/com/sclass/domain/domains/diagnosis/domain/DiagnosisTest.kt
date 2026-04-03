@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 class DiagnosisTest {
     private fun createDiagnosis() =
         Diagnosis(
+            requestId = "req-001",
             studentName = "홍길동",
             studentPhone = "010-1234-5678",
             parentPhone = null,

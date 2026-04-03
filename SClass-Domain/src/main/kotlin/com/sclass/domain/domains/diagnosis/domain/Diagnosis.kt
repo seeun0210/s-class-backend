@@ -16,8 +16,8 @@ class Diagnosis(
     @Column(length = 26)
     val id: String = Ulid.generate(),
 
-    @Column(length = 26, unique = true)
-    val requestId: String? = null,
+    @Column(length = 26, unique = true, nullable = false)
+    val requestId: String,
 
     @Column(nullable = false)
     val studentName: String,

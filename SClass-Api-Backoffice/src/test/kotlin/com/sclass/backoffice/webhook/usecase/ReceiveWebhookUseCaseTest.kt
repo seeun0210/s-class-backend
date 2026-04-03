@@ -107,6 +107,7 @@ class ReceiveWebhookUseCaseTest {
         fun `정상 요청 시 DiagnosisRequestedEvent가 발행된다`() {
             val savedDiagnosis =
                 Diagnosis(
+                    requestId = "req-001",
                     studentName = "홍길동",
                     studentPhone = "010-1234-5678",
                     parentPhone = "010-9876-5432",
@@ -135,6 +136,7 @@ class ReceiveWebhookUseCaseTest {
         fun `정상 요청 시 WebhookLog가 진단 ID와 연결된다`() {
             val savedDiagnosis =
                 Diagnosis(
+                    requestId = "req-001",
                     studentName = "홍길동",
                     studentPhone = "010-1234-5678",
                     parentPhone = null,

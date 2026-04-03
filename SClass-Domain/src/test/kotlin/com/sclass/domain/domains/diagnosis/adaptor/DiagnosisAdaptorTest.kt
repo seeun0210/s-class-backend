@@ -53,9 +53,9 @@ class DiagnosisAdaptorTest {
         @Test
         fun `존재하는 requestId로 조회하면 diagnosis를 반환한다`() {
             val diagnosis = createDiagnosis()
-            every { diagnosisRepository.findByRequestId(diagnosis.requestId!!) } returns diagnosis
+            every { diagnosisRepository.findByRequestId(diagnosis.requestId) } returns diagnosis
 
-            val result = adaptor.findByRequestIdOrNull(diagnosis.requestId!!)
+            val result = adaptor.findByRequestIdOrNull(diagnosis.requestId)
 
             assertEquals(diagnosis, result)
         }
