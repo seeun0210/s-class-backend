@@ -8,6 +8,7 @@ import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
 import com.sclass.infrastructure.message.DiagnosisNotificationSender
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -15,6 +16,7 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 @EventHandler
+@ConditionalOnBean(ReportServiceClient::class)
 class DiagnosisEventListener(
     private val diagnosisAdaptor: DiagnosisAdaptor,
     private val reportServiceClient: ReportServiceClient,
