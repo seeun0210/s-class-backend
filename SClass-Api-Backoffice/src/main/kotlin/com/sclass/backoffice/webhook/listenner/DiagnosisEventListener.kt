@@ -1,19 +1,19 @@
 package com.sclass.backoffice.webhook.listenner
 
+import com.sclass.backoffice.webhook.event.DiagnosisCompletedNotificationEvent
 import com.sclass.backoffice.webhook.event.DiagnosisRequestedEvent
 import com.sclass.backoffice.webhook.event.SurveyReportCompletedEvent
 import com.sclass.backoffice.webhook.event.SurveyReportFailedEvent
+import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.common.annotation.EventHandler
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
-import com.sclass.infrastructure.message.DiagnosisNotificationSender
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.context.ApplicationEventPublisher
-import org.springframework.core.task.TaskExecutor
+import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 import org.springframework.transaction.support.TransactionTemplate
@@ -23,30 +23,25 @@ import org.springframework.transaction.support.TransactionTemplate
 class DiagnosisEventListener(
     private val diagnosisAdaptor: DiagnosisAdaptor,
     private val reportServiceClient: ReportServiceClient,
-    private val diagnosisNotificationSender: DiagnosisNotificationSender,
     private val eventPublisher: ApplicationEventPublisher,
-    private val taskExecutor: TaskExecutor,
     transactionManager: PlatformTransactionManager,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
-    private val requiresNewTx =
-        TransactionTemplate(transactionManager).apply {
-            propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
-        }
+    private val tx = TransactionTemplate(transactionManager)
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleDiagnosisRequested(event: DiagnosisRequestedEvent) {
         // 트랜잭션 1: PROCESSING 저장 후 즉시 커밋 (DB 커넥션 반환)
         val diagnosis =
-            requiresNewTx.execute {
+            tx.execute {
                 val d = diagnosisAdaptor.findById(event.diagnosisId)
                 d.markProcessing()
                 diagnosisAdaptor.save(d)
                 d
             }!!
 
-        // 트랜잭션 밖: 외부 API 호출 (최대 30초, DB 커넥션 점유 없음)
+        // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유)
         try {
             reportServiceClient.createSurveyReport(
                 requestId = event.requestId,
@@ -67,46 +62,42 @@ class DiagnosisEventListener(
             return
         }
 
-        // API 성공 후 알림톡 비동기 발송 (Spring TaskExecutor)
-        taskExecutor.execute {
-            runCatching {
-                diagnosis.studentPhone?.let {
-                    diagnosisNotificationSender.sendSurveySubmitted(it, event.studentName, event.submittedAt)
-                }
-                diagnosis.parentPhone?.let {
-                    diagnosisNotificationSender.sendSurveySubmittedToParent(it, event.studentName)
-                }
-            }.onFailure { logger.warn("[diagnosis] 알림톡 발송 실패 diagnosisId=${diagnosis.id}: ${it.message}") }
-        }
+        // API 성공 후 알림 이벤트 발행 (DiagnosisNotificationEventListener에서 @Async 처리)
+        eventPublisher.publishEvent(
+            SurveySubmittedNotificationEvent(
+                studentPhone = diagnosis.studentPhone,
+                parentPhone = diagnosis.parentPhone,
+                studentName = event.studentName,
+                submittedAt = event.submittedAt,
+            ),
+        )
     }
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleCompleted(event: SurveyReportCompletedEvent) {
         val resultUrl =
-            requiresNewTx.execute {
+            tx.execute {
                 val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
                 diagnosis.complete(event.reportData)
                 diagnosisAdaptor.save(diagnosis)
                 diagnosis.resultUrl!!
             }!!
 
-        taskExecutor.execute {
-            runCatching {
-                event.studentPhone?.let {
-                    diagnosisNotificationSender.sendDiagnosisCompleted(it, event.studentName, resultUrl)
-                }
-                event.parentPhone?.let {
-                    diagnosisNotificationSender.sendDiagnosisCompleted(it, event.studentName, resultUrl)
-                }
-            }.onFailure { logger.warn("[diagnosis] 알림톡 발송 실패 diagnosisId=${event.diagnosisId}: ${it.message}") }
-        }
+        eventPublisher.publishEvent(
+            DiagnosisCompletedNotificationEvent(
+                studentPhone = event.studentPhone,
+                parentPhone = event.parentPhone,
+                studentName = event.studentName,
+                resultUrl = resultUrl,
+            ),
+        )
     }
 
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     fun handleFailed(event: SurveyReportFailedEvent) {
-        requiresNewTx.execute {
+        tx.execute {
             val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
             diagnosis.fail()
             diagnosisAdaptor.save(diagnosis)
