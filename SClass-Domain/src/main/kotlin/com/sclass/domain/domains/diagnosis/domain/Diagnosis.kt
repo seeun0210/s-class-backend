@@ -16,6 +16,9 @@ class Diagnosis(
     @Column(length = 26)
     val id: String = Ulid.generate(),
 
+    @Column(length = 26, unique = true, nullable = false)
+    val requestId: String,
+
     @Column(nullable = false)
     val studentName: String,
 
@@ -26,19 +29,28 @@ class Diagnosis(
     @Column(columnDefinition = "TEXT", nullable = false)
     val requestData: String,
 
+    val callbackSecret: String =
+        java.util.UUID
+            .randomUUID()
+            .toString(),
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     var status: DiagnosisStatus = DiagnosisStatus.PENDING,
 
     var resultUrl: String? = null,
+
+    @Column(columnDefinition = "TEXT")
+    var reportData: String? = null,
 ) : BaseTimeEntity() {
     fun markProcessing() {
         status = DiagnosisStatus.PROCESSING
     }
 
-    fun complete(resultUrl: String) {
+    fun complete(reportData: String) {
         status = DiagnosisStatus.COMPLETED
-        this.resultUrl = resultUrl
+        this.reportData = reportData
+        this.resultUrl = "https://report.aura.co.kr/$id"
     }
 
     fun fail() {

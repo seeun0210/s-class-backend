@@ -19,6 +19,7 @@ class DiagnosisAdaptorTest {
 
     private fun createDiagnosis() =
         Diagnosis(
+            requestId = "req-001",
             studentName = "홍길동",
             studentPhone = "010-1234-5678",
             parentPhone = null,
@@ -43,6 +44,28 @@ class DiagnosisAdaptorTest {
 
             assertThrows(DiagnosisNotFoundException::class.java) {
                 adaptor.findById(Ulid.generate())
+            }
+        }
+    }
+
+    @Nested
+    inner class FindByRequestId {
+        @Test
+        fun `존재하는 requestId로 조회하면 diagnosis를 반환한다`() {
+            val diagnosis = createDiagnosis()
+            every { diagnosisRepository.findByRequestId(diagnosis.requestId) } returns diagnosis
+
+            val result = adaptor.findByRequestId(diagnosis.requestId)
+
+            assertEquals(diagnosis, result)
+        }
+
+        @Test
+        fun `존재하지 않는 requestId로 조회하면 DiagnosisNotFoundException을 던진다`() {
+            every { diagnosisRepository.findByRequestId(any()) } returns null
+
+            assertThrows(DiagnosisNotFoundException::class.java) {
+                adaptor.findByRequestId("non-existent-request-id")
             }
         }
     }

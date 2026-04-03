@@ -21,8 +21,8 @@ data class WebhookFieldMapping(
 
         return ExtractedFields(
             studentName = studentName,
-            studentPhone = answers[studentPhoneQuestion],
-            parentPhone = parentPhoneQuestion?.let { answers[it] },
+            studentPhone = answers[studentPhoneQuestion]?.replace("-", ""),
+            parentPhone = parentPhoneQuestion?.let { answers[it] }?.replace("-", ""),
         )
     }
 }

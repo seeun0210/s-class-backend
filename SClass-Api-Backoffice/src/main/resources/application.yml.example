@@ -78,6 +78,10 @@ management:
       step: ${CLOUDWATCH_STEP:60}
       region: ${AWS_REGION:ap-northeast-1}
 
+report-service:
+  enabled: ${REPORT_SERVICE_ENABLED:false}
+  base-url: ${REPORT_SERVICE_BASE_URL:}
+
 cloud:
   aws:
     s3:
