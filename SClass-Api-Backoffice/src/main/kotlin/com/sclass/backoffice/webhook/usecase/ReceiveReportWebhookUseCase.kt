@@ -33,7 +33,7 @@ class ReceiveReportWebhookUseCase(
 
         val payload = objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java)
 
-        val diagnosis = diagnosisAdaptor.findByRequestIdOrNull(payload.requestId)
+        val diagnosis = diagnosisAdaptor.findByRequestId(payload.requestId)
 
         verifySignature(diagnosis.callbackSecret, timestamp, rawBody, signature)
 

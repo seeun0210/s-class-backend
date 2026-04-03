@@ -49,13 +49,13 @@ class DiagnosisAdaptorTest {
     }
 
     @Nested
-    inner class FindByRequestIdOrNull {
+    inner class FindByRequestId {
         @Test
         fun `존재하는 requestId로 조회하면 diagnosis를 반환한다`() {
             val diagnosis = createDiagnosis()
             every { diagnosisRepository.findByRequestId(diagnosis.requestId) } returns diagnosis
 
-            val result = adaptor.findByRequestIdOrNull(diagnosis.requestId)
+            val result = adaptor.findByRequestId(diagnosis.requestId)
 
             assertEquals(diagnosis, result)
         }
@@ -65,7 +65,7 @@ class DiagnosisAdaptorTest {
             every { diagnosisRepository.findByRequestId(any()) } returns null
 
             assertThrows(DiagnosisNotFoundException::class.java) {
-                adaptor.findByRequestIdOrNull("non-existent-request-id")
+                adaptor.findByRequestId("non-existent-request-id")
             }
         }
     }

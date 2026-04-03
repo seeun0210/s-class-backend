@@ -91,7 +91,7 @@ class ReceiveReportWebhookUseCaseTest {
                     sentAt = "2026-04-03T10:00:00Z",
                     result = mapOf("score" to 95),
                 )
-            every { diagnosisAdaptor.findByRequestIdOrNull(requestId) } returns diagnosis
+            every { diagnosisAdaptor.findByRequestId(requestId) } returns diagnosis
             every { objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java) } returns completedPayload
 
             assertThrows(WebhookInvalidSecretException::class.java) {
@@ -113,7 +113,7 @@ class ReceiveReportWebhookUseCaseTest {
                     requestId = requestId,
                     sentAt = "2026-04-03T10:00:00Z",
                 )
-            every { diagnosisAdaptor.findByRequestIdOrNull(requestId) } returns diagnosis
+            every { diagnosisAdaptor.findByRequestId(requestId) } returns diagnosis
             every { objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java) } returns payload
 
             useCase.execute(signature, timestamp, "survey_report.completed", rawBody)
@@ -132,7 +132,7 @@ class ReceiveReportWebhookUseCaseTest {
                     requestId = requestId,
                     sentAt = "2026-04-03T10:00:00Z",
                 )
-            every { diagnosisAdaptor.findByRequestIdOrNull(requestId) } returns diagnosis
+            every { diagnosisAdaptor.findByRequestId(requestId) } returns diagnosis
             every { objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java) } returns payload
 
             useCase.execute(signature, timestamp, "survey_report.failed", rawBody)
@@ -156,7 +156,7 @@ class ReceiveReportWebhookUseCaseTest {
                     sentAt = "2026-04-03T10:00:00Z",
                     result = result,
                 )
-            every { diagnosisAdaptor.findByRequestIdOrNull(requestId) } returns diagnosis
+            every { diagnosisAdaptor.findByRequestId(requestId) } returns diagnosis
             every { objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java) } returns payload
             every { objectMapper.writeValueAsString(result) } returns "{\"score\":95}"
 
@@ -190,7 +190,7 @@ class ReceiveReportWebhookUseCaseTest {
                             retryable = true,
                         ),
                 )
-            every { diagnosisAdaptor.findByRequestIdOrNull(requestId) } returns diagnosis
+            every { diagnosisAdaptor.findByRequestId(requestId) } returns diagnosis
             every { objectMapper.readValue(rawBody, SurveyReportCallbackPayload::class.java) } returns payload
 
             useCase.execute(signature, timestamp, "survey_report.failed", rawBody)

@@ -174,3 +174,4 @@ variable "report_service_base_url" {
   type        = string
   default     = ""
 }
+

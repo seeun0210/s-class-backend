@@ -9,6 +9,7 @@ import com.sclass.infrastructure.message.DiagnosisNotificationSender
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -21,6 +22,7 @@ class DiagnosisEventListener(
     private val diagnosisAdaptor: DiagnosisAdaptor,
     private val reportServiceClient: ReportServiceClient,
     private val diagnosisNotificationSender: DiagnosisNotificationSender,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -38,6 +40,16 @@ class DiagnosisEventListener(
             answers = event.answers,
             callbackUrl = event.callbackUrl,
             callbackSecret = diagnosis.callbackSecret,
+            onError = { e ->
+                logger.error("[diagnosis] report-service 호출 실패 diagnosisId=${diagnosis.id}: ${e.message}")
+                eventPublisher.publishEvent(
+                    SurveyReportFailedEvent(
+                        diagnosisId = diagnosis.id,
+                        errorCode = "REPORT_SERVICE_ERROR",
+                        retryable = true,
+                    ),
+                )
+            },
         )
 
         diagnosis.studentPhone?.let {

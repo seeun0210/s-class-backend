@@ -13,6 +13,5 @@ class DiagnosisAdaptor(
 
     fun findById(id: String): Diagnosis = diagnosisRepository.findById(id).orElseThrow { DiagnosisNotFoundException() }
 
-    fun findByRequestIdOrNull(requestId: String): Diagnosis =
-        diagnosisRepository.findByRequestId(requestId) ?: throw DiagnosisNotFoundException()
+    fun findByRequestId(requestId: String): Diagnosis = diagnosisRepository.findByRequestId(requestId) ?: throw DiagnosisNotFoundException()
 }
