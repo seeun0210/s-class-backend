@@ -30,8 +30,8 @@ class WebhookFieldMappingTest {
 
             assertAll(
                 { assertEquals("홍길동", result.studentName) },
-                { assertEquals("010-1234-5678", result.studentPhone) },
-                { assertEquals("010-9876-5432", result.parentPhone) },
+                { assertEquals("01012345678", result.studentPhone) },
+                { assertEquals("01098765432", result.parentPhone) },
             )
         }
 
@@ -53,7 +53,7 @@ class WebhookFieldMappingTest {
 
             assertAll(
                 { assertEquals("홍길동", result.studentName) },
-                { assertEquals("010-1234-5678", result.studentPhone) },
+                { assertEquals("01012345678", result.studentPhone) },
                 { assertNull(result.parentPhone) },
             )
         }
