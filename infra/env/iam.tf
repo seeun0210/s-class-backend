@@ -1,8 +1,8 @@
 # ──────────────────────────────────────
-# App Runner Instance Role (S3, SSM 접근 등)
+# ECS Task Execution Role (ECR pull + CloudWatch Logs + SSM secrets)
 # ──────────────────────────────────────
-resource "aws_iam_role" "app_runner_instance" {
-  name = "${local.name_prefix}-apprunner-instance"
+resource "aws_iam_role" "ecs_execution" {
+  name = "${local.name_prefix}-ecs-execution"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -10,7 +10,7 @@ resource "aws_iam_role" "app_runner_instance" {
       {
         Effect = "Allow"
         Principal = {
-          Service = "tasks.apprunner.amazonaws.com"
+          Service = "ecs-tasks.amazonaws.com"
         }
         Action = "sts:AssumeRole"
       }
@@ -18,9 +18,185 @@ resource "aws_iam_role" "app_runner_instance" {
   })
 }
 
-resource "aws_iam_role_policy" "app_runner_s3" {
-  name = "${local.name_prefix}-s3-access"
-  role = aws_iam_role.app_runner_instance.id
+resource "aws_iam_role_policy_attachment" "ecs_execution_policy" {
+  role       = aws_iam_role.ecs_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role_policy" "ecs_execution_ssm" {
+  name = "${local.name_prefix}-ecs-execution-ssm"
+  role = aws_iam_role.ecs_execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:parameter/sclass/${var.environment}/*"
+      }
+    ]
+  })
+}
+
+# ──────────────────────────────────────
+# ECS Infrastructure Role (ALB, SG, Auto Scaling 자동 관리)
+# ──────────────────────────────────────
+resource "aws_iam_role" "ecs_infrastructure" {
+  name = "${local.name_prefix}-ecs-infrastructure"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ecs_infrastructure_policy" {
+  name = "${local.name_prefix}-ecs-infrastructure"
+  role = aws_iam_role.ecs_infrastructure.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:CreateLoadBalancer",
+          "elasticloadbalancing:DeleteLoadBalancer",
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:ModifyLoadBalancerAttributes",
+          "elasticloadbalancing:CreateTargetGroup",
+          "elasticloadbalancing:DeleteTargetGroup",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:ModifyTargetGroup",
+          "elasticloadbalancing:ModifyTargetGroupAttributes",
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets",
+          "elasticloadbalancing:DescribeTargetHealth",
+          "elasticloadbalancing:CreateListener",
+          "elasticloadbalancing:DeleteListener",
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:ModifyListener",
+          "elasticloadbalancing:AddTags",
+          "elasticloadbalancing:RemoveTags",
+          "elasticloadbalancing:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:CreateNetworkInterface",
+          "ec2:DeleteNetworkInterface",
+          "ec2:AssignPrivateIpAddresses",
+          "ec2:UnassignPrivateIpAddresses",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:CreateTags",
+          "ec2:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "application-autoscaling:RegisterScalableTarget",
+          "application-autoscaling:DeregisterScalableTarget",
+          "application-autoscaling:DescribeScalableTargets",
+          "application-autoscaling:PutScalingPolicy",
+          "application-autoscaling:DeleteScalingPolicy",
+          "application-autoscaling:DescribeScalingPolicies",
+          "application-autoscaling:DescribeScalingActivities"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:UpdateService",
+          "ecs:ListTasks",
+          "ecs:DescribeTasks"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "acm:ListCertificates",
+          "acm:DescribeCertificate",
+          "acm:RequestCertificate",
+          "acm:DeleteCertificate",
+          "acm:AddTagsToCertificate"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["iam:CreateServiceLinkedRole"]
+        Resource = "arn:aws:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/*"
+        Condition = {
+          StringLike = {
+            "iam:AWSServiceName" = "elasticloadbalancing.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# ──────────────────────────────────────
+# ECS Task Role (S3, CloudWatch, SSM 접근)
+# ──────────────────────────────────────
+resource "aws_iam_role" "ecs_task" {
+  name = "${local.name_prefix}-ecs-task"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ecs_task_s3" {
+  name = "${local.name_prefix}-ecs-task-s3"
+  role = aws_iam_role.ecs_task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -42,9 +218,9 @@ resource "aws_iam_role_policy" "app_runner_s3" {
   })
 }
 
-resource "aws_iam_role_policy" "app_runner_cloudwatch" {
-  name = "${local.name_prefix}-cloudwatch-put"
-  role = aws_iam_role.app_runner_instance.id
+resource "aws_iam_role_policy" "ecs_task_cloudwatch" {
+  name = "${local.name_prefix}-ecs-task-cloudwatch"
+  role = aws_iam_role.ecs_task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -58,31 +234,9 @@ resource "aws_iam_role_policy" "app_runner_cloudwatch" {
   })
 }
 
-resource "aws_iam_role_policy" "app_runner_xray" {
-  name = "${local.name_prefix}-xray-write"
-  role = aws_iam_role.app_runner_instance.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "xray:PutTraceSegments",
-          "xray:PutTelemetryRecords",
-          "xray:GetSamplingRules",
-          "xray:GetSamplingTargets",
-          "xray:GetSamplingStatisticSummaries"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy" "app_runner_ssm" {
-  name = "${local.name_prefix}-ssm-read"
-  role = aws_iam_role.app_runner_instance.id
+resource "aws_iam_role_policy" "ecs_task_ssm" {
+  name = "${local.name_prefix}-ecs-task-ssm"
+  role = aws_iam_role.ecs_task.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -98,31 +252,6 @@ resource "aws_iam_role_policy" "app_runner_ssm" {
       }
     ]
   })
-}
-
-# ──────────────────────────────────────
-# App Runner ECR Access Role (이미지 pull용)
-# ──────────────────────────────────────
-resource "aws_iam_role" "app_runner_ecr_access" {
-  name = "${local.name_prefix}-apprunner-ecr"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "build.apprunner.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "app_runner_ecr" {
-  role       = aws_iam_role.app_runner_ecr_access.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
 
 # ──────────────────────────────────────
@@ -189,9 +318,9 @@ resource "aws_iam_policy" "deployer" {
         Resource = "*"
       },
       {
-        Sid      = "AppRunner"
-        Effect   = "Allow"
-        Action   = ["apprunner:*"]
+        Sid    = "ECS"
+        Effect = "Allow"
+        Action = ["ecs:*"]
         Resource = "*"
       },
       {
@@ -277,6 +406,45 @@ resource "aws_iam_policy" "deployer" {
           "cloudwatch:TagResource",
           "cloudwatch:UntagResource"
         ]
+        Resource = "*"
+      },
+      {
+        Sid    = "Logs"
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:DescribeLogGroups",
+          "logs:ListTagsLogGroup",
+          "logs:TagLogGroup",
+          "logs:UntagLogGroup",
+          "logs:PutRetentionPolicy",
+          "logs:DeleteRetentionPolicy"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "EC2VPC"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:CreateTags",
+          "ec2:DescribeTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ELB"
+        Effect = "Allow"
+        Action = ["elasticloadbalancing:*"]
         Resource = "*"
       }
     ]

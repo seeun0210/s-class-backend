@@ -58,7 +58,6 @@ jobs:
         target: ${{ fromJson(needs.setup.outputs.matrix) }}
     environment:
       name: ${{ inputs.environment }} / ${{ matrix.target.service }}
-      url: ${{ steps.deploy.outputs.service_url }}
 
     steps:
       - uses: actions/checkout@v4
@@ -89,24 +88,18 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy to App Runner
+      - name: Deploy to ECS
         id: deploy
         env:
+          ENVIRONMENT: ${{ inputs.environment }}
           SERVICE_NAME: sclass-${{ inputs.environment }}-${{ matrix.target.service }}
         run: |
-          SERVICE_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" \
-            --output text)
+          CLUSTER_NAME="sclass-${ENVIRONMENT}"
 
-          if [ -z "$SERVICE_ARN" ]; then
-            echo "::error::App Runner service '${SERVICE_NAME}' not found"
-            exit 1
-          fi
+          aws ecs update-service \
+            --cluster "$CLUSTER_NAME" \
+            --service "$SERVICE_NAME" \
+            --force-new-deployment \
+            --no-cli-pager
 
-          SERVICE_URL=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceUrl" \
-            --output text)
-
-          aws apprunner start-deployment --service-arn "$SERVICE_ARN"
-          echo "Deployment triggered for ${SERVICE_NAME} (${SERVICE_ARN})"
-          echo "service_url=https://${SERVICE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Deployment triggered for ${SERVICE_NAME} on cluster ${CLUSTER_NAME}"

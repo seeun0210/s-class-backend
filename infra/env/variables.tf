@@ -9,7 +9,7 @@ variable "environment" {
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "ap-northeast-1"
+  default     = "ap-northeast-2"
 }
 
 variable "domain" {
@@ -19,26 +19,16 @@ variable "domain" {
 }
 
 # ──────────────────────────────────────
-# App Runner
+# ECS Express Mode
 # ──────────────────────────────────────
-variable "app_runner_cpu" {
-  description = "App Runner vCPU (256, 512, 1024, 2048, 4096)"
-  type        = string
-  default     = "1024"
-}
-
-variable "app_runner_memory" {
-  description = "App Runner memory in MB (512, 1024, 2048, 3072, 4096, ...)"
-  type        = string
-  default     = "2048"
-}
-
 variable "services" {
-  description = "App Runner services configuration"
+  description = "ECS Express Gateway services configuration"
   type = map(object({
     port     = string
     min_size = number
     max_size = number
+    cpu      = string
+    memory   = string
   }))
 }
 

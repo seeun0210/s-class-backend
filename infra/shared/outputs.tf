@@ -25,22 +25,6 @@ output "rds_endpoint" {
 }
 
 # ──────────────────────────────────────
-# Security Groups
-# ──────────────────────────────────────
-output "app_runner_sg_id" {
-  description = "App Runner VPC Connector security group ID"
-  value       = aws_security_group.app_runner.id
-}
-
-# ──────────────────────────────────────
-# VPC Connector
-# ──────────────────────────────────────
-output "vpc_connector_arn" {
-  description = "App Runner VPC Connector ARN"
-  value       = aws_apprunner_vpc_connector.main.arn
-}
-
-# ──────────────────────────────────────
 # Route 53
 # ──────────────────────────────────────
 output "route53_zone_id" {

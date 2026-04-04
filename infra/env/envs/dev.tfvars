@@ -1,29 +1,31 @@
 environment = "dev"
-aws_region  = "ap-northeast-1"
+aws_region  = "ap-northeast-2"
 domain      = "aura.co.kr"
 
 # Database (환경별 DB 이름)
 db_name = "sclass_dev"
-
-# App Runner (dev: 최소 스펙)
-app_runner_cpu    = "512"
-app_runner_memory = "1024"
 
 services = {
   supporters-api = {
     port     = "8080"
     min_size = 1
     max_size = 2
+    cpu      = "512"
+    memory   = "1024"
   }
   lms-api = {
     port     = "8080"
     min_size = 1
     max_size = 2
+    cpu      = "512"
+    memory   = "1024"
   }
   backoffice-api = {
     port     = "8080"
     min_size = 1
     max_size = 2
+    cpu      = "512"
+    memory   = "1024"
   }
 }
 

@@ -1,23 +1,9 @@
 # ──────────────────────────────────────
-# App Runner
+# ECS
 # ──────────────────────────────────────
-output "app_runner_urls" {
-  description = "App Runner service URLs"
-  value = {
-    for key, svc in aws_apprunner_service.services :
-    key => svc.service_url
-  }
-}
-
-output "custom_domains" {
-  description = "Custom domain → DNS 설정에 필요한 CNAME 레코드"
-  value = {
-    for key, domain in aws_apprunner_custom_domain_association.services :
-    key => {
-      domain              = domain.domain_name
-      certificate_records = domain.certificate_validation_records
-    }
-  }
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = aws_ecs_cluster.main.name
 }
 
 # ──────────────────────────────────────
