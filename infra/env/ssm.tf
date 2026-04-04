@@ -132,14 +132,3 @@ resource "aws_ssm_parameter" "alimtalk_secret_key" {
     Name = "${local.name_prefix}-ssm-alimtalk-secret"
   }
 }
-
-resource "aws_ssm_parameter" "report_service_base_url" {
-  name      = "/sclass/${var.environment}/REPORT_SERVICE_BASE_URL"
-  type      = "String"
-  value     = var.report_service_base_url
-  overwrite = true
-
-  tags = {
-    Name = "${local.name_prefix}-ssm-report-service-base-url"
-  }
-}
