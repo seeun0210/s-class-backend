@@ -20,6 +20,8 @@ class ReportServiceClient(
         answers: Map<String, Any>,
         callbackUrl: String,
         callbackSecret: String,
+        onSuccess: () -> Unit,
+        onError: (Throwable) -> Unit,
     ) {
         val request =
             CreateSurveyReportRequest(
@@ -37,9 +39,15 @@ class ReportServiceClient(
             .uri("/survey-report")
             .bodyValue(request)
             .retrieve()
-            .bodyToMono(String::class.java)
-            .timeout(Duration.ofSeconds(30))
-            .block()
+            .toBodilessEntity()
+            .timeout(Duration.ofSeconds(10))
+            .subscribe(
+                {
+                    logger.info("[report-service] survey-report accepted requestId=$requestId status=${it.statusCode}")
+                    onSuccess()
+                },
+                { onError(it) },
+            )
     }
 
     companion object {
