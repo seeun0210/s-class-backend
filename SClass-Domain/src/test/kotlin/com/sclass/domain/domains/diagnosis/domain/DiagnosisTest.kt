@@ -29,7 +29,7 @@ class DiagnosisTest {
         assertAll(
             { assertEquals(DiagnosisStatus.COMPLETED, diagnosis.status) },
             { assertEquals("{\"score\":95}", diagnosis.reportData) },
-            { assertEquals("https://report.aura.co.kr/${diagnosis.id}", diagnosis.resultUrl) },
+            { assertEquals("https://report.aura.co.kr/reports/${diagnosis.id}", diagnosis.resultUrl) },
         )
     }
 
