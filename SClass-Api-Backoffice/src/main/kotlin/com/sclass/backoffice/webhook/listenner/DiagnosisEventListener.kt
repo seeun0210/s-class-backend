@@ -32,14 +32,7 @@ class DiagnosisEventListener(
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleDiagnosisRequested(event: DiagnosisRequestedEvent) {
-        // 트랜잭션 1: PROCESSING 저장 후 즉시 커밋 (DB 커넥션 반환)
-        val diagnosis =
-            tx.execute {
-                val d = diagnosisAdaptor.findById(event.diagnosisId)
-                d.markProcessing()
-                diagnosisAdaptor.save(d)
-                d
-            }!!
+        val diagnosis = tx.execute { diagnosisAdaptor.findById(event.diagnosisId) }!!
 
         // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유, 논블로킹)
         reportServiceClient.createSurveyReport(
@@ -49,7 +42,12 @@ class DiagnosisEventListener(
             callbackUrl = event.callbackUrl,
             callbackSecret = diagnosis.callbackSecret,
             onSuccess = {
-                // 202 Accepted 후 알림 이벤트 발행
+                // 202 Accepted 후 PROCESSING 상태 변경 → 알림톡 발송
+                tx.execute {
+                    val d = diagnosisAdaptor.findById(event.diagnosisId)
+                    d.markProcessing()
+                    diagnosisAdaptor.save(d)
+                }
                 eventPublisher.publishEvent(
                     SurveySubmittedNotificationEvent(
                         studentPhone = diagnosis.studentPhone,
