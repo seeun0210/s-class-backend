@@ -6,12 +6,11 @@ import com.sclass.lms.diagnosis.dto.SendDiagnosisVerificationRequest
 import com.sclass.lms.diagnosis.usecase.GetDiagnosisResultUseCase
 import com.sclass.lms.diagnosis.usecase.SendDiagnosisPhoneVerificationUseCase
 import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.GetMapping
+import jakarta.validation.constraints.NotBlank
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -29,10 +28,14 @@ class DiagnosisController(
         return ApiResponse.success(Unit)
     }
 
-    @GetMapping("/{id}")
+    @PostMapping("/{id}")
     fun getDiagnosisResult(
         @PathVariable id: String,
-        @RequestParam phone: String,
-        @RequestParam code: String,
-    ): ApiResponse<DiagnosisResultResponse> = ApiResponse.success(getDiagnosisResultUseCase.execute(id, phone, code))
+        @Valid @RequestBody request: GetDiagnosisResultRequest,
+    ): ApiResponse<DiagnosisResultResponse> = ApiResponse.success(getDiagnosisResultUseCase.execute(id, request.phone, request.code))
 }
+
+data class GetDiagnosisResultRequest(
+    @field:NotBlank val phone: String,
+    @field:NotBlank val code: String,
+)
