@@ -130,6 +130,23 @@
     </div>
   </a>
 
+  <a class="post-card type-arch" href="hibernate-bytecode-enhancement-lazy-2026-04-05.html">
+    <div class="post-top">
+      <span class="post-badge badge-arch">JPA</span>
+      <span class="post-badge" style="background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.2);">Performance</span>
+      <span class="post-date">2026. 04. 05</span>
+    </div>
+    <h2>@Basic(fetch = LAZY)가 왜 안 되지? — Hibernate Bytecode Enhancement 적용기</h2>
+    <p class="excerpt">
+      TEXT 컬럼이 상태 변경 쿼리마다 딸려온다. <code>@Basic(fetch = LAZY)</code>를 붙여도 Hibernate는 무시한다.
+      <strong>단순 필드는 프록시를 쓸 수 없기 때문이다.</strong> Bytecode Enhancement 플러그인으로 실제 lazy load를 구현한 과정.
+    </p>
+    <div class="post-bottom">
+      <span class="read">읽기 →</span>
+      <span class="mins">약 5분</span>
+    </div>
+  </a>
+
   <a class="post-card type-debug" href="troubleshooting-nat-forward-2026-04-05.html">
     <div class="post-top">
       <span class="post-badge badge-debug">트러블슈팅</span>
