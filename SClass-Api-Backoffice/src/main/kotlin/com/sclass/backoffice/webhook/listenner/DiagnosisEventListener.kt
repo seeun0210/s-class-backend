@@ -8,6 +8,7 @@ import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.common.annotation.EventHandler
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
 import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
+import com.sclass.domain.domains.webhook.adaptor.WebhookLogAdaptor
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -23,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate
 @ConditionalOnBean(ReportServiceClient::class)
 class DiagnosisEventListener(
     private val diagnosisAdaptor: DiagnosisAdaptor,
+    private val webhookLogAdaptor: WebhookLogAdaptor,
     private val reportServiceClient: ReportServiceClient,
     private val eventPublisher: ApplicationEventPublisher,
     transactionManager: PlatformTransactionManager,
@@ -82,6 +84,10 @@ class DiagnosisEventListener(
                 val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
                 diagnosis.complete(event.reportData)
                 diagnosisAdaptor.save(diagnosis)
+                webhookLogAdaptor.findByDiagnosisIdOrNull(event.diagnosisId)?.let {
+                    it.markCompleted()
+                    webhookLogAdaptor.save(it)
+                }
                 diagnosis.resultUrl!!
             }!!
 
@@ -102,6 +108,10 @@ class DiagnosisEventListener(
             val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
             diagnosis.fail()
             diagnosisAdaptor.save(diagnosis)
+            webhookLogAdaptor.findByDiagnosisIdOrNull(event.diagnosisId)?.let {
+                it.markFailed(event.errorCode ?: "UNKNOWN")
+                webhookLogAdaptor.save(it)
+            }
         }
         logger.error("[diagnosis] 진단 실패 diagnosisId=${event.diagnosisId} errorCode=${event.errorCode} retryable=${event.retryable}")
     }

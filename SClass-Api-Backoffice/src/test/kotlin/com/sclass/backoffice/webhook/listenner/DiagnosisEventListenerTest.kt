@@ -8,6 +8,7 @@ import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
 import com.sclass.domain.domains.diagnosis.domain.Diagnosis
 import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
+import com.sclass.domain.domains.webhook.adaptor.WebhookLogAdaptor
 import com.sclass.infrastructure.report.ReportServiceClient
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus
 
 class DiagnosisEventListenerTest {
     private val diagnosisAdaptor = mockk<DiagnosisAdaptor>()
+    private val webhookLogAdaptor = mockk<WebhookLogAdaptor>(relaxed = true)
     private val reportServiceClient = mockk<ReportServiceClient>()
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
@@ -40,6 +42,7 @@ class DiagnosisEventListenerTest {
     private val listener =
         DiagnosisEventListener(
             diagnosisAdaptor,
+            webhookLogAdaptor,
             reportServiceClient,
             eventPublisher,
             transactionManager,

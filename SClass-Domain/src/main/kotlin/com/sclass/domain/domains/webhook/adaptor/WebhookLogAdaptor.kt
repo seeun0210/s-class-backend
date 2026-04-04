@@ -19,4 +19,6 @@ class WebhookLogAdaptor(
         webhookId: String,
         pageable: Pageable,
     ): Page<WebhookLog> = webhookLogRepository.findAllByWebhookId(webhookId, pageable)
+
+    fun findByDiagnosisIdOrNull(diagnosisId: String): WebhookLog? = webhookLogRepository.findByDiagnosisId(diagnosisId)
 }

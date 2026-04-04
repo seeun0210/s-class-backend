@@ -10,4 +10,6 @@ interface WebhookLogRepository : JpaRepository<WebhookLog, String> {
         webhookId: String,
         pageable: Pageable,
     ): Page<WebhookLog>
+
+    fun findByDiagnosisId(diagnosisId: String): WebhookLog?
 }
