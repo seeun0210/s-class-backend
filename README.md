@@ -12,6 +12,7 @@
 ## Engineering Blog
 
 <!-- BLOG_POSTS_START -->
+- [App Runner에서 외부 API 호출이 10초 만에 죽는다](https://seeun0210.github.io/s-class-backend/troubleshooting-nat-forward-2026-04-05.html) — `트러블슈팅` · `DevOps` · 2026-04-05
 - [@Scheduled 대신 Quartz — 동적 스케줄과 취소](https://seeun0210.github.io/s-class-backend/quartz-dynamic-scheduler-2026-04-02.html) — `아키텍처` · `DevOps` · 2026-04-02
 - [알림톡, 트랜잭션이 끝난 뒤에 보내야 한다](https://seeun0210.github.io/s-class-backend/adr-async-alimtalk-2026-04-02.html) — `아키텍처 결정` · 2026-04-02
 - [App Runner에서 앱이 뜨질 않는다](https://seeun0210.github.io/s-class-backend/troubleshooting-2026-03-25.html) — `트러블슈팅` · `DevOps` · 2026-03-25
