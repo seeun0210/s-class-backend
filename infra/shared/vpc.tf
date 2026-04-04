@@ -50,9 +50,11 @@ resource "aws_instance" "nat" {
     # IP forwarding
     echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
     sysctl -p
-    # NAT masquerade
+    # NAT masquerade + forward rules
     dnf install -y iptables-services
     iptables -t nat -A POSTROUTING -o ens5 -s ${var.vpc_cidr} -j MASQUERADE
+    iptables -I FORWARD 1 -s ${var.vpc_cidr} -j ACCEPT
+    iptables -I FORWARD 2 -d ${var.vpc_cidr} -m state --state RELATED,ESTABLISHED -j ACCEPT
     service iptables save
     systemctl enable iptables
   EOF

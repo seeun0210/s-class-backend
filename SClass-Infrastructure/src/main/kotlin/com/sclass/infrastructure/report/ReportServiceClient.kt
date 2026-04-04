@@ -40,7 +40,7 @@ class ReportServiceClient(
             .bodyValue(request)
             .retrieve()
             .toBodilessEntity()
-            .timeout(Duration.ofSeconds(10))
+            .timeout(Duration.ofSeconds(30))
             .subscribe(
                 {
                     logger.info("[report-service] survey-report accepted requestId=$requestId status=${it.statusCode}")

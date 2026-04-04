@@ -172,6 +172,5 @@ variable "alimtalk_app_base_url" {
 variable "report_service_base_url" {
   description = "Report service base URL (backoffice-api only)"
   type        = string
-  default     = ""
 }
 

@@ -52,7 +52,6 @@ resource "aws_apprunner_service" "services" {
           JWT_ACCESS_EXP             = var.jwt_access_exp
           JWT_REFRESH_EXP            = var.jwt_refresh_exp
           REPORT_SERVICE_ENABLED     = each.key == "backoffice-api" ? "true" : "false"
-          REPORT_SERVICE_BASE_URL    = each.key == "backoffice-api" ? var.report_service_base_url : ""
         }
 
         runtime_environment_secrets = {
@@ -65,9 +64,10 @@ resource "aws_apprunner_service" "services" {
           KAKAO_APP_ID         = aws_ssm_parameter.kakao_app_id.arn
           SMTP_USERNAME        = aws_ssm_parameter.smtp_username.arn
           SMTP_PASSWORD        = aws_ssm_parameter.smtp_password.arn
-          ALIMTALK_ACCESS_KEY  = aws_ssm_parameter.alimtalk_access_key.arn
-          ALIMTALK_SERVICE_ID  = aws_ssm_parameter.alimtalk_service_id.arn
-          ALIMTALK_SECRET_KEY  = aws_ssm_parameter.alimtalk_secret_key.arn
+          ALIMTALK_ACCESS_KEY      = aws_ssm_parameter.alimtalk_access_key.arn
+          ALIMTALK_SERVICE_ID      = aws_ssm_parameter.alimtalk_service_id.arn
+          ALIMTALK_SECRET_KEY      = aws_ssm_parameter.alimtalk_secret_key.arn
+          REPORT_SERVICE_BASE_URL  = each.key == "backoffice-api" ? aws_ssm_parameter.report_service_base_url.arn : ""
         }
       }
 
