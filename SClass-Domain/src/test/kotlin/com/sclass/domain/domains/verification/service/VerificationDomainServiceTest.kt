@@ -22,12 +22,14 @@ import java.time.LocalDateTime
 
 class VerificationDomainServiceTest {
     private lateinit var verificationAdaptor: VerificationAdaptor
+    private lateinit var verificationAttemptService: VerificationAttemptService
     private lateinit var verificationDomainService: VerificationDomainService
 
     @BeforeEach
     fun setUp() {
         verificationAdaptor = mockk()
-        verificationDomainService = VerificationDomainService(verificationAdaptor)
+        verificationAttemptService = mockk()
+        verificationDomainService = VerificationDomainService(verificationAdaptor, verificationAttemptService)
     }
 
     @Nested
@@ -81,11 +83,15 @@ class VerificationDomainServiceTest {
                 )
 
             every { verificationAdaptor.findLatestOrNull(VerificationChannel.PHONE, "010-1234-5678") } returns verification
+            every { verificationAttemptService.incrementAttemptCount(verification) } answers {
+                firstArg<Verification>().incrementAttemptCount()
+            }
 
             val result = verificationDomainService.verifyCode(VerificationChannel.PHONE, "010-1234-5678", "123456")
 
             assertEquals(true, result.verified)
             assertEquals(1, result.attemptCount)
+            verify { verificationAttemptService.incrementAttemptCount(verification) }
         }
 
         @Test
@@ -112,6 +118,8 @@ class VerificationDomainServiceTest {
             assertThrows<VerificationExpiredException> {
                 verificationDomainService.verifyCode(VerificationChannel.PHONE, "010-1234-5678", "123456")
             }
+            // 만료 시에는 시도 횟수 증가 없음
+            verify(exactly = 0) { verificationAttemptService.incrementAttemptCount(any()) }
         }
 
         @Test
@@ -130,6 +138,8 @@ class VerificationDomainServiceTest {
             assertThrows<VerificationMaxAttemptsException> {
                 verificationDomainService.verifyCode(VerificationChannel.PHONE, "010-1234-5678", "123456")
             }
+            // 최대 시도 초과 시에는 추가 증가 없음
+            verify(exactly = 0) { verificationAttemptService.incrementAttemptCount(any()) }
         }
 
         @Test
@@ -143,11 +153,16 @@ class VerificationDomainServiceTest {
                 )
 
             every { verificationAdaptor.findLatestOrNull(VerificationChannel.PHONE, "010-1234-5678") } returns verification
+            // REQUIRES_NEW 트랜잭션으로 즉시 커밋 — 롤백과 무관하게 시도 횟수 보존
+            every { verificationAttemptService.incrementAttemptCount(verification) } answers {
+                firstArg<Verification>().incrementAttemptCount()
+            }
 
             assertThrows<VerificationCodeMismatchException> {
                 verificationDomainService.verifyCode(VerificationChannel.PHONE, "010-1234-5678", "999999")
             }
             assertEquals(1, verification.attemptCount)
+            verify { verificationAttemptService.incrementAttemptCount(verification) }
         }
     }
 }

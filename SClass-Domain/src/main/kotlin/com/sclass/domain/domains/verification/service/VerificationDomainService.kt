@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 @DomainService
 class VerificationDomainService(
     private val verificationAdaptor: VerificationAdaptor,
+    private val verificationAttemptService: VerificationAttemptService,
 ) {
     companion object {
         private const val MAX_SEND_PER_HOURS = 5
@@ -54,7 +55,8 @@ class VerificationDomainService(
             throw VerificationMaxAttemptsException()
         }
 
-        verification.incrementAttemptCount()
+        // REQUIRES_NEW 트랜잭션으로 즉시 커밋 → 코드 불일치 롤백 시에도 시도 횟수 보존 (Brute-force 방지)
+        verificationAttemptService.incrementAttemptCount(verification)
 
         if (verification.code != code) {
             throw VerificationCodeMismatchException()
