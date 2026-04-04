@@ -17,7 +17,7 @@ class ReportServiceClient(
     fun createSurveyReport(
         requestId: String,
         studentName: String,
-        answers: Map<String, String>,
+        answers: Map<String, Any>,
         callbackUrl: String,
         callbackSecret: String,
     ) {

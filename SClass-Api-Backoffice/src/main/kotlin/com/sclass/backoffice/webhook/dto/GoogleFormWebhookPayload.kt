@@ -5,5 +5,5 @@ data class GoogleFormWebhookPayload(
     val formTitle: String?,
     val formResponseId: String,
     val submittedAt: String,
-    val answers: Map<String, String>,
+    val answers: Map<String, Any>,
 )
