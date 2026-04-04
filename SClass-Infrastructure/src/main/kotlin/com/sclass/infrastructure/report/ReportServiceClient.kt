@@ -13,6 +13,7 @@ import java.time.Duration
 @ConditionalOnProperty(prefix = "report-service", name = ["enabled"], havingValue = "true")
 class ReportServiceClient(
     @Qualifier("reportServiceWebClient") private val webClient: WebClient,
+    private val properties: ReportServiceProperties,
 ) {
     fun createSurveyReport(
         requestId: String,
@@ -40,7 +41,7 @@ class ReportServiceClient(
             .bodyValue(request)
             .retrieve()
             .toBodilessEntity()
-            .timeout(Duration.ofSeconds(10))
+            .timeout(Duration.ofSeconds(properties.timeoutSeconds))
             .subscribe(
                 {
                     logger.info("[report-service] survey-report accepted requestId=$requestId status=${it.statusCode}")

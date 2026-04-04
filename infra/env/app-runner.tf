@@ -65,9 +65,9 @@ resource "aws_apprunner_service" "services" {
           KAKAO_APP_ID         = aws_ssm_parameter.kakao_app_id.arn
           SMTP_USERNAME        = aws_ssm_parameter.smtp_username.arn
           SMTP_PASSWORD        = aws_ssm_parameter.smtp_password.arn
-          ALIMTALK_ACCESS_KEY  = aws_ssm_parameter.alimtalk_access_key.arn
-          ALIMTALK_SERVICE_ID  = aws_ssm_parameter.alimtalk_service_id.arn
-          ALIMTALK_SECRET_KEY  = aws_ssm_parameter.alimtalk_secret_key.arn
+          ALIMTALK_ACCESS_KEY      = aws_ssm_parameter.alimtalk_access_key.arn
+          ALIMTALK_SERVICE_ID      = aws_ssm_parameter.alimtalk_service_id.arn
+          ALIMTALK_SECRET_KEY      = aws_ssm_parameter.alimtalk_secret_key.arn
         }
       }
 
