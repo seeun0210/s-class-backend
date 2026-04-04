@@ -1,3 +1,13 @@
+plugins {
+    id("org.hibernate.orm") version "7.2.4.Final"
+}
+
+hibernate {
+    enhancement {
+        enableLazyInitialization.set(true)
+    }
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 
