@@ -3,6 +3,18 @@ name: CD
 on:
   push:
     branches: [develop, main]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Deploy target (supporters / lms / backoffice / all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - supporters
+          - lms
+          - backoffice
 
 permissions:
   contents: read
@@ -45,7 +57,7 @@ jobs:
           fi
 
       - uses: dorny/paths-filter@v3
-        if: steps.release.outputs.is_release != 'true'
+        if: github.event_name != 'workflow_dispatch' && steps.release.outputs.is_release != 'true'
         id: filter
         with:
           filters: |
@@ -67,11 +79,25 @@ jobs:
       - name: Build deploy matrix
         id: set-matrix
         run: |
+          ALL='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
+
+          # workflow_dispatch → 입력값으로 결정
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            case "${{ inputs.service }}" in
+              all)        matrix="$ALL" ;;
+              supporters) matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"}]' ;;
+              lms)        matrix='[{"service":"lms-api","module":"SClass-Api-Lms"}]' ;;
+              backoffice) matrix='[{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]' ;;
+            esac
+            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+            echo "Manual dispatch — deploying: $matrix"
+            exit 0
+          fi
+
           # release 머지 → 전체 서비스 배포
           if [[ "${{ steps.release.outputs.is_release }}" == "true" ]]; then
-            matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
-            echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
-            echo "Release merge detected — deploying all services: $matrix"
+            echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
+            echo "Release merge detected — deploying all services: $ALL"
             exit 0
           fi
 
