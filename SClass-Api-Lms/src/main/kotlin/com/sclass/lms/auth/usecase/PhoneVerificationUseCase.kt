@@ -11,6 +11,8 @@ import com.sclass.lms.auth.dto.SendPhoneCodeResponse
 import com.sclass.lms.auth.dto.VerifyPhoneCodeRequest
 import com.sclass.lms.auth.dto.VerifyPhoneCodeResponse
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 @UseCase
 class PhoneVerificationUseCase(
@@ -26,7 +28,8 @@ class PhoneVerificationUseCase(
                 channel = VerificationChannel.PHONE,
                 target = phoneNumber,
             )
-        messageSender.sendVerificationCode(phoneNumber, verification.code)
+        // 커밋 후 발송 → DB 미반영 상태에서 메시지 발송되는 불일치 방지
+        afterCommit { messageSender.sendVerificationCode(phoneNumber, verification.code) }
         return SendPhoneCodeResponse()
     }
 
@@ -44,5 +47,17 @@ class PhoneVerificationUseCase(
                 target = phoneNumber,
             )
         return VerifyPhoneCodeResponse(phoneVerificationToken = token)
+    }
+
+    private fun afterCommit(action: () -> Unit) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() = action()
+                },
+            )
+        } else {
+            action()
+        }
     }
 }
