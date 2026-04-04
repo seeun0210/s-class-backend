@@ -7,6 +7,7 @@ import com.sclass.backoffice.webhook.event.SurveyReportFailedEvent
 import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.common.annotation.EventHandler
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
+import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -43,10 +44,13 @@ class DiagnosisEventListener(
             callbackSecret = diagnosis.callbackSecret,
             onSuccess = {
                 // 202 Accepted 후 PROCESSING 상태 변경 → 알림톡 발송
+                // PENDING 상태 확인 후 변경 (콜백이 먼저 도착해 COMPLETED가 된 경우 덮어쓰지 않음)
                 tx.execute {
                     val d = diagnosisAdaptor.findById(event.diagnosisId)
-                    d.markProcessing()
-                    diagnosisAdaptor.save(d)
+                    if (d.status == DiagnosisStatus.PENDING) {
+                        d.markProcessing()
+                        diagnosisAdaptor.save(d)
+                    }
                 }
                 eventPublisher.publishEvent(
                     SurveySubmittedNotificationEvent(

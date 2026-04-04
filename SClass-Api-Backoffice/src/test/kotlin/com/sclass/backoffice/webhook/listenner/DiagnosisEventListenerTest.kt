@@ -105,6 +105,26 @@ class DiagnosisEventListenerTest {
         }
 
         @Test
+        fun `콜백이 먼저 도착해 COMPLETED 상태일 때 PROCESSING으로 덮어쓰지 않는다`() {
+            val diagnosis = createDiagnosis()
+            diagnosis.markProcessing()
+            diagnosis.complete("{}")
+            every { diagnosisAdaptor.findById(event.diagnosisId) } returns diagnosis
+            every { diagnosisAdaptor.save(any()) } returns diagnosis
+            every { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any(), any(), any()) } answers {
+                val onSuccess = arg<() -> Unit>(5)
+                onSuccess()
+            }
+
+            listener.handleDiagnosisRequested(event)
+
+            assertAll(
+                { assertEquals(DiagnosisStatus.COMPLETED, diagnosis.status) },
+                { verify(exactly = 0) { diagnosisAdaptor.save(diagnosis) } },
+            )
+        }
+
+        @Test
         fun `API 호출 실패 시 SurveyReportFailedEvent를 발행하고 알림 이벤트를 발행하지 않는다`() {
             val diagnosis = createDiagnosis()
             every { diagnosisAdaptor.findById(event.diagnosisId) } returns diagnosis
