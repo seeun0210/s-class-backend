@@ -50,7 +50,7 @@ class Diagnosis(
     fun complete(reportData: String) {
         status = DiagnosisStatus.COMPLETED
         this.reportData = reportData
-        this.resultUrl = "https://report.aura.co.kr/$id"
+        this.resultUrl = "https://report.aura.co.kr/reports/$id"
     }
 
     fun fail() {

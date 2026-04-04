@@ -7,6 +7,8 @@ import com.sclass.backoffice.webhook.event.SurveyReportFailedEvent
 import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.common.annotation.EventHandler
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
+import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
+import com.sclass.domain.domains.webhook.adaptor.WebhookLogAdaptor
 import com.sclass.infrastructure.report.ReportServiceClient
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -22,6 +24,7 @@ import org.springframework.transaction.support.TransactionTemplate
 @ConditionalOnBean(ReportServiceClient::class)
 class DiagnosisEventListener(
     private val diagnosisAdaptor: DiagnosisAdaptor,
+    private val webhookLogAdaptor: WebhookLogAdaptor,
     private val reportServiceClient: ReportServiceClient,
     private val eventPublisher: ApplicationEventPublisher,
     transactionManager: PlatformTransactionManager,
@@ -32,14 +35,7 @@ class DiagnosisEventListener(
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     fun handleDiagnosisRequested(event: DiagnosisRequestedEvent) {
-        // 트랜잭션 1: PROCESSING 저장 후 즉시 커밋 (DB 커넥션 반환)
-        val diagnosis =
-            tx.execute {
-                val d = diagnosisAdaptor.findById(event.diagnosisId)
-                d.markProcessing()
-                diagnosisAdaptor.save(d)
-                d
-            }!!
+        val diagnosis = tx.execute { diagnosisAdaptor.findById(event.diagnosisId) }!!
 
         // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유, 논블로킹)
         reportServiceClient.createSurveyReport(
@@ -49,7 +45,15 @@ class DiagnosisEventListener(
             callbackUrl = event.callbackUrl,
             callbackSecret = diagnosis.callbackSecret,
             onSuccess = {
-                // 202 Accepted 후 알림 이벤트 발행
+                // 202 Accepted 후 PROCESSING 상태 변경 → 알림톡 발송
+                // PENDING 상태 확인 후 변경 (콜백이 먼저 도착해 COMPLETED가 된 경우 덮어쓰지 않음)
+                tx.execute {
+                    val d = diagnosisAdaptor.findById(event.diagnosisId)
+                    if (d.status == DiagnosisStatus.PENDING) {
+                        d.markProcessing()
+                        diagnosisAdaptor.save(d)
+                    }
+                }
                 eventPublisher.publishEvent(
                     SurveySubmittedNotificationEvent(
                         studentPhone = diagnosis.studentPhone,
@@ -80,6 +84,10 @@ class DiagnosisEventListener(
                 val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
                 diagnosis.complete(event.reportData)
                 diagnosisAdaptor.save(diagnosis)
+                webhookLogAdaptor.findByDiagnosisIdOrNull(event.diagnosisId)?.let {
+                    it.markCompleted()
+                    webhookLogAdaptor.save(it)
+                }
                 diagnosis.resultUrl!!
             }!!
 
@@ -100,6 +108,10 @@ class DiagnosisEventListener(
             val diagnosis = diagnosisAdaptor.findById(event.diagnosisId)
             diagnosis.fail()
             diagnosisAdaptor.save(diagnosis)
+            webhookLogAdaptor.findByDiagnosisIdOrNull(event.diagnosisId)?.let {
+                it.markFailed(event.errorCode ?: "UNKNOWN")
+                webhookLogAdaptor.save(it)
+            }
         }
         logger.error("[diagnosis] 진단 실패 diagnosisId=${event.diagnosisId} errorCode=${event.errorCode} retryable=${event.retryable}")
     }
