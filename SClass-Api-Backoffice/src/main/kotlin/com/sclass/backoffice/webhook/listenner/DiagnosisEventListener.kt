@@ -41,35 +41,34 @@ class DiagnosisEventListener(
                 d
             }!!
 
-        // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유)
-        try {
-            reportServiceClient.createSurveyReport(
-                requestId = event.requestId,
-                studentName = event.studentName,
-                answers = event.answers,
-                callbackUrl = event.callbackUrl,
-                callbackSecret = diagnosis.callbackSecret,
-            )
-        } catch (e: Exception) {
-            logger.error("[diagnosis] report-service 호출 실패 diagnosisId=${diagnosis.id}: ${e.message}")
-            eventPublisher.publishEvent(
-                SurveyReportFailedEvent(
-                    diagnosisId = diagnosis.id,
-                    errorCode = "REPORT_SERVICE_ERROR",
-                    retryable = true,
-                ),
-            )
-            return
-        }
-
-        // API 성공 후 알림 이벤트 발행 (DiagnosisNotificationEventListener에서 @Async 처리)
-        eventPublisher.publishEvent(
-            SurveySubmittedNotificationEvent(
-                studentPhone = diagnosis.studentPhone,
-                parentPhone = diagnosis.parentPhone,
-                studentName = event.studentName,
-                submittedAt = event.submittedAt,
-            ),
+        // 트랜잭션 밖: 외부 API 호출 (DB 커넥션 비점유, 논블로킹)
+        reportServiceClient.createSurveyReport(
+            requestId = event.requestId,
+            studentName = event.studentName,
+            answers = event.answers,
+            callbackUrl = event.callbackUrl,
+            callbackSecret = diagnosis.callbackSecret,
+            onSuccess = {
+                // 202 Accepted 후 알림 이벤트 발행
+                eventPublisher.publishEvent(
+                    SurveySubmittedNotificationEvent(
+                        studentPhone = diagnosis.studentPhone,
+                        parentPhone = diagnosis.parentPhone,
+                        studentName = event.studentName,
+                        submittedAt = event.submittedAt,
+                    ),
+                )
+            },
+            onError = { e ->
+                logger.error("[diagnosis] report-service 호출 실패 diagnosisId=${diagnosis.id}: ${e.message}")
+                eventPublisher.publishEvent(
+                    SurveyReportFailedEvent(
+                        diagnosisId = diagnosis.id,
+                        errorCode = "REPORT_SERVICE_ERROR",
+                        retryable = true,
+                    ),
+                )
+            },
         )
     }
 
