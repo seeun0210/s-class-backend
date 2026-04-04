@@ -14,15 +14,15 @@ data class WebhookFieldMapping(
     @Column(name = "parent_phone_question")
     val parentPhoneQuestion: String?,
 ) {
-    fun extractFrom(answers: Map<String, String>): ExtractedFields {
+    fun extractFrom(answers: Map<String, Any>): ExtractedFields {
         val studentName =
-            answers[studentNameQuestion]
+            answers[studentNameQuestion]?.toString()
                 ?: throw IllegalArgumentException("학생 이름 필드를 찾을 수 없습니다: $studentNameQuestion")
 
         return ExtractedFields(
             studentName = studentName,
-            studentPhone = answers[studentPhoneQuestion]?.replace("-", ""),
-            parentPhone = parentPhoneQuestion?.let { answers[it] }?.replace("-", ""),
+            studentPhone = answers[studentPhoneQuestion]?.toString()?.replace("-", ""),
+            parentPhone = parentPhoneQuestion?.let { answers[it] }?.toString()?.replace("-", ""),
         )
     }
 }
