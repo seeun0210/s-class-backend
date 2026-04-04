@@ -10,7 +10,6 @@ import com.sclass.domain.domains.diagnosis.domain.Diagnosis
 import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
 import com.sclass.infrastructure.report.ReportServiceClient
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -74,7 +73,10 @@ class DiagnosisEventListenerTest {
             val diagnosis = createDiagnosis()
             every { diagnosisAdaptor.findById(event.diagnosisId) } returns diagnosis
             every { diagnosisAdaptor.save(any()) } returns diagnosis
-            justRun { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any()) }
+            every { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any(), any(), any()) } answers {
+                val onSuccess = arg<() -> Unit>(5)
+                onSuccess()
+            }
 
             listener.handleDiagnosisRequested(event)
 
@@ -91,6 +93,8 @@ class DiagnosisEventListenerTest {
                             event.answers,
                             event.callbackUrl,
                             diagnosis.callbackSecret,
+                            any(),
+                            any(),
                         )
                     }
                 },
@@ -105,7 +109,10 @@ class DiagnosisEventListenerTest {
             val diagnosis = createDiagnosis()
             every { diagnosisAdaptor.findById(event.diagnosisId) } returns diagnosis
             every { diagnosisAdaptor.save(any()) } returns diagnosis
-            every { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any()) } throws RuntimeException("서버 오류")
+            every { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any(), any(), any()) } answers {
+                val onError = arg<(Throwable) -> Unit>(6)
+                onError(RuntimeException("서버 오류"))
+            }
 
             listener.handleDiagnosisRequested(event)
 
