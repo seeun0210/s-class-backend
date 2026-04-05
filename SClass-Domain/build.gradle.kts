@@ -9,6 +9,12 @@ hibernate {
     }
 }
 
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 

@@ -9,6 +9,6 @@ import jakarta.persistence.Entity
 class CommissionProduct(
     name: String,
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     val coinCost: Int,
 ) : Product(name = name, priceWon = 0)

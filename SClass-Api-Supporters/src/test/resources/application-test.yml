@@ -41,3 +41,6 @@ nicepay:
   client-key: test-client-key
   secret-key: test-secret-key
   base-url: https://sandbox-api.nicepay.co.kr
+
+sclass:
+  frontend-url: http://localhost:3000

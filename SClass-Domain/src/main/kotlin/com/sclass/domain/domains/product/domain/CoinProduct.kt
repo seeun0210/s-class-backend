@@ -10,6 +10,6 @@ class CoinProduct(
     name: String,
     priceWon: Int,
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     val coinAmount: Int,
 ) : Product(name = name, priceWon = priceWon)
