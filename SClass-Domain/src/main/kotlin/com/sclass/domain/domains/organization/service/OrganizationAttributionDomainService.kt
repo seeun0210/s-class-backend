@@ -16,7 +16,6 @@ class OrganizationAttributionDomainService(
         organizationId: Long,
         studentId: String,
         source: AttributionSource,
-        originService: String? = null,
     ): OrganizationAttribution {
         if (organizationAttributionAdaptor.existsByStudentId(studentId)) {
             throw OrganizationAlreadyAttributedException()
@@ -26,7 +25,6 @@ class OrganizationAttributionDomainService(
                 organizationId = organizationId,
                 studentId = studentId,
                 source = source,
-                originService = originService,
             ),
         )
     }

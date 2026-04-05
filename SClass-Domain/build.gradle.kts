@@ -5,6 +5,7 @@ plugins {
 hibernate {
     enhancement {
         enableLazyInitialization.set(true)
+        classNames.add("com.sclass.domain.domains.diagnosis.domain.Diagnosis")
     }
 }
 

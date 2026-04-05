@@ -1,5 +1,7 @@
 package com.sclass.supporters.commission.usecase
 
+import com.sclass.domain.domains.coin.exception.InsufficientCoinException
+import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.domain.ActivityType
@@ -8,6 +10,8 @@ import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.OutputFormat
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.file.domain.File
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CommissionProduct
 import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
 import com.sclass.domain.domains.teacherassignment.domain.TeacherAssignment
 import com.sclass.domain.domains.teacherassignment.exception.TeacherAssignmentNotFoundException
@@ -33,6 +37,8 @@ class CreateCommissionUseCaseTest {
     private lateinit var fileAdaptor: FileAdaptor
     private lateinit var eventPublisher: ApplicationEventPublisher
     private lateinit var commissionReminderScheduler: CommissionReminderScheduler
+    private lateinit var coinDomainService: CoinDomainService
+    private lateinit var productAdaptor: ProductAdaptor
     private lateinit var useCase: CreateCommissionUseCase
 
     @BeforeEach
@@ -43,6 +49,8 @@ class CreateCommissionUseCaseTest {
         fileAdaptor = mockk()
         eventPublisher = mockk(relaxed = true)
         commissionReminderScheduler = mockk(relaxed = true)
+        coinDomainService = mockk(relaxed = true)
+        productAdaptor = mockk()
         useCase =
             CreateCommissionUseCase(
                 commissionAdaptor,
@@ -51,6 +59,8 @@ class CreateCommissionUseCaseTest {
                 fileAdaptor,
                 eventPublisher,
                 commissionReminderScheduler,
+                coinDomainService,
+                productAdaptor,
             )
     }
 
@@ -81,9 +91,16 @@ class CreateCommissionUseCaseTest {
         } returns assignment
     }
 
+    private fun mockCommissionProduct(coinCost: Int = 100): CommissionProduct {
+        val product = CommissionProduct(name = "의뢰 기본 상품", coinCost = coinCost)
+        every { productAdaptor.findActiveCommissionProduct() } returns product
+        return product
+    }
+
     @Test
     fun `의뢰를 정상 생성하면 CommissionResponse를 반환한다`() {
         mockTeacherAssignment()
+        mockCommissionProduct()
         val commissionSlot = slot<Commission>()
         every { commissionAdaptor.save(capture(commissionSlot)) } answers { commissionSlot.captured }
 
@@ -99,8 +116,41 @@ class CreateCommissionUseCaseTest {
     }
 
     @Test
+    fun `의뢰 생성 시 코인이 차감된다`() {
+        mockTeacherAssignment()
+        mockCommissionProduct(coinCost = 100)
+        val commissionSlot = slot<Commission>()
+        every { commissionAdaptor.save(capture(commissionSlot)) } answers { commissionSlot.captured }
+
+        useCase.execute("student-user-id-0000000001", createRequest())
+
+        verify {
+            coinDomainService.deduct(
+                userId = "student-user-id-0000000001",
+                amount = 100,
+                referenceId = any(),
+                description = "의뢰 생성 코인 차감",
+            )
+        }
+    }
+
+    @Test
+    fun `코인 잔액 부족 시 예외가 발생한다`() {
+        mockTeacherAssignment()
+        mockCommissionProduct()
+        val commissionSlot = slot<Commission>()
+        every { commissionAdaptor.save(capture(commissionSlot)) } answers { commissionSlot.captured }
+        every { coinDomainService.deduct(any(), any(), any(), any()) } throws InsufficientCoinException()
+
+        assertThrows<InsufficientCoinException> {
+            useCase.execute("student-user-id-0000000001", createRequest())
+        }
+    }
+
+    @Test
     fun `fileIds가 있으면 CommissionFile이 저장된다`() {
         mockTeacherAssignment()
+        mockCommissionProduct()
         val commissionSlot = slot<Commission>()
         every { commissionAdaptor.save(capture(commissionSlot)) } answers { commissionSlot.captured }
 
@@ -117,6 +167,7 @@ class CreateCommissionUseCaseTest {
     @Test
     fun `fileIds가 없으면 CommissionFile 저장을 하지 않는다`() {
         mockTeacherAssignment()
+        mockCommissionProduct()
         val commissionSlot = slot<Commission>()
         every { commissionAdaptor.save(capture(commissionSlot)) } answers { commissionSlot.captured }
 
