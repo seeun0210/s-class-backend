@@ -2,14 +2,17 @@ package com.sclass.infrastructure.nicepay
 
 import com.sclass.infrastructure.nicepay.dto.NicePayApproveResponse
 import com.sclass.infrastructure.nicepay.dto.NicePayCancelResponse
+import com.sclass.infrastructure.nicepay.dto.NicePayInquiryResponse
 import com.sclass.infrastructure.nicepay.dto.NicePayTokenResponse
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
 import com.sclass.infrastructure.nicepay.dto.PgCancelResult
+import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import java.security.MessageDigest
 import java.time.Instant
 
 @Component
@@ -124,6 +127,47 @@ class NicePayGateway(
         return PgCancelResult(
             tid = response.tid ?: tid,
             cancelAmount = response.cancelAmt ?: amount,
+        )
+    }
+
+    override fun verifyWebhookSignature(
+        tid: String,
+        amount: Int,
+        ediDate: String,
+        signature: String,
+    ): Boolean {
+        val raw = "$tid$amount$ediDate${properties.secretKey}"
+        val expected =
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(raw.toByteArray())
+                .joinToString("") { "%02x".format(it) }
+        return expected == signature
+    }
+
+    override fun inquiry(pgOrderId: String): PgInquiryResult {
+        val accessToken = getAccessToken()
+
+        val response =
+            try {
+                webClient
+                    .get()
+                    .uri("/v1/payments?orderId=$pgOrderId")
+                    .headers { it.setBearerAuth(accessToken) }
+                    .retrieve()
+                    .bodyToMono(NicePayInquiryResponse::class.java)
+                    .block() ?: throw NicePayException("NicePay 조회 응답이 비어있습니다")
+            } catch (e: NicePayException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("NicePay 거래 조회 실패: ${e.message}", e)
+                throw NicePayException("NicePay 거래 조회 실패", e)
+            }
+
+        return PgInquiryResult(
+            approved = response.resultCode == RESULT_CODE_SUCCESS,
+            tid = response.tid,
+            amount = response.amount ?: 0,
         )
     }
 
