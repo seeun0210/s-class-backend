@@ -3,10 +3,13 @@ package com.sclass.supporters.payment.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.PaymentStatus
+import com.sclass.domain.domains.payment.exception.InvalidPaymentStatusException
 import com.sclass.domain.domains.payment.exception.PaymentPgApproveFailedException
 import com.sclass.domain.domains.payment.exception.PaymentUnauthorizedException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import com.sclass.supporters.payment.dto.ApprovePaymentResponse
@@ -28,6 +31,7 @@ class ApprovePaymentUseCase(
         val payment = paymentAdaptor.findById(paymentId)
 
         if (payment.userId != userId) throw PaymentUnauthorizedException()
+        if (payment.status != PaymentStatus.PENDING) throw InvalidPaymentStatusException()
 
         val pgResult =
             try {
@@ -39,7 +43,7 @@ class ApprovePaymentUseCase(
         payment.markPgApproved(pgResult.tid)
 
         val product = productAdaptor.findById(payment.productId)
-        val coinAmount = (product as CoinProduct).coinAmount
+        val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
         coinDomainService.issue(
             userId = userId,
