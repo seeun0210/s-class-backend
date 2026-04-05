@@ -68,12 +68,12 @@ class HandleNicePayReturnUseCase(
             return failureUrl()
         }
 
+        val product = productAdaptor.findById(payment.productId)
+        val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
+
         return try {
             val pgResult = pgGateway.approve(payment.pgOrderId, tid, payment.amount)
             payment.markPgApproved(pgResult.tid)
-
-            val product = productAdaptor.findById(payment.productId)
-            val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
             coinDomainService.issue(
                 userId = payment.userId,
@@ -87,22 +87,26 @@ class HandleNicePayReturnUseCase(
 
             log.info("결제 완료: paymentId={}, coinAmount={}", payment.id, coinAmount)
             successUrl(coinAmount)
-        } catch (e: NicePayException) {
-            payment.markPgApproveFailed()
-            paymentAdaptor.save(payment)
-            log.error("NicePay 승인 실패: orderId={}", orderId, e)
+        } catch (e: Exception) {
+            if (e is NicePayException) {
+                payment.markPgApproveFailed()
+                paymentAdaptor.save(payment)
+            }
+            log.error("NicePay 결제 처리 중 오류 발생: orderId={}", orderId, e)
             failureUrl()
         }
     }
 
+    private fun baseUrl() = frontendUrl.trimEnd('/')
+
     private fun successUrl(issuedCoinAmount: Int?) =
         if (issuedCoinAmount != null) {
-            "$frontendUrl/student/payment/callback?status=COMPLETED&issuedCoinAmount=$issuedCoinAmount"
+            "${baseUrl()}/student/payment/callback?status=COMPLETED&issuedCoinAmount=$issuedCoinAmount"
         } else {
-            "$frontendUrl/student/payment/callback?status=COMPLETED"
+            "${baseUrl()}/student/payment/callback?status=COMPLETED"
         }
 
-    private fun failureUrl() = "$frontendUrl/student/payment/callback?status=FAILED"
+    private fun failureUrl() = "${baseUrl()}/student/payment/callback?status=FAILED"
 
     companion object {
         private const val AUTH_RESULT_SUCCESS = "0000"
