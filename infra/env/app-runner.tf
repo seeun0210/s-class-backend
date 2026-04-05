@@ -49,6 +49,7 @@ resource "aws_apprunner_service" "services" {
           ALIMTALK_ENABLED           = "true"
           ALIMTALK_PLUS_FRIEND_ID    = "@학생부종합전형"
           ALIMTALK_APP_BASE_URL      = var.alimtalk_app_base_url
+          FRONTEND_URL               = each.key == "supporters-api" ? var.frontend_url : ""
           JWT_ACCESS_EXP             = var.jwt_access_exp
           JWT_REFRESH_EXP            = var.jwt_refresh_exp
           REPORT_SERVICE_ENABLED     = each.key == "backoffice-api" ? "true" : "false"
@@ -65,9 +66,9 @@ resource "aws_apprunner_service" "services" {
           KAKAO_APP_ID         = aws_ssm_parameter.kakao_app_id.arn
           SMTP_USERNAME        = aws_ssm_parameter.smtp_username.arn
           SMTP_PASSWORD        = aws_ssm_parameter.smtp_password.arn
-          ALIMTALK_ACCESS_KEY  = aws_ssm_parameter.alimtalk_access_key.arn
-          ALIMTALK_SERVICE_ID  = aws_ssm_parameter.alimtalk_service_id.arn
-          ALIMTALK_SECRET_KEY  = aws_ssm_parameter.alimtalk_secret_key.arn
+          ALIMTALK_ACCESS_KEY      = aws_ssm_parameter.alimtalk_access_key.arn
+          ALIMTALK_SERVICE_ID      = aws_ssm_parameter.alimtalk_service_id.arn
+          ALIMTALK_SECRET_KEY      = aws_ssm_parameter.alimtalk_secret_key.arn
         }
       }
 

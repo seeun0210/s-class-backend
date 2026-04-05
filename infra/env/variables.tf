@@ -166,12 +166,31 @@ variable "alimtalk_app_base_url" {
   default = ""
 }
 
+variable "frontend_url" {
+  type    = string
+  default = "https://sclass.aura.co.kr"
+}
+
 # ──────────────────────────────────────
 # Report Service (Backoffice only)
 # ──────────────────────────────────────
 variable "report_service_base_url" {
   description = "Report service base URL (backoffice-api only)"
   type        = string
-  default     = ""
+}
+
+# ──────────────────────────────────────
+# NicePay PG
+# ──────────────────────────────────────
+variable "nicepay_client_key" {
+  description = "NicePay client key"
+  type        = string
+  sensitive   = true
+}
+
+variable "nicepay_secret_key" {
+  description = "NicePay secret key"
+  type        = string
+  sensitive   = true
 }
 

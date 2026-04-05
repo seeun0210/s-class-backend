@@ -1,12 +1,14 @@
 package com.sclass.supporters.commission.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionFile
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.supporters.commission.dto.CommissionResponse
@@ -25,6 +27,8 @@ class CreateCommissionUseCase(
     private val fileAdaptor: FileAdaptor,
     private val eventPublisher: ApplicationEventPublisher,
     private val commissionReminderScheduler: CommissionReminderScheduler,
+    private val coinDomainService: CoinDomainService,
+    private val productAdaptor: ProductAdaptor,
 ) {
     @Transactional
     fun execute(
@@ -55,6 +59,15 @@ class CreateCommissionUseCase(
                         ),
                 ),
             )
+
+        val commissionProduct = productAdaptor.findActiveCommissionProduct()
+
+        coinDomainService.deduct(
+            userId = studentUserId,
+            amount = commissionProduct.coinCost,
+            referenceId = commission.id.toString(),
+            description = "의뢰 생성 코인 차감",
+        )
 
         request.fileIds?.let { fileIds ->
             val files = fileIds.map { fileAdaptor.findById(it) }

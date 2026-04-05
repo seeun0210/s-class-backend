@@ -8,6 +8,7 @@ import com.sclass.backoffice.webhook.event.SurveySubmittedNotificationEvent
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
 import com.sclass.domain.domains.diagnosis.domain.Diagnosis
 import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus
+import com.sclass.domain.domains.webhook.adaptor.WebhookLogAdaptor
 import com.sclass.infrastructure.report.ReportServiceClient
 import io.mockk.every
 import io.mockk.mockk
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus
 
 class DiagnosisEventListenerTest {
     private val diagnosisAdaptor = mockk<DiagnosisAdaptor>()
+    private val webhookLogAdaptor = mockk<WebhookLogAdaptor>(relaxed = true)
     private val reportServiceClient = mockk<ReportServiceClient>()
     private val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
@@ -40,6 +42,7 @@ class DiagnosisEventListenerTest {
     private val listener =
         DiagnosisEventListener(
             diagnosisAdaptor,
+            webhookLogAdaptor,
             reportServiceClient,
             eventPublisher,
             transactionManager,
@@ -101,6 +104,26 @@ class DiagnosisEventListenerTest {
                 { assertEquals(diagnosis.studentPhone, notificationSlot.captured.studentPhone) },
                 { assertEquals(diagnosis.parentPhone, notificationSlot.captured.parentPhone) },
                 { assertEquals(event.submittedAt, notificationSlot.captured.submittedAt) },
+            )
+        }
+
+        @Test
+        fun `콜백이 먼저 도착해 COMPLETED 상태일 때 PROCESSING으로 덮어쓰지 않는다`() {
+            val diagnosis = createDiagnosis()
+            diagnosis.markProcessing()
+            diagnosis.complete("{}")
+            every { diagnosisAdaptor.findById(event.diagnosisId) } returns diagnosis
+            every { diagnosisAdaptor.save(any()) } returns diagnosis
+            every { reportServiceClient.createSurveyReport(any(), any(), any(), any(), any(), any(), any()) } answers {
+                val onSuccess = arg<() -> Unit>(5)
+                onSuccess()
+            }
+
+            listener.handleDiagnosisRequested(event)
+
+            assertAll(
+                { assertEquals(DiagnosisStatus.COMPLETED, diagnosis.status) },
+                { verify(exactly = 0) { diagnosisAdaptor.save(diagnosis) } },
             )
         }
 

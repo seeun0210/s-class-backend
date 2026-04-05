@@ -1,3 +1,20 @@
+plugins {
+    id("org.hibernate.orm") version "7.2.4.Final"
+}
+
+hibernate {
+    enhancement {
+        enableLazyInitialization.set(true)
+        classNames.add("com.sclass.domain.domains.diagnosis.domain.Diagnosis")
+    }
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
 tasks.bootJar { enabled = false }
 tasks.jar { enabled = true }
 

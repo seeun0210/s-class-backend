@@ -2,10 +2,12 @@ package com.sclass.domain.domains.diagnosis.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
+import jakarta.persistence.Basic
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
@@ -40,6 +42,7 @@ class Diagnosis(
 
     var resultUrl: String? = null,
 
+    @Basic(fetch = FetchType.LAZY)
     @Column(columnDefinition = "TEXT")
     var reportData: String? = null,
 ) : BaseTimeEntity() {
@@ -50,7 +53,7 @@ class Diagnosis(
     fun complete(reportData: String) {
         status = DiagnosisStatus.COMPLETED
         this.reportData = reportData
-        this.resultUrl = "https://report.aura.co.kr/$id"
+        this.resultUrl = "https://report.aura.co.kr/reports/$id"
     }
 
     fun fail() {

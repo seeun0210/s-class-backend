@@ -6,6 +6,7 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
 import com.sclass.domain.domains.diagnosis.domain.Diagnosis
+import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.webhook.adaptor.WebhookAdaptor
 import com.sclass.domain.domains.webhook.adaptor.WebhookLogAdaptor
 import com.sclass.domain.domains.webhook.domain.WebhookLog
@@ -52,8 +53,8 @@ class ReceiveWebhookUseCase(
                 Diagnosis(
                     requestId = requestId,
                     studentName = extracted.studentName,
-                    studentPhone = extracted.studentPhone,
-                    parentPhone = extracted.parentPhone,
+                    studentPhone = extracted.studentPhone?.let { User.formatPhoneNumber(it) },
+                    parentPhone = extracted.parentPhone?.let { User.formatPhoneNumber(it) },
                     requestData = objectMapper.writeValueAsString(payload.answers),
                 ),
             )

@@ -88,7 +88,7 @@ class GetDiagnosisResultUseCaseTest {
         assertAll(
             { assertEquals(DiagnosisStatus.COMPLETED, result.status) },
             { assertEquals("{\"score\":95}", result.reportData) },
-            { assertEquals("https://report.aura.co.kr/${diagnosis.id}", result.resultUrl) },
+            { assertEquals("https://report.aura.co.kr/reports/${diagnosis.id}", result.resultUrl) },
         )
     }
 
