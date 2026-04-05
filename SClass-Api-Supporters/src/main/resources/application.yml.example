@@ -99,3 +99,6 @@ nicepay:
   client-key: ${NICE_PAY_CLIENT_KEY:}
   secret-key: ${NICE_PAY_SECRET_KEY:}
   base-url: ${NICE_PAY_API_URL:https://api.nicepay.co.kr}
+
+sclass:
+  frontend-url: ${FRONTEND_URL:https://sclass.aura.co.kr}
