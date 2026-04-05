@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.Base64
+import java.time.Instant
 
 @Component
 class NicePayGateway(
@@ -20,32 +19,43 @@ class NicePayGateway(
 ) : PgGateway {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    private var cachedToken: String? = null
+    private var tokenExpiresAt: Instant = Instant.EPOCH
+
+    @Synchronized
     private fun getAccessToken(): String {
-        val credentials =
-            Base64
-                .getEncoder()
-                .encodeToString("${properties.clientKey}:${properties.secretKey}".toByteArray())
+        if (cachedToken != null && Instant.now().isBefore(tokenExpiresAt)) {
+            return cachedToken!!
+        }
 
         val response =
             try {
                 webClient
                     .post()
                     .uri("/v1/oauth/token")
-                    .headers { it["Authorization"] = "Basic $credentials" }
+                    .headers { it.setBasicAuth(properties.clientKey, properties.secretKey) }
                     .bodyValue(mapOf("grantType" to "client_credentials"))
                     .retrieve()
                     .bodyToMono(NicePayTokenResponse::class.java)
                     .block() ?: throw NicePayException("NicePay 토큰 응답이 비어있습니다")
-            } catch (e: WebClientResponseException) {
-                log.error("NicePay 토큰 발급 실패: ${e.message}")
-                throw NicePayException("NicePay 토큰 발급 실패")
+            } catch (e: NicePayException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("NicePay 토큰 발급 실패: ${e.message}", e)
+                throw NicePayException("NicePay 토큰 발급 실패", e)
             }
 
         if (response.resultCode != RESULT_CODE_SUCCESS) {
             throw NicePayException("NicePay 토큰 발급 실패: ${response.resultMsg}")
         }
 
-        return response.accessToken ?: throw NicePayException("NicePay 액세스 토큰이 없습니다")
+        val token = response.accessToken ?: throw NicePayException("NicePay 액세스 토큰이 없습니다")
+        val expiresIn = response.expiresIn ?: DEFAULT_TOKEN_EXPIRES_IN
+
+        cachedToken = token
+        tokenExpiresAt = Instant.now().plusSeconds(expiresIn - TOKEN_EXPIRY_BUFFER_SECONDS)
+
+        return token
     }
 
     override fun approve(
@@ -65,9 +75,11 @@ class NicePayGateway(
                     .retrieve()
                     .bodyToMono(NicePayApproveResponse::class.java)
                     .block() ?: throw NicePayException("NicePay 승인 응답이 비어있습니다")
-            } catch (e: WebClientResponseException) {
-                log.error("NicePay 결제 승인 실패: ${e.message}")
-                throw NicePayException("NicePay 결제 승인 실패")
+            } catch (e: NicePayException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("NicePay 결제 승인 실패: ${e.message}", e)
+                throw NicePayException("NicePay 결제 승인 실패", e)
             }
 
         if (response.resultCode != RESULT_CODE_SUCCESS) {
@@ -98,9 +110,11 @@ class NicePayGateway(
                     .retrieve()
                     .bodyToMono(NicePayCancelResponse::class.java)
                     .block() ?: throw NicePayException("NicePay 취소 응답이 비어있습니다")
-            } catch (e: WebClientResponseException) {
-                log.error("NicePay 결제 취소 실패: ${e.message}")
-                throw NicePayException("NicePay 결제 취소 실패")
+            } catch (e: NicePayException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("NicePay 결제 취소 실패: ${e.message}", e)
+                throw NicePayException("NicePay 결제 취소 실패", e)
             }
 
         if (response.resultCode != RESULT_CODE_SUCCESS) {
@@ -115,5 +129,7 @@ class NicePayGateway(
 
     companion object {
         private const val RESULT_CODE_SUCCESS = "0000"
+        private const val DEFAULT_TOKEN_EXPIRES_IN = 1800L
+        private const val TOKEN_EXPIRY_BUFFER_SECONDS = 60L
     }
 }
