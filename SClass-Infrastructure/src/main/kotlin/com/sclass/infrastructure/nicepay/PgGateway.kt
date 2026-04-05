@@ -25,4 +25,10 @@ interface PgGateway {
     ): Boolean
 
     fun inquiry(pgOrderId: String): PgInquiryResult
+
+    fun verifyReturnSignature(
+        authToken: String,
+        amount: Int,
+        signature: String,
+    ): Boolean
 }

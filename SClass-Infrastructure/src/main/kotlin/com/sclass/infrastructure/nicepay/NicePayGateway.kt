@@ -171,6 +171,20 @@ class NicePayGateway(
         )
     }
 
+    override fun verifyReturnSignature(
+        authToken: String,
+        amount: Int,
+        signature: String,
+    ): Boolean {
+        val raw = "$authToken${properties.clientKey}$amount${properties.secretKey}"
+        val expected =
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(raw.toByteArray(Charsets.UTF_8))
+                .joinToString("") { "%02x".format(it) }
+        return expected == signature
+    }
+
     companion object {
         private const val RESULT_CODE_SUCCESS = "0000"
         private const val DEFAULT_TOKEN_EXPIRES_IN = 1800L
