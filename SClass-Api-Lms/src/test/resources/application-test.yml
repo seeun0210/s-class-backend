@@ -36,3 +36,8 @@ cloud:
     storage:
       bucket: test-bucket
       project-id: test-project-id
+
+nicepay:
+  client-key: test-client-key
+  secret-key: test-secret-key
+  base-url: https://sandbox-api.nicepay.co.kr
