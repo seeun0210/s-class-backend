@@ -4,6 +4,7 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CommissionProduct
 import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.exception.CommissionProductNotConfiguredException
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
 import com.sclass.domain.domains.product.repository.ProductRepository
 
@@ -21,5 +22,5 @@ class ProductAdaptor(
 
     fun findActiveCommissionProduct(): CommissionProduct =
         productRepository.findActiveCommissionProduct()
-            ?: throw ProductNotFoundException()
+            ?: throw CommissionProductNotConfiguredException()
 }

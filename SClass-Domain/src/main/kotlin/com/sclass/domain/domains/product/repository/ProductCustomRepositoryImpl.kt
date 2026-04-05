@@ -21,5 +21,6 @@ class ProductCustomRepositoryImpl(
             .select(QCommissionProduct.commissionProduct)
             .from(QCommissionProduct.commissionProduct)
             .where(QCommissionProduct.commissionProduct.active.isTrue)
+            .orderBy(QCommissionProduct.commissionProduct.createdAt.desc())
             .fetchFirst()
 }
