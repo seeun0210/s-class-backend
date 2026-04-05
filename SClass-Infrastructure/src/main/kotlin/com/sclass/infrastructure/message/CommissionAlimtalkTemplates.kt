@@ -66,9 +66,9 @@ class CommissionAlimtalkTemplates(
     ) = AlimtalkTemplate(
         templateCode = "COMMTOPREQUEST",
         content =
-            "[S클래스] 탐구 주제 보강 요청이 도착했습니다\n\n" +
+            "[S클래스] 탐구 주제 보강 요청이 도착했습니다.\n\n" +
                 "${studentName}님, 안녕하세요.\n\n" +
-                "선생님께서 탐구 주제 보강을 요청하셨습니다.\n\n" +
+                "등록하신 요청에 대해 선생님께서 자료 보강을 요청하셨습니다.\n" +
                 "■ 요청내용: $requestContent\n\n" +
                 "앱에서 요청 내용을 확인하고 답변해 주세요.",
         buttons = listOf(studentButton(name = "요청 확인하기", commissionId = commissionId)),
@@ -83,7 +83,7 @@ class CommissionAlimtalkTemplates(
         content =
             "[S클래스] 지원 요청이 처리되었습니다\n\n" +
                 "$teacherName 선생님, 안녕하세요.\n\n" +
-                "선생님의 $ticketType 요청이 처리 완료되었습니다.\n\n" +
+                "선생님의 $ticketType 요청이 처리 완료되었습니다.\n" +
                 "앱에서 처리 결과를 확인해 주세요.",
         buttons = listOf(teacherButton(name = "처리 결과 확인하기", commissionId = commissionId)),
     )
@@ -115,9 +115,9 @@ class CommissionAlimtalkTemplates(
         content =
             "[S클래스] 진행 중인 의뢰 확인을 요청드립니다\n\n" +
                 "$teacherName 선생님, 안녕하세요.\n\n" +
-                "$studentName 학생의 탐구 의뢰에 ${inactiveDays}일간 활동이 없습니다.\n\n" +
+                "$studentName 학생의 탐구 의뢰에 ${inactiveDays}일간 활동이 없습니다.\n" +
                 "마지막 활동: $lastActivityAt\n\n" +
-                "앱에서 의뢰 진행 상황을 확인해 주세요.\n\n" +
+                "학생의 의뢰에 답변이 필요합니다. 앱에서 의뢰 진행 상황을 확인하고 답변해 주세요.\n" +
                 "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
         buttons = listOf(teacherButton(name = "의뢰 확인하기", commissionId = commissionId)),
     )
