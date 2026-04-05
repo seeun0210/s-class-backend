@@ -38,7 +38,6 @@ class OrganizationAttributionDomainServiceTest {
                     organizationId = 1L,
                     studentId = "student-id",
                     source = AttributionSource.INVITE_CODE,
-                    originService = null,
                 )
 
             assertEquals(1L, result.organizationId)

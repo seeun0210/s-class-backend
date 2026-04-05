@@ -2,7 +2,9 @@ package com.sclass.domain.domains.product.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.domain.CommissionProduct
 import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.exception.CommissionProductNotConfiguredException
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
 import com.sclass.domain.domains.product.repository.ProductRepository
 
@@ -17,4 +19,8 @@ class ProductAdaptor(
     fun save(product: Product): Product = productRepository.save(product)
 
     fun findAllActiveCoinProducts(): List<CoinProduct> = productRepository.findAllActiveCoinProducts()
+
+    fun findActiveCommissionProduct(): CommissionProduct =
+        productRepository.findActiveCommissionProduct()
+            ?: throw CommissionProductNotConfiguredException()
 }
