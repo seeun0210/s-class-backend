@@ -66,9 +66,9 @@ class CommissionAlimtalkTemplates(
     ) = AlimtalkTemplate(
         templateCode = "COMMTOPREQUEST",
         content =
-            "[S클래스] 탐구 주제 보강 요청이 도착했습니다\n\n" +
+            "[S클래스] 탐구 주제 보강 요청이 도착했습니다.\n\n" +
                 "${studentName}님, 안녕하세요.\n\n" +
-                "선생님께서 탐구 주제 보강을 요청하셨습니다.\n\n" +
+                "등록하신 요청에 대해 선생님께서 자료 보강을 요청하셨습니다.\n" +
                 "■ 요청내용: $requestContent\n\n" +
                 "앱에서 요청 내용을 확인하고 답변해 주세요.",
         buttons = listOf(studentButton(name = "요청 확인하기", commissionId = commissionId)),
