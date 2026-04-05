@@ -2,6 +2,7 @@ package com.sclass.domain.domains.payment.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
+import com.sclass.domain.domains.payment.exception.InvalidPaymentStatusException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -43,23 +44,31 @@ class Payment(
     var metadata: String? = null,
 ) : BaseTimeEntity() {
     fun markPgApproved(pgTid: String) {
-        check(status == PaymentStatus.PENDING) { "PENDING 상태에서만 PG 승인 가능합니다" }
+        if (status != PaymentStatus.PENDING) {
+            throw InvalidPaymentStatusException()
+        }
         this.pgTid = pgTid
         this.status = PaymentStatus.PG_APPROVED
     }
 
     fun markCompleted() {
-        check(status == PaymentStatus.PG_APPROVED) { "PG_APPROVED 상태에서만 완료 처리 가능합니다" }
+        if (status != PaymentStatus.PG_APPROVED) {
+            throw InvalidPaymentStatusException()
+        }
         this.status = PaymentStatus.COMPLETED
     }
 
     fun markPgApproveFailed() {
-        check(status == PaymentStatus.PENDING) { "PENDING 상태에서만 PG 승인 실패 처리 가능합니다" }
+        if (status != PaymentStatus.PENDING) {
+            throw InvalidPaymentStatusException()
+        }
         this.status = PaymentStatus.PG_APPROVE_FAILED
     }
 
     fun markIssueCoinFailed() {
-        check(status == PaymentStatus.PG_APPROVED) { "PG_APPROVED 상태에서만 코인 발급 실패 처리 가능합니다" }
+        if (status != PaymentStatus.PG_APPROVED) {
+            throw InvalidPaymentStatusException()
+        }
         this.status = PaymentStatus.ISSUE_COIN_FAILED
     }
 
@@ -68,7 +77,9 @@ class Payment(
     }
 
     fun markCancelled() {
-        check(status == PaymentStatus.COMPLETED) { "COMPLETED 상태에서만 취소 가능합니다" }
+        if (status != PaymentStatus.COMPLETED) {
+            throw InvalidPaymentStatusException()
+        }
         this.status = PaymentStatus.CANCELLED
     }
 

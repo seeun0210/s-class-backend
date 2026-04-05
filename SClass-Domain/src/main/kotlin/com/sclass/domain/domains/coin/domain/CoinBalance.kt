@@ -2,6 +2,7 @@ package com.sclass.domain.domains.coin.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
+import com.sclass.domain.domains.coin.exception.InsufficientCoinException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -36,7 +37,9 @@ class CoinBalance(
     }
 
     fun deduct(amount: Int) {
-        check(balance >= amount) { "잔액이 부족합니다" }
+        if (balance < amount) {
+            throw InsufficientCoinException()
+        }
         balance -= amount
         totalUsed += amount
     }
