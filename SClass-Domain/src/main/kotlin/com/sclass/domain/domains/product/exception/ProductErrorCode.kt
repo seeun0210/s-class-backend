@@ -8,4 +8,5 @@ enum class ProductErrorCode(
     override val httpStatus: Int,
 ) : ErrorCode {
     PRODUCT_NOT_FOUND("PRODUCT_001", "상품을 찾을 수 없습니다", 404),
+    PRODUCT_TYPE_MISMATCH("PRODUCT_002", "상품 타입이 올바르지 않습니다", 400),
 }
