@@ -4,4 +4,6 @@ dependencies {
     implementation(project(":SClass-Infrastructure"))
 
     implementation("org.springframework.boot:spring-boot-starter-batch")
+
+    testImplementation("io.mockk:mockk:1.13.16")
 }
