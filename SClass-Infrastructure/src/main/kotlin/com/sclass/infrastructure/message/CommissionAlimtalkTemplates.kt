@@ -83,7 +83,7 @@ class CommissionAlimtalkTemplates(
         content =
             "[S클래스] 지원 요청이 처리되었습니다\n\n" +
                 "$teacherName 선생님, 안녕하세요.\n\n" +
-                "선생님의 $ticketType 요청이 처리 완료되었습니다.\n\n" +
+                "선생님의 $ticketType 요청이 처리 완료되었습니다.\n" +
                 "앱에서 처리 결과를 확인해 주세요.",
         buttons = listOf(teacherButton(name = "처리 결과 확인하기", commissionId = commissionId)),
     )
