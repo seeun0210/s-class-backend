@@ -166,6 +166,11 @@ variable "alimtalk_app_base_url" {
   default = ""
 }
 
+variable "frontend_url" {
+  type    = string
+  default = "https://sclass.aura.co.kr"
+}
+
 # ──────────────────────────────────────
 # Report Service (Backoffice only)
 # ──────────────────────────────────────
