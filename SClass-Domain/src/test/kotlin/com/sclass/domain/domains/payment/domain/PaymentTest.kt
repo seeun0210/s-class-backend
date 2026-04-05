@@ -1,5 +1,6 @@
 package com.sclass.domain.domains.payment.domain
 
+import com.sclass.domain.domains.payment.exception.InvalidPaymentStatusException
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
@@ -43,7 +44,7 @@ class PaymentTest {
         fun `PENDING이 아닌 상태에서 PG 승인 시 예외가 발생한다`() {
             val payment = createPayment(PaymentStatus.PG_APPROVED)
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InvalidPaymentStatusException> {
                 payment.markPgApproved("tid-002")
             }
         }
@@ -64,7 +65,7 @@ class PaymentTest {
         fun `PG_APPROVED가 아닌 상태에서 완료 처리 시 예외가 발생한다`() {
             val payment = createPayment()
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InvalidPaymentStatusException> {
                 payment.markCompleted()
             }
         }
@@ -85,7 +86,7 @@ class PaymentTest {
         fun `COMPLETED가 아닌 상태에서 취소 시 예외가 발생한다`() {
             val payment = createPayment()
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InvalidPaymentStatusException> {
                 payment.markCancelled()
             }
         }
@@ -106,7 +107,7 @@ class PaymentTest {
         fun `PENDING이 아닌 상태에서 PG 승인 실패 처리 시 예외가 발생한다`() {
             val payment = createPayment(PaymentStatus.PG_APPROVED)
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InvalidPaymentStatusException> {
                 payment.markPgApproveFailed()
             }
         }
@@ -127,7 +128,7 @@ class PaymentTest {
         fun `PG_APPROVED가 아닌 상태에서 코인 발급 실패 처리 시 예외가 발생한다`() {
             val payment = createPayment()
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InvalidPaymentStatusException> {
                 payment.markIssueCoinFailed()
             }
         }

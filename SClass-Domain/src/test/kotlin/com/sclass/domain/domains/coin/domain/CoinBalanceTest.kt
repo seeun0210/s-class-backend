@@ -1,5 +1,6 @@
 package com.sclass.domain.domains.coin.domain
 
+import com.sclass.domain.domains.coin.exception.InsufficientCoinException
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
@@ -42,7 +43,7 @@ class CoinBalanceTest {
         fun `잔액보다 많은 코인 차감 시 예외가 발생한다`() {
             val coinBalance = createBalance(balance = 50)
 
-            assertThrows<IllegalStateException> {
+            assertThrows<InsufficientCoinException> {
                 coinBalance.deduct(100)
             }
         }
