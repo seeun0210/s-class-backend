@@ -94,3 +94,8 @@ cloud:
       access-key: ${S3_ACCESS_KEY:}
       secret-key: ${S3_SECRET_KEY:}
       endpoint: ${S3_ENDPOINT:}
+
+nicepay:
+  client-key: ${NICE_PAY_CLIENT_KEY:}
+  secret-key: ${NICE_PAY_SECRET_KEY:}
+  base-url: ${NICE_PAY_API_URL:https://api.nicepay.co.kr}

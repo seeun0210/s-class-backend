@@ -44,6 +44,8 @@ jobs:
       TF_VAR_alimtalk_access_key: ${{ secrets.TF_VAR_ALIMTALK_ACCESS_KEY }}
       TF_VAR_alimtalk_service_id: ${{ secrets.TF_VAR_ALIMTALK_SERVICE_ID }}
       TF_VAR_alimtalk_secret_key: ${{ secrets.TF_VAR_ALIMTALK_SECRET_KEY }}
+      TF_VAR_nicepay_client_key: ${{ secrets.TF_VAR_NICEPAY_CLIENT_KEY }}
+      TF_VAR_nicepay_secret_key: ${{ secrets.TF_VAR_NICEPAY_SECRET_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -89,6 +91,8 @@ jobs:
       TF_VAR_alimtalk_access_key: ${{ secrets.TF_VAR_ALIMTALK_ACCESS_KEY }}
       TF_VAR_alimtalk_service_id: ${{ secrets.TF_VAR_ALIMTALK_SERVICE_ID }}
       TF_VAR_alimtalk_secret_key: ${{ secrets.TF_VAR_ALIMTALK_SECRET_KEY }}
+      TF_VAR_nicepay_client_key: ${{ secrets.TF_VAR_NICEPAY_CLIENT_KEY }}
+      TF_VAR_nicepay_secret_key: ${{ secrets.TF_VAR_NICEPAY_SECRET_KEY }}
 
     steps:
       - uses: actions/checkout@v4

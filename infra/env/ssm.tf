@@ -132,3 +132,25 @@ resource "aws_ssm_parameter" "alimtalk_secret_key" {
     Name = "${local.name_prefix}-ssm-alimtalk-secret"
   }
 }
+
+resource "aws_ssm_parameter" "nicepay_client_key" {
+  name      = "/sclass/${var.environment}/NICE_PAY_CLIENT_KEY"
+  type      = "SecureString"
+  value     = var.nicepay_client_key
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-nicepay-client-key"
+  }
+}
+
+resource "aws_ssm_parameter" "nicepay_secret_key" {
+  name      = "/sclass/${var.environment}/NICE_PAY_SECRET_KEY"
+  type      = "SecureString"
+  value     = var.nicepay_secret_key
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-nicepay-secret-key"
+  }
+}
