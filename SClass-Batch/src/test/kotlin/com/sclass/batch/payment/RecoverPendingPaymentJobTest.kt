@@ -2,13 +2,11 @@ package com.sclass.batch.payment
 
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
-import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PgType
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -54,14 +52,13 @@ class RecoverPendingPaymentJobTest {
     }
 
     @Test
-    fun `PENDING 결제가 50건 초과면 전체 COMPENSATION_NEEDED 처리된다`() {
+    fun `PENDING 결제가 50건 초과면 최대 50건만 처리하고 나머지는 다음 주기로 넘긴다`() {
         val payments = (1..51).map { createPendingPayment("id-$it") }
         every { paymentAdaptor.findPendingOlderThan(any()) } returns payments
-        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        justRun { processor.process(any()) }
 
         job.execute()
 
-        verify(exactly = 0) { processor.process(any()) }
-        payments.forEach { assertEquals(PaymentStatus.COMPENSATION_NEEDED, it.status) }
+        verify(exactly = 50) { processor.process(any()) }
     }
 }

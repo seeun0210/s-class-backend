@@ -27,22 +27,17 @@ class RecoverPendingPaymentJob(
         )
 
         if (pendingPayments.size > MAX_BATCH_SIZE) {
-            log.warn("PENDING 결제 {}건 초과 - 전체 COMPENSATION_NEEDED 처리", pendingPayments.size)
-            pendingPayments.forEach { payment ->
-                payment.markCompensationNeeded()
-                paymentAdaptor.save(payment)
-            }
-            return
+            log.warn("PENDING 결제 {}건 초과 - 최대 {}건만 처리하고 나머지는 다음 주기에 처리됩니다", pendingPayments.size, MAX_BATCH_SIZE)
         }
 
-        pendingPayments.forEach { payment ->
+        pendingPayments.take(MAX_BATCH_SIZE).forEach { payment ->
             processor.process(payment)
             Thread.sleep(200) // rate limit 방지
         }
 
         log.info(
             "PENDING 결제 복구 완료 - {}건",
-            pendingPayments.size,
+            minOf(pendingPayments.size, MAX_BATCH_SIZE),
         )
     }
 

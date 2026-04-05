@@ -5,6 +5,7 @@ import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import org.slf4j.LoggerFactory
@@ -30,9 +31,8 @@ class PendingPaymentProcessor(
             if (result.approved && tid != null) {
                 payment.markPgApproved(tid)
 
-                val product =
-                    productAdaptor.findById(payment.productId)
-                val coinAmount = (product as CoinProduct).coinAmount
+                val product = productAdaptor.findById(payment.productId)
+                val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
                 coinDomainService.issue(
                     userId = payment.userId,

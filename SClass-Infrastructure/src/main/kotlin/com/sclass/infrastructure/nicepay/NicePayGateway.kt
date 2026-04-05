@@ -140,7 +140,7 @@ class NicePayGateway(
         val expected =
             MessageDigest
                 .getInstance("SHA-256")
-                .digest(raw.toByteArray())
+                .digest(raw.toByteArray(Charsets.UTF_8))
                 .joinToString("") { "%02x".format(it) }
         return expected == signature
     }
