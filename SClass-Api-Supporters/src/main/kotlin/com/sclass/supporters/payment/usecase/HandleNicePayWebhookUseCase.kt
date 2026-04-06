@@ -9,6 +9,8 @@ import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,12 +20,15 @@ class HandleNicePayWebhookUseCase(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
-
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    @DistributedLock(prefix = "payment")
     @Transactional
-    fun execute(payload: NicePayWebhookPayload) {
+    fun execute(
+        @LockKey orderId: String,
+        payload: NicePayWebhookPayload,
+    ) {
         if (!pgGateway.verifyWebhookSignature(
                 payload.tid,
                 payload.amount,
@@ -31,15 +36,15 @@ class HandleNicePayWebhookUseCase(
                 payload.signature,
             )
         ) {
-            log.warn("웹훅 서명 검증 실패 orderId={}", payload.orderId)
+            log.warn("웹훅 서명 검증 실패 orderId={}", orderId)
             return
         }
 
         val payment =
-            paymentAdaptor.findByPgOrderIdOrNull(payload.orderId) ?: run {
+            paymentAdaptor.findByPgOrderIdOrNull(orderId) ?: run {
                 log.warn(
                     "웹훅 수신: 알 수 없는 pgOrderId={}",
-                    payload.orderId,
+                    orderId,
                 )
                 return
             }
@@ -48,7 +53,7 @@ class HandleNicePayWebhookUseCase(
             log.info(
                 "웹훅 수신: 실패 결과 resultCode={}, orderId={}",
                 payload.resultCode,
-                payload.orderId,
+                orderId,
             )
             return
         }

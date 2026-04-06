@@ -36,7 +36,7 @@ class PaymentController(
     fun handleNicepayWebhook(
         @RequestBody request: NicePayWebhookPayload,
     ): String {
-        handleNicePayWebhookUseCase.execute(request)
+        handleNicePayWebhookUseCase.execute(request.orderId, request)
         return "OK"
     }
 

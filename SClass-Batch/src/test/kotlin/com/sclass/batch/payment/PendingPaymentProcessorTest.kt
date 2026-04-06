@@ -23,6 +23,7 @@ class PendingPaymentProcessorTest {
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var pgGateway: PgGateway
+    private lateinit var completePaymentUseCase: CompletePaymentUseCase
     private lateinit var processor: PendingPaymentProcessor
 
     @BeforeEach
@@ -31,7 +32,8 @@ class PendingPaymentProcessorTest {
         productAdaptor = mockk()
         coinDomainService = mockk()
         pgGateway = mockk()
-        processor = PendingPaymentProcessor(paymentAdaptor, productAdaptor, coinDomainService, pgGateway)
+        completePaymentUseCase = CompletePaymentUseCase(paymentAdaptor, productAdaptor, coinDomainService)
+        processor = PendingPaymentProcessor(pgGateway, completePaymentUseCase)
     }
 
     private fun createPendingPayment() =
@@ -50,6 +52,7 @@ class PendingPaymentProcessorTest {
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = true, tid = "nicepay-tid-001", amount = 1000)
         every { productAdaptor.findById(any()) } returns product
+        every { paymentAdaptor.findById(any()) } returns payment
         justRun { coinDomainService.issue(any(), any(), any(), any()) }
         every { paymentAdaptor.save(any()) } answers { firstArg() }
 
@@ -65,6 +68,7 @@ class PendingPaymentProcessorTest {
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = false, tid = null, amount = 0)
         every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { paymentAdaptor.findById(any()) } returns payment
 
         processor.process(payment)
 

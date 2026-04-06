@@ -194,3 +194,23 @@ variable "nicepay_secret_key" {
   sensitive   = true
 }
 
+# ──────────────────────────────────────
+# Redis (Redis Cloud)
+# ──────────────────────────────────────
+variable "redis_host" {
+  description = "Redis Cloud host"
+  type        = string
+}
+
+variable "redis_port" {
+  description = "Redis Cloud port"
+  type        = string
+  default     = "6379"
+}
+
+variable "redis_password" {
+  description = "Redis Cloud password"
+  type        = string
+  sensitive   = true
+}
+

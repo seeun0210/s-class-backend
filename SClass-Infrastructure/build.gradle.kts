@@ -10,6 +10,8 @@ dependencies {
     api("software.amazon.awssdk:s3")
     api("software.amazon.awssdk:ssm")
     api("software.amazon.awssdk:cloudwatch")
+    // Redis (Redisson - 분산 락)
+    api("org.redisson:redisson-spring-boot-starter:4.3.0")
 
     // Micrometer CloudWatch Registry
     api("io.micrometer:micrometer-registry-cloudwatch2")
