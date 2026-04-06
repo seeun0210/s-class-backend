@@ -53,8 +53,7 @@ class TokenDomainService(
         val refreshJwt = aesTokenEncryptor.decrypt(encryptedRefreshToken)
         val userId = jwtTokenProvider.parseRefreshToken(refreshJwt)
 
-        val tokens = refreshTokenAdaptor.findAllByUserId(userId)
-        if (tokens.none { it.isValid() }) {
+        if (!refreshTokenAdaptor.existsValidByUserId(userId)) {
             throw RefreshTokenRevokedException()
         }
 
