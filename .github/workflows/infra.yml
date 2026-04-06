@@ -5,6 +5,7 @@ on:
     branches: [develop, main]
     paths:
       - 'infra/env/**'
+      - 'infra/shared/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -46,6 +47,9 @@ jobs:
       TF_VAR_alimtalk_secret_key: ${{ secrets.TF_VAR_ALIMTALK_SECRET_KEY }}
       TF_VAR_nicepay_client_key: ${{ secrets.TF_VAR_NICEPAY_CLIENT_KEY }}
       TF_VAR_nicepay_secret_key: ${{ secrets.TF_VAR_NICEPAY_SECRET_KEY }}
+      TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
+      TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
+      TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
 
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +97,9 @@ jobs:
       TF_VAR_alimtalk_secret_key: ${{ secrets.TF_VAR_ALIMTALK_SECRET_KEY }}
       TF_VAR_nicepay_client_key: ${{ secrets.TF_VAR_NICEPAY_CLIENT_KEY }}
       TF_VAR_nicepay_secret_key: ${{ secrets.TF_VAR_NICEPAY_SECRET_KEY }}
+      TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
+      TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
+      TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
 
     steps:
       - uses: actions/checkout@v4
