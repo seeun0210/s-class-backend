@@ -170,10 +170,15 @@ class CoinDomainServiceConcurrencyTest {
         executor.shutdown()
         executor.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS)
 
-        val balances =
+        val balance =
             txTemplate.execute {
                 coinBalanceRepository.findByUserId(newUserId)
             }
-        assertThat(balances).isNotNull
+
+        assertThat(balance).isNotNull
+        assertThat(successes.size).isEqualTo(1)
+        assertThat(failures.size).isEqualTo(threadCount - 1)
+        assertThat(balance!!.balance).isEqualTo(100)
+        assertThat(balance.totalIssued).isEqualTo(100)
     }
 }
