@@ -3,6 +3,7 @@ package com.sclass.domain.domains.token.service
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
 import com.sclass.common.jwt.VerificationTokenInfo
+import com.sclass.common.jwt.exception.RefreshTokenRevokedException
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
 import com.sclass.domain.domains.token.domain.RefreshToken
 import com.sclass.domain.domains.user.domain.AuthProvider
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.time.LocalDateTime
 
 class TokenDomainServiceTest {
     private lateinit var jwtTokenProvider: JwtTokenProvider
@@ -69,13 +72,38 @@ class TokenDomainServiceTest {
     @Nested
     inner class ResolveUserId {
         @Test
-        fun `암호화된 refresh token에서 userId를 추출한다`() {
+        fun `유효한 refresh token이 DB에 존재하면 userId를 반환한다`() {
+            val validToken = RefreshToken(userId = "user-id", expiresAt = LocalDateTime.now().plusDays(7))
             every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
             every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns "user-id"
+            every { refreshTokenAdaptor.findAllByUserId("user-id") } returns listOf(validToken)
 
             val result = tokenDomainService.resolveUserId("encrypted-refresh")
 
             assertEquals("user-id", result)
+        }
+
+        @Test
+        fun `DB에 refresh token이 없으면 RefreshTokenRevokedException을 던진다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns "user-id"
+            every { refreshTokenAdaptor.findAllByUserId("user-id") } returns emptyList()
+
+            assertThrows<RefreshTokenRevokedException> {
+                tokenDomainService.resolveUserId("encrypted-refresh")
+            }
+        }
+
+        @Test
+        fun `DB에 만료된 refresh token만 있으면 RefreshTokenRevokedException을 던진다`() {
+            val expiredToken = RefreshToken(userId = "user-id", expiresAt = LocalDateTime.now().minusDays(1))
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns "user-id"
+            every { refreshTokenAdaptor.findAllByUserId("user-id") } returns listOf(expiredToken)
+
+            assertThrows<RefreshTokenRevokedException> {
+                tokenDomainService.resolveUserId("encrypted-refresh")
+            }
         }
     }
 
