@@ -33,7 +33,7 @@ class DistributedLockAspect(
         joinPoint: ProceedingJoinPoint,
         distributedLock: DistributedLock,
     ): Any? {
-        val keyValue = resolveKeyValue(joinPoint, distributedLock.key)
+        val keyValue = resolveKeyValue(joinPoint)
         val lockKey = "lock:${distributedLock.prefix}:$keyValue"
         val lock = redissonClient.getLock(lockKey)
 
@@ -61,31 +61,20 @@ class DistributedLockAspect(
         }
     }
 
-    private fun resolveKeyValue(
-        joinPoint: ProceedingJoinPoint,
-        key: String,
-    ): String {
+    private fun resolveKeyValue(joinPoint: ProceedingJoinPoint): String {
         val signature = joinPoint.signature as MethodSignature
-        val parameterNames = signature.parameterNames
+        val method = signature.method
         val args = joinPoint.args
 
-        if (parameterNames.isEmpty()) {
-            throw IllegalArgumentException("분산 락 대상 메서드에 파라미터가 없습니다")
+        method.parameters.forEachIndexed { index, param ->
+            if (param.isAnnotationPresent(LockKey::class.java)) {
+                return args[index]?.toString()
+                    ?: throw IllegalArgumentException("@LockKey 파라미터가 null입니다")
+            }
         }
 
-        // key가 비어있으면 첫 번째 파라미터 사용
-        if (key.isBlank()) {
-            return args[0].toString()
-        }
-
-        // key에 해당하는 파라미터 이름 찾기
-        val index = parameterNames.indexOf(key)
-        if (index == -1) {
-            throw IllegalArgumentException(
-                "파라미터 '$key'를 찾을 수 없습니다. 사용 가능한 파라미터: ${parameterNames.toList()}",
-            )
-        }
-
-        return args[index].toString()
+        throw IllegalArgumentException(
+            "@DistributedLock 메서드에 @LockKey 파라미터가 없습니다: ${method.declaringClass.simpleName}.${method.name}()",
+        )
     }
 }
