@@ -9,6 +9,7 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 
 @Entity
 @Table(name = "payments")
@@ -42,6 +43,9 @@ class Payment(
 
     @Column(columnDefinition = "TEXT")
     var metadata: String? = null,
+
+    @Version
+    val version: Long = 0,
 ) : BaseTimeEntity() {
     fun markPgApproved(pgTid: String) {
         if (status != PaymentStatus.PENDING) {

@@ -9,6 +9,8 @@ import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.transaction.annotation.Transactional
@@ -19,15 +21,16 @@ class HandleNicePayReturnUseCase(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
-    @Value("\${sclass.frontend-url}") private val frontendUrl: String,
+    @param:Value("\${sclass.frontend-url}") private val frontendUrl: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    @DistributedLock(prefix = "payment")
     @Transactional
     fun execute(
         authResultCode: String,
         tid: String?,
-        orderId: String,
+        @LockKey orderId: String,
         amount: Int,
         authToken: String?,
         signature: String?,

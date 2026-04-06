@@ -50,6 +50,7 @@ class PendingPaymentProcessorTest {
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = true, tid = "nicepay-tid-001", amount = 1000)
         every { productAdaptor.findById(any()) } returns product
+        every { paymentAdaptor.findById(any()) } returns payment
         justRun { coinDomainService.issue(any(), any(), any(), any()) }
         every { paymentAdaptor.save(any()) } answers { firstArg() }
 
@@ -65,6 +66,7 @@ class PendingPaymentProcessorTest {
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = false, tid = null, amount = 0)
         every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { paymentAdaptor.findById(any()) } returns payment
 
         processor.process(payment)
 
