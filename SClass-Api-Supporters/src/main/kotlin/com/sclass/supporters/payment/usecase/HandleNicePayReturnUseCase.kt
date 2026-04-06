@@ -13,7 +13,7 @@ import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class HandleNicePayReturnUseCase(
@@ -21,12 +21,12 @@ class HandleNicePayReturnUseCase(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
-    private val txTemplate: TransactionTemplate,
     @param:Value("\${sclass.frontend-url}") private val frontendUrl: String,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     @DistributedLock(prefix = "payment")
+    @Transactional
     fun execute(
         authResultCode: String,
         tid: String?,
@@ -74,46 +74,28 @@ class HandleNicePayReturnUseCase(
         val product = productAdaptor.findById(payment.productId)
         val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
-        // PG 승인 (외부 API - 트랜잭션 밖)
-        val pgResult =
-            try {
-                pgGateway.approve(payment.pgOrderId, tid, payment.amount)
-            } catch (e: NicePayException) {
-                log.error("PG 승인 실패: orderId={}", orderId, e)
-                txTemplate.execute {
-                    val fresh = paymentAdaptor.findById(payment.id)
-                    fresh.markPgApproveFailed()
-                }
-                return failureUrl()
-            }
-
-        // TX1: PG 승인 상태 커밋 (이후 실패해도 PG_APPROVED는 보존)
-        txTemplate.execute {
-            val fresh = paymentAdaptor.findById(payment.id)
-            fresh.markPgApproved(pgResult.tid)
-        }
-
-        // TX2: 코인 발급 + 완료
         return try {
-            txTemplate.execute {
-                val fresh = paymentAdaptor.findById(payment.id)
-                coinDomainService.issue(
-                    userId = fresh.userId,
-                    amount = coinAmount,
-                    referenceId = fresh.id,
-                    description = "결제 완료 - ${product.name}",
-                )
-                fresh.markCompleted()
-            }
+            val pgResult = pgGateway.approve(payment.pgOrderId, tid, payment.amount)
+            payment.markPgApproved(pgResult.tid)
+
+            coinDomainService.issue(
+                userId = payment.userId,
+                amount = coinAmount,
+                referenceId = payment.id,
+                description = "결제 완료 - ${product.name}",
+            )
+
+            payment.markCompleted()
+            paymentAdaptor.save(payment)
+
             log.info("결제 완료: paymentId={}, coinAmount={}", payment.id, coinAmount)
             successUrl(coinAmount)
         } catch (e: Exception) {
-            // TX3: 코인 발급 실패 → ISSUE_COIN_FAILED 마킹
-            log.error("코인 발급 실패: paymentId={}", payment.id, e)
-            txTemplate.execute {
-                val fresh = paymentAdaptor.findById(payment.id)
-                fresh.markIssueCoinFailed()
+            if (e is NicePayException) {
+                payment.markPgApproveFailed()
+                paymentAdaptor.save(payment)
             }
+            log.error("NicePay 결제 처리 중 오류 발생: orderId={}", orderId, e)
             failureUrl()
         }
     }
