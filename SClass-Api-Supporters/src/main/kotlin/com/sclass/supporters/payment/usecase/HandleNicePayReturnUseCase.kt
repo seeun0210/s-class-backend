@@ -83,6 +83,7 @@ class HandleNicePayReturnUseCase(
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     fresh.markPgApproveFailed()
+                    paymentAdaptor.save(fresh)
                 }
                 return failureUrl()
             }
@@ -91,6 +92,7 @@ class HandleNicePayReturnUseCase(
         txTemplate.execute {
             val fresh = paymentAdaptor.findById(payment.id)
             fresh.markPgApproved(pgResult.tid)
+            paymentAdaptor.save(fresh)
         }
 
         // TX2: 코인 발급 + 완료
@@ -104,6 +106,7 @@ class HandleNicePayReturnUseCase(
                     description = "결제 완료 - ${product.name}",
                 )
                 fresh.markCompleted()
+                paymentAdaptor.save(fresh)
             }
             log.info("결제 완료: paymentId={}, coinAmount={}", payment.id, coinAmount)
             successUrl(coinAmount)
@@ -113,6 +116,7 @@ class HandleNicePayReturnUseCase(
             txTemplate.execute {
                 val fresh = paymentAdaptor.findById(payment.id)
                 fresh.markIssueCoinFailed()
+                paymentAdaptor.save(fresh)
             }
             failureUrl()
         }

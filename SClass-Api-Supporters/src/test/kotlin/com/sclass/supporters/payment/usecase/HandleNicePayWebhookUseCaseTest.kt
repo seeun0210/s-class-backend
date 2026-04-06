@@ -38,6 +38,7 @@ class HandleNicePayWebhookUseCaseTest {
             val callback = firstArg<org.springframework.transaction.support.TransactionCallback<Any?>>()
             callback.doInTransaction(mockk())
         }
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
         useCase = HandleNicePayWebhookUseCase(paymentAdaptor, productAdaptor, coinDomainService, pgGateway, txTemplate)
     }
 

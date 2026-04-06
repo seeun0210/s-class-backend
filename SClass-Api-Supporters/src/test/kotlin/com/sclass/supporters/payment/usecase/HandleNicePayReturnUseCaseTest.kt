@@ -42,6 +42,7 @@ class HandleNicePayReturnUseCaseTest {
             val callback = firstArg<org.springframework.transaction.support.TransactionCallback<Any?>>()
             callback.doInTransaction(mockk())
         }
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
         useCase =
             HandleNicePayReturnUseCase(
                 paymentAdaptor,
@@ -193,7 +194,7 @@ class HandleNicePayReturnUseCaseTest {
             { assertTrue(result.contains("status=FAILED"), "실패 URL이 반환되어야 한다") },
             { assertEquals(PaymentStatus.ISSUE_COIN_FAILED, pgApprovedPayment.status, "코인 발급 실패 상태로 마킹되어야 한다") },
         )
-        verify(exactly = 0) { paymentAdaptor.save(any()) }
+        verify(atLeast = 1) { paymentAdaptor.save(any()) }
     }
 
     @Test

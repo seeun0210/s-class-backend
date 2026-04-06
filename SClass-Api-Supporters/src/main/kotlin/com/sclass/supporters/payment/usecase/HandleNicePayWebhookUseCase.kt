@@ -67,6 +67,7 @@ class HandleNicePayWebhookUseCase(
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     fresh.markPgApproved(payload.tid)
+                    paymentAdaptor.save(fresh)
                 }
 
                 // TX2: 코인 발급 + 완료
@@ -80,6 +81,7 @@ class HandleNicePayWebhookUseCase(
                             description = "결제 완료 (웹훅) - ${product.name}",
                         )
                         fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
                     }
                     log.info("웹훅 수신: 결제 완료 처리 paymentId={}", payment.id)
                 } catch (e: Exception) {
@@ -88,6 +90,7 @@ class HandleNicePayWebhookUseCase(
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         fresh.markIssueCoinFailed()
+                        paymentAdaptor.save(fresh)
                     }
                 }
             }

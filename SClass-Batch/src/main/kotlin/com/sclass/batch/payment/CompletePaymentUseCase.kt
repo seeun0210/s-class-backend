@@ -42,11 +42,13 @@ class CompletePaymentUseCase(
                 val tid = result.tid
                 if (result.approved && tid != null) {
                     fresh.markPgApproved(tid)
+                    paymentAdaptor.save(fresh)
                     val product = productAdaptor.findById(fresh.productId)
                     val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
                     CoinIssueContext(fresh.userId, coinAmount, fresh.id, product.name)
                 } else {
                     fresh.markPgApproveFailed()
+                    paymentAdaptor.save(fresh)
                     log.info("결제 미승인 확인 paymentId={}", fresh.id)
                     null
                 }
@@ -63,6 +65,7 @@ class CompletePaymentUseCase(
                     description = "결제 복구 - ${coinContext.productName}",
                 )
                 fresh.markCompleted()
+                paymentAdaptor.save(fresh)
             }
             log.info("결제 복구 완료 paymentId={}", payment.id)
         } catch (e: Exception) {
@@ -71,6 +74,7 @@ class CompletePaymentUseCase(
             txTemplate.execute {
                 val fresh = paymentAdaptor.findById(payment.id)
                 fresh.markIssueCoinFailed()
+                paymentAdaptor.save(fresh)
             }
         }
     }

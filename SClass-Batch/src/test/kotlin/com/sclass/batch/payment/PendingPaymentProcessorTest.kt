@@ -39,6 +39,7 @@ class PendingPaymentProcessorTest {
             val callback = firstArg<org.springframework.transaction.support.TransactionCallback<Any?>>()
             callback.doInTransaction(mockk())
         }
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
         completePaymentUseCase = CompletePaymentUseCase(paymentAdaptor, productAdaptor, coinDomainService, txTemplate)
         processor = PendingPaymentProcessor(pgGateway, completePaymentUseCase)
     }
