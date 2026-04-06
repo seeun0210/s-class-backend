@@ -1,6 +1,10 @@
 # S-Class Backend
 
-학원 관리 플랫폼 백엔드 서버
+수행평가 매칭과 학원 관리를 하나의 도메인으로 연결하는 B2B2C 교육 플랫폼 백엔드 서버
+
+- **Supporters** — 학생이 수행평가를 강사에게 의뢰하고 도움받는 매칭 서비스
+- **LMS** — 학원 단위 수업·탐구·정산 관리 (원장, 강사, 학생)
+- **Backoffice** — 플랫폼 운영 관리
 
 ## Tech Stack
 
@@ -21,13 +25,15 @@
 
 ## Module Structure
 
+서비스별 트래픽 프로파일이 다르기 때문에(Supporters > LMS > Backoffice) API 모듈을 분리하여 독립 배포·스케일링이 가능하도록 설계했습니다. 도메인 모듈을 공유하여 강사·학생 등 핵심 엔티티의 중복 없이 여러 서비스에서 재사용합니다.
+
 ```
 SClass-Common           # 공통 (어노테이션, DTO, 예외, JWT, 유틸)
 SClass-Domain           # 도메인 (엔티티, 리포지토리, 어댑터, 도메인서비스)
-SClass-Infrastructure   # 외부 연동 (S3, GCS, OAuth 등)
-SClass-Api-Lms          # LMS API (수업/탐구/정산)
-SClass-Api-Backoffice   # 슈퍼어드민 Backoffice API
-SClass-Api-Supporters   # 서포터즈 서비스 전용 API
+SClass-Infrastructure   # 외부 연동 (S3, OAuth, NicePay, 알림톡, Quartz 등)
+SClass-Api-Supporters   # Supporters API — 트래픽 최다, 독립 스케일링
+SClass-Api-Lms          # LMS API — 학원 단위 수업·탐구·정산
+SClass-Api-Backoffice   # Backoffice API — 내부 운영진 전용
 SClass-Batch            # 배치 처리
 ```
 
