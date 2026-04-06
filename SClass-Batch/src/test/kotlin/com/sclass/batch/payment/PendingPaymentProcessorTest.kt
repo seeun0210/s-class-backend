@@ -31,7 +31,9 @@ class PendingPaymentProcessorTest {
         productAdaptor = mockk()
         coinDomainService = mockk()
         pgGateway = mockk()
-        processor = PendingPaymentProcessor(paymentAdaptor, productAdaptor, coinDomainService, pgGateway)
+        processor = PendingPaymentProcessor(paymentAdaptor, productAdaptor, coinDomainService, pgGateway, mockk())
+        // self-injection: 단위테스트에서는 프록시 없이 자기 자신을 주입
+        processor = PendingPaymentProcessor(paymentAdaptor, productAdaptor, coinDomainService, pgGateway, processor)
     }
 
     private fun createPendingPayment() =

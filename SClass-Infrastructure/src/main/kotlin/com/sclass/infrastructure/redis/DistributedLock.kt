@@ -20,12 +20,12 @@ package com.sclass.infrastructure.redis
  *
  * @param prefix 락 키 프리픽스 (도메인 구분)
  * @param waitTime 락 획득 최대 대기 시간 (초)
- * @param leaseTime 락 자동 해제 시간 (초)
+ * @param leaseTime 락 자동 해제 시간 (초). -1이면 Watchdog이 자동 연장 (기본값)
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DistributedLock(
     val prefix: String,
     val waitTime: Long = 5,
-    val leaseTime: Long = 10,
+    val leaseTime: Long = -1,
 )

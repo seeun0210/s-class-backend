@@ -13,6 +13,7 @@ import com.sclass.infrastructure.nicepay.exception.NicePayException
 import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,6 +23,7 @@ class PendingPaymentProcessor(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
+    @Lazy private val self: PendingPaymentProcessor,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -31,12 +33,12 @@ class PendingPaymentProcessor(
             try {
                 pgGateway.inquiry(payment.pgOrderId)
             } catch (e: NicePayException) {
-                handlePgInquiryFailed(payment, e)
+                self.handlePgInquiryFailed(payment, e)
                 return
             }
 
-        // DB 변경은 락 안에서
-        completePayment(payment.pgOrderId, payment, result)
+        // DB 변경은 락 안에서 (프록시를 통해 호출하여 AOP 적용)
+        self.completePayment(payment.pgOrderId, payment, result)
     }
 
     @DistributedLock(prefix = "payment")

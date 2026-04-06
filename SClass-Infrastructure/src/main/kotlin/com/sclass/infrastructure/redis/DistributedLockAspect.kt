@@ -39,11 +39,15 @@ class DistributedLockAspect(
         val lock = redissonClient.getLock(lockKey)
 
         val acquired =
-            lock.tryLock(
-                distributedLock.waitTime,
-                distributedLock.leaseTime,
-                TimeUnit.SECONDS,
-            )
+            if (distributedLock.leaseTime == -1L) {
+                lock.tryLock(distributedLock.waitTime, TimeUnit.SECONDS)
+            } else {
+                lock.tryLock(
+                    distributedLock.waitTime,
+                    distributedLock.leaseTime,
+                    TimeUnit.SECONDS,
+                )
+            }
 
         if (!acquired) {
             log.warn("분산 락 획득 실패: key={}", lockKey)

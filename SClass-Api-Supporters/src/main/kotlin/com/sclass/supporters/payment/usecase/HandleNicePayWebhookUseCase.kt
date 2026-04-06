@@ -20,17 +20,12 @@ class HandleNicePayWebhookUseCase(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
-
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun execute(payload: NicePayWebhookPayload) {
-        processPayment(payload.orderId, payload)
-    }
-
     @DistributedLock(prefix = "payment")
     @Transactional
-    fun processPayment(
+    fun execute(
         @LockKey orderId: String,
         payload: NicePayWebhookPayload,
     ) {

@@ -45,7 +45,7 @@ class Payment(
     var metadata: String? = null,
 
     @Version
-    val version: Long = 0,
+    var version: Long = 0,
 ) : BaseTimeEntity() {
     fun markPgApproved(pgTid: String) {
         if (status != PaymentStatus.PENDING) {

@@ -1,15 +1,16 @@
 package com.sclass.infrastructure.redis
 
-import jakarta.annotation.PostConstruct
 import org.springframework.aop.support.AopUtils
 import org.springframework.context.ApplicationContext
+import org.springframework.context.event.ContextRefreshedEvent
+import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Component
 
 @Component
 class DistributedLockValidator(
     private val applicationContext: ApplicationContext,
 ) {
-    @PostConstruct
+    @EventListener(ContextRefreshedEvent::class)
     fun validate() {
         applicationContext.beanDefinitionNames
             .mapNotNull { runCatching { applicationContext.getBean(it) }.getOrNull() }
