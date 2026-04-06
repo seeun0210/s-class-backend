@@ -8,8 +8,6 @@ import org.redisson.api.RedissonClient
 import org.slf4j.LoggerFactory
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.expression.spel.standard.SpelExpressionParser
-import org.springframework.expression.spel.support.StandardEvaluationContext
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
@@ -29,14 +27,14 @@ class DistributedLockAspect(
     private val redissonClient: RedissonClient,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
-    private val parser = SpelExpressionParser()
 
     @Around("@annotation(distributedLock)")
     fun around(
         joinPoint: ProceedingJoinPoint,
         distributedLock: DistributedLock,
     ): Any? {
-        val lockKey = "lock:${resolveKey(joinPoint, distributedLock.key)}"
+        val keyValue = resolveKeyValue(joinPoint, distributedLock.key)
+        val lockKey = "lock:${distributedLock.prefix}:$keyValue"
         val lock = redissonClient.getLock(lockKey)
 
         val acquired =
@@ -63,20 +61,31 @@ class DistributedLockAspect(
         }
     }
 
-    private fun resolveKey(
+    private fun resolveKeyValue(
         joinPoint: ProceedingJoinPoint,
-        keyExpression: String,
+        key: String,
     ): String {
         val signature = joinPoint.signature as MethodSignature
         val parameterNames = signature.parameterNames
         val args = joinPoint.args
 
-        val context = StandardEvaluationContext()
-        parameterNames.forEachIndexed { index, name ->
-            context.setVariable(name, args[index])
+        if (parameterNames.isEmpty()) {
+            throw IllegalArgumentException("분산 락 대상 메서드에 파라미터가 없습니다")
         }
 
-        return parser.parseExpression(keyExpression).getValue(context, String::class.java)
-            ?: throw IllegalArgumentException("분산 락 키를 평가할 수 없습니다: $keyExpression")
+        // key가 비어있으면 첫 번째 파라미터 사용
+        if (key.isBlank()) {
+            return args[0].toString()
+        }
+
+        // key에 해당하는 파라미터 이름 찾기
+        val index = parameterNames.indexOf(key)
+        if (index == -1) {
+            throw IllegalArgumentException(
+                "파라미터 '$key'를 찾을 수 없습니다. 사용 가능한 파라미터: ${parameterNames.toList()}",
+            )
+        }
+
+        return args[index].toString()
     }
 }
