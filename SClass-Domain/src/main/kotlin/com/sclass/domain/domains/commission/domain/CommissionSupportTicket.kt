@@ -12,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 
 @Entity
 @Table(name = "commission_support_tickets")
@@ -37,6 +38,9 @@ class CommissionSupportTicket(
 
     @Column(columnDefinition = "TEXT")
     var response: String? = null,
+
+    @Version
+    var version: Long = 0,
 ) : BaseTimeEntity() {
     fun resolve(response: String) {
         this.status = TicketStatus.RESOLVED
