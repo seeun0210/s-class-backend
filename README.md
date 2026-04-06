@@ -1,5 +1,8 @@
 # S-Class Backend
 
+![CI](https://github.com/seeun0210/s-class-backend/actions/workflows/ci.yml/badge.svg)
+![CodeQL](https://github.com/seeun0210/s-class-backend/actions/workflows/codeql.yml/badge.svg)
+
 수행평가 매칭과 학원 관리를 하나의 도메인으로 연결하는 B2B2C 교육 플랫폼 백엔드 서버
 
 - **Supporters** — 학생이 수행평가를 강사에게 의뢰하고 도움받는 매칭 서비스
