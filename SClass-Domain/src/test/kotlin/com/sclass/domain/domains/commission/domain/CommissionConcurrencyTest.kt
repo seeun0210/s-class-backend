@@ -86,7 +86,7 @@ class CommissionConcurrencyTest {
             startLatch.await()
             try {
                 txTemplate.execute {
-                    val commission = commissionRepository.findById(commissionId).get()
+                    val commission = commissionRepository.findById(commissionId).orElseThrow()
                     commission.proposeTopics()
                     commissionRepository.saveAndFlush(commission)
                 }
@@ -102,7 +102,7 @@ class CommissionConcurrencyTest {
             startLatch.await()
             try {
                 txTemplate.execute {
-                    val commission = commissionRepository.findById(commissionId).get()
+                    val commission = commissionRepository.findById(commissionId).orElseThrow()
                     commission.cancel()
                     commissionRepository.saveAndFlush(commission)
                 }
@@ -119,7 +119,7 @@ class CommissionConcurrencyTest {
 
         val finalCommission =
             txTemplate.execute {
-                commissionRepository.findById(commissionId).get()
+                commissionRepository.findById(commissionId).orElseThrow()
             }!!
 
         assertThat(successes.size)
@@ -148,7 +148,7 @@ class CommissionConcurrencyTest {
                 startLatch.await()
                 try {
                     txTemplate.execute {
-                        val commission = commissionRepository.findById(commissionId).get()
+                        val commission = commissionRepository.findById(commissionId).orElseThrow()
                         commission.cancel()
                         commissionRepository.saveAndFlush(commission)
                     }
@@ -166,7 +166,7 @@ class CommissionConcurrencyTest {
 
         val finalCommission =
             txTemplate.execute {
-                commissionRepository.findById(commissionId).get()
+                commissionRepository.findById(commissionId).orElseThrow()
             }!!
 
         assertThat(successes.size)
