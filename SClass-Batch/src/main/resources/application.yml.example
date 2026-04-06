@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: ${DATASOURCE_URL:jdbc:mysql://localhost:3306/sclass}
+    username: ${DATASOURCE_USERNAME:root}
+    password: ${DATASOURCE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: never
+
+  nicepay:
+    client-key: ${NICE_PAY_CLIENT_KEY:}
+    secret-key: ${NICE_PAY_SECRET_KEY:}
+    base-url: ${NICE_PAY_API_URL:https://api.nicepay.co.kr}

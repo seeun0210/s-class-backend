@@ -154,3 +154,36 @@ resource "aws_ssm_parameter" "nicepay_secret_key" {
     Name = "${local.name_prefix}-ssm-nicepay-secret-key"
   }
 }
+
+resource "aws_ssm_parameter" "redis_host" {
+  name      = "/sclass/${var.environment}/REDIS_HOST"
+  type      = "String"
+  value     = var.redis_host
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-redis-host"
+  }
+}
+
+resource "aws_ssm_parameter" "redis_port" {
+  name      = "/sclass/${var.environment}/REDIS_PORT"
+  type      = "String"
+  value     = var.redis_port
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-redis-port"
+  }
+}
+
+resource "aws_ssm_parameter" "redis_password" {
+  name      = "/sclass/${var.environment}/REDIS_PASSWORD"
+  type      = "SecureString"
+  value     = var.redis_password
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-redis-password"
+  }
+}
