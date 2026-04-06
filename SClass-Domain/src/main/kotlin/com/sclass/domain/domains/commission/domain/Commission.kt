@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 
 @Entity
 @Table(name = "commissions")
@@ -41,6 +42,9 @@ class Commission(
 
     @Column(name = "selected_topic_id")
     var selectedTopicId: Long? = null,
+
+    @Version
+    var version: Long = 0,
 ) : BaseTimeEntity() {
     fun requestAdditionalInfo() {
         validateStatusTransition(CommissionStatus.ADDITIONAL_INFO_REQUESTED)
