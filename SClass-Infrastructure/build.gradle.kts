@@ -24,5 +24,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-mail")
 
+    // Redis (Redisson - 분산 락)
+    api("org.redisson:redisson-spring-boot-starter:3.40.2")
+
     testImplementation("io.mockk:mockk:1.13.16")
 }
