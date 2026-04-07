@@ -21,6 +21,14 @@ resource "aws_security_group" "nat" {
     cidr_blocks = var.private_subnet_cidrs
   }
 
+  # Private Subnet → SMTP (Gmail 587)
+  ingress {
+    from_port   = 587
+    to_port     = 587
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs
+  }
+
   # Private Subnet → Redis Cloud
   ingress {
     from_port   = 13699
@@ -57,6 +65,14 @@ resource "aws_security_group" "app_runner" {
   egress {
     from_port   = 443
     to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # SMTP 접근 (NAT Instance 경유)
+  egress {
+    from_port   = 587
+    to_port     = 587
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
