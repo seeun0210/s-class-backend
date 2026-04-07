@@ -41,6 +41,11 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.16")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-web")
+
+    // test container
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("org.testcontainers:mysql:1.20.4")
 }
 
 afterEvaluate {

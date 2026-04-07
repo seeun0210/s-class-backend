@@ -9,8 +9,10 @@ import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 
 @UseCase
 class HandleNicePayWebhookUseCase(
@@ -18,12 +20,15 @@ class HandleNicePayWebhookUseCase(
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
-
+    private val txTemplate: TransactionTemplate,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Transactional
-    fun execute(payload: NicePayWebhookPayload) {
+    @DistributedLock(prefix = "payment")
+    fun execute(
+        @LockKey orderId: String,
+        payload: NicePayWebhookPayload,
+    ) {
         if (!pgGateway.verifyWebhookSignature(
                 payload.tid,
                 payload.amount,
@@ -31,15 +36,15 @@ class HandleNicePayWebhookUseCase(
                 payload.signature,
             )
         ) {
-            log.warn("웹훅 서명 검증 실패 orderId={}", payload.orderId)
+            log.warn("웹훅 서명 검증 실패 orderId={}", orderId)
             return
         }
 
         val payment =
-            paymentAdaptor.findByPgOrderIdOrNull(payload.orderId) ?: run {
+            paymentAdaptor.findByPgOrderIdOrNull(orderId) ?: run {
                 log.warn(
                     "웹훅 수신: 알 수 없는 pgOrderId={}",
-                    payload.orderId,
+                    orderId,
                 )
                 return
             }
@@ -48,31 +53,46 @@ class HandleNicePayWebhookUseCase(
             log.info(
                 "웹훅 수신: 실패 결과 resultCode={}, orderId={}",
                 payload.resultCode,
-                payload.orderId,
+                orderId,
             )
             return
         }
 
         when (payment.status) {
             PaymentStatus.PENDING -> {
-                payment.markPgApproved(payload.tid)
-
                 val product = productAdaptor.findById(payment.productId)
                 val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
-                coinDomainService.issue(
-                    userId = payment.userId,
-                    amount = coinAmount,
-                    referenceId = payment.id,
-                    description = "결제 완료 (웹훅) - ${product.name}",
-                )
+                // TX1: PG 승인 상태 커밋
+                txTemplate.execute {
+                    val fresh = paymentAdaptor.findById(payment.id)
+                    fresh.markPgApproved(payload.tid)
+                    paymentAdaptor.save(fresh)
+                }
 
-                payment.markCompleted()
-                paymentAdaptor.save(payment)
-                log.info(
-                    "웹훅 수신: 결제 완료 처리 paymentId={}",
-                    payment.id,
-                )
+                // TX2: 코인 발급 + 완료
+                try {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        coinDomainService.issue(
+                            userId = fresh.userId,
+                            amount = coinAmount,
+                            referenceId = fresh.id,
+                            description = "결제 완료 (웹훅) - ${product.name}",
+                        )
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    log.info("웹훅 수신: 결제 완료 처리 paymentId={}", payment.id)
+                } catch (e: Exception) {
+                    // TX3: 코인 발급 실패 → ISSUE_COIN_FAILED 마킹
+                    log.error("웹훅 수신: 코인 발급 실패 paymentId={}", payment.id, e)
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        fresh.markIssueCoinFailed()
+                        paymentAdaptor.save(fresh)
+                    }
+                }
             }
             PaymentStatus.COMPLETED -> {
                 log.info(
