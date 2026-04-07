@@ -3,6 +3,7 @@ package com.sclass.common.exception
 import com.sclass.common.dto.ApiResponse
 import com.sclass.common.dto.ErrorResponse
 import org.slf4j.LoggerFactory
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -55,6 +56,15 @@ open class GlobalExceptionHandler {
     fun handleNoResourceFound(e: NoResourceFoundException): ResponseEntity<ApiResponse<Nothing>> {
         log.warn("Resource not found: {}", e.resourcePath)
         val errorCode = GlobalErrorCode.NOT_FOUND
+        return ResponseEntity
+            .status(errorCode.httpStatus)
+            .body(ApiResponse.error(ErrorResponse.of(errorCode)))
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException::class)
+    fun handleOptimisticLock(e: OptimisticLockingFailureException): ResponseEntity<ApiResponse<Nothing>> {
+        log.warn("Optimistic lock conflict: {}", e.message)
+        val errorCode = GlobalErrorCode.CONFLICT
         return ResponseEntity
             .status(errorCode.httpStatus)
             .body(ApiResponse.error(ErrorResponse.of(errorCode)))
