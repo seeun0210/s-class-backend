@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.Duration
 
 @Component
@@ -47,7 +48,11 @@ class ReportServiceClient(
                     logger.info("[report-service] survey-report accepted requestId=$requestId status=${it.statusCode}")
                     onSuccess()
                 },
-                { onError(it) },
+                { e ->
+                    val body = (e as? WebClientResponseException)?.responseBodyAsString ?: e.message
+                    logger.error("[report-service] survey-report 호출 실패 requestId=$requestId body=$body")
+                    onError(e)
+                },
             )
     }
 
