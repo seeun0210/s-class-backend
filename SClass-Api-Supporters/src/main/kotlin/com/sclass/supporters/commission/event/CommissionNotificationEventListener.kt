@@ -39,17 +39,4 @@ class CommissionNotificationEventListener(
             commissionId = event.commissionId,
         )
     }
-
-    @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    fun handle(event: AdditionalInfoRequestedEvent) {
-        val student = userAdaptor.findById(event.studentUserId)
-        val phoneNumber = student.phoneNumber ?: return
-        commissionNotificationSender.sendAdditionalInfoRequested(
-            phoneNumber = phoneNumber,
-            studentName = student.name,
-            requestContent = event.requestContent,
-            commissionId = event.commissionId,
-        )
-    }
 }

@@ -11,4 +11,7 @@ class CommissionProduct(
 
     @Column(nullable = true)
     val coinCost: Int,
+
+    @Column(name = "teacher_payout_amount_won", nullable = false)
+    val teacherPayoutAmountWon: Int,
 ) : Product(name = name, priceWon = 0)

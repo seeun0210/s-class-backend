@@ -2,11 +2,8 @@ package com.sclass.domain.domains.commission.domain
 
 enum class CommissionStatus {
     REQUESTED,
-    ADDITIONAL_INFO_REQUESTED,
     TOPIC_PROPOSED,
-    TOPIC_SELECTED,
-    IN_PROGRESS,
-    COMPLETED,
+    ACCEPTED, // 학생이 주제 선택 → Lesson 생성 완료 (terminal)
     REJECTED,
     CANCELLED,
 }
