@@ -21,12 +21,15 @@ class GetMyTeacherProfileUseCase(
     fun execute(userId: String): TeacherProfileResponse {
         val teacher = teacherAdaptor.findByUserId(userId)
         val documents = teacherDocumentAdaptor.findAllByTeacherId(teacher.id)
+        val allRoles = userRoleAdaptor.findAllByUserId(userId)
         val userRole =
-            userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, Platform.SUPPORTERS, Role.TEACHER)
+            allRoles.find { it.platform == Platform.SUPPORTERS && it.role == Role.TEACHER }
                 ?: throw RoleNotFoundException()
+        val platforms = allRoles.filter { it.state.isActive }.map { it.platform }.distinct()
         return TeacherProfileResponse.from(
             teacher = teacher,
             userRole = userRole,
+            platforms = platforms,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }

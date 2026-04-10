@@ -40,12 +40,15 @@ class UpdateTeacherProfileUseCase(
                 residentNumber = request.residentNumber,
             )
         val documents = teacherDocumentAdaptor.findAllByTeacherId(updated.id)
+        val allRoles = userRoleAdaptor.findAllByUserId(userId)
         val userRole =
-            userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, Platform.SUPPORTERS, Role.TEACHER)
+            allRoles.find { it.platform == Platform.SUPPORTERS && it.role == Role.TEACHER }
                 ?: throw RoleNotFoundException()
+        val platforms = allRoles.filter { it.state.isActive }.map { it.platform }.distinct()
         return TeacherProfileResponse.from(
             teacher = updated,
             userRole = userRole,
+            platforms = platforms,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }
