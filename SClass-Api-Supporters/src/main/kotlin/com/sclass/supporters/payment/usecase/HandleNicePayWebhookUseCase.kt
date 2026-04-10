@@ -2,10 +2,12 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.service.CoinDomainService
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
@@ -21,6 +23,7 @@ class HandleNicePayWebhookUseCase(
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
     private val txTemplate: TransactionTemplate,
+    private val enrollmentAdaptor: EnrollmentAdaptor,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -58,34 +61,31 @@ class HandleNicePayWebhookUseCase(
             return
         }
 
-        when (payment.status) {
-            PaymentStatus.PENDING -> {
-                val product = productAdaptor.findById(payment.productId)
-                val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
+        if (payment.status != PaymentStatus.PENDING) {
+            log.info("웹훅 수신: 처리 불필요한 결제 상태 status={}, paymentId={}", payment.status, payment.id)
+            return
+        }
 
-                // TX1: PG 승인 상태 커밋
+        when (val product = productAdaptor.findById(payment.productId)) {
+            is CoinProduct -> {
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     fresh.markPgApproved(payload.tid)
                     paymentAdaptor.save(fresh)
                 }
-
-                // TX2: 코인 발급 + 완료
                 try {
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         coinDomainService.issue(
                             userId = fresh.userId,
-                            amount = coinAmount,
+                            amount = product.coinAmount,
                             referenceId = fresh.id,
                             description = "결제 완료 (웹훅) - ${product.name}",
                         )
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)
                     }
-                    log.info("웹훅 수신: 결제 완료 처리 paymentId={}", payment.id)
                 } catch (e: Exception) {
-                    // TX3: 코인 발급 실패 → ISSUE_COIN_FAILED 마킹
                     log.error("웹훅 수신: 코인 발급 실패 paymentId={}", payment.id, e)
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
@@ -94,15 +94,22 @@ class HandleNicePayWebhookUseCase(
                     }
                 }
             }
-            PaymentStatus.COMPLETED -> {
-                log.info(
-                    "웹훅 수신: 이미 완료된 결제 paymentId={}",
-                    payment.id,
-                )
+            is CourseProduct -> {
+                txTemplate.execute {
+                    val fresh = paymentAdaptor.findById(payment.id)
+                    fresh.markPgApproved(payload.tid)
+                    paymentAdaptor.save(fresh)
+                }
+                txTemplate.execute {
+                    val fresh = paymentAdaptor.findById(payment.id)
+                    val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+                    enrollment.markPaid()
+                    enrollmentAdaptor.save(enrollment)
+                    fresh.markCompleted()
+                    paymentAdaptor.save(fresh)
+                }
             }
-            else -> {
-                log.warn("웹훅 수신: 처리 불가 상태 status={}, paymentId={}", payment.status, payment.id)
-            }
+            else -> throw ProductTypeMismatchException()
         }
     }
 
