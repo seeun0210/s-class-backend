@@ -12,9 +12,3 @@ data class TopicSuggestedEvent(
     val studentUserId: String,
     val commissionId: String,
 )
-
-data class AdditionalInfoRequestedEvent(
-    val studentUserId: String,
-    val requestContent: String,
-    val commissionId: String,
-)

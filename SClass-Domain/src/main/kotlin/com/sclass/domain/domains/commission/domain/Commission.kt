@@ -9,11 +9,20 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 
 @Entity
-@Table(name = "commissions")
+@Table(
+    name = "commissions",
+    indexes = [
+        Index(name = "idx_commissions_student", columnList = "student_user_id"),
+        Index(name = "idx_commissions_teacher", columnList = "teacher_user_id"),
+        Index(name = "idx_commissions_product", columnList = "product_id"),
+        Index(name = "idx_commissions_status", columnList = "status"),
+    ],
+)
 class Commission(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +33,14 @@ class Commission(
 
     @Column(name = "teacher_user_id", nullable = false, length = 26)
     val teacherUserId: String,
+
+    // 요청 시점의 CommissionProduct 스냅샷 참조
+    @Column(name = "product_id", nullable = false, length = 26)
+    val productId: String,
+
+    // 요청 시점의 교사 보수 스냅샷 (TeacherPayoutResolver 결과를 굳혀둠)
+    @Column(name = "teacher_payout_amount_won", nullable = false)
+    val teacherPayoutAmountWon: Int,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -43,74 +60,40 @@ class Commission(
     @Column(name = "selected_topic_id")
     var selectedTopicId: Long? = null,
 
+    // 수락 시 생성된 Lesson FK
+    @Column(name = "accepted_lesson_id")
+    var acceptedLessonId: Long? = null,
+
     @Version
     var version: Long = 0,
 ) : BaseTimeEntity() {
-    fun requestAdditionalInfo() {
-        validateStatusTransition(CommissionStatus.ADDITIONAL_INFO_REQUESTED)
-        this.status = CommissionStatus.ADDITIONAL_INFO_REQUESTED
+    fun proposeTopics() = transitionTo(CommissionStatus.TOPIC_PROPOSED)
+
+    fun selectTopicAndAccept(
+        topicId: Long,
+        lessonId: Long,
+    ) {
+        transitionTo(CommissionStatus.ACCEPTED)
+        this.selectedTopicId = topicId
+        this.acceptedLessonId = lessonId
     }
 
-    fun resubmit() {
-        validateStatusTransition(CommissionStatus.REQUESTED)
-        this.status = CommissionStatus.REQUESTED
-    }
+    fun reject() = transitionTo(CommissionStatus.REJECTED)
 
-    fun proposeTopics() {
-        validateStatusTransition(CommissionStatus.TOPIC_PROPOSED)
-        this.status = CommissionStatus.TOPIC_PROPOSED
-    }
+    fun cancel() = transitionTo(CommissionStatus.CANCELLED)
 
-    fun selectTopic() {
-        validateStatusTransition(CommissionStatus.TOPIC_SELECTED)
-        this.status = CommissionStatus.TOPIC_SELECTED
-    }
-
-    fun start() {
-        validateStatusTransition(CommissionStatus.IN_PROGRESS)
-        this.status = CommissionStatus.IN_PROGRESS
-    }
-
-    fun complete() {
-        validateStatusTransition(CommissionStatus.COMPLETED)
-        this.status = CommissionStatus.COMPLETED
-    }
-
-    fun reject() {
-        validateStatusTransition(CommissionStatus.REJECTED)
-        this.status = CommissionStatus.REJECTED
-    }
-
-    fun cancel() {
-        validateStatusTransition(CommissionStatus.CANCELLED)
-        this.status = CommissionStatus.CANCELLED
-    }
-
-    private fun validateStatusTransition(target: CommissionStatus) {
+    private fun transitionTo(target: CommissionStatus) {
         val allowed =
             when (target) {
-                CommissionStatus.REQUESTED -> setOf(CommissionStatus.ADDITIONAL_INFO_REQUESTED, CommissionStatus.REQUESTED)
-                CommissionStatus.ADDITIONAL_INFO_REQUESTED -> setOf(CommissionStatus.REQUESTED, CommissionStatus.ADDITIONAL_INFO_REQUESTED)
+                CommissionStatus.REQUESTED -> emptySet()
                 CommissionStatus.TOPIC_PROPOSED -> setOf(CommissionStatus.REQUESTED)
-                CommissionStatus.TOPIC_SELECTED -> setOf(CommissionStatus.TOPIC_PROPOSED)
-                CommissionStatus.IN_PROGRESS -> setOf(CommissionStatus.TOPIC_SELECTED)
-                CommissionStatus.COMPLETED -> setOf(CommissionStatus.IN_PROGRESS)
-                CommissionStatus.REJECTED -> {
-                    setOf(
-                        CommissionStatus.REQUESTED,
-                        CommissionStatus.ADDITIONAL_INFO_REQUESTED,
-                    )
-                }
-                CommissionStatus.CANCELLED ->
-                    setOf(
-                        CommissionStatus.REQUESTED,
-                        CommissionStatus.ADDITIONAL_INFO_REQUESTED,
-                        CommissionStatus.TOPIC_PROPOSED,
-                        CommissionStatus.TOPIC_SELECTED,
-                    )
+                CommissionStatus.ACCEPTED -> setOf(CommissionStatus.TOPIC_PROPOSED)
+                CommissionStatus.REJECTED -> setOf(CommissionStatus.REQUESTED)
+                CommissionStatus.CANCELLED -> setOf(CommissionStatus.REQUESTED)
             }
         require(status in allowed) {
             "Cannot transition from $status to $target"
         }
+        this.status = target
     }
 }

@@ -69,6 +69,9 @@ resource "aws_apprunner_service" "services" {
           ALIMTALK_ACCESS_KEY      = aws_ssm_parameter.alimtalk_access_key.arn
           ALIMTALK_SERVICE_ID      = aws_ssm_parameter.alimtalk_service_id.arn
           ALIMTALK_SECRET_KEY      = aws_ssm_parameter.alimtalk_secret_key.arn
+          REDIS_HOST               = aws_ssm_parameter.redis_host.arn
+          REDIS_PORT               = aws_ssm_parameter.redis_port.arn
+          REDIS_PASSWORD           = aws_ssm_parameter.redis_password.arn
         }
       }
 
