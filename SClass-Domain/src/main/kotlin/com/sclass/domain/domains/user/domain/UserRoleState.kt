@@ -6,4 +6,7 @@ enum class UserRoleState {
     PENDING,
     APPROVED,
     REJECTED,
+    ;
+
+    val isActive: Boolean get() = this == NORMAL || this == APPROVED
 }

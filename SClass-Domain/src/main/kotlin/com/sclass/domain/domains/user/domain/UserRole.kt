@@ -76,3 +76,5 @@ class UserRole(
             )
     }
 }
+
+fun List<UserRole>.activePlatforms(): List<Platform> = filter { it.state.isActive }.map { it.platform }.distinct()
