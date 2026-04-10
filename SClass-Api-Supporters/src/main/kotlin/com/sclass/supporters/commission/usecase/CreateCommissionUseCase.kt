@@ -42,11 +42,15 @@ class CreateCommissionUseCase(
                 organizationId = null,
             )
 
+        val commissionProduct = productAdaptor.findActiveCommissionProduct()
+
         val commission =
             commissionAdaptor.save(
                 Commission(
                     studentUserId = studentUserId,
                     teacherUserId = assignment.teacherUserId,
+                    productId = commissionProduct.id,
+                    teacherPayoutAmountWon = commissionProduct.teacherPayoutAmountWon,
                     outputFormat = request.outputFormat,
                     activityType = request.activityType,
                     guideInfo =
@@ -59,8 +63,6 @@ class CreateCommissionUseCase(
                         ),
                 ),
             )
-
-        val commissionProduct = productAdaptor.findActiveCommissionProduct()
 
         coinDomainService.deduct(
             userId = studentUserId,

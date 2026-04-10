@@ -13,7 +13,14 @@ class CreateCommissionProductUseCase(
 ) {
     @Transactional
     fun execute(request: CreateCommissionProductRequest): ProductResponse {
-        val product = productAdaptor.save(CommissionProduct(name = request.name, coinCost = request.coinCost))
+        val product =
+            productAdaptor.save(
+                CommissionProduct(
+                    name = request.name,
+                    coinCost = request.coinCost,
+                    teacherPayoutAmountWon = request.teacherPayoutAmountWon,
+                ),
+            )
         return ProductResponse.from(product)
     }
 }

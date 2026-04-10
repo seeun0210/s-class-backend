@@ -1,0 +1,17 @@
+package com.sclass.domain.domains.enrollment.exception
+
+import com.sclass.common.exception.BusinessException
+
+class EnrollmentNotFoundException : BusinessException(EnrollmentErrorCode.ENROLLMENT_NOT_FOUND)
+
+class EnrollmentAlreadyExistsException : BusinessException(EnrollmentErrorCode.ENROLLMENT_ALREADY_EXISTS)
+
+class EnrollmentPaymentRequiredException : BusinessException(EnrollmentErrorCode.ENROLLMENT_PAYMENT_REQUIRED)
+
+class EnrollmentInvalidStatusTransitionException : BusinessException(EnrollmentErrorCode.ENROLLMENT_INVALID_STATUS_TRANSITION)
+
+class EnrollmentDuplicatePaymentException : BusinessException(EnrollmentErrorCode.ENROLLMENT_DUPLICATE_PAYMENT)
+
+class EnrollmentNotActiveException : BusinessException(EnrollmentErrorCode.ENROLLMENT_NOT_ACTIVE)
+
+class EnrollmentTypeMismatchException : BusinessException(EnrollmentErrorCode.ENROLLMENT_TYPE_MISMATCH)

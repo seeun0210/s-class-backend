@@ -92,7 +92,12 @@ class CreateCommissionUseCaseTest {
     }
 
     private fun mockCommissionProduct(coinCost: Int = 100): CommissionProduct {
-        val product = CommissionProduct(name = "의뢰 기본 상품", coinCost = coinCost)
+        val product =
+            CommissionProduct(
+                name = "의뢰 기본 상품",
+                coinCost = coinCost,
+                teacherPayoutAmountWon = 50_000,
+            )
         every { productAdaptor.findActiveCommissionProduct() } returns product
         return product
     }
