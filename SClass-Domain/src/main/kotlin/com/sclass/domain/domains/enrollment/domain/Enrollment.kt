@@ -83,10 +83,13 @@ class Enrollment private constructor(
         this.status = EnrollmentStatus.COMPLETED
     }
 
-    fun cancel(reason: String) {
+    fun cancel(
+        reason: String,
+        at: LocalDateTime = LocalDateTime.now(),
+    ) {
         validateTransition(EnrollmentStatus.CANCELLED)
         this.status = EnrollmentStatus.CANCELLED
-        this.cancelledAt = LocalDateTime.now()
+        this.cancelledAt = at
         this.cancelReason = reason
     }
 

@@ -18,5 +18,5 @@ class LessonReportAdaptor(
 
     fun findLatestByLesson(lessonId: Long): LessonReport? = lessonReportRepository.findTopByLessonIdOrderByVersionDesc(lessonId)
 
-    fun nextVersion(lessonId: Long): Int = lessonReportRepository.countByLessonId(lessonId) + 1
+    fun nextVersion(lessonId: Long): Int = (findLatestByLesson(lessonId)?.version ?: 0) + 1
 }
