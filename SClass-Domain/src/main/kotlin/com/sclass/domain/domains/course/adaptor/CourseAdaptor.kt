@@ -13,6 +13,8 @@ class CourseAdaptor(
 ) {
     fun save(course: Course): Course = courseRepository.save(course)
 
+    fun saveAll(courses: List<Course>): List<Course> = courseRepository.saveAll(courses)
+
     fun findById(id: Long): Course = courseRepository.findByIdOrNull(id) ?: throw CourseNotFoundException()
 
     fun findByIdOrNull(id: Long): Course? = courseRepository.findByIdOrNull(id)
