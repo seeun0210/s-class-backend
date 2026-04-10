@@ -7,6 +7,7 @@ import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.user.domain.activePlatforms
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.supporters.teacher.dto.TeacherDocumentResponse
 import com.sclass.supporters.teacher.dto.TeacherProfileResponse
@@ -28,7 +29,7 @@ class SubmitTeacherVerificationUseCase(
         val userRole =
             allRoles.find { it.platform == Platform.SUPPORTERS && it.role == Role.TEACHER }
                 ?: throw RoleNotFoundException()
-        val platforms = allRoles.filter { it.state.isActive }.map { it.platform }.distinct()
+        val platforms = allRoles.activePlatforms()
         return TeacherProfileResponse.from(
             teacher = submitted,
             userRole = userRole,

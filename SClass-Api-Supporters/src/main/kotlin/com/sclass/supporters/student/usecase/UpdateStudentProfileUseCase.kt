@@ -5,6 +5,7 @@ import com.sclass.domain.domains.student.adaptor.StudentAdaptor
 import com.sclass.domain.domains.student.adaptor.StudentDocumentAdaptor
 import com.sclass.domain.domains.student.service.StudentDomainService
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
+import com.sclass.domain.domains.user.domain.activePlatforms
 import com.sclass.supporters.student.dto.StudentDocumentResponse
 import com.sclass.supporters.student.dto.StudentProfileResponse
 import com.sclass.supporters.student.dto.UpdateStudentProfileRequest
@@ -31,12 +32,7 @@ class UpdateStudentProfileUseCase(
                 parentPhoneNumber = request.parentPhoneNumber,
             )
         val documents = studentDocumentAdaptor.findAllByStudentId(updated.id)
-        val platforms =
-            userRoleAdaptor
-                .findAllByUserId(userId)
-                .filter { it.state.isActive }
-                .map { it.platform }
-                .distinct()
+        val platforms = userRoleAdaptor.findAllByUserId(userId).activePlatforms()
         return StudentProfileResponse.from(
             student = updated,
             platforms = platforms,
