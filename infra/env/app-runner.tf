@@ -52,8 +52,9 @@ resource "aws_apprunner_service" "services" {
           FRONTEND_URL               = each.key == "supporters-api" ? var.frontend_url : ""
           JWT_ACCESS_EXP             = var.jwt_access_exp
           JWT_REFRESH_EXP            = var.jwt_refresh_exp
-          REPORT_SERVICE_ENABLED     = each.key == "backoffice-api" ? "true" : "false"
-          REPORT_SERVICE_BASE_URL    = each.key == "backoffice-api" ? var.report_service_base_url : ""
+          REPORT_SERVICE_ENABLED              = contains(["backoffice-api", "supporters-api"], each.key) ? "true" : "false"
+          REPORT_SERVICE_BASE_URL             = contains(["backoffice-api", "supporters-api"], each.key) ? var.report_service_base_url : ""
+          REPORT_SERVICE_CALLBACK_BASE_URL    = each.key == "supporters-api" ? var.report_service_callback_base_url : ""
         }
 
         runtime_environment_secrets = {
@@ -72,6 +73,7 @@ resource "aws_apprunner_service" "services" {
           REDIS_HOST               = aws_ssm_parameter.redis_host.arn
           REDIS_PORT               = aws_ssm_parameter.redis_port.arn
           REDIS_PASSWORD           = aws_ssm_parameter.redis_password.arn
+          REPORT_SERVICE_CALLBACK_SECRET = aws_ssm_parameter.report_service_callback_secret.arn
         }
       }
 

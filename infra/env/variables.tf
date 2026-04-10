@@ -172,11 +172,24 @@ variable "frontend_url" {
 }
 
 # ──────────────────────────────────────
-# Report Service (Backoffice only)
+# Report Service
 # ──────────────────────────────────────
 variable "report_service_base_url" {
-  description = "Report service base URL (backoffice-api only)"
+  description = "Report service base URL"
   type        = string
+}
+
+variable "report_service_callback_base_url" {
+  description = "Supporters App Runner base URL (ReportService가 콜백 요청을 보내는 대상)"
+  type        = string
+  default     = ""
+}
+
+variable "report_service_callback_secret" {
+  description = "HMAC-SHA256 secret for validating report callbacks"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
 # ──────────────────────────────────────
