@@ -3,10 +3,13 @@ package com.sclass.backoffice.course.controller
 import com.sclass.backoffice.course.dto.CourseResponse
 import com.sclass.backoffice.course.dto.CreateBulkCourseRequest
 import com.sclass.backoffice.course.dto.CreateCourseRequest
+import com.sclass.backoffice.course.usecase.ActivateCourseUseCase
 import com.sclass.backoffice.course.usecase.CreateBulkCourseUseCase
 import com.sclass.backoffice.course.usecase.CreateCourseUseCase
 import com.sclass.common.dto.ApiResponse
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 class CourseController(
     private val createCourseUseCase: CreateCourseUseCase,
     private val createBulkCourseUseCase: CreateBulkCourseUseCase,
+    private val activateCourseUseCase: ActivateCourseUseCase,
 ) {
     @PostMapping
     fun createCourse(
@@ -27,4 +31,9 @@ class CourseController(
     fun createBulkCourse(
         @RequestBody @Valid request: CreateBulkCourseRequest,
     ): ApiResponse<List<CourseResponse>> = ApiResponse.success(createBulkCourseUseCase.execute(request))
+
+    @PatchMapping("/{courseId}/activate")
+    fun activateCourse(
+        @PathVariable courseId: Long,
+    ): ApiResponse<CourseResponse> = ApiResponse.success(activateCourseUseCase.execute(courseId))
 }

@@ -5,7 +5,9 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface EnrollmentRepository : JpaRepository<Enrollment, Long> {
+interface EnrollmentRepository :
+    JpaRepository<Enrollment, Long>,
+    EnrollmentCustomRepository {
     fun findAllByStudentUserId(studentUserId: String): List<Enrollment>
 
     fun findAllByCourseId(courseId: Long): List<Enrollment>

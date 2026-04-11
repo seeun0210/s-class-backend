@@ -148,6 +148,14 @@ class TeacherCustomRepositoryImpl(
             .where(organizationUser.user.id.eq(userId))
             .fetch()
 
+    override fun findAllByUserIdInWithUser(userIds: List<String>): List<Teacher> =
+        queryFactory
+            .selectFrom(teacher)
+            .join(teacher.user, user)
+            .fetchJoin()
+            .where(teacher.user.id.`in`(userIds))
+            .fetch()
+
     private fun nameContains(name: String?): BooleanExpression? = name?.let { user.name.contains(it) }
 
     private fun emailContains(email: String?): BooleanExpression? = email?.let { user.email.contains(it) }
