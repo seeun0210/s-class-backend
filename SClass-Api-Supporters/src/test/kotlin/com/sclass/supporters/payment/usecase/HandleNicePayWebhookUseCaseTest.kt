@@ -2,12 +2,15 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.domain.Enrollment
+import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
 import io.mockk.every
@@ -127,6 +130,50 @@ class HandleNicePayWebhookUseCaseTest {
         useCase.execute("unknown-order", successPayload("unknown-order"))
 
         verify(exactly = 0) { productAdaptor.findById(any()) }
+    }
+
+    @Test
+    fun `CourseProduct 결제 시 enrollment가 없으면 무시한다`() {
+        val payment = pendingPayment()
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12, teacherPayoutPerLessonWon = 20000)
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `CourseProduct 결제 시 enrollment가 있으면 ACTIVE 처리된다`() {
+        val payment = pendingPayment()
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12, teacherPayoutPerLessonWon = 20000)
+        val enrollment =
+            Enrollment.createForPurchase(
+                courseId = 1L,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                teacherPayoutPerLessonWon = 20000,
+                paymentId = payment.id,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertEquals(EnrollmentStatus.ACTIVE, enrollment.status)
     }
 
     private fun pendingPayment() =
