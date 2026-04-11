@@ -100,11 +100,16 @@ class HandleNicePayWebhookUseCase(
                     fresh.markPgApproved(payload.tid)
                     paymentAdaptor.save(fresh)
                 }
+                val enrollment = enrollmentAdaptor.findByPaymentIdOrNull(payment.id)
+                if (enrollment == null) {
+                    log.warn("웹훅 수신: enrollment 없음 paymentId={}", payment.id)
+                    return
+                }
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
-                    val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                    enrollment.markPaid()
-                    enrollmentAdaptor.save(enrollment)
+                    val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+                    freshEnrollment.markPaid()
+                    enrollmentAdaptor.save(freshEnrollment)
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
                 }
