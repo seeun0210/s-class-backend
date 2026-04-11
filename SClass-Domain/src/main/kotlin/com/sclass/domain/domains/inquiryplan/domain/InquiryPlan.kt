@@ -29,17 +29,11 @@ class InquiryPlan(
     @Column(name = "source_type", nullable = false, length = 30)
     val sourceType: InquiryPlanSourceType,
 
-    // source_type에 따라 참조:
-    //   COURSE_ROADMAP → Course.id
-    //   LESSON         → Lesson.id
     @Column(name = "source_ref_id", nullable = false)
     val sourceRefId: Long,
 
     @Column(name = "requested_by_user_id", nullable = false, length = 26)
     val requestedByUserId: String,
-
-    @Column(nullable = false, length = 200)
-    val subject: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -48,12 +42,20 @@ class InquiryPlan(
     @Column(name = "external_plan_id", length = 100)
     var externalPlanId: String? = null,
 
+    @Column(length = 500)
+    var topic: String? = null,
+
     @Column(name = "failure_reason", length = 1000)
     var failureReason: String? = null,
 ) : BaseTimeEntity() {
-    fun markReady(externalPlanId: String) {
+    fun acceptJobId(jobId: String) {
+        require(status == InquiryPlanStatus.PENDING) { "Cannot accept job id from $status" }
+        this.externalPlanId = jobId
+    }
+
+    fun markReady(topic: String?) {
         require(status == InquiryPlanStatus.PENDING) { "Cannot mark ready from $status" }
-        this.externalPlanId = externalPlanId
+        this.topic = topic
         this.status = InquiryPlanStatus.READY
     }
 

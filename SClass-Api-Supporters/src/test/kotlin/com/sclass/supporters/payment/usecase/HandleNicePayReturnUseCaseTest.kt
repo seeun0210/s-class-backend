@@ -1,6 +1,7 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.domain.domains.coin.service.CoinDomainService
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
@@ -25,6 +26,7 @@ class HandleNicePayReturnUseCaseTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var coinDomainService: CoinDomainService
+    private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var pgGateway: PgGateway
     private lateinit var txTemplate: TransactionTemplate
     private lateinit var useCase: HandleNicePayReturnUseCase
@@ -43,11 +45,13 @@ class HandleNicePayReturnUseCaseTest {
             callback.doInTransaction(mockk())
         }
         every { paymentAdaptor.save(any()) } answers { firstArg() }
+        enrollmentAdaptor = mockk()
         useCase =
             HandleNicePayReturnUseCase(
                 paymentAdaptor,
                 productAdaptor,
                 coinDomainService,
+                enrollmentAdaptor,
                 pgGateway,
                 txTemplate,
                 frontendUrl,

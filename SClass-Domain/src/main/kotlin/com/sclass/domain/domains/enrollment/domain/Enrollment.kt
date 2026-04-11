@@ -43,8 +43,8 @@ class Enrollment private constructor(
     @Column(name = "tuition_amount_won", nullable = false)
     val tuitionAmountWon: Int,
 
-    @Column(name = "teacher_payout_per_session_won", nullable = false)
-    val teacherPayoutPerSessionWon: Int,
+    @Column(name = "teacher_payout_per_lesson_won", nullable = false)
+    val teacherPayoutPerLessonWon: Int,
 
     // ===== 결제 FK (PURCHASE일 때만 채워짐) =====
     // payment 도메인의 Payment.id (ULID) 참조
@@ -128,7 +128,7 @@ class Enrollment private constructor(
             courseId: Long,
             studentUserId: String,
             tuitionAmountWon: Int,
-            teacherPayoutPerSessionWon: Int,
+            teacherPayoutPerLessonWon: Int,
             paymentId: String,
         ): Enrollment =
             Enrollment(
@@ -136,7 +136,7 @@ class Enrollment private constructor(
                 studentUserId = studentUserId,
                 enrollmentType = EnrollmentType.PURCHASE,
                 tuitionAmountWon = tuitionAmountWon,
-                teacherPayoutPerSessionWon = teacherPayoutPerSessionWon,
+                teacherPayoutPerLessonWon = teacherPayoutPerLessonWon,
                 paymentId = paymentId,
                 status = EnrollmentStatus.PENDING_PAYMENT,
             )
@@ -150,7 +150,7 @@ class Enrollment private constructor(
             studentUserId: String,
             grantedByUserId: String,
             grantReason: String,
-            teacherPayoutPerSessionWon: Int,
+            teacherPayoutPerLessonWon: Int,
             tuitionAmountWon: Int = 0,
             type: EnrollmentType = EnrollmentType.ADMIN_GRANT,
         ): Enrollment {
@@ -162,7 +162,7 @@ class Enrollment private constructor(
                 studentUserId = studentUserId,
                 enrollmentType = type,
                 tuitionAmountWon = tuitionAmountWon,
-                teacherPayoutPerSessionWon = teacherPayoutPerSessionWon,
+                teacherPayoutPerLessonWon = teacherPayoutPerLessonWon,
                 status = EnrollmentStatus.ACTIVE,
                 grantedByUserId = grantedByUserId,
                 grantReason = grantReason,

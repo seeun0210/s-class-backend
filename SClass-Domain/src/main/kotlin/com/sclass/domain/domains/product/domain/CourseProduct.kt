@@ -10,9 +10,9 @@ class CourseProduct(
     name: String,
     priceWon: Int,
 
-    @Column(name = "total_sessions", nullable = false)
-    val totalSessions: Int,
+    @Column(name = "total_lessons", nullable = false)
+    val totalLessons: Int,
 
-    @Column(name = "teacher_payout_per_session_won", nullable = false)
-    val teacherPayoutPerSessionWon: Int,
+    @Column(name = "teacher_payout_per_lesson_won", nullable = false)
+    val teacherPayoutPerLessonWon: Int,
 ) : Product(name = name, priceWon = priceWon)

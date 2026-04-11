@@ -2,10 +2,12 @@ package com.sclass.backoffice.product.controller
 
 import com.sclass.backoffice.product.dto.CreateCoinProductRequest
 import com.sclass.backoffice.product.dto.CreateCommissionProductRequest
+import com.sclass.backoffice.product.dto.CreateCourseProductRequest
 import com.sclass.backoffice.product.dto.ProductListResponse
 import com.sclass.backoffice.product.dto.ProductResponse
 import com.sclass.backoffice.product.usecase.CreateCoinProductUseCase
 import com.sclass.backoffice.product.usecase.CreateCommissionProductUseCase
+import com.sclass.backoffice.product.usecase.CreateCourseProductUseCase
 import com.sclass.backoffice.product.usecase.DeactivateProductUseCase
 import com.sclass.backoffice.product.usecase.GetAdminProductListUseCase
 import com.sclass.common.dto.ApiResponse
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/products")
 class ProductController(
     private val createCoinProductUseCase: CreateCoinProductUseCase,
+    private val createCourseProductUseCase: CreateCourseProductUseCase,
     private val createCommissionProductUseCase: CreateCommissionProductUseCase,
     private val deactivateProductUseCase: DeactivateProductUseCase,
     private val getProductListUseCase: GetAdminProductListUseCase,
@@ -38,6 +41,11 @@ class ProductController(
     fun createCommissionProduct(
         @RequestBody @Valid request: CreateCommissionProductRequest,
     ): ApiResponse<ProductResponse> = ApiResponse.success(createCommissionProductUseCase.execute(request))
+
+    @PostMapping("/course")
+    fun createCourseProduct(
+        @RequestBody @Valid request: CreateCourseProductRequest,
+    ): ApiResponse<ProductResponse> = ApiResponse.success(createCourseProductUseCase.execute(request))
 
     @PatchMapping("/{id}/deactivate")
     fun deactivateProduct(

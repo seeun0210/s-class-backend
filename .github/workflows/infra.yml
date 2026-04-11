@@ -82,6 +82,7 @@ jobs:
       TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
       TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
       TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
+      TF_VAR_report_service_callback_secret: ${{ secrets.TF_VAR_REPORT_SERVICE_CALLBACK_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
@@ -133,6 +134,7 @@ jobs:
       TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
       TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
       TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
+      TF_VAR_report_service_callback_secret: ${{ secrets.TF_VAR_REPORT_SERVICE_CALLBACK_SECRET }}
 
     steps:
       - uses: actions/checkout@v4

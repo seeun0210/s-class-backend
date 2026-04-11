@@ -71,15 +71,20 @@ class DistributedLockAspect(
         val method = signature.method
         val args = joinPoint.args
 
+        val keyParts = mutableListOf<String>()
         method.parameters.forEachIndexed { index, param ->
             if (param.isAnnotationPresent(LockKey::class.java)) {
-                return args[index]?.toString()
+                keyParts += args[index]?.toString()
                     ?: throw IllegalArgumentException("@LockKey 파라미터가 null입니다")
             }
         }
 
-        throw IllegalArgumentException(
-            "@DistributedLock 메서드에 @LockKey 파라미터가 없습니다: ${method.declaringClass.simpleName}.${method.name}()",
-        )
+        if (keyParts.isEmpty()) {
+            throw IllegalArgumentException(
+                "@DistributedLock 메서드에 @LockKey 파라미터가 없습니다: ${method.declaringClass.simpleName}.${method.name}()",
+            )
+        }
+
+        return keyParts.joinToString(":")
     }
 }
