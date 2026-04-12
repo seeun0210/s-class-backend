@@ -23,6 +23,8 @@ class InquiryPlanAdaptor(
         repository.findByIdAndRequestedByUserId(id, userId)
             ?: throw InquiryPlanNotFoundException()
 
+    fun findByJobIdOrNull(jobId: String): InquiryPlan? = repository.findByExternalPlanId(jobId)
+
     fun findAllBySource(
         sourceType: InquiryPlanSourceType,
         sourceRefId: Long,

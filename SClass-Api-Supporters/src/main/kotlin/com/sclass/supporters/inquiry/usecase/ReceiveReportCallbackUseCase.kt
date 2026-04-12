@@ -6,6 +6,7 @@ import com.sclass.domain.domains.inquiryplan.domain.InquiryPlanStatus
 import com.sclass.domain.domains.webhook.exception.WebhookInvalidSecretException
 import com.sclass.infrastructure.report.ReportServiceProperties
 import com.sclass.infrastructure.report.dto.ReportCallbackPayload
+import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 import java.security.MessageDigest
@@ -20,6 +21,8 @@ class ReceiveReportCallbackUseCase(
     private val objectMapper: ObjectMapper,
     private val properties: ReportServiceProperties,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     fun execute(
         signature: String,
@@ -30,12 +33,22 @@ class ReceiveReportCallbackUseCase(
         verifySignature(timestamp, rawBody, signature)
 
         val payload = objectMapper.readValue(rawBody, ReportCallbackPayload::class.java)
-        val plan = inquiryPlanAdaptor.findById(payload.requestId.toLong())
+        val jobId =
+            payload.jobId ?: run {
+                log.warn("콜백 수신: jobId 없음")
+                return
+            }
+
+        val plan =
+            inquiryPlanAdaptor.findByJobIdOrNull(jobId) ?: run {
+                log.warn("콜백 수신: jobId={}에 해당하는 InquiryPlan 없음", jobId)
+                return
+            }
 
         if (plan.status != InquiryPlanStatus.PENDING) return
 
         when (payload.event) {
-            "report.completed" -> plan.markReady(payload.result?.topic)
+            "report.completed" -> plan.markReady(payload.result?.get("topic") as? String)
             "report.failed" -> plan.markFailed(payload.error?.message ?: "알 수 없는 오류")
         }
         inquiryPlanAdaptor.save(plan)
