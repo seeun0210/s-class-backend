@@ -11,8 +11,7 @@ data class ProposeTopicsRequest(
 )
 
 data class TopicRequest(
-    @field:NotBlank
-    val topicId: String,
+    val topicId: String? = null,
 
     @field:NotBlank
     val title: String,

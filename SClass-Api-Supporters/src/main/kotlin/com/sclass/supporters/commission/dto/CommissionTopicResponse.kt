@@ -4,7 +4,7 @@ import com.sclass.domain.domains.commission.domain.CommissionTopic
 
 data class CommissionTopicResponse(
     val id: Long,
-    val topicId: String,
+    val topicId: String?,
     val title: String,
     val description: String?,
     val selected: Boolean,
