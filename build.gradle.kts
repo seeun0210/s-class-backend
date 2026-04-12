@@ -43,6 +43,9 @@ subprojects {
 
     kotlin {
         jvmToolchain(21)
+        compilerOptions {
+            javaParameters.set(true)
+        }
     }
 
     repositories { mavenCentral() }
