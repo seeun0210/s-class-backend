@@ -1,6 +1,7 @@
 package com.sclass.supporters.enrollment.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.exception.EnrollmentUnauthorizedAccessException
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class GetEnrollmentLessonsUseCase(
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val courseAdaptor: CourseAdaptor,
     private val lessonAdaptor: LessonAdaptor,
 ) {
     @Transactional(readOnly = true)
@@ -18,9 +20,15 @@ class GetEnrollmentLessonsUseCase(
         enrollmentId: Long,
     ): List<LessonResponse> {
         val enrollment = enrollmentAdaptor.findById(enrollmentId)
-        if (enrollment.studentUserId != userId) {
+        val course = courseAdaptor.findById(enrollment.courseId)
+
+        val isStudent = enrollment.studentUserId == userId
+        val isTeacher = course.teacherUserId == userId
+
+        if (!isStudent && !isTeacher) {
             throw EnrollmentUnauthorizedAccessException()
         }
+
         return lessonAdaptor.findAllByEnrollment(enrollmentId).map { LessonResponse.from(it) }
     }
 }
