@@ -1,8 +1,10 @@
 package com.sclass.backoffice.enrollment.controller
 
+import com.sclass.backoffice.enrollment.dto.EnrollmentLessonListResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentPageResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentResponse
 import com.sclass.backoffice.enrollment.dto.GrantEnrollmentRequest
+import com.sclass.backoffice.enrollment.usecase.GetEnrollmentLessonListUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentListUseCase
 import com.sclass.backoffice.enrollment.usecase.GrantEnrollmentUseCase
 import com.sclass.common.annotation.CurrentUserId
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 class EnrollmentController(
     private val grantEnrollmentUseCase: GrantEnrollmentUseCase,
     private val getEnrollmentListUseCase: GetEnrollmentListUseCase,
+    private val getEnrollmentLessonListUseCase: GetEnrollmentLessonListUseCase,
 ) {
     @PostMapping("/grant")
     fun grantEnrollment(
@@ -41,4 +45,9 @@ class EnrollmentController(
         @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<EnrollmentPageResponse> =
         ApiResponse.success(getEnrollmentListUseCase.execute(studentUserId, teacherUserId, courseId, status, pageable))
+
+    @GetMapping("/{enrollmentId}/lessons")
+    fun getEnrollmentLessonList(
+        @PathVariable enrollmentId: Long,
+    ): ApiResponse<EnrollmentLessonListResponse> = ApiResponse.success(getEnrollmentLessonListUseCase.execute(enrollmentId))
 }
