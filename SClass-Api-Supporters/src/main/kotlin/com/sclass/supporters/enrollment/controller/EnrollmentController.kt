@@ -48,6 +48,7 @@ class EnrollmentController(
 
     @GetMapping("/{enrollmentId}/lessons")
     fun getEnrollmentLessons(
+        @CurrentUserId userId: String,
         @PathVariable enrollmentId: Long,
-    ): ApiResponse<List<LessonResponse>> = success(getEnrollmentLessonsUseCase.execute(enrollmentId))
+    ): ApiResponse<List<LessonResponse>> = success(getEnrollmentLessonsUseCase.execute(userId, enrollmentId))
 }

@@ -3,6 +3,7 @@ package com.sclass.supporters.lesson.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.inquiryplan.domain.InquiryPlanSourceType
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
+import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.supporters.inquiry.dto.CreateInquiryPlanRequest
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
 import com.sclass.supporters.inquiry.usecase.CreateInquiryPlanUseCase
@@ -19,8 +20,8 @@ class CreateLessonInquiryPlanUseCase(
         request: CreateLessonInquiryPlanRequest,
     ): InquiryPlanResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-        require(lesson.assignedTeacherUserId == userId) {
-            "선생님만 탐구 계획을 생성할 수 있습니다"
+        if (lesson.assignedTeacherUserId != userId) {
+            throw LessonUnauthorizedAccessException()
         }
         return createInquiryPlanUseCase.execute(
             userId,

@@ -14,4 +14,5 @@ enum class EnrollmentErrorCode(
     ENROLLMENT_DUPLICATE_PAYMENT("ENROLLMENT_005", "이미 처리된 결제입니다", 409),
     ENROLLMENT_NOT_ACTIVE("ENROLLMENT_006", "활성 상태의 수강 등록이 아닙니다", 400),
     ENROLLMENT_TYPE_MISMATCH("ENROLLMENT_007", "해당 작업은 이 등록 유형에서 허용되지 않습니다", 400),
+    ENROLLMENT_UNAUTHORIZED_ACCESS("ENROLLMENT_008", "해당 수강에 대한 권한이 없습니다", 403),
 }
