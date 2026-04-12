@@ -28,4 +28,9 @@ class UserRoleAdaptor(
         platform: Platform,
         role: Role,
     ): UserRole? = userRoleRepository.findByUserIdAndPlatformAndRole(userId, platform, role)
+
+    fun findAllByUserIdAndRole(
+        userId: String,
+        role: Role,
+    ): List<UserRole> = userRoleRepository.findAllByUserIdAndRole(userId, role)
 }

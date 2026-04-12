@@ -38,7 +38,6 @@ class JwtAuthInterceptor(
 
         request.setAttribute(USER_ID_ATTRIBUTE, tokenInfo.userId)
         request.setAttribute(USER_ROLE_ATTRIBUTE, tokenInfo.role)
-        request.setAttribute(USER_PLATFORM_ATTRIBUTE, tokenInfo.platform)
         return true
     }
 }
