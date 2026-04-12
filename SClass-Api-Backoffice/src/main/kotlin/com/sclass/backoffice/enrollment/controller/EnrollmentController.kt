@@ -35,9 +35,10 @@ class EnrollmentController(
     @GetMapping
     fun getEnrollmentList(
         @RequestParam(required = false) studentUserId: String?,
+        @RequestParam(required = false) teacherUserId: String?,
         @RequestParam(required = false) courseId: Long?,
         @RequestParam(required = false) status: EnrollmentStatus?,
         @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<EnrollmentPageResponse> =
-        ApiResponse.success(getEnrollmentListUseCase.execute(studentUserId, courseId, status, pageable))
+        ApiResponse.success(getEnrollmentListUseCase.execute(studentUserId, teacherUserId, courseId, status, pageable))
 }

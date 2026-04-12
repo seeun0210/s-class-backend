@@ -21,6 +21,7 @@ class GetEnrollmentListUseCaseTest {
         studentName: String = "홍길동",
         courseId: Long = 1L,
         courseName: String = "수학 기초",
+        teacherUserId: String = "teacher01",
         teacherName: String = "김선생",
         status: EnrollmentStatus = EnrollmentStatus.ACTIVE,
     ) = EnrollmentWithDetailDto(
@@ -35,6 +36,7 @@ class GetEnrollmentListUseCaseTest {
             ),
         studentName = studentName,
         courseName = courseName,
+        teacherUserId = teacherUserId,
         teacherName = teacherName,
     )
 
@@ -46,9 +48,9 @@ class GetEnrollmentListUseCaseTest {
                 createEnrollmentDto(studentName = "김철수", courseName = "영어 회화"),
             )
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments(null, null, null, pageable) } returns PageImpl(dtos, pageable, 2)
+        every { enrollmentAdaptor.searchEnrollments(null, null, null, null, pageable) } returns PageImpl(dtos, pageable, 2)
 
-        val result = useCase.execute(null, null, null, pageable)
+        val result = useCase.execute(null, null, null, null, pageable)
 
         assertAll(
             { assertEquals(2, result.totalElements) },
@@ -65,9 +67,9 @@ class GetEnrollmentListUseCaseTest {
     fun `studentUserId 필터를 적용하면 해당 학생의 enrollment만 반환한다`() {
         val dto = createEnrollmentDto(studentUserId = "student01", studentName = "홍길동")
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments("student01", null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+        every { enrollmentAdaptor.searchEnrollments("student01", null, null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
 
-        val result = useCase.execute("student01", null, null, pageable)
+        val result = useCase.execute("student01", null, null, null, pageable)
 
         assertAll(
             { assertEquals(1, result.totalElements) },
@@ -80,9 +82,9 @@ class GetEnrollmentListUseCaseTest {
     fun `courseId 필터를 적용하면 해당 코스의 enrollment만 반환한다`() {
         val dto = createEnrollmentDto(courseId = 1L, courseName = "수학 기초")
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments(null, 1L, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+        every { enrollmentAdaptor.searchEnrollments(null, null, 1L, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
 
-        val result = useCase.execute(null, 1L, null, pageable)
+        val result = useCase.execute(null, null, 1L, null, pageable)
 
         assertAll(
             { assertEquals(1, result.totalElements) },
@@ -94,10 +96,10 @@ class GetEnrollmentListUseCaseTest {
     fun `status 필터를 적용하면 해당 상태의 enrollment만 반환한다`() {
         val dto = createEnrollmentDto(status = EnrollmentStatus.ACTIVE)
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments(null, null, EnrollmentStatus.ACTIVE, pageable) } returns
+        every { enrollmentAdaptor.searchEnrollments(null, null, null, EnrollmentStatus.ACTIVE, pageable) } returns
             PageImpl(listOf(dto), pageable, 1)
 
-        val result = useCase.execute(null, null, EnrollmentStatus.ACTIVE, pageable)
+        val result = useCase.execute(null, null, null, EnrollmentStatus.ACTIVE, pageable)
 
         assertAll(
             { assertEquals(1, result.totalElements) },
@@ -106,22 +108,40 @@ class GetEnrollmentListUseCaseTest {
     }
 
     @Test
-    fun `teacherName이 응답에 포함된다`() {
-        val dto = createEnrollmentDto(teacherName = "김선생")
+    fun `teacherUserId 필터를 적용하면 해당 선생님의 enrollment만 반환한다`() {
+        val dto = createEnrollmentDto(teacherUserId = "teacher01", teacherName = "김선생")
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments(null, null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+        every { enrollmentAdaptor.searchEnrollments(null, "teacher01", null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
 
-        val result = useCase.execute(null, null, null, pageable)
+        val result = useCase.execute(null, "teacher01", null, null, pageable)
 
-        assertEquals("김선생", result.content[0].teacherName)
+        assertAll(
+            { assertEquals(1, result.totalElements) },
+            { assertEquals("teacher01", result.content[0].teacherUserId) },
+            { assertEquals("김선생", result.content[0].teacherName) },
+        )
+    }
+
+    @Test
+    fun `teacherUserId와 teacherName이 응답에 포함된다`() {
+        val dto = createEnrollmentDto(teacherUserId = "teacher01", teacherName = "김선생")
+        val pageable = PageRequest.of(0, 20)
+        every { enrollmentAdaptor.searchEnrollments(null, null, null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, null, null, pageable)
+
+        assertAll(
+            { assertEquals("teacher01", result.content[0].teacherUserId) },
+            { assertEquals("김선생", result.content[0].teacherName) },
+        )
     }
 
     @Test
     fun `enrollment이 없으면 빈 페이지를 반환한다`() {
         val pageable = PageRequest.of(0, 20)
-        every { enrollmentAdaptor.searchEnrollments(null, null, null, pageable) } returns PageImpl(emptyList(), pageable, 0)
+        every { enrollmentAdaptor.searchEnrollments(null, null, null, null, pageable) } returns PageImpl(emptyList(), pageable, 0)
 
-        val result = useCase.execute(null, null, null, pageable)
+        val result = useCase.execute(null, null, null, null, pageable)
 
         assertAll(
             { assertEquals(0, result.totalElements) },

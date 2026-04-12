@@ -6,5 +6,6 @@ data class EnrollmentWithDetailDto(
     val enrollment: Enrollment,
     val studentName: String,
     val courseName: String,
+    val teacherUserId: String,
     val teacherName: String,
 )

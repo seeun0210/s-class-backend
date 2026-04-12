@@ -29,10 +29,11 @@ class EnrollmentAdaptor(
 
     fun searchEnrollments(
         studentUserId: String?,
+        teacherUserId: String?,
         courseId: Long?,
         status: EnrollmentStatus?,
         pageable: Pageable,
-    ): Page<EnrollmentWithDetailDto> = enrollmentRepository.searchEnrollments(studentUserId, courseId, status, pageable)
+    ): Page<EnrollmentWithDetailDto> = enrollmentRepository.searchEnrollments(studentUserId, teacherUserId, courseId, status, pageable)
 
     fun findAllByCourse(courseId: Long): List<Enrollment> = enrollmentRepository.findAllByCourseId(courseId)
 
