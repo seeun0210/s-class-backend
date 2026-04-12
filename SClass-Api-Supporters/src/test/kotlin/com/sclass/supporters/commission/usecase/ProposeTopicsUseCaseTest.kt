@@ -95,6 +95,33 @@ class ProposeTopicsUseCaseTest {
     }
 
     @Test
+    fun `topicId가 null인 주제도 제안할 수 있다`() {
+        val commission = createCommission()
+        every { commissionAdaptor.findById(1L) } returns commission
+
+        val topicsSlot = slot<List<CommissionTopic>>()
+        every { commissionTopicAdaptor.saveAll(capture(topicsSlot)) } answers { topicsSlot.captured }
+
+        val request =
+            ProposeTopicsRequest(
+                topics =
+                    listOf(
+                        TopicRequest(topicId = null, title = "새 주제", description = "설명"),
+                        TopicRequest(topicId = "mongo-id-001", title = "기존 주제", description = null),
+                    ),
+            )
+
+        val result = useCase.execute(teacherUserId, 1L, request)
+
+        assertAll(
+            { assertEquals(2, result.topics.size) },
+            { assertEquals(null, result.topics[0].topicId) },
+            { assertEquals("새 주제", result.topics[0].title) },
+            { assertEquals("mongo-id-001", result.topics[1].topicId) },
+        )
+    }
+
+    @Test
     fun `담당 선생님이 아니면 예외가 발생한다`() {
         val commission = createCommission()
         every { commissionAdaptor.findById(1L) } returns commission
