@@ -18,12 +18,14 @@ import com.sclass.supporters.commission.dto.TransitionStatusRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
 import com.sclass.supporters.commission.usecase.CreateSupportTicketUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
+import com.sclass.supporters.commission.usecase.GetCommissionLessonUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionTopicsUseCase
 import com.sclass.supporters.commission.usecase.GetSupportTicketsUseCase
 import com.sclass.supporters.commission.usecase.ProposeTopicsUseCase
 import com.sclass.supporters.commission.usecase.SelectTopicUseCase
 import com.sclass.supporters.commission.usecase.TransitionCommissionStatusUseCase
+import com.sclass.supporters.lesson.dto.LessonResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -45,6 +47,7 @@ class CommissionController(
     private val transitionCommissionStatusUseCase: TransitionCommissionStatusUseCase,
     private val createSupportTicketUseCase: CreateSupportTicketUseCase,
     private val getSupportTicketsUseCase: GetSupportTicketsUseCase,
+    private val getCommissionLessonUseCase: GetCommissionLessonUseCase,
 ) {
     @PostMapping
     fun create(
@@ -111,4 +114,9 @@ class CommissionController(
         @CurrentUserId userId: String,
         @PathVariable commissionId: Long,
     ): ApiResponse<SupportTicketListResponse> = ApiResponse.success(getSupportTicketsUseCase.execute(userId, commissionId))
+
+    @GetMapping("/{commissionId}/lesson")
+    fun getLesson(
+        @PathVariable commissionId: Long,
+    ): ApiResponse<LessonResponse> = ApiResponse.success(getCommissionLessonUseCase.execute(commissionId))
 }

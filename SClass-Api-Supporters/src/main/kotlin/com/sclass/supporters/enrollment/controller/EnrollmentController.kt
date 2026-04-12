@@ -8,10 +8,13 @@ import com.sclass.supporters.enrollment.dto.MyEnrollmentResponse
 import com.sclass.supporters.enrollment.dto.PrepareEnrollmentRequest
 import com.sclass.supporters.enrollment.dto.PrepareEnrollmentResponse
 import com.sclass.supporters.enrollment.usecase.GetCourseEnrollmentsUseCase
+import com.sclass.supporters.enrollment.usecase.GetEnrollmentLessonsUseCase
 import com.sclass.supporters.enrollment.usecase.GetMyEnrollmentsUseCase
 import com.sclass.supporters.enrollment.usecase.PrepareEnrollmentUseCase
+import com.sclass.supporters.lesson.dto.LessonResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,6 +27,7 @@ class EnrollmentController(
     private val prepareEnrollmentUseCase: PrepareEnrollmentUseCase,
     private val getMyEnrollmentsUseCase: GetMyEnrollmentsUseCase,
     private val getCourseEnrollmentsUseCase: GetCourseEnrollmentsUseCase,
+    private val getEnrollmentLessonsUseCase: GetEnrollmentLessonsUseCase,
 ) {
     @PostMapping
     fun prepareEnrollment(
@@ -41,4 +45,9 @@ class EnrollmentController(
         @CurrentUserId userId: String,
         @RequestParam courseId: Long,
     ): ApiResponse<List<EnrollmentWithStudentResponse>> = success(getCourseEnrollmentsUseCase.execute(userId, courseId))
+
+    @GetMapping("/{enrollmentId}/lessons")
+    fun getEnrollmentLessons(
+        @PathVariable enrollmentId: Long,
+    ): ApiResponse<List<LessonResponse>> = success(getEnrollmentLessonsUseCase.execute(enrollmentId))
 }
