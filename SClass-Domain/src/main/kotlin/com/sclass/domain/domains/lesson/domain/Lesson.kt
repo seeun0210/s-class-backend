@@ -93,6 +93,14 @@ class Lesson(
         this.status = LessonStatus.CANCELLED
     }
 
+    fun updateSchedule(
+        name: String?,
+        scheduledAt: LocalDateTime?,
+    ) {
+        if (name != null) this.name = name
+        if (scheduledAt != null) this.scheduledAt = scheduledAt
+    }
+
     private fun validateTransition(target: LessonStatus) {
         val allowed =
             when (target) {
