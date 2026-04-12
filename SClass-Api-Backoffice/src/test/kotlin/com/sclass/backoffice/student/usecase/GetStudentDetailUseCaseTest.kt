@@ -67,7 +67,7 @@ class GetStudentDetailUseCaseTest {
                         userId = user.id,
                         platform = Platform.SUPPORTERS,
                         role = Role.STUDENT,
-                        state = UserRoleState.NORMAL,
+                        state = UserRoleState.ACTIVE,
                     ),
                 )
             val organization =
@@ -109,7 +109,7 @@ class GetStudentDetailUseCaseTest {
             assertThat(response.phoneNumber).isEqualTo("010-1234-5678")
             assertThat(response.roles).hasSize(1)
             assertThat(response.roles[0].platform).isEqualTo(Platform.SUPPORTERS)
-            assertThat(response.roles[0].state).isEqualTo(UserRoleState.NORMAL)
+            assertThat(response.roles[0].state).isEqualTo(UserRoleState.ACTIVE)
             assertThat(response.documents).isEmpty()
             assertThat(response.organizations).hasSize(1)
             assertThat(response.organizations[0].id).isEqualTo(1L)

@@ -15,9 +15,6 @@ class LoginUseCase(
     @Transactional
     fun execute(request: LoginRequest): TokenResponse {
         val user = userService.authenticate(request.email, request.password, request.role)
-
-        userService.activateIfApproved(user.id, request.role)
-
         val tokens = tokenService.issueTokens(user.id, request.role)
         return TokenResponse(
             accessToken = tokens.accessToken,
