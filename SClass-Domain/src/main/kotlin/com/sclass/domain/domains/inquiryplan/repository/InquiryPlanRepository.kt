@@ -17,4 +17,6 @@ interface InquiryPlanRepository : JpaRepository<InquiryPlan, Long> {
         id: Long,
         requestedByUserId: String,
     ): InquiryPlan?
+
+    fun findByExternalPlanId(externalPlanId: String): InquiryPlan?
 }

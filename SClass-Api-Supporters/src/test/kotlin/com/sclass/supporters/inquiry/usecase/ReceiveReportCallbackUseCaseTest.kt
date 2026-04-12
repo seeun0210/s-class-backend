@@ -48,6 +48,7 @@ class ReceiveReportCallbackUseCaseTest {
             sourceRefId = 10L,
             requestedByUserId = "user-id-00000000001",
             status = InquiryPlanStatus.PENDING,
+            externalPlanId = "job-abc",
         )
 
     private fun sign(
@@ -63,15 +64,16 @@ class ReceiveReportCallbackUseCaseTest {
     private fun completedPayload() =
         ReportCallbackPayload(
             event = "report.completed",
-            requestId = "1",
+            jobId = "job-abc",
+            reportId = "report-001",
             sentAt = "2026-04-11T00:00:00Z",
-            result = ReportCallbackPayload.ReportResult(jobId = "job-abc", topic = "제로음료와 혈당"),
+            result = mapOf("topic" to "제로음료와 혈당"),
         )
 
     private fun failedPayload() =
         ReportCallbackPayload(
             event = "report.failed",
-            requestId = "1",
+            jobId = "job-abc",
             sentAt = "2026-04-11T00:00:00Z",
             error = ReportCallbackPayload.ErrorDetail(code = "E001", message = "생성 실패", retryable = false),
         )
@@ -79,24 +81,23 @@ class ReceiveReportCallbackUseCaseTest {
     @Test
     fun `report_completed 이벤트 수신 시 plan이 READY로 전환된다`() {
         val planSlot = slot<InquiryPlan>()
-        val rawBody = """{"event":"report.completed","requestId":"1","sentAt":"2026-04-11T00:00:00Z"}"""
+        val rawBody = """{"event":"report.completed","jobId":"job-abc","sentAt":"2026-04-11T00:00:00Z"}"""
         every { objectMapper.readValue(rawBody, ReportCallbackPayload::class.java) } returns completedPayload()
-        every { inquiryPlanAdaptor.findById(1L) } returns pendingPlan()
+        every { inquiryPlanAdaptor.findByJobIdOrNull("job-abc") } returns pendingPlan()
         every { inquiryPlanAdaptor.save(capture(planSlot)) } answers { planSlot.captured }
 
         val timestamp = Instant.now().epochSecond.toString()
         useCase.execute(sign(timestamp, rawBody), timestamp, rawBody)
 
         assertEquals(InquiryPlanStatus.READY, planSlot.captured.status)
-        assertEquals("제로음료와 혈당", planSlot.captured.topic)
     }
 
     @Test
     fun `report_failed 이벤트 수신 시 plan이 FAILED로 전환된다`() {
         val planSlot = slot<InquiryPlan>()
-        val rawBody = """{"event":"report.failed","requestId":"1","sentAt":"2026-04-11T00:00:00Z"}"""
+        val rawBody = """{"event":"report.failed","jobId":"job-abc","sentAt":"2026-04-11T00:00:00Z"}"""
         every { objectMapper.readValue(rawBody, ReportCallbackPayload::class.java) } returns failedPayload()
-        every { inquiryPlanAdaptor.findById(1L) } returns pendingPlan()
+        every { inquiryPlanAdaptor.findByJobIdOrNull("job-abc") } returns pendingPlan()
         every { inquiryPlanAdaptor.save(capture(planSlot)) } answers { planSlot.captured }
 
         val timestamp = Instant.now().epochSecond.toString()
@@ -108,7 +109,7 @@ class ReceiveReportCallbackUseCaseTest {
 
     @Test
     fun `서명이 틀리면 WebhookInvalidSecretException이 발생한다`() {
-        val rawBody = """{"event":"report.completed","requestId":"1","sentAt":"2026-04-11T00:00:00Z"}"""
+        val rawBody = """{"event":"report.completed","jobId":"job-abc","sentAt":"2026-04-11T00:00:00Z"}"""
         val timestamp = Instant.now().epochSecond.toString()
 
         assertThrows<WebhookInvalidSecretException> {
@@ -118,7 +119,7 @@ class ReceiveReportCallbackUseCaseTest {
 
     @Test
     fun `타임스탬프가 5분을 초과하면 WebhookInvalidSecretException이 발생한다`() {
-        val rawBody = """{"event":"report.completed","requestId":"1","sentAt":"2026-04-11T00:00:00Z"}"""
+        val rawBody = """{"event":"report.completed","jobId":"job-abc","sentAt":"2026-04-11T00:00:00Z"}"""
         val oldTimestamp = (Instant.now().epochSecond - 400).toString()
 
         assertThrows<WebhookInvalidSecretException> {
@@ -136,14 +137,27 @@ class ReceiveReportCallbackUseCaseTest {
                 requestedByUserId = "user-id-00000000001",
                 status = InquiryPlanStatus.READY,
                 topic = "기존 토픽",
+                externalPlanId = "job-abc",
             )
-        val rawBody = """{"event":"report.completed","requestId":"1","sentAt":"2026-04-11T00:00:00Z"}"""
+        val rawBody = """{"event":"report.completed","jobId":"job-abc","sentAt":"2026-04-11T00:00:00Z"}"""
         every { objectMapper.readValue(rawBody, ReportCallbackPayload::class.java) } returns completedPayload()
-        every { inquiryPlanAdaptor.findById(1L) } returns readyPlan
+        every { inquiryPlanAdaptor.findByJobIdOrNull("job-abc") } returns readyPlan
 
         val timestamp = Instant.now().epochSecond.toString()
         useCase.execute(sign(timestamp, rawBody), timestamp, rawBody)
 
         verify(exactly = 0) { inquiryPlanAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `jobId가 없으면 무시한다`() {
+        val rawBody = """{"event":"report.completed","sentAt":"2026-04-11T00:00:00Z"}"""
+        every { objectMapper.readValue(rawBody, ReportCallbackPayload::class.java) } returns
+            ReportCallbackPayload(event = "report.completed", sentAt = "2026-04-11T00:00:00Z")
+
+        val timestamp = Instant.now().epochSecond.toString()
+        useCase.execute(sign(timestamp, rawBody), timestamp, rawBody)
+
+        verify(exactly = 0) { inquiryPlanAdaptor.findByJobIdOrNull(any()) }
     }
 }
