@@ -4,9 +4,12 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
+import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.course.exception.CourseNotFoundException
 import com.sclass.domain.domains.course.repository.CourseRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 
 @Adaptor
@@ -27,6 +30,12 @@ class CourseAdaptor(
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)
+
+    fun searchCourses(
+        teacherUserId: String?,
+        status: CourseStatus?,
+        pageable: Pageable,
+    ): Page<CourseWithTeacherAndEnrollmentCountDto> = courseRepository.searchCourses(teacherUserId, status, pageable)
 
     fun findAllByTeacherUserId(teacherUserId: String): List<Course> = courseRepository.findAllByTeacherUserId(teacherUserId)
 
