@@ -1,6 +1,7 @@
 package com.sclass.supporters.course.controller
 
 import com.sclass.common.annotation.CurrentUserId
+import com.sclass.common.annotation.CurrentUserRole
 import com.sclass.common.dto.ApiResponse
 import com.sclass.supporters.course.dto.CourseResponse
 import com.sclass.supporters.course.dto.MyCourseResponse
@@ -22,5 +23,6 @@ class CourseController(
     @GetMapping("/me")
     fun getMyCourseList(
         @CurrentUserId userId: String,
-    ): ApiResponse<List<MyCourseResponse>> = ApiResponse.success(getMyCourseListUseCase.execute(userId))
+        @CurrentUserRole role: String,
+    ): ApiResponse<List<MyCourseResponse>> = ApiResponse.success(getMyCourseListUseCase.execute(userId, role))
 }

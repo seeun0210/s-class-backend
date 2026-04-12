@@ -1,17 +1,35 @@
 package com.sclass.supporters.course.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.common.exception.ForbiddenException
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
+import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
+import com.sclass.domain.domains.user.domain.Platform
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.supporters.course.dto.MyCourseResponse
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class GetMyCourseListUseCase(
     private val courseAdaptor: CourseAdaptor,
+    private val userRoleAdaptor: UserRoleAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(teacherUserId: String): List<MyCourseResponse> =
-        courseAdaptor
-            .findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)
+    fun execute(
+        userId: String,
+        role: String,
+    ): List<MyCourseResponse> {
+        if (Role.valueOf(role) != Role.TEACHER) throw ForbiddenException()
+
+        val hasLmsTeacher =
+            userRoleAdaptor
+                .findAllByUserIdAndRole(userId, Role.TEACHER)
+                .any { it.platform == Platform.LMS && it.state.isActive }
+
+        if (!hasLmsTeacher) return emptyList()
+
+        return courseAdaptor
+            .findAllByTeacherUserIdWithEnrollmentCount(userId)
             .map { MyCourseResponse.from(it) }
+    }
 }
