@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.lesson.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -97,7 +98,9 @@ class Lesson(
         name: String?,
         scheduledAt: LocalDateTime?,
     ) {
-        require(status == LessonStatus.SCHEDULED) { "Cannot update lesson in $status status" }
+        if (status != LessonStatus.SCHEDULED) {
+            throw LessonInvalidStatusTransitionException()
+        }
         name?.let { this.name = it }
         scheduledAt?.let { this.scheduledAt = it }
     }
