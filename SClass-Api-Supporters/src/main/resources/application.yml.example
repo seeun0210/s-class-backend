@@ -73,6 +73,12 @@ alimtalk:
   plus-friend-id: ${ALIMTALK_PLUS_FRIEND_ID:}
   app-base-url: ${ALIMTALK_APP_BASE_URL:}
 
+report-service:
+  enabled: ${REPORT_SERVICE_ENABLED:false}
+  base-url: ${REPORT_SERVICE_BASE_URL:}
+  callback-secret: ${REPORT_SERVICE_CALLBACK_SECRET:}
+  callback-base-url: ${REPORT_SERVICE_CALLBACK_BASE_URL:}
+
 management:
   endpoints:
     web:
