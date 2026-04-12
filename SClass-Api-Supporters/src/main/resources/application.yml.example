@@ -74,8 +74,9 @@ alimtalk:
   app-base-url: ${ALIMTALK_APP_BASE_URL:}
 
 report-service:
-  enabled: ${REPORT_SERVICE_ENABLED:false}
+  enabled: ${REPORT_SERVICE_ENABLED:true}
   base-url: ${REPORT_SERVICE_BASE_URL:}
+  timeout-seconds: ${REPORT_SERVICE_TIMEOUT_SECONDS:30}
   callback-secret: ${REPORT_SERVICE_CALLBACK_SECRET:}
   callback-base-url: ${REPORT_SERVICE_CALLBACK_BASE_URL:}
 
