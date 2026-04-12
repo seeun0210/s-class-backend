@@ -22,9 +22,7 @@ class GetMyCourseListUseCase(
         if (Role.valueOf(role) != Role.TEACHER) throw ForbiddenException()
 
         val hasLmsTeacher =
-            userRoleAdaptor
-                .findAllByUserIdAndRole(userId, Role.TEACHER)
-                .any { it.platform == Platform.LMS && it.state.isActive }
+            userRoleAdaptor.existsActiveByUserIdAndPlatformAndRole(userId, Platform.LMS, Role.TEACHER)
 
         if (!hasLmsTeacher) return emptyList()
 

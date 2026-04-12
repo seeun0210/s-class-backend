@@ -8,8 +8,6 @@ import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
-import com.sclass.domain.domains.user.domain.UserRole
-import com.sclass.domain.domains.user.domain.UserRoleState
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,17 +29,6 @@ class GetMyCourseListUseCaseTest {
         useCase = GetMyCourseListUseCase(courseAdaptor, userRoleAdaptor)
     }
 
-    private fun createUserRole(
-        platform: Platform,
-        role: Role = Role.TEACHER,
-        state: UserRoleState = UserRoleState.NORMAL,
-    ) = UserRole(
-        userId = USER_ID,
-        platform = platform,
-        role = role,
-        state = state,
-    )
-
     private fun createCourseWithCount(
         id: Long,
         enrollmentCount: Long,
@@ -59,10 +46,9 @@ class GetMyCourseListUseCaseTest {
 
     @Test
     fun `LMS TEACHER는 내 코스 목록을 조회한다`() {
-        val userRoles = listOf(createUserRole(Platform.LMS))
         val courses = listOf(createCourseWithCount(1L, 5), createCourseWithCount(2L, 3))
 
-        every { userRoleAdaptor.findAllByUserIdAndRole(USER_ID, Role.TEACHER) } returns userRoles
+        every { userRoleAdaptor.existsActiveByUserIdAndPlatformAndRole(USER_ID, Platform.LMS, Role.TEACHER) } returns true
         every { courseAdaptor.findAllByTeacherUserIdWithEnrollmentCount(USER_ID) } returns courses
 
         val result = useCase.execute(USER_ID, "TEACHER")
@@ -77,9 +63,7 @@ class GetMyCourseListUseCaseTest {
 
     @Test
     fun `Supporters TEACHER는 빈 배열을 반환한다`() {
-        val userRoles = listOf(createUserRole(Platform.SUPPORTERS))
-
-        every { userRoleAdaptor.findAllByUserIdAndRole(USER_ID, Role.TEACHER) } returns userRoles
+        every { userRoleAdaptor.existsActiveByUserIdAndPlatformAndRole(USER_ID, Platform.LMS, Role.TEACHER) } returns false
 
         val result = useCase.execute(USER_ID, "TEACHER")
 
@@ -89,9 +73,7 @@ class GetMyCourseListUseCaseTest {
 
     @Test
     fun `LMS TEACHER이지만 비활성 상태면 빈 배열을 반환한다`() {
-        val userRoles = listOf(createUserRole(Platform.LMS, state = UserRoleState.PENDING))
-
-        every { userRoleAdaptor.findAllByUserIdAndRole(USER_ID, Role.TEACHER) } returns userRoles
+        every { userRoleAdaptor.existsActiveByUserIdAndPlatformAndRole(USER_ID, Platform.LMS, Role.TEACHER) } returns false
 
         val result = useCase.execute(USER_ID, "TEACHER")
 
@@ -115,9 +97,7 @@ class GetMyCourseListUseCaseTest {
 
     @Test
     fun `코스가 없으면 빈 배열을 반환한다`() {
-        val userRoles = listOf(createUserRole(Platform.LMS))
-
-        every { userRoleAdaptor.findAllByUserIdAndRole(USER_ID, Role.TEACHER) } returns userRoles
+        every { userRoleAdaptor.existsActiveByUserIdAndPlatformAndRole(USER_ID, Platform.LMS, Role.TEACHER) } returns true
         every { courseAdaptor.findAllByTeacherUserIdWithEnrollmentCount(USER_ID) } returns emptyList()
 
         val result = useCase.execute(USER_ID, "TEACHER")
