@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.lesson.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -91,6 +92,17 @@ class Lesson(
     fun cancel() {
         validateTransition(LessonStatus.CANCELLED)
         this.status = LessonStatus.CANCELLED
+    }
+
+    fun updateSchedule(
+        name: String?,
+        scheduledAt: LocalDateTime?,
+    ) {
+        if (status != LessonStatus.SCHEDULED) {
+            throw LessonInvalidStatusTransitionException()
+        }
+        name?.let { this.name = it }
+        scheduledAt?.let { this.scheduledAt = it }
     }
 
     private fun validateTransition(target: LessonStatus) {
