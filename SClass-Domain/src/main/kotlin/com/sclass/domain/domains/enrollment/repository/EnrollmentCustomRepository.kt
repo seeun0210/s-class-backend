@@ -11,6 +11,7 @@ interface EnrollmentCustomRepository {
 
     fun searchEnrollments(
         studentUserId: String?,
+        teacherUserId: String?,
         courseId: Long?,
         status: EnrollmentStatus?,
         pageable: Pageable,

@@ -38,12 +38,14 @@ class EnrollmentCustomRepositoryImpl(
 
     override fun searchEnrollments(
         studentUserId: String?,
+        teacherUserId: String?,
         courseId: Long?,
         status: EnrollmentStatus?,
         pageable: Pageable,
     ): Page<EnrollmentWithDetailDto> {
         val where = mutableListOf<BooleanExpression>()
         studentUserId?.let { where += enrollment.studentUserId.eq(it) }
+        teacherUserId?.let { where += course.teacherUserId.eq(it) }
         courseId?.let { where += enrollment.courseId.eq(it) }
         status?.let { where += enrollment.status.eq(it) }
 
@@ -52,7 +54,7 @@ class EnrollmentCustomRepositoryImpl(
 
         val content =
             queryFactory
-                .select(enrollment, studentUser.name, course.name, teacherUser.name)
+                .select(enrollment, studentUser.name, course.name, course.teacherUserId, teacherUser.name)
                 .from(enrollment)
                 .join(course)
                 .on(course.id.eq(enrollment.courseId))
@@ -70,6 +72,7 @@ class EnrollmentCustomRepositoryImpl(
                         enrollment = tuple[enrollment]!!,
                         studentName = tuple[studentUser.name] ?: "",
                         courseName = tuple[course.name] ?: "",
+                        teacherUserId = tuple[course.teacherUserId] ?: "",
                         teacherName = tuple[teacherUser.name] ?: "",
                     )
                 }

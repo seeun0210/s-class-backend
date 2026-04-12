@@ -15,11 +15,12 @@ class GetEnrollmentListUseCase(
     @Transactional(readOnly = true)
     fun execute(
         studentUserId: String?,
+        teacherUserId: String?,
         courseId: Long?,
         status: EnrollmentStatus?,
         pageable: Pageable,
     ): EnrollmentPageResponse {
-        val page = enrollmentAdaptor.searchEnrollments(studentUserId, courseId, status, pageable)
+        val page = enrollmentAdaptor.searchEnrollments(studentUserId, teacherUserId, courseId, status, pageable)
         return EnrollmentPageResponse(
             content = page.content.map { EnrollmentListResponse.from(it) },
             totalElements = page.totalElements,
