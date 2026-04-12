@@ -48,7 +48,11 @@ class ReceiveReportCallbackUseCase(
         if (plan.status != InquiryPlanStatus.PENDING) return
 
         when (payload.event) {
-            "report.completed" -> plan.markReady(payload.result?.get("topic") as? String)
+            "report.completed" -> {
+                val index = payload.result?.get("index") as? Map<*, *>
+                val topic = index?.get("topic") as? String
+                plan.markReady(topic)
+            }
             "report.failed" -> plan.markFailed(payload.error?.message ?: "알 수 없는 오류")
         }
         inquiryPlanAdaptor.save(plan)
