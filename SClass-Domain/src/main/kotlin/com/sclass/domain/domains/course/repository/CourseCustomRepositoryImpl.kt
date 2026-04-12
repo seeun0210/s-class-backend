@@ -81,7 +81,7 @@ class CourseCustomRepositoryImpl(
                 .leftJoin(courseProduct)
                 .on(courseProduct.id.eq(course.productId))
                 .where(*where.toTypedArray())
-                .groupBy(course.id, user.name, courseProduct.totalLessons)
+                .groupBy(course, user.name, courseProduct.totalLessons)
                 .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
