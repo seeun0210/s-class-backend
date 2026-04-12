@@ -40,14 +40,14 @@ class TokenDomainServiceTest {
     inner class IssueTokens {
         @Test
         fun `암호화된 access token과 refresh token을 반환한다`() {
-            every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT", "SUPPORTERS") } returns "raw-access"
+            every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT") } returns "raw-access"
             every { jwtTokenProvider.generateRefreshToken("user-id") } returns "raw-refresh"
             every { jwtTokenProvider.getRefreshTokenTtlSecond() } returns 604800L
             every { aesTokenEncryptor.encrypt("raw-access") } returns "encrypted-access"
             every { aesTokenEncryptor.encrypt("raw-refresh") } returns "encrypted-refresh"
             every { refreshTokenAdaptor.save(any()) } returns mockk()
 
-            val result = tokenDomainService.issueTokens("user-id", Role.STUDENT, Platform.SUPPORTERS)
+            val result = tokenDomainService.issueTokens("user-id", Role.STUDENT)
 
             assertEquals("encrypted-access", result.accessToken)
             assertEquals("encrypted-refresh", result.refreshToken)
@@ -56,13 +56,13 @@ class TokenDomainServiceTest {
         @Test
         fun `RefreshToken이 저장된다`() {
             val refreshTokenSlot = slot<RefreshToken>()
-            every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT", "SUPPORTERS") } returns "raw-access"
+            every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT") } returns "raw-access"
             every { jwtTokenProvider.generateRefreshToken("user-id") } returns "raw-refresh"
             every { jwtTokenProvider.getRefreshTokenTtlSecond() } returns 604800L
             every { aesTokenEncryptor.encrypt(any()) } returns "encrypted"
             every { refreshTokenAdaptor.save(capture(refreshTokenSlot)) } returns mockk()
 
-            tokenDomainService.issueTokens("user-id", Role.STUDENT, Platform.SUPPORTERS)
+            tokenDomainService.issueTokens("user-id", Role.STUDENT)
 
             assertEquals("user-id", refreshTokenSlot.captured.userId)
         }

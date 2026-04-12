@@ -41,8 +41,8 @@ class OAuthLoginUseCase(
             )
 
         if (user != null) {
-            userService.activateIfApproved(user.id, request.platform, request.role)
-            val tokens = tokenService.issueTokens(user.id, request.role, request.platform)
+            userService.activateIfApproved(user.id, request.role)
+            val tokens = tokenService.issueTokens(user.id, request.role)
             return OAuthLoginResponse(
                 isNewUser = false,
                 accessToken = tokens.accessToken,
@@ -89,7 +89,7 @@ class OAuthLoginUseCase(
 
         createRoleProfile(user, role)
 
-        val tokens = tokenService.issueTokens(user.id, role, platform)
+        val tokens = tokenService.issueTokens(user.id, role)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,
