@@ -44,6 +44,7 @@ resource "aws_instance" "nat" {
   associate_public_ip_address = true
   source_dest_check           = false
   vpc_security_group_ids      = [aws_security_group.nat.id]
+  iam_instance_profile        = "sclass-nat-ssm-profile"
 
   user_data = <<-EOF
     #!/bin/bash
