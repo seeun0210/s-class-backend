@@ -18,6 +18,10 @@ class RedissonConfig(
         config
             .useSingleServer()
             .setAddress("redis://${redisProperties.host}:${redisProperties.port}")
+            .setConnectionPoolSize(redisProperties.connectionPoolSize)
+            .setConnectionMinimumIdleSize(redisProperties.connectionMinimumIdleSize)
+            .setSubscriptionConnectionPoolSize(redisProperties.subscriptionConnectionPoolSize)
+            .setSubscriptionConnectionMinimumIdleSize(redisProperties.subscriptionConnectionMinimumIdleSize)
             .apply {
                 redisProperties.password?.takeIf { it.isNotEmpty() }?.let { password = it }
             }
