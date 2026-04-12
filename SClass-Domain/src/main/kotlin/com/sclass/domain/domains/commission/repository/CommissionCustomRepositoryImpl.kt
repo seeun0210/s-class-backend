@@ -1,7 +1,11 @@
 package com.sclass.domain.domains.commission.repository
 
+import com.querydsl.core.types.Order
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.QCommission.commission
 import com.sclass.domain.domains.commission.dto.CommissionWithDetailDto
@@ -10,6 +14,7 @@ import com.sclass.domain.domains.user.domain.QUser
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 
 class CommissionCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -39,7 +44,7 @@ class CommissionCustomRepositoryImpl(
                 .leftJoin(lesson)
                 .on(lesson.id.eq(commission.acceptedLessonId))
                 .where(*where.toTypedArray())
-                .orderBy(commission.createdAt.desc())
+                .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .fetch()
@@ -60,5 +65,14 @@ class CommissionCustomRepositoryImpl(
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
+    }
+
+    private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
+        if (isUnsorted) return arrayOf(commission.createdAt.desc())
+        val path = PathBuilder(Commission::class.java, "commission")
+        return map { order ->
+            val direction = if (order.isAscending) Order.ASC else Order.DESC
+            OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
+        }.toList().toTypedArray()
     }
 }

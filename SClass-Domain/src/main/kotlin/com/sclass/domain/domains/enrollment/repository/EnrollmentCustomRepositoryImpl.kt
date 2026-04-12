@@ -1,8 +1,12 @@
 package com.sclass.domain.domains.enrollment.repository
 
+import com.querydsl.core.types.Order
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.course.domain.QCourse.course
+import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
@@ -12,6 +16,7 @@ import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 
 class EnrollmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -56,7 +61,7 @@ class EnrollmentCustomRepositoryImpl(
                 .leftJoin(teacherUser)
                 .on(teacherUser.id.eq(course.teacherUserId))
                 .where(*where.toTypedArray())
-                .orderBy(enrollment.createdAt.desc())
+                .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .fetch()
@@ -79,5 +84,14 @@ class EnrollmentCustomRepositoryImpl(
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
+    }
+
+    private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
+        if (isUnsorted) return arrayOf(enrollment.createdAt.desc())
+        val path = PathBuilder(Enrollment::class.java, "enrollment")
+        return map { order ->
+            val direction = if (order.isAscending) Order.ASC else Order.DESC
+            OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
+        }.toList().toTypedArray()
     }
 }

@@ -1,7 +1,11 @@
 package com.sclass.domain.domains.course.repository
 
+import com.querydsl.core.types.Order
+import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.domain.QCourse.course
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
@@ -12,6 +16,7 @@ import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 
 class CourseCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -52,8 +57,8 @@ class CourseCustomRepositoryImpl(
                 .leftJoin(enrollment)
                 .on(enrollment.courseId.eq(course.id))
                 .where(*where.toTypedArray())
-                .groupBy(course.id)
-                .orderBy(course.createdAt.desc())
+                .groupBy(course.id, user.name)
+                .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .fetch()
@@ -73,5 +78,14 @@ class CourseCustomRepositoryImpl(
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
+    }
+
+    private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
+        if (isUnsorted) return arrayOf(course.createdAt.desc())
+        val path = PathBuilder(Course::class.java, "course")
+        return map { order ->
+            val direction = if (order.isAscending) Order.ASC else Order.DESC
+            OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
+        }.toList().toTypedArray()
     }
 }
