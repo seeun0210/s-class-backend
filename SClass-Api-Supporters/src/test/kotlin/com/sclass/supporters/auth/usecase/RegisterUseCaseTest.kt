@@ -62,7 +62,7 @@ class RegisterUseCaseTest {
 
         val user = User(email = "test@example.com", name = "홍길동", authProvider = AuthProvider.EMAIL, phoneNumber = "010-1234-5678")
         every { userService.register(any(), any(), Platform.SUPPORTERS, Role.STUDENT) } returns user
-        every { tokenService.issueTokens(user.id, Role.STUDENT, Platform.SUPPORTERS) } returns
+        every { tokenService.issueTokens(user.id, Role.STUDENT) } returns
             TokenResult(accessToken = "access", refreshToken = "refresh")
 
         val result = useCase.execute(createRequest())

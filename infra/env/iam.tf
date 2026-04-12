@@ -257,6 +257,51 @@ resource "aws_iam_policy" "deployer" {
         ]
       },
       {
+        Sid    = "EC2"
+        Effect = "Allow"
+        Action = [
+          "ec2:Describe*",
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:CreateVpcEndpoint",
+          "ec2:DeleteVpcEndpoints",
+          "ec2:ModifyVpcEndpoint",
+          "ec2:RunInstances",
+          "ec2:TerminateInstances",
+          "ec2:StopInstances",
+          "ec2:StartInstances",
+          "ec2:ModifyInstanceAttribute",
+          "ec2:CreateRoute",
+          "ec2:DeleteRoute",
+          "ec2:ReplaceRoute",
+          "ec2:CreateTags",
+          "ec2:DeleteTags"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "RDS"
+        Effect = "Allow"
+        Action = [
+          "rds:Describe*",
+          "rds:CreateDBInstance",
+          "rds:ModifyDBInstance",
+          "rds:DeleteDBInstance",
+          "rds:CreateDBSubnetGroup",
+          "rds:ModifyDBSubnetGroup",
+          "rds:DeleteDBSubnetGroup",
+          "rds:CreateDBSnapshot",
+          "rds:AddTagsToResource",
+          "rds:RemoveTagsFromResource",
+          "rds:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+      {
         Sid      = "Route53"
         Effect   = "Allow"
         Action   = ["route53:*"]

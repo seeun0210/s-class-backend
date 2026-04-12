@@ -32,7 +32,7 @@ class TokenDomainServiceIntegrationTest {
         val userId = "test-user-id-0000000000001"
 
         // when
-        val result = tokenDomainService.issueTokens(userId, Role.STUDENT, Platform.SUPPORTERS)
+        val result = tokenDomainService.issueTokens(userId, Role.STUDENT)
 
         // then
         assertThat(result.accessToken).isNotBlank()
@@ -72,8 +72,8 @@ class TokenDomainServiceIntegrationTest {
     fun `revokeAllByUserId로 해당 유저의 모든 RefreshToken이 삭제된다`() {
         // given
         val userId = "test-user-id-0000000000002"
-        tokenDomainService.issueTokens(userId, Role.STUDENT, Platform.SUPPORTERS)
-        tokenDomainService.issueTokens(userId, Role.STUDENT, Platform.SUPPORTERS)
+        tokenDomainService.issueTokens(userId, Role.STUDENT)
+        tokenDomainService.issueTokens(userId, Role.STUDENT)
         assertThat(refreshTokenRepository.findAllByUserId(userId)).hasSize(2)
 
         // when

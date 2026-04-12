@@ -41,17 +41,24 @@ class Payment(
     @Column(nullable = false)
     var status: PaymentStatus = PaymentStatus.PENDING,
 
+    @Column(name = "receipt_url", length = 500)
+    var receiptUrl: String? = null,
+
     @Column(columnDefinition = "TEXT")
     var metadata: String? = null,
 
     @Version
     var version: Long = 0,
 ) : BaseTimeEntity() {
-    fun markPgApproved(pgTid: String) {
+    fun markPgApproved(
+        pgTid: String,
+        receiptUrl: String? = null,
+    ) {
         if (status != PaymentStatus.PENDING) {
             throw InvalidPaymentStatusException()
         }
         this.pgTid = pgTid
+        this.receiptUrl = receiptUrl
         this.status = PaymentStatus.PG_APPROVED
     }
 

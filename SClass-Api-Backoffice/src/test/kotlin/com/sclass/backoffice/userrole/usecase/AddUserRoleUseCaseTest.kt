@@ -44,7 +44,7 @@ class AddUserRoleUseCaseTest {
                 userId = "user-id-123",
                 platform = Platform.LMS,
                 role = Role.STUDENT,
-                state = UserRoleState.NORMAL,
+                state = UserRoleState.ACTIVE,
             )
 
         every { userAdaptor.findById("user-id-123") } returns user
@@ -59,7 +59,7 @@ class AddUserRoleUseCaseTest {
             { assertEquals("user-id-123", result.userId) },
             { assertEquals(Platform.LMS, result.platform) },
             { assertEquals(Role.STUDENT, result.role) },
-            { assertEquals(UserRoleState.NORMAL, result.state) },
+            { assertEquals(UserRoleState.ACTIVE, result.state) },
         )
     }
 

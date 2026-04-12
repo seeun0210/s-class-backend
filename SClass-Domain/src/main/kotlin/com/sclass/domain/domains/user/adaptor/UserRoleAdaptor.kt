@@ -4,6 +4,7 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.domain.UserRoleState
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.domain.domains.user.repository.UserRoleRepository
 
@@ -28,4 +29,21 @@ class UserRoleAdaptor(
         platform: Platform,
         role: Role,
     ): UserRole? = userRoleRepository.findByUserIdAndPlatformAndRole(userId, platform, role)
+
+    fun findAllByUserIdAndRole(
+        userId: String,
+        role: Role,
+    ): List<UserRole> = userRoleRepository.findAllByUserIdAndRole(userId, role)
+
+    fun existsActiveByUserIdAndPlatformAndRole(
+        userId: String,
+        platform: Platform,
+        role: Role,
+    ): Boolean =
+        userRoleRepository.existsByUserIdAndPlatformAndRoleAndStateIn(
+            userId,
+            platform,
+            role,
+            UserRoleState.entries.filter { it.isActive },
+        )
 }

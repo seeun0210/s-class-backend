@@ -2,8 +2,12 @@ package com.sclass.domain.domains.commission.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.commission.domain.Commission
+import com.sclass.domain.domains.commission.domain.CommissionStatus
+import com.sclass.domain.domains.commission.dto.CommissionWithDetailDto
 import com.sclass.domain.domains.commission.exception.CommissionNotFoundException
 import com.sclass.domain.domains.commission.repository.CommissionRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 
 @Adaptor
 class CommissionAdaptor(
@@ -18,4 +22,11 @@ class CommissionAdaptor(
     fun findByTeacherUserId(teacherUserId: String): List<Commission> = commissionRepository.findByTeacherUserId(teacherUserId)
 
     fun save(commission: Commission): Commission = commissionRepository.save(commission)
+
+    fun searchCommissions(
+        studentUserId: String?,
+        teacherUserId: String?,
+        status: CommissionStatus?,
+        pageable: Pageable,
+    ): Page<CommissionWithDetailDto> = commissionRepository.searchCommissions(studentUserId, teacherUserId, status, pageable)
 }

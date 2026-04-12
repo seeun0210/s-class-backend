@@ -26,7 +26,7 @@ class JwtAuthInterceptorTest {
 
     @Test
     fun `유효한 Bearer 토큰이면 userId와 role을 request에 저장한다`() {
-        val accessToken = jwtTokenProvider.generateAccessToken("user-123", "ADMIN", "BACKOFFICE")
+        val accessToken = jwtTokenProvider.generateAccessToken("user-123", "ADMIN")
         val encryptedToken = aesTokenEncryptor.encrypt(accessToken)
 
         val request = MockHttpServletRequest()
@@ -38,7 +38,6 @@ class JwtAuthInterceptorTest {
         assertTrue(result)
         assertEquals("user-123", request.getAttribute(JwtAuthInterceptor.USER_ID_ATTRIBUTE))
         assertEquals("ADMIN", request.getAttribute(JwtAuthInterceptor.USER_ROLE_ATTRIBUTE))
-        assertEquals("BACKOFFICE", request.getAttribute(JwtAuthInterceptor.USER_PLATFORM_ATTRIBUTE))
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.sclass.domain.domains.teacher.service.TeacherDomainService
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
+import com.sclass.domain.domains.user.domain.activePlatforms
 import com.sclass.domain.domains.user.exception.RoleNotFoundException
 import com.sclass.supporters.teacher.dto.TeacherDocumentResponse
 import com.sclass.supporters.teacher.dto.TeacherProfileResponse
@@ -40,12 +41,15 @@ class UpdateTeacherProfileUseCase(
                 residentNumber = request.residentNumber,
             )
         val documents = teacherDocumentAdaptor.findAllByTeacherId(updated.id)
+        val allRoles = userRoleAdaptor.findAllByUserId(userId)
         val userRole =
-            userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, Platform.SUPPORTERS, Role.TEACHER)
+            allRoles.find { it.platform == Platform.SUPPORTERS && it.role == Role.TEACHER }
                 ?: throw RoleNotFoundException()
+        val platforms = allRoles.activePlatforms()
         return TeacherProfileResponse.from(
             teacher = updated,
             userRole = userRole,
+            platforms = platforms,
             documents = documents.map { TeacherDocumentResponse.from(it) },
         )
     }

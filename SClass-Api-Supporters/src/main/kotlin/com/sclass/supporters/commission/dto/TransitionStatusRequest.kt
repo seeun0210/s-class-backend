@@ -6,6 +6,4 @@ import jakarta.validation.constraints.NotNull
 data class TransitionStatusRequest(
     @field:NotNull
     val status: CommissionStatus,
-
-    val reason: String? = null,
 )

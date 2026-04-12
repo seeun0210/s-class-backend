@@ -41,7 +41,6 @@ class CommissionConcurrencyTest {
             entityManager.createNativeQuery("DELETE FROM commission_files").executeUpdate()
             entityManager.createNativeQuery("DELETE FROM commission_support_tickets").executeUpdate()
             entityManager.createNativeQuery("DELETE FROM commission_topics").executeUpdate()
-            entityManager.createNativeQuery("DELETE FROM messages").executeUpdate()
             entityManager.createNativeQuery("DELETE FROM commissions").executeUpdate()
         }
     }
@@ -53,6 +52,8 @@ class CommissionConcurrencyTest {
                     Commission(
                         studentUserId = "student-user-0000000000001",
                         teacherUserId = "teacher-user-0000000000001",
+                        productId = "product-id-00000000000001",
+                        teacherPayoutAmountWon = 50_000,
                         outputFormat = OutputFormat.REPORT,
                         activityType = ActivityType.CAREER_EXPLORATION,
                         status = status,

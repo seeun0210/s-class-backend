@@ -4,7 +4,6 @@ import com.sclass.backoffice.auth.dto.LoginRequest
 import com.sclass.backoffice.auth.dto.TokenResponse
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.token.service.TokenDomainService
-import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.service.UserDomainService
 import org.springframework.transaction.annotation.Transactional
@@ -20,11 +19,10 @@ class LoginUseCase(
             userDomainService.authenticate(
                 email = request.email,
                 rawPassword = request.password,
-                platform = Platform.BACKOFFICE,
                 role = Role.ADMIN,
             )
 
-        val tokens = tokenDomainService.issueTokens(user.id, Role.ADMIN, Platform.BACKOFFICE)
+        val tokens = tokenDomainService.issueTokens(user.id, Role.ADMIN)
         return TokenResponse(
             accessToken = tokens.accessToken,
             refreshToken = tokens.refreshToken,

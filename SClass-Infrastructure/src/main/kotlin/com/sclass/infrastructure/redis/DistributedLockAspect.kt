@@ -29,11 +29,10 @@ class DistributedLockAspect(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Around("@annotation(distributedLock)")
-    fun around(
-        joinPoint: ProceedingJoinPoint,
-        distributedLock: DistributedLock,
-    ): Any? {
+    @Around("@annotation(com.sclass.infrastructure.redis.DistributedLock)")
+    fun around(joinPoint: ProceedingJoinPoint): Any? {
+        val signature = joinPoint.signature as MethodSignature
+        val distributedLock = signature.method.getAnnotation(DistributedLock::class.java)
         val keyValue = resolveKeyValue(joinPoint)
         val lockKey = "lock:${distributedLock.prefix}:$keyValue"
         val lock = redissonClient.getLock(lockKey)
@@ -71,15 +70,20 @@ class DistributedLockAspect(
         val method = signature.method
         val args = joinPoint.args
 
+        val keyParts = mutableListOf<String>()
         method.parameters.forEachIndexed { index, param ->
             if (param.isAnnotationPresent(LockKey::class.java)) {
-                return args[index]?.toString()
+                keyParts += args[index]?.toString()
                     ?: throw IllegalArgumentException("@LockKey 파라미터가 null입니다")
             }
         }
 
-        throw IllegalArgumentException(
-            "@DistributedLock 메서드에 @LockKey 파라미터가 없습니다: ${method.declaringClass.simpleName}.${method.name}()",
-        )
+        if (keyParts.isEmpty()) {
+            throw IllegalArgumentException(
+                "@DistributedLock 메서드에 @LockKey 파라미터가 없습니다: ${method.declaringClass.simpleName}.${method.name}()",
+            )
+        }
+
+        return keyParts.joinToString(":")
     }
 }

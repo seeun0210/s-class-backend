@@ -6,4 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class ReportServiceProperties(
     val baseUrl: String,
     val timeoutSeconds: Long = 30,
+    val callbackSecret: String = "",
+    val callbackBaseUrl: String = "",
 )

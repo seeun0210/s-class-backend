@@ -62,7 +62,7 @@ class GetTeacherDetailUseCaseTest {
                         userId = user.id,
                         platform = Platform.SUPPORTERS,
                         role = Role.TEACHER,
-                        state = UserRoleState.APPROVED,
+                        state = UserRoleState.ACTIVE,
                     ),
                 )
             val file =
@@ -117,7 +117,7 @@ class GetTeacherDetailUseCaseTest {
             assertThat(response.roles).hasSize(1)
             assertThat(response.roles[0].platform).isEqualTo(Platform.SUPPORTERS)
             assertThat(response.roles[0].role).isEqualTo(Role.TEACHER)
-            assertThat(response.roles[0].state).isEqualTo(UserRoleState.APPROVED)
+            assertThat(response.roles[0].state).isEqualTo(UserRoleState.ACTIVE)
             assertThat(response.documents).hasSize(1)
             assertThat(response.documents[0].documentType).isEqualTo(TeacherDocumentType.COMPLETION_CERTIFICATE)
             assertThat(response.documents[0].file.originalFilename).isEqualTo("certificate.pdf")

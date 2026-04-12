@@ -21,4 +21,6 @@ interface TeacherCustomRepository {
     fun findByDocumentsWithFileByTeacherId(teacherId: String): List<TeacherDocument>
 
     fun findOrganizationByUserId(userId: String): List<OrganizationUser>
+
+    fun findAllByUserIdInWithUser(userIds: List<String>): List<Teacher>
 }

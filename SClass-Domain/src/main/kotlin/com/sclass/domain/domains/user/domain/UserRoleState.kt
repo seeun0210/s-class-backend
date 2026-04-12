@@ -1,9 +1,11 @@
 package com.sclass.domain.domains.user.domain
 
 enum class UserRoleState {
-    NORMAL,
+    ACTIVE,
     DRAFT,
     PENDING,
-    APPROVED,
     REJECTED,
+    ;
+
+    val isActive: Boolean get() = this == ACTIVE
 }

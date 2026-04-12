@@ -42,4 +42,8 @@ resource "aws_db_instance" "main" {
   tags = {
     Name = "${local.name_prefix}-mysql"
   }
+
+  lifecycle {
+    ignore_changes = [username, password]
+  }
 }

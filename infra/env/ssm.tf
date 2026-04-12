@@ -187,3 +187,14 @@ resource "aws_ssm_parameter" "redis_password" {
     Name = "${local.name_prefix}-ssm-redis-password"
   }
 }
+
+resource "aws_ssm_parameter" "report_service_callback_secret" {
+  name      = "/sclass/${var.environment}/REPORT_SERVICE_CALLBACK_SECRET"
+  type      = "SecureString"
+  value     = var.report_service_callback_secret != "" ? var.report_service_callback_secret : "placeholder"
+  overwrite = true
+
+  tags = {
+    Name = "${local.name_prefix}-ssm-report-callback-secret"
+  }
+}

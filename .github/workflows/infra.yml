@@ -21,10 +21,46 @@ permissions:
   contents: read
 
 jobs:
+  terraform-shared:
+    name: Terraform Apply (shared)
+    runs-on: ubuntu-latest
+    environment: dev
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
+      (github.event_name == 'workflow_dispatch')
+    defaults:
+      run:
+        working-directory: infra/shared
+
+    env:
+      TF_VAR_db_username: ${{ secrets.TF_VAR_DB_USERNAME }}
+      TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~> 1.5'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config="key=sclass/shared/terraform.tfstate"
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
   terraform-dev:
     name: Terraform Apply (dev)
     runs-on: ubuntu-latest
     environment: dev
+    needs: terraform-shared
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/develop') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
@@ -50,6 +86,7 @@ jobs:
       TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
       TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
       TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
+      TF_VAR_report_service_callback_secret: ${{ secrets.TF_VAR_REPORT_SERVICE_CALLBACK_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
@@ -75,6 +112,7 @@ jobs:
     name: Terraform Apply (prod)
     runs-on: ubuntu-latest
     environment: prod
+    needs: terraform-shared
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
@@ -100,6 +138,7 @@ jobs:
       TF_VAR_redis_host: ${{ secrets.TF_VAR_redis_host }}
       TF_VAR_redis_port: ${{ secrets.TF_VAR_redis_port }}
       TF_VAR_redis_password: ${{ secrets.TF_VAR_redis_password }}
+      TF_VAR_report_service_callback_secret: ${{ secrets.TF_VAR_REPORT_SERVICE_CALLBACK_SECRET }}
 
     steps:
       - uses: actions/checkout@v4

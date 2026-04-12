@@ -17,6 +17,7 @@ data class CommissionResponse(
     val status: CommissionStatus,
     val guideInfo: GuideInfoResponse,
     val commissionFiles: List<CommissionFileResponse>,
+    val lessonId: Long?,
     val createdAt: LocalDateTime,
     val updatedAt: LocalDateTime,
 ) {
@@ -41,6 +42,7 @@ data class CommissionResponse(
                         teacherEmphasis = commission.guideInfo.teacherEmphasis,
                     ),
                 commissionFiles = commissionFiles.map { CommissionFileResponse.from(it) },
+                lessonId = commission.acceptedLessonId,
                 createdAt = commission.createdAt,
                 updatedAt = commission.updatedAt,
             )

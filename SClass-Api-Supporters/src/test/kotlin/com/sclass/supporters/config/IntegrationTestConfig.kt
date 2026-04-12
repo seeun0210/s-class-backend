@@ -6,6 +6,7 @@ import com.sclass.infrastructure.message.CommissionNotificationSender
 import com.sclass.infrastructure.message.VerificationCodeSender
 import com.sclass.infrastructure.oauth.OAuthClientFactory
 import com.sclass.infrastructure.oauth.client.OAuthClient
+import com.sclass.infrastructure.report.ReportServiceClient
 import io.mockk.mockk
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -46,4 +47,8 @@ class IntegrationTestConfig {
     @Bean
     @Primary
     fun mockCommissionNotificationSender(): CommissionNotificationSender = mockk<CommissionNotificationSender>(relaxed = true)
+
+    @Bean
+    @Primary
+    fun mockReportServiceClient(): ReportServiceClient = mockk<ReportServiceClient>(relaxed = true)
 }

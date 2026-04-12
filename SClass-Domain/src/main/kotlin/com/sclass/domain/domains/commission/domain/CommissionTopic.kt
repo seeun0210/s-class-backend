@@ -22,8 +22,8 @@ class CommissionTopic(
     @JoinColumn(name = "commission_id", nullable = false)
     val commission: Commission,
 
-    @Column(name = "topic_id", nullable = false, length = 24)
-    val topicId: String,
+    @Column(name = "topic_id", nullable = true, length = 24)
+    val topicId: String? = null,
 
     @Column(nullable = false, length = 200)
     val title: String,

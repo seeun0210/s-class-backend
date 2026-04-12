@@ -2,10 +2,12 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.service.CoinDomainService
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
@@ -20,6 +22,7 @@ class HandleNicePayReturnUseCase(
     private val paymentAdaptor: PaymentAdaptor,
     private val productAdaptor: ProductAdaptor,
     private val coinDomainService: CoinDomainService,
+    private val enrollmentAdaptor: EnrollmentAdaptor,
     private val pgGateway: PgGateway,
     private val txTemplate: TransactionTemplate,
     @param:Value("\${sclass.frontend-url}") private val frontendUrl: String,
@@ -72,7 +75,6 @@ class HandleNicePayReturnUseCase(
         }
 
         val product = productAdaptor.findById(payment.productId)
-        val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
 
         // PG 승인 (외부 API - 트랜잭션 밖)
         val pgResult =
@@ -88,31 +90,47 @@ class HandleNicePayReturnUseCase(
                 return failureUrl()
             }
 
-        // TX1: PG 승인 상태 커밋 (이후 실패해도 PG_APPROVED는 보존)
+        // TX1: PG 승인 상태 커밋
         txTemplate.execute {
             val fresh = paymentAdaptor.findById(payment.id)
             fresh.markPgApproved(pgResult.tid)
             paymentAdaptor.save(fresh)
         }
 
-        // TX2: 코인 발급 + 완료
+        // TX2: 상품 타입별 처리
         return try {
-            txTemplate.execute {
-                val fresh = paymentAdaptor.findById(payment.id)
-                coinDomainService.issue(
-                    userId = fresh.userId,
-                    amount = coinAmount,
-                    referenceId = fresh.id,
-                    description = "결제 완료 - ${product.name}",
-                )
-                fresh.markCompleted()
-                paymentAdaptor.save(fresh)
+            when (product) {
+                is CoinProduct -> {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        coinDomainService.issue(
+                            userId = fresh.userId,
+                            amount = product.coinAmount,
+                            referenceId = fresh.id,
+                            description = "결제 완료 - ${product.name}",
+                        )
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    log.info("결제 완료(코인): paymentId={}", payment.id)
+                    successUrl(product.coinAmount)
+                }
+                is CourseProduct -> {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+                        enrollment.markPaid()
+                        enrollmentAdaptor.save(enrollment)
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    log.info("결제 완료(수강): paymentId={}", payment.id)
+                    successUrl(null)
+                }
+                else -> throw ProductTypeMismatchException()
             }
-            log.info("결제 완료: paymentId={}, coinAmount={}", payment.id, coinAmount)
-            successUrl(coinAmount)
         } catch (e: Exception) {
-            // TX3: 코인 발급 실패 → ISSUE_COIN_FAILED 마킹
-            log.error("코인 발급 실패: paymentId={}", payment.id, e)
+            log.error("결제 후처리 실패: paymentId={}", payment.id, e)
             txTemplate.execute {
                 val fresh = paymentAdaptor.findById(payment.id)
                 fresh.markIssueCoinFailed()
