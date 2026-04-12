@@ -23,8 +23,9 @@ class LessonController(
 ) {
     @GetMapping("/{lessonId}")
     fun detail(
+        @CurrentUserId userId: String,
         @PathVariable lessonId: Long,
-    ): ApiResponse<LessonDetailResponse> = ApiResponse.success(getLessonDetailUseCase.execute(lessonId))
+    ): ApiResponse<LessonDetailResponse> = ApiResponse.success(getLessonDetailUseCase.execute(userId, lessonId))
 
     @PostMapping("/{lessonId}/inquiry-plans")
     fun createInquiryPlan(

@@ -29,7 +29,7 @@ data class ReportStateDto(
 
     val createdAt: String? = null,
     val status: String? = null,
-    val schemaVersion: Int? = null,
+    val schemaVersion: Int? = 2,
 )
 
 data class ReportIndexDto(
