@@ -43,6 +43,9 @@ subprojects {
 
     kotlin {
         jvmToolchain(21)
+        compilerOptions {
+            javaParameters.set(true)
+        }
     }
 
     repositories { mavenCentral() }
@@ -52,6 +55,10 @@ subprojects {
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
         testImplementation("org.springframework.boot:spring-boot-starter-test")
         testImplementation("com.h2database:h2")
+    }
+
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
     }
 
     tasks.withType<Test> {

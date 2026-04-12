@@ -29,11 +29,10 @@ class DistributedLockAspect(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    @Around("@annotation(distributedLock)")
-    fun around(
-        joinPoint: ProceedingJoinPoint,
-        distributedLock: DistributedLock,
-    ): Any? {
+    @Around("@annotation(com.sclass.infrastructure.redis.DistributedLock)")
+    fun around(joinPoint: ProceedingJoinPoint): Any? {
+        val signature = joinPoint.signature as MethodSignature
+        val distributedLock = signature.method.getAnnotation(DistributedLock::class.java)
         val keyValue = resolveKeyValue(joinPoint)
         val lockKey = "lock:${distributedLock.prefix}:$keyValue"
         val lock = redissonClient.getLock(lockKey)
