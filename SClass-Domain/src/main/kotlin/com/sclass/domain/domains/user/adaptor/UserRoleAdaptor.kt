@@ -32,5 +32,5 @@ class UserRoleAdaptor(
     fun findByUserIdAndRole(
         userId: String,
         role: Role,
-    ): UserRole? = userRoleRepository.findFirstByUserIdAndRole(userId, role)
+    ): UserRole? = userRoleRepository.findFirstByUserIdAndRoleOrderByCreatedAtDesc(userId, role)
 }

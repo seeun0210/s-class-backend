@@ -18,7 +18,7 @@ interface UserRoleRepository : JpaRepository<UserRole, String> {
         role: Role,
     ): UserRole?
 
-    fun findFirstByUserIdAndRole(
+    fun findFirstByUserIdAndRoleOrderByCreatedAtDesc(
         userId: String,
         role: Role,
     ): UserRole?
