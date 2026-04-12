@@ -107,10 +107,13 @@ class CourseCustomRepositoryImpl(
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(course.createdAt.desc())
-        val path = PathBuilder(Course::class.java, "course")
-        return map { order ->
+        val coursePath = PathBuilder(Course::class.java, "course")
+        return mapNotNull { order ->
             val direction = if (order.isAscending) Order.ASC else Order.DESC
-            OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
-        }.toList().toTypedArray()
+            when (order.property) {
+                "totalLessons" -> OrderSpecifier(direction, courseProduct.totalLessons)
+                else -> OrderSpecifier(direction, coursePath.get(order.property, Comparable::class.java))
+            }
+        }.toTypedArray()
     }
 }
