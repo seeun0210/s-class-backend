@@ -21,6 +21,7 @@ data class CourseListResponse(
     val description: String?,
     val status: CourseStatus,
     val enrollmentCount: Long,
+    val totalLessons: Int,
     val createdAt: LocalDateTime,
 ) {
     companion object {
@@ -35,6 +36,7 @@ data class CourseListResponse(
                 description = dto.course.description,
                 status = dto.course.status,
                 enrollmentCount = dto.enrollmentCount,
+                totalLessons = dto.totalLessons,
                 createdAt = dto.course.createdAt,
             )
     }
