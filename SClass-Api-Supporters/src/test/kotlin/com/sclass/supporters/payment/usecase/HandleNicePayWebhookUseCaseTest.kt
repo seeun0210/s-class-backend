@@ -1,9 +1,13 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.domain.domains.coin.service.CoinDomainService
+import com.sclass.domain.domains.course.adaptor.CourseAdaptor
+import com.sclass.domain.domains.course.domain.Course
+import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
+import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
@@ -28,6 +32,8 @@ class HandleNicePayWebhookUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var courseAdaptor: CourseAdaptor
+    private lateinit var lessonService: LessonDomainService
     private lateinit var pgGateway: PgGateway
     private lateinit var txTemplate: TransactionTemplate
     private lateinit var useCase: HandleNicePayWebhookUseCase
@@ -45,7 +51,19 @@ class HandleNicePayWebhookUseCaseTest {
         }
         every { paymentAdaptor.save(any()) } answers { firstArg() }
         enrollmentAdaptor = mockk()
-        useCase = HandleNicePayWebhookUseCase(paymentAdaptor, productAdaptor, coinDomainService, pgGateway, txTemplate, enrollmentAdaptor)
+        courseAdaptor = mockk()
+        lessonService = mockk(relaxed = true)
+        useCase =
+            HandleNicePayWebhookUseCase(
+                paymentAdaptor,
+                productAdaptor,
+                coinDomainService,
+                pgGateway,
+                txTemplate,
+                enrollmentAdaptor,
+                courseAdaptor,
+                lessonService,
+            )
     }
 
     @Test
@@ -161,6 +179,14 @@ class HandleNicePayWebhookUseCaseTest {
                 teacherPayoutPerLessonWon = 20000,
                 paymentId = payment.id,
             )
+        val course =
+            Course(
+                id = 1L,
+                productId = "prod-00000000000000000000000001",
+                teacherUserId = "teacher-id-00000000001",
+                name = "수학 코스",
+                status = CourseStatus.ACTIVE,
+            )
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
@@ -170,10 +196,21 @@ class HandleNicePayWebhookUseCaseTest {
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
         every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
         every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { courseAdaptor.findById(1L) } returns course
 
         useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
 
-        assertEquals(EnrollmentStatus.ACTIVE, enrollment.status)
+        assertAll(
+            { assertEquals(EnrollmentStatus.ACTIVE, enrollment.status) },
+        )
+        verify {
+            lessonService.createLessonsForEnrollment(
+                enrollment = any(),
+                course = course,
+                totalLessons = 12,
+                teacherPayoutPerLessonWon = 20000,
+            )
+        }
     }
 
     private fun pendingPayment() =

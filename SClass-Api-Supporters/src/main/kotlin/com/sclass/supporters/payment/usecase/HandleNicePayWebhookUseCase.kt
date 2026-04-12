@@ -2,7 +2,9 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.service.CoinDomainService
+import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
@@ -24,6 +26,8 @@ class HandleNicePayWebhookUseCase(
     private val pgGateway: PgGateway,
     private val txTemplate: TransactionTemplate,
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val courseAdaptor: CourseAdaptor,
+    private val lessonService: LessonDomainService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -112,6 +116,14 @@ class HandleNicePayWebhookUseCase(
                     enrollmentAdaptor.save(freshEnrollment)
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
+
+                    val course = courseAdaptor.findById(freshEnrollment.courseId)
+                    lessonService.createLessonsForEnrollment(
+                        enrollment,
+                        course,
+                        totalLessons = product.totalLessons,
+                        product.teacherPayoutPerLessonWon,
+                    )
                 }
             }
             else -> throw ProductTypeMismatchException()
