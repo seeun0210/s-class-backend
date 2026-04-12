@@ -7,6 +7,7 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
+import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
@@ -14,6 +15,7 @@ import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -24,6 +26,7 @@ class GrantEnrollmentUseCaseTest {
     private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var lessonService: LessonDomainService
     private lateinit var useCase: GrantEnrollmentUseCase
 
     @BeforeEach
@@ -31,7 +34,8 @@ class GrantEnrollmentUseCaseTest {
         courseAdaptor = mockk()
         productAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        useCase = GrantEnrollmentUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor)
+        lessonService = mockk(relaxed = true)
+        useCase = GrantEnrollmentUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor, lessonService)
     }
 
     private fun activeCourse() =
@@ -85,6 +89,25 @@ class GrantEnrollmentUseCaseTest {
 
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)
             assertThat(enrollmentSlot.captured.teacherPayoutPerLessonWon).isEqualTo(20000)
+        }
+
+        @Test
+        fun `수강 등록 시 totalLessons만큼 레슨이 일괄 생성된다`() {
+            val enrollmentSlot = slot<Enrollment>()
+            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { productAdaptor.findById(any()) } returns courseProduct()
+            every { enrollmentAdaptor.save(capture(enrollmentSlot)) } answers { enrollmentSlot.captured }
+
+            useCase.execute("admin-id-000000000001", "student-id-00000000001", 1L, "장학생 혜택")
+
+            verify {
+                lessonService.createLessonsForEnrollment(
+                    enrollment = any(),
+                    course = any(),
+                    totalLessons = 12,
+                    teacherPayoutPerLessonWon = 20000,
+                )
+            }
         }
     }
 
