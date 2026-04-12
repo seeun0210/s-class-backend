@@ -32,6 +32,10 @@ jobs:
       run:
         working-directory: infra/shared
 
+    env:
+      TF_VAR_db_username: ${{ secrets.TF_VAR_DB_USERNAME }}
+      TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+
     steps:
       - uses: actions/checkout@v4
 

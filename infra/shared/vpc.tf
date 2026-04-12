@@ -62,6 +62,10 @@ resource "aws_instance" "nat" {
   tags = {
     Name = "${local.name_prefix}-nat"
   }
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 }
 
 # Private Subnet → NAT Instance 라우팅
