@@ -71,6 +71,7 @@ class UserRole(
             mapOf(
                 UserRoleState.DRAFT to setOf(UserRoleState.PENDING),
                 UserRoleState.PENDING to setOf(UserRoleState.ACTIVE, UserRoleState.REJECTED, UserRoleState.PENDING),
+                UserRoleState.ACTIVE to setOf(UserRoleState.ACTIVE, UserRoleState.REJECTED),
                 UserRoleState.REJECTED to setOf(UserRoleState.PENDING),
             )
     }
