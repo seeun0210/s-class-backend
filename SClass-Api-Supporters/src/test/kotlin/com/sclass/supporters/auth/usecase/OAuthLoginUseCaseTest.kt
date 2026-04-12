@@ -17,7 +17,6 @@ import com.sclass.infrastructure.oauth.client.OAuthClient
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
 import com.sclass.supporters.auth.dto.OAuthCompleteSignupRequest
 import com.sclass.supporters.auth.dto.OAuthLoginRequest
-import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -68,7 +67,6 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.STUDENT) } just runs
-        every { userService.activateIfApproved("user-id", Role.STUDENT) } just Runs
         every { tokenService.issueTokens("user-id", Role.STUDENT) } returns tokenResult
 
         val result = useCase.login(request)
@@ -96,7 +94,6 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.SUPPORTERS, Role.TEACHER) } just runs
-        every { userService.activateIfApproved("user-id", Role.TEACHER) } just Runs
         every { tokenService.issueTokens("user-id", Role.TEACHER) } returns tokenResult
 
         useCase.login(request)
@@ -128,7 +125,6 @@ class OAuthLoginUseCaseTest {
                 role = Role.STUDENT,
             )
         } returns user
-        every { userService.activateIfApproved("linked-user-id", Role.STUDENT) } just Runs
         every { tokenService.issueTokens("linked-user-id", Role.STUDENT) } returns tokenResult
 
         val result = useCase.login(request)

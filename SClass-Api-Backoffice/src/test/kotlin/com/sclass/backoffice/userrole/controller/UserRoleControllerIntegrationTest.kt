@@ -104,12 +104,12 @@ class UserRoleControllerIntegrationTest {
     @Nested
     inner class UpdateState {
         @Test
-        fun `APPROVED 요청 시 200을 반환한다`() {
+        fun `ACTIVE 요청 시 200을 반환한다`() {
             val userRole = createUserRole(UserRoleState.PENDING)
 
             val body =
                 mapOf(
-                    "state" to "APPROVED",
+                    "state" to "ACTIVE",
                 )
 
             mockMvc
@@ -188,7 +188,7 @@ class UserRoleControllerIntegrationTest {
 
             val body =
                 mapOf(
-                    "state" to "APPROVED",
+                    "state" to "ACTIVE",
                 )
 
             mockMvc

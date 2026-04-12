@@ -18,7 +18,7 @@ class UpdateUserRoleStateUseCase(
     ) {
         val userRole = userRoleAdaptor.findById(userRoleId)
         when (request.state) {
-            UserRoleState.APPROVED -> userRole.approve(adminUserId)
+            UserRoleState.ACTIVE -> userRole.approve(adminUserId)
             UserRoleState.REJECTED -> userRole.reject(requireNotNull(request.reason))
             else -> error("Unreachable")
         }
