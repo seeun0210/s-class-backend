@@ -12,6 +12,7 @@ import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
+import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
 import com.sclass.domain.domains.teacher.domain.QTeacher.teacher
 import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
@@ -67,14 +68,20 @@ class CourseCustomRepositoryImpl(
 
         val content =
             queryFactory
-                .select(course, user.name, enrollment.count())
-                .from(course)
+                .select(
+                    course,
+                    user.name,
+                    enrollment.count(),
+                    courseProduct.totalLessons,
+                ).from(course)
                 .leftJoin(user)
                 .on(user.id.eq(course.teacherUserId))
                 .leftJoin(enrollment)
                 .on(enrollment.courseId.eq(course.id))
+                .leftJoin(courseProduct)
+                .on(courseProduct.id.eq(course.productId))
                 .where(*where.toTypedArray())
-                .groupBy(course.id, user.name)
+                .groupBy(course, user.name, courseProduct.totalLessons)
                 .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
@@ -84,6 +91,7 @@ class CourseCustomRepositoryImpl(
                         course = tuple[course]!!,
                         teacherName = tuple[user.name] ?: "-",
                         enrollmentCount = tuple[enrollment.count()] ?: 0L,
+                        totalLessons = tuple[courseProduct.totalLessons] ?: 0,
                     )
                 }
 

@@ -6,4 +6,5 @@ data class CourseWithTeacherAndEnrollmentCountDto(
     val course: Course,
     val teacherName: String,
     val enrollmentCount: Long,
+    val totalLessons: Int,
 )

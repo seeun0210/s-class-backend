@@ -22,6 +22,7 @@ class GetCourseListUseCaseTest {
         courseName: String = "수학 기초",
         status: CourseStatus = CourseStatus.ACTIVE,
         enrollmentCount: Long = 5,
+        totalLessons: Int = 12,
     ) = CourseWithTeacherAndEnrollmentCountDto(
         course =
             Course(
@@ -34,6 +35,7 @@ class GetCourseListUseCaseTest {
             ),
         teacherName = teacherName,
         enrollmentCount = enrollmentCount,
+        totalLessons = totalLessons,
     )
 
     @Test
@@ -97,6 +99,17 @@ class GetCourseListUseCaseTest {
         val result = useCase.execute(null, null, pageable)
 
         assertEquals(10, result.content[0].enrollmentCount)
+    }
+
+    @Test
+    fun `totalLessons가 응답에 포함된다`() {
+        val dto = createCourseDto(totalLessons = 8)
+        val pageable = PageRequest.of(0, 20)
+        every { courseAdaptor.searchCourses(null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, pageable)
+
+        assertEquals(8, result.content[0].totalLessons)
     }
 
     @Test
