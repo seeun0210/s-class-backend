@@ -117,6 +117,7 @@ class CommissionController(
 
     @GetMapping("/{commissionId}/lesson")
     fun getLesson(
+        @CurrentUserId userId: String,
         @PathVariable commissionId: Long,
-    ): ApiResponse<LessonResponse> = ApiResponse.success(getCommissionLessonUseCase.execute(commissionId))
+    ): ApiResponse<LessonResponse> = ApiResponse.success(getCommissionLessonUseCase.execute(userId, commissionId))
 }

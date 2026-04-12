@@ -17,4 +17,5 @@ enum class LessonErrorCode(
     LESSON_REPORT_ALREADY_APPROVED("LESSON_007", "이미 승인된 리포트입니다", 409),
     LESSON_REPORT_INVALID_STATUS_TRANSITION("LESSON_008", "잘못된 리포트 상태 전이입니다", 400),
     LESSON_REPORT_REJECT_REASON_REQUIRED("LESSON_009", "반려 사유가 필요합니다", 400),
+    LESSON_UNAUTHORIZED_ACCESS("LESSON_010", "해당 수업에 대한 권한이 없습니다", 403),
 }
