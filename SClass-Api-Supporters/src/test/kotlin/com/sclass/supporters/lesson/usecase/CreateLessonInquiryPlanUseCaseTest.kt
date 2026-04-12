@@ -4,6 +4,7 @@ import com.sclass.domain.domains.inquiryplan.domain.InquiryPlanSourceType
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonType
+import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.supporters.inquiry.dto.CreateInquiryPlanRequest
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
 import com.sclass.supporters.inquiry.usecase.CreateInquiryPlanUseCase
@@ -68,7 +69,7 @@ class CreateLessonInquiryPlanUseCaseTest {
     fun `학생은 탐구 계획을 생성할 수 없다`() {
         every { lessonAdaptor.findById(1L) } returns lesson()
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<LessonUnauthorizedAccessException> {
             useCase.execute(studentUserId, 1L, CreateLessonInquiryPlanRequest(paragraph = "탐구 내용"))
         }
     }
@@ -77,7 +78,7 @@ class CreateLessonInquiryPlanUseCaseTest {
     fun `담당 선생님이 아니면 탐구 계획을 생성할 수 없다`() {
         every { lessonAdaptor.findById(1L) } returns lesson()
 
-        assertThrows<IllegalArgumentException> {
+        assertThrows<LessonUnauthorizedAccessException> {
             useCase.execute("other-teacher-id-000000001", 1L, CreateLessonInquiryPlanRequest(paragraph = "탐구 내용"))
         }
     }
