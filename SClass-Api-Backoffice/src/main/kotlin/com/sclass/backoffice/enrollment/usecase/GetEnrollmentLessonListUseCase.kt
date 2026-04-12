@@ -14,7 +14,10 @@ class GetEnrollmentLessonListUseCase(
     fun execute(enrollmentId: Long): EnrollmentLessonListResponse {
         val lessons = lessonAdaptor.findAllByEnrollment(enrollmentId)
         return EnrollmentLessonListResponse(
-            lessons = lessons.map { EnrollmentLessonResponse.from(it) },
+            lessons =
+                lessons
+                    .sortedBy { it.lessonNumber ?: Int.MAX_VALUE }
+                    .map { EnrollmentLessonResponse.from(it) },
         )
     }
 }
