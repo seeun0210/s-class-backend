@@ -52,7 +52,6 @@ class UserDomainService(
     fun authenticate(
         email: String,
         rawPassword: String,
-        platform: Platform,
         role: Role,
     ): User {
         val user = userAdaptor.findByEmail(email)
@@ -65,7 +64,7 @@ class UserDomainService(
             throw InvalidPasswordException()
         }
 
-        userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, platform, role)
+        userRoleAdaptor.findByUserIdAndRole(user.id, role)
             ?: throw RoleNotFoundException()
 
         return user
@@ -186,10 +185,9 @@ class UserDomainService(
 
     fun activateIfApproved(
         userId: String,
-        platform: Platform,
         role: Role,
     ) {
-        val userRole = userRoleAdaptor.findByUserIdAndPlatformAndRole(userId, platform, role) ?: return
+        val userRole = userRoleAdaptor.findByUserIdAndRole(userId, role) ?: return
         if (userRole.state == UserRoleState.APPROVED) {
             userRole.changeStateTo(UserRoleState.NORMAL)
             userRoleAdaptor.save(userRole)

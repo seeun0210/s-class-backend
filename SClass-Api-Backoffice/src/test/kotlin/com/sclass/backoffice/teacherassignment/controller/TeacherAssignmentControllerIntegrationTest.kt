@@ -115,7 +115,6 @@ class TeacherAssignmentControllerIntegrationTest {
             jwtTokenProvider.generateAccessToken(
                 userId = adminUser.id,
                 role = "ADMIN",
-                platform = "BACKOFFICE",
             )
         adminToken = "Bearer ${aesTokenEncryptor.encrypt(jwt)}"
     }

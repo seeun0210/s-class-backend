@@ -111,11 +111,9 @@ class UserDomainServiceTest {
                 )
             every { userAdaptor.findByEmail("test@example.com") } returns user
             every { passwordService.matches("rawPw", "hashedPw") } returns true
-            every {
-                userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, Platform.SUPPORTERS, Role.STUDENT)
-            } returns mockk()
+            every { userRoleAdaptor.findByUserIdAndRole(user.id, Role.STUDENT) } returns mockk()
 
-            val result = userDomainService.authenticate("test@example.com", "rawPw", Platform.SUPPORTERS, Role.STUDENT)
+            val result = userDomainService.authenticate("test@example.com", "rawPw", Role.STUDENT)
 
             assertEquals(user, result)
         }
@@ -132,7 +130,7 @@ class UserDomainServiceTest {
             every { userAdaptor.findByEmail("test@example.com") } returns user
 
             assertThrows<InvalidPasswordException> {
-                userDomainService.authenticate("test@example.com", "rawPw", Platform.SUPPORTERS, Role.STUDENT)
+                userDomainService.authenticate("test@example.com", "rawPw", Role.STUDENT)
             }
         }
 
@@ -149,7 +147,7 @@ class UserDomainServiceTest {
             every { passwordService.matches("wrongPw", "hashedPw") } returns false
 
             assertThrows<InvalidPasswordException> {
-                userDomainService.authenticate("test@example.com", "wrongPw", Platform.SUPPORTERS, Role.STUDENT)
+                userDomainService.authenticate("test@example.com", "wrongPw", Role.STUDENT)
             }
         }
 
@@ -164,12 +162,10 @@ class UserDomainServiceTest {
                 )
             every { userAdaptor.findByEmail("test@example.com") } returns user
             every { passwordService.matches("rawPw", "hashedPw") } returns true
-            every {
-                userRoleAdaptor.findByUserIdAndPlatformAndRole(user.id, Platform.LMS, Role.ADMIN)
-            } returns null
+            every { userRoleAdaptor.findByUserIdAndRole(user.id, Role.ADMIN) } returns null
 
             assertThrows<RoleNotFoundException> {
-                userDomainService.authenticate("test@example.com", "rawPw", Platform.LMS, Role.ADMIN)
+                userDomainService.authenticate("test@example.com", "rawPw", Role.ADMIN)
             }
         }
     }

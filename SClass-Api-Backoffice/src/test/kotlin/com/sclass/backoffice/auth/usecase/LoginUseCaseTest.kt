@@ -3,7 +3,6 @@ package com.sclass.backoffice.auth.usecase
 import com.sclass.backoffice.auth.dto.LoginRequest
 import com.sclass.domain.domains.token.dto.TokenResult
 import com.sclass.domain.domains.token.service.TokenDomainService
-import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.service.UserDomainService
@@ -36,13 +35,12 @@ class LoginUseCaseTest {
             userDomainService.authenticate(
                 email = "admin@sclass.com",
                 rawPassword = "password123",
-                platform = Platform.BACKOFFICE,
                 role = Role.ADMIN,
             )
         } returns user
 
         every {
-            tokenDomainService.issueTokens("user-id-123", Role.ADMIN, Platform.BACKOFFICE)
+            tokenDomainService.issueTokens("user-id-123", Role.ADMIN)
         } returns
             TokenResult(
                 accessToken = "encrypted-access-token",
