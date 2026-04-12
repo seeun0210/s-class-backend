@@ -111,7 +111,7 @@ class UserDomainServiceTest {
                 )
             every { userAdaptor.findByEmail("test@example.com") } returns user
             every { passwordService.matches("rawPw", "hashedPw") } returns true
-            every { userRoleAdaptor.findByUserIdAndRole(user.id, Role.STUDENT) } returns mockk()
+            every { userRoleAdaptor.findAllByUserIdAndRole(user.id, Role.STUDENT) } returns listOf(mockk())
 
             val result = userDomainService.authenticate("test@example.com", "rawPw", Role.STUDENT)
 
@@ -162,7 +162,7 @@ class UserDomainServiceTest {
                 )
             every { userAdaptor.findByEmail("test@example.com") } returns user
             every { passwordService.matches("rawPw", "hashedPw") } returns true
-            every { userRoleAdaptor.findByUserIdAndRole(user.id, Role.ADMIN) } returns null
+            every { userRoleAdaptor.findAllByUserIdAndRole(user.id, Role.ADMIN) } returns emptyList()
 
             assertThrows<RoleNotFoundException> {
                 userDomainService.authenticate("test@example.com", "rawPw", Role.ADMIN)

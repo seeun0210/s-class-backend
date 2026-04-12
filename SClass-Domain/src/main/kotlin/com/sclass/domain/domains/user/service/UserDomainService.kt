@@ -64,8 +64,9 @@ class UserDomainService(
             throw InvalidPasswordException()
         }
 
-        userRoleAdaptor.findByUserIdAndRole(user.id, role)
-            ?: throw RoleNotFoundException()
+        if (userRoleAdaptor.findAllByUserIdAndRole(user.id, role).isEmpty()) {
+            throw RoleNotFoundException()
+        }
 
         return user
     }
@@ -187,11 +188,13 @@ class UserDomainService(
         userId: String,
         role: Role,
     ) {
-        val userRole = userRoleAdaptor.findByUserIdAndRole(userId, role) ?: return
-        if (userRole.state == UserRoleState.APPROVED) {
-            userRole.changeStateTo(UserRoleState.NORMAL)
-            userRoleAdaptor.save(userRole)
-        }
+        userRoleAdaptor
+            .findAllByUserIdAndRole(userId, role)
+            .filter { it.state == UserRoleState.APPROVED }
+            .forEach {
+                it.changeStateTo(UserRoleState.NORMAL)
+                userRoleAdaptor.save(it)
+            }
     }
 
     private fun initialStateFor(role: Role): UserRoleState = if (role == Role.TEACHER) UserRoleState.DRAFT else UserRoleState.NORMAL
