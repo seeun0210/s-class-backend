@@ -19,4 +19,14 @@ interface InquiryPlanRepository : JpaRepository<InquiryPlan, Long> {
     ): InquiryPlan?
 
     fun findByExternalPlanId(externalPlanId: String): InquiryPlan?
+
+    fun findFirstBySourceTypeAndSourceRefIdOrderByIdDesc(
+        sourceType: InquiryPlanSourceType,
+        sourceRefId: Long,
+    ): InquiryPlan?
+
+    fun findAllBySourceTypeAndSourceRefIdIn(
+        sourceType: InquiryPlanSourceType,
+        sourceRefIds: List<Long>,
+    ): List<InquiryPlan>
 }
