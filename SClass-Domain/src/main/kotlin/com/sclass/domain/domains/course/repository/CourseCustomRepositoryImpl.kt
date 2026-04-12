@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.domain.QCourse.course
+import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
@@ -36,6 +37,22 @@ class CourseCustomRepositoryImpl(
                     course = tuple[course]!!,
                     teacher = tuple[teacher],
                     teacherUser = tuple[user],
+                )
+            }
+
+    override fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
+        queryFactory
+            .select(course, enrollment.count())
+            .from(course)
+            .leftJoin(enrollment)
+            .on(enrollment.courseId.eq(course.id))
+            .where(course.teacherUserId.eq(teacherUserId))
+            .groupBy(course.id)
+            .fetch()
+            .map { tuple ->
+                CourseWithEnrollmentCountDto(
+                    course = tuple[course]!!,
+                    enrollmentCount = tuple[enrollment.count()] ?: 0L,
                 )
             }
 

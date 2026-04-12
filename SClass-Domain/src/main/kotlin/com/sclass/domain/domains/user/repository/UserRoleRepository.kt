@@ -3,6 +3,7 @@ package com.sclass.domain.domains.user.repository
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.user.domain.UserRole
+import com.sclass.domain.domains.user.domain.UserRoleState
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface UserRoleRepository : JpaRepository<UserRole, String> {
@@ -22,4 +23,11 @@ interface UserRoleRepository : JpaRepository<UserRole, String> {
         userId: String,
         role: Role,
     ): List<UserRole>
+
+    fun existsByUserIdAndPlatformAndRoleAndStateIn(
+        userId: String,
+        platform: Platform,
+        role: Role,
+        states: Collection<UserRoleState>,
+    ): Boolean
 }

@@ -3,6 +3,7 @@ package com.sclass.domain.domains.course.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
+import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.course.exception.CourseNotFoundException
@@ -26,6 +27,9 @@ class CourseAdaptor(
     fun findAllActive(): List<Course> = courseRepository.findAllByStatus(CourseStatus.ACTIVE)
 
     fun findAllActiveWithTeacher(): List<CourseWithTeacherDto> = courseRepository.findAllActiveWithTeacher()
+
+    fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
+        courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)
 
     fun searchCourses(
         teacherUserId: String?,
