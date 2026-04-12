@@ -41,7 +41,6 @@ class OAuthLoginUseCase(
             )
 
         if (user != null) {
-            userService.activateIfApproved(user.id, request.role)
             val tokens = tokenService.issueTokens(user.id, request.role)
             return OAuthLoginResponse(
                 isNewUser = false,

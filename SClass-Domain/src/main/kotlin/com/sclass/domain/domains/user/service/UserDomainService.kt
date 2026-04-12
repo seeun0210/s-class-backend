@@ -184,18 +184,5 @@ class UserDomainService(
             )
     }
 
-    fun activateIfApproved(
-        userId: String,
-        role: Role,
-    ) {
-        userRoleAdaptor
-            .findAllByUserIdAndRole(userId, role)
-            .filter { it.state == UserRoleState.APPROVED }
-            .forEach {
-                it.changeStateTo(UserRoleState.NORMAL)
-                userRoleAdaptor.save(it)
-            }
-    }
-
-    private fun initialStateFor(role: Role): UserRoleState = if (role == Role.TEACHER) UserRoleState.DRAFT else UserRoleState.NORMAL
+    private fun initialStateFor(role: Role): UserRoleState = if (role == Role.TEACHER) UserRoleState.DRAFT else UserRoleState.ACTIVE
 }

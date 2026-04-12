@@ -15,7 +15,6 @@ import com.sclass.infrastructure.oauth.client.OAuthClient
 import com.sclass.infrastructure.oauth.dto.OAuthUserInfo
 import com.sclass.lms.auth.dto.OAuthCompleteSignupRequest
 import com.sclass.lms.auth.dto.OAuthLoginRequest
-import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -62,7 +61,6 @@ class OAuthLoginUseCaseTest {
         every { oAuthClient.fetchUserInfo("oauth-access-token") } returns userInfo
         every { userService.findByOAuthOrNull("oauth-id", AuthProvider.GOOGLE) } returns user
         every { userService.ensureUserRole("user-id", Platform.LMS, Role.ADMIN) } just runs
-        every { userService.activateIfApproved("user-id", Role.ADMIN) } just Runs
         every { tokenService.issueTokens("user-id", Role.ADMIN) } returns tokenResult
 
         val result = useCase.login(request)

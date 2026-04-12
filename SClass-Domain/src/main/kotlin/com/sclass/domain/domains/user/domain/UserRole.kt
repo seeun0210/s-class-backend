@@ -41,7 +41,7 @@ class UserRole(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var state: UserRoleState = UserRoleState.NORMAL,
+    var state: UserRoleState = UserRoleState.ACTIVE,
 
     @Embedded
     var stateDetail: UserRoleStateDetail? = null,
@@ -50,7 +50,7 @@ class UserRole(
         approvedBy: String,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
-        changeStateTo(UserRoleState.APPROVED)
+        changeStateTo(UserRoleState.ACTIVE)
         stateDetail = UserRoleStateDetail(approvedAt = now, approvedBy = approvedBy)
     }
 
@@ -70,9 +70,8 @@ class UserRole(
         private val VALID_TRANSITIONS =
             mapOf(
                 UserRoleState.DRAFT to setOf(UserRoleState.PENDING),
-                UserRoleState.PENDING to setOf(UserRoleState.APPROVED, UserRoleState.REJECTED, UserRoleState.PENDING),
+                UserRoleState.PENDING to setOf(UserRoleState.ACTIVE, UserRoleState.REJECTED, UserRoleState.PENDING),
                 UserRoleState.REJECTED to setOf(UserRoleState.PENDING),
-                UserRoleState.APPROVED to setOf(UserRoleState.NORMAL),
             )
     }
 }

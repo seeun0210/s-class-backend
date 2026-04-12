@@ -202,7 +202,7 @@ class UserDomainServiceIntegrationTest {
         assertThat(newRole.userId).isEqualTo(user.id)
         assertThat(newRole.platform).isEqualTo(Platform.LMS)
         assertThat(newRole.role).isEqualTo(Role.STUDENT)
-        assertThat(newRole.state).isEqualTo(UserRoleState.NORMAL)
+        assertThat(newRole.state).isEqualTo(UserRoleState.ACTIVE)
 
         val roles = userRoleRepository.findAllByUserId(user.id)
         assertThat(roles).hasSize(2)

@@ -47,7 +47,7 @@ class GetStudentsUseCaseTest {
                     userId = user.id,
                     platform = Platform.SUPPORTERS,
                     role = Role.STUDENT,
-                    state = UserRoleState.NORMAL,
+                    state = UserRoleState.ACTIVE,
                 )
             val pageable = PageRequest.of(0, 20)
             val condition = StudentSearchCondition(name = "김학생")
@@ -75,7 +75,7 @@ class GetStudentsUseCaseTest {
             assertThat(result.content[0].email).isEqualTo("student@example.com")
             assertThat(result.content[0].roles).hasSize(1)
             assertThat(result.content[0].roles[0].platform).isEqualTo(Platform.SUPPORTERS)
-            assertThat(result.content[0].roles[0].state).isEqualTo(UserRoleState.NORMAL)
+            assertThat(result.content[0].roles[0].state).isEqualTo(UserRoleState.ACTIVE)
             assertThat(result.content[0].roles[0].userRoleId).isEqualTo(userRole.id)
 
             verify(exactly = 1) { studentAdaptor.searchStudents(condition, pageable) }

@@ -9,7 +9,7 @@ data class UpdateUserRoleStateRequest(
     val reason: String? = null,
 ) {
     init {
-        if (state != UserRoleState.APPROVED && state != UserRoleState.REJECTED) {
+        if (state != UserRoleState.ACTIVE && state != UserRoleState.REJECTED) {
             throw InvalidStateRequestException()
         }
 

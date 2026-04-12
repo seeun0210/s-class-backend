@@ -175,7 +175,7 @@ class TeacherDomainServiceTest {
                 approvedBy = "admin-id",
             )
 
-            assertEquals(UserRoleState.APPROVED, userRole.state)
+            assertEquals(UserRoleState.ACTIVE, userRole.state)
             assertEquals("admin-id", userRole.stateDetail?.approvedBy)
             verify { userRoleAdaptor.save(userRole) }
         }
