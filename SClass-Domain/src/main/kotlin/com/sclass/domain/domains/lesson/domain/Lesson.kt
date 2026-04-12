@@ -97,8 +97,9 @@ class Lesson(
         name: String?,
         scheduledAt: LocalDateTime?,
     ) {
-        if (name != null) this.name = name
-        if (scheduledAt != null) this.scheduledAt = scheduledAt
+        require(status == LessonStatus.SCHEDULED) { "Cannot update lesson in $status status" }
+        name?.let { this.name = it }
+        scheduledAt?.let { this.scheduledAt = it }
     }
 
     private fun validateTransition(target: LessonStatus) {

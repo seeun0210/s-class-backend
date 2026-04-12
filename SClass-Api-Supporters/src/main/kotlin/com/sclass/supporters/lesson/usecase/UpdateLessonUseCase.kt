@@ -22,6 +22,6 @@ class UpdateLessonUseCase(
             throw LessonUnauthorizedAccessException()
         }
         lesson.updateSchedule(request.name, request.scheduledAt)
-        return LessonResponse.from(lessonAdaptor.save(lesson))
+        return LessonResponse.from(lesson)
     }
 }
