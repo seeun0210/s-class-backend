@@ -3,14 +3,14 @@ package com.sclass.infrastructure.report.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class ReportStateDto(
-    val id: String,
-    val jobId: String,
-    val paragraph: String,
+    val id: String? = null,
+    val jobId: String? = null,
+    val paragraph: String? = null,
     val topic: String? = null,
 
-    @param:JsonProperty("keywords_core") val keywordsCore: List<String> = emptyList(),
-    @param:JsonProperty("keywords_related") val keywordsRelated: List<String> = emptyList(),
-    val keywords: List<String> = emptyList(),
+    @param:JsonProperty("keywords_core") val keywordsCore: List<String>? = null,
+    @param:JsonProperty("keywords_related") val keywordsRelated: List<String>? = null,
+    val keywords: List<String>? = null,
 
     val subject: String? = null,
     val category: String? = null,
@@ -18,9 +18,32 @@ data class ReportStateDto(
     val difficulty: String? = null,
     val reason: String? = null,
 
-    @param:JsonProperty("related_subjects") val relatedSubjects: List<String> = emptyList(),
+    @param:JsonProperty("related_subjects") val relatedSubjects: List<String>? = null,
+
+    val index: ReportIndexDto? = null,
+    val motivation: Map<String, Any?>? = null,
+    val citations: List<Map<String, Any?>>? = null,
+    val activities: Map<String, Any?>? = null,
+    val summary: Map<String, Any?>? = null,
+    val extraTools: Map<String, Any?>? = null,
 
     val createdAt: String? = null,
     val status: String? = null,
-    val schemaVersion: Int = 2,
+    val schemaVersion: Int? = 2,
+)
+
+data class ReportIndexDto(
+    val topic: String? = null,
+
+    @param:JsonProperty("keywords_core") val keywordsCore: List<String>? = null,
+    @param:JsonProperty("keywords_related") val keywordsRelated: List<String>? = null,
+    val keywords: List<String>? = null,
+
+    val subject: String? = null,
+    val category: String? = null,
+    val major: String? = null,
+    val difficulty: String? = null,
+    val reason: String? = null,
+
+    @param:JsonProperty("related_subjects") val relatedSubjects: List<String>? = null,
 )

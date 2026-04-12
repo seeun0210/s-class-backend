@@ -6,7 +6,9 @@ import com.sclass.domain.domains.inquiryplan.domain.InquiryPlanSourceType
 import com.sclass.supporters.inquiry.dto.CreateInquiryPlanRequest
 import com.sclass.supporters.inquiry.dto.InquiryPlanDetailResponse
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
+import com.sclass.supporters.inquiry.dto.InquiryPlanStatusResponse
 import com.sclass.supporters.inquiry.usecase.CreateInquiryPlanUseCase
+import com.sclass.supporters.inquiry.usecase.GetInquiryPlanStatusUseCase
 import com.sclass.supporters.inquiry.usecase.GetInquiryPlanUseCase
 import com.sclass.supporters.inquiry.usecase.GetInquiryPlansUseCase
 import jakarta.validation.Valid
@@ -27,6 +29,7 @@ class InquiryPlanController(
     private val createInquiryPlanUseCase: CreateInquiryPlanUseCase,
     private val getInquiryPlansUseCase: GetInquiryPlansUseCase,
     private val getInquiryPlanUseCase: GetInquiryPlanUseCase,
+    private val getInquiryPlanStatusUseCase: GetInquiryPlanStatusUseCase,
 ) {
     @PostMapping
     fun create(
@@ -48,4 +51,10 @@ class InquiryPlanController(
         @CurrentUserId userId: String,
         @PathVariable id: Long,
     ): ApiResponse<InquiryPlanDetailResponse> = ApiResponse.success(getInquiryPlanUseCase.execute(userId, id))
+
+    @GetMapping("/{id}/status")
+    fun status(
+        @CurrentUserId userId: String,
+        @PathVariable id: Long,
+    ): ApiResponse<InquiryPlanStatusResponse> = ApiResponse.success(getInquiryPlanStatusUseCase.execute(userId, id))
 }
