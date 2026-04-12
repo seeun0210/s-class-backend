@@ -46,3 +46,9 @@ nicepay:
   client-key: test-client-key
   secret-key: test-secret-key
   base-url: https://sandbox-api.nicepay.co.kr
+
+report-service:
+  enabled: true
+  base-url: http://localhost:9999
+  callback-secret: test-secret
+  callback-base-url: http://localhost:8081
