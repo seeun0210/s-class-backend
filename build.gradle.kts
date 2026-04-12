@@ -57,6 +57,10 @@ subprojects {
         testImplementation("com.h2database:h2")
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-parameters")
+    }
+
     tasks.withType<Test> {
         useJUnitPlatform()
     }
