@@ -30,4 +30,14 @@ class InquiryPlanAdaptor(
         sourceRefId: Long,
         pageable: Pageable,
     ): Page<InquiryPlan> = repository.findAllBySourceTypeAndSourceRefId(sourceType, sourceRefId, pageable)
+
+    fun findLatestBySourceOrNull(
+        sourceType: InquiryPlanSourceType,
+        sourceRefId: Long,
+    ): InquiryPlan? = repository.findFirstBySourceTypeAndSourceRefIdOrderByIdDesc(sourceType, sourceRefId)
+
+    fun findAllBySourceIn(
+        sourceType: InquiryPlanSourceType,
+        sourceRefIds: List<Long>,
+    ): List<InquiryPlan> = repository.findAllBySourceTypeAndSourceRefIdIn(sourceType, sourceRefIds)
 }

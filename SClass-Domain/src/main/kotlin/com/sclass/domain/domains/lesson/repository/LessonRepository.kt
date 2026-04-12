@@ -6,7 +6,7 @@ import com.sclass.domain.domains.lesson.domain.LessonType
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LessonRepository : JpaRepository<Lesson, Long> {
-    fun findAllByEnrollmentId(enrollmentId: Long): List<Lesson>
+    fun findAllByEnrollmentIdOrderByLessonNumberAscCreatedAtAsc(enrollmentId: Long): List<Lesson>
 
     fun findAllBySourceCommissionId(sourceCommissionId: Long): List<Lesson>
 
