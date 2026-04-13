@@ -60,7 +60,6 @@ class GetEnrollmentLessonsUseCaseTest {
             assignedTeacherUserId = teacherUserId,
             lessonNumber = lessonNumber,
             name = "수학 ${lessonNumber}회차",
-            teacherPayoutAmountWon = 50_000,
         )
 
     @Test

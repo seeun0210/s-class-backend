@@ -32,7 +32,6 @@ class CreateCourseUseCaseTest {
             name = "수학 코스",
             priceWon = 300000,
             totalLessons = 12,
-            teacherPayoutPerLessonWon = 20000,
         )
 
     private fun request() =

@@ -96,7 +96,6 @@ class CreateCommissionUseCaseTest {
             CommissionProduct(
                 name = "의뢰 기본 상품",
                 coinCost = coinCost,
-                teacherPayoutAmountWon = 50_000,
             )
         every { productAdaptor.findActiveCommissionProduct() } returns product
         return product

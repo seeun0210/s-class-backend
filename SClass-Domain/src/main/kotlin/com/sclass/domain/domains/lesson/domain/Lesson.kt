@@ -65,10 +65,6 @@ class Lesson(
     @Column(name = "completed_at")
     var completedAt: LocalDateTime? = null,
 
-    // 정산용 스냅샷 (Enrollment/Commission에서 복사)
-    @Column(name = "teacher_payout_amount_won", nullable = false)
-    val teacherPayoutAmountWon: Int,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: LessonStatus = LessonStatus.SCHEDULED,
