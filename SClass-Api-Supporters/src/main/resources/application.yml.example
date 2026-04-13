@@ -22,6 +22,10 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+      connection-pool-size: ${REDIS_CONNECTION_POOL_SIZE:8}
+      connection-minimum-idle-size: ${REDIS_CONNECTION_MIN_IDLE:2}
+      subscription-connection-pool-size: ${REDIS_SUBSCRIPTION_POOL_SIZE:4}
+      subscription-connection-minimum-idle-size: ${REDIS_SUBSCRIPTION_MIN_IDLE:1}
   mail:
     host: ${SMTP_HOST:}
     port: ${SMTP_PORT:587}
@@ -72,6 +76,13 @@ alimtalk:
   secret-key: ${ALIMTALK_SECRET_KEY:}
   plus-friend-id: ${ALIMTALK_PLUS_FRIEND_ID:}
   app-base-url: ${ALIMTALK_APP_BASE_URL:}
+
+report-service:
+  enabled: ${REPORT_SERVICE_ENABLED:true}
+  base-url: ${REPORT_SERVICE_BASE_URL:}
+  timeout-seconds: ${REPORT_SERVICE_TIMEOUT_SECONDS:30}
+  callback-secret: ${REPORT_SERVICE_CALLBACK_SECRET:}
+  callback-base-url: ${REPORT_SERVICE_CALLBACK_BASE_URL:}
 
 management:
   endpoints:
