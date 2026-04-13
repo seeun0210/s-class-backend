@@ -19,7 +19,7 @@ class GetLessonDetailUseCase(
         lessonId: Long,
     ): LessonDetailResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-        if (lesson.studentUserId != userId && lesson.assignedTeacherUserId != userId) {
+        if (lesson.studentUserId != userId && !lesson.isTeacher(userId)) {
             throw LessonUnauthorizedAccessException()
         }
         val latestPlan =

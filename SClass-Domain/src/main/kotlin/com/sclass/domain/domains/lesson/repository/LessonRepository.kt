@@ -5,7 +5,9 @@ import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.LessonType
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface LessonRepository : JpaRepository<Lesson, Long> {
+interface LessonRepository :
+    JpaRepository<Lesson, Long>,
+    LessonCustomRepository {
     fun findAllByEnrollmentIdOrderByLessonNumberAscCreatedAtAsc(enrollmentId: Long): List<Lesson>
 
     fun findAllBySourceCommissionId(sourceCommissionId: Long): List<Lesson>
@@ -13,6 +15,8 @@ interface LessonRepository : JpaRepository<Lesson, Long> {
     fun findAllByStudentUserId(studentUserId: String): List<Lesson>
 
     fun findAllByAssignedTeacherUserId(assignedTeacherUserId: String): List<Lesson>
+
+    fun findAllBySubstituteTeacherUserId(substituteTeacherUserId: String): List<Lesson>
 
     fun findAllByActualTeacherUserIdAndStatus(
         actualTeacherUserId: String,

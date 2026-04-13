@@ -18,7 +18,7 @@ class UpdateLessonUseCase(
         request: UpdateLessonRequest,
     ): LessonResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-        if (lesson.assignedTeacherUserId != userId) {
+        if (!lesson.isTeacher(userId)) {
             throw LessonUnauthorizedAccessException()
         }
         lesson.updateSchedule(request.name, request.scheduledAt)

@@ -2,13 +2,19 @@ package com.sclass.supporters.lesson.controller
 
 import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.dto.ApiResponse
+import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
 import com.sclass.supporters.lesson.dto.CreateLessonInquiryPlanRequest
 import com.sclass.supporters.lesson.dto.LessonDetailResponse
+import com.sclass.supporters.lesson.dto.LessonReportResponse
 import com.sclass.supporters.lesson.dto.LessonResponse
+import com.sclass.supporters.lesson.dto.SubmitLessonReportRequest
 import com.sclass.supporters.lesson.dto.UpdateLessonRequest
 import com.sclass.supporters.lesson.usecase.CreateLessonInquiryPlanUseCase
 import com.sclass.supporters.lesson.usecase.GetLessonDetailUseCase
+import com.sclass.supporters.lesson.usecase.GetLessonReportsUseCase
+import com.sclass.supporters.lesson.usecase.GetMySubstituteLessonsUseCase
+import com.sclass.supporters.lesson.usecase.SubmitLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.UpdateLessonUseCase
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -25,7 +32,16 @@ class LessonController(
     private val createLessonInquiryPlanUseCase: CreateLessonInquiryPlanUseCase,
     private val getLessonDetailUseCase: GetLessonDetailUseCase,
     private val updateLessonUseCase: UpdateLessonUseCase,
+    private val submitLessonReportUseCase: SubmitLessonReportUseCase,
+    private val getLessonReportsUseCase: GetLessonReportsUseCase,
+    private val getMySubstituteLessonsUseCase: GetMySubstituteLessonsUseCase,
 ) {
+    @GetMapping("/my/substitutes")
+    fun mySubstituteLessons(
+        @CurrentUserId userId: String,
+        @RequestParam(required = false) status: LessonStatus?,
+    ): ApiResponse<List<LessonResponse>> = ApiResponse.success(getMySubstituteLessonsUseCase.execute(userId, status))
+
     @GetMapping("/{lessonId}")
     fun detail(
         @CurrentUserId userId: String,
@@ -45,4 +61,17 @@ class LessonController(
         @PathVariable lessonId: Long,
         @Valid @RequestBody request: CreateLessonInquiryPlanRequest,
     ): ApiResponse<InquiryPlanResponse> = ApiResponse.success(createLessonInquiryPlanUseCase.execute(userId, lessonId, request))
+
+    @PostMapping("/{lessonId}/reports")
+    fun submitReport(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+        @Valid @RequestBody request: SubmitLessonReportRequest,
+    ): ApiResponse<LessonReportResponse> = ApiResponse.success(submitLessonReportUseCase.execute(userId, lessonId, request))
+
+    @GetMapping("/{lessonId}/reports")
+    fun listReports(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+    ): ApiResponse<List<LessonReportResponse>> = ApiResponse.success(getLessonReportsUseCase.execute(userId, lessonId))
 }
