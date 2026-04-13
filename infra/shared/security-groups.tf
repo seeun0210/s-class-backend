@@ -29,10 +29,17 @@ resource "aws_security_group" "nat" {
     cidr_blocks = var.private_subnet_cidrs
   }
 
-  # Private Subnet → Redis Cloud
+  # Private Subnet → Redis Cloud (dev: 13699, prod: 17870)
   ingress {
     from_port   = 13699
     to_port     = 13699
+    protocol    = "tcp"
+    cidr_blocks = var.private_subnet_cidrs
+  }
+
+  ingress {
+    from_port   = 17870
+    to_port     = 17870
     protocol    = "tcp"
     cidr_blocks = var.private_subnet_cidrs
   }
@@ -77,10 +84,17 @@ resource "aws_security_group" "app_runner" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Redis Cloud 접근 (NAT Instance 경유)
+  # Redis Cloud 접근 (NAT Instance 경유) — dev: 13699, prod: 17870
   egress {
     from_port   = 13699
     to_port     = 13699
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 17870
+    to_port     = 17870
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

@@ -53,6 +53,43 @@ resource "aws_security_group_rule" "dedicated_rds_from_app_runner" {
   source_security_group_id = local.shared.app_runner_sg_id
 }
 
+# App Runner SG → dedicated RDS egress 허용
+# (shared SG의 기본 egress는 shared RDS SG로만 열려있어서 별도로 추가)
+resource "aws_security_group_rule" "app_runner_to_dedicated_rds" {
+  count = var.create_dedicated_rds ? 1 : 0
+
+  type                     = "egress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = local.shared.app_runner_sg_id
+  source_security_group_id = aws_security_group.dedicated_rds[0].id
+}
+
+# NAT Instance → dedicated RDS ingress 허용
+# 로컬에서 SSM Session Manager port-forward를 통해 DB 접속할 때 사용
+# (sclass-prod-db 스크립트, DEV_DB_ACCESS.md 참고)
+data "aws_security_group" "nat" {
+  count = var.create_dedicated_rds ? 1 : 0
+
+  filter {
+    name   = "group-name"
+    values = ["sclass-nat-*"]
+  }
+}
+
+resource "aws_security_group_rule" "dedicated_rds_from_nat" {
+  count = var.create_dedicated_rds ? 1 : 0
+
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.dedicated_rds[0].id
+  source_security_group_id = data.aws_security_group.nat[0].id
+  description              = "Admin DB access via SSM port-forward from NAT"
+}
+
 # ──────────────────────────────────────
 # Subnet Group
 # ──────────────────────────────────────
