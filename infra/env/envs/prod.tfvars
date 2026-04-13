@@ -5,6 +5,9 @@ domain      = "aura.co.kr"
 # Database (환경별 DB 이름)
 db_name = "sclass_prod"
 
+# Dedicated RDS 사용 (shared RDS 분리)
+create_dedicated_rds = true
+
 # App Runner (prod: 기본 스펙)
 app_runner_cpu    = "1024"
 app_runner_memory = "2048"
@@ -27,10 +30,10 @@ services = {
   }
 }
 
-cors_allow_origins   = "https://aura.co.kr,https://app.aura.co.kr,https://lms.aura.co.kr,https://backoffice.aura.co.kr,https://sclass.aura.co.kr"
-alimtalk_app_base_url = "https://sclass.aura.co.kr"
-frontend_url          = "https://sclass.aura.co.kr"
-enable_custom_domain = false
+cors_allow_origins               = "https://aura.co.kr,https://app.aura.co.kr,https://lms.aura.co.kr,https://backoffice.aura.co.kr,https://sclass.aura.co.kr"
+alimtalk_app_base_url            = "https://sclass.aura.co.kr"
+frontend_url                     = "https://sclass.aura.co.kr"
+enable_custom_domain             = false
 report_service_base_url          = "https://report-service-452628026107.asia-northeast3.run.app"
 report_service_callback_base_url = "https://d5z6hitxmg.ap-northeast-1.awsapprunner.com"
 
