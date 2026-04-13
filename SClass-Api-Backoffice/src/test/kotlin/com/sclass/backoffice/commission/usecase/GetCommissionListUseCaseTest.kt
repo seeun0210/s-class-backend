@@ -33,7 +33,6 @@ class GetCommissionListUseCaseTest {
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
         productId = "prod01",
-        teacherPayoutAmountWon = 80000,
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,
@@ -55,7 +54,6 @@ class GetCommissionListUseCaseTest {
             studentUserId = "student01",
             assignedTeacherUserId = "teacher01",
             name = "탐구 수업 1회차",
-            teacherPayoutAmountWon = 80000,
             status = LessonStatus.SCHEDULED,
         )
 

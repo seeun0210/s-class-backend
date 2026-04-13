@@ -50,7 +50,6 @@ class CreateCommissionUseCase(
                     studentUserId = studentUserId,
                     teacherUserId = assignment.teacherUserId,
                     productId = commissionProduct.id,
-                    teacherPayoutAmountWon = commissionProduct.teacherPayoutAmountWon,
                     outputFormat = request.outputFormat,
                     activityType = request.activityType,
                     guideInfo =

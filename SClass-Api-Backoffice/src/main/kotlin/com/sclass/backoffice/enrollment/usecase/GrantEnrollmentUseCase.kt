@@ -40,7 +40,6 @@ class GrantEnrollmentUseCase(
                     studentUserId = studentUserId,
                     grantedByUserId = adminUserId,
                     grantReason = grantReason,
-                    teacherPayoutPerLessonWon = product.teacherPayoutPerLessonWon,
                     tuitionAmountWon = product.priceWon,
                 ),
             )
@@ -49,7 +48,6 @@ class GrantEnrollmentUseCase(
             enrollment,
             course,
             totalLessons = product.totalLessons,
-            teacherPayoutPerLessonWon = product.teacherPayoutPerLessonWon,
         )
 
         return EnrollmentResponse.from(enrollment)

@@ -27,7 +27,6 @@ class GetEnrollmentLessonListUseCaseTest {
         assignedTeacherUserId = "teacher-id-00000000001",
         lessonNumber = lessonNumber,
         name = name,
-        teacherPayoutAmountWon = 20000,
         status = status,
     )
 
@@ -48,7 +47,6 @@ class GetEnrollmentLessonListUseCaseTest {
             { assertEquals(1, result.lessons[0].lessonNumber) },
             { assertEquals("수학 기초 1회차", result.lessons[0].name) },
             { assertEquals(LessonStatus.SCHEDULED, result.lessons[0].status) },
-            { assertEquals(20000, result.lessons[0].teacherPayoutAmountWon) },
             { assertEquals(3, result.lessons[2].lessonNumber) },
         )
     }

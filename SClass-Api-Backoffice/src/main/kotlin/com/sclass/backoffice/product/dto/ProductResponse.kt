@@ -4,16 +4,17 @@ import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CommissionProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.domain.ProductType
+import com.sclass.domain.domains.product.exception.UnknownProductTypeException
 
 data class ProductResponse(
     val id: String,
     val name: String,
-    val type: String,
+    val type: ProductType,
     val priceWon: Int,
     val coinAmount: Int?,
     val coinCost: Int?,
     val totalLessons: Int?,
-    val teacherPayoutPerLessonWon: Int?,
     val active: Boolean,
 ) {
     companion object {
@@ -23,16 +24,15 @@ data class ProductResponse(
                 name = product.name,
                 type =
                     when (product) {
-                        is CoinProduct -> "COIN"
-                        is CommissionProduct -> "COMMISSION"
-                        is CourseProduct -> "COURSE"
-                        else -> "UNKNOWN"
+                        is CoinProduct -> ProductType.COIN
+                        is CommissionProduct -> ProductType.COMMISSION
+                        is CourseProduct -> ProductType.COURSE
+                        else -> throw UnknownProductTypeException()
                     },
                 priceWon = product.priceWon,
                 coinAmount = (product as? CoinProduct)?.coinAmount,
                 coinCost = (product as? CommissionProduct)?.coinCost,
                 totalLessons = (product as? CourseProduct)?.totalLessons,
-                teacherPayoutPerLessonWon = (product as? CourseProduct)?.teacherPayoutPerLessonWon,
                 active = product.active,
             )
     }

@@ -122,7 +122,6 @@ class HandleNicePayWebhookUseCase(
                         freshEnrollment,
                         course,
                         totalLessons = product.totalLessons,
-                        teacherPayoutPerLessonWon = freshEnrollment.teacherPayoutPerLessonWon,
                     )
                 }
             }

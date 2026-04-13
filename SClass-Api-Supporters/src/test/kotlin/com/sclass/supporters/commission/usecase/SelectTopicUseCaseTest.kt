@@ -51,7 +51,6 @@ class SelectTopicUseCaseTest {
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
         productId = "product-id-00000000000001",
-        teacherPayoutAmountWon = 50_000,
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,
@@ -83,7 +82,6 @@ class SelectTopicUseCaseTest {
             studentUserId = studentUserId,
             assignedTeacherUserId = teacherUserId,
             name = "미시경제학",
-            teacherPayoutAmountWon = 50_000,
         )
 
     @Test
