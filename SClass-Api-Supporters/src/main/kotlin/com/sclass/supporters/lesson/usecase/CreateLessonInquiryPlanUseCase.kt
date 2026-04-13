@@ -28,6 +28,7 @@ class CreateLessonInquiryPlanUseCase(
             CreateInquiryPlanRequest(
                 paragraph = request.paragraph,
                 sourceType = InquiryPlanSourceType.LESSON,
+
                 sourceRefId = lessonId,
             ),
         )

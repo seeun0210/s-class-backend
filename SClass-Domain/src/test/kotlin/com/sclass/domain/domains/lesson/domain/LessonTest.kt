@@ -2,6 +2,7 @@ package com.sclass.domain.domains.lesson.domain
 
 import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
+import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -86,6 +87,14 @@ class LessonTest {
         val lesson = newLesson(status = LessonStatus.COMPLETED)
         assertThrows<LessonInvalidStatusTransitionException> {
             lesson.complete(assignedTeacher)
+        }
+    }
+
+    @Test
+    fun `assignedTeacher를 대타로 배정 시 예외`() {
+        val lesson = newLesson()
+        assertThrows<LessonSubstituteSameAsAssignedException> {
+            lesson.assignSubstitute(assignedTeacher)
         }
     }
 

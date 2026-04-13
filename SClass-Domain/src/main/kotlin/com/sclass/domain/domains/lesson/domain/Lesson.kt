@@ -3,6 +3,7 @@ package com.sclass.domain.domains.lesson.domain
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
+import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -89,6 +90,9 @@ class Lesson(
     fun assignSubstitute(teacherUserId: String) {
         if (status != LessonStatus.SCHEDULED) {
             throw LessonSubstituteAssignNotAllowedException()
+        }
+        if (teacherUserId == assignedTeacherUserId) {
+            throw LessonSubstituteSameAsAssignedException()
         }
         this.substituteTeacherUserId = teacherUserId
     }
