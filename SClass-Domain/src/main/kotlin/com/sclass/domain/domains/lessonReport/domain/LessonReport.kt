@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.lessonReport.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lessonReport.exception.LessonReportInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -39,10 +40,6 @@ class LessonReport(
     val submittedByUserId: String,
     @Column(columnDefinition = "TEXT", nullable = false)
     var content: String,
-    @Column(name = "report_file_id", length = 26)
-    var reportFileId: String? = null,
-    @Column(name = "class_video_file_id", length = 26)
-    var classVideoFileId: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: LessonReportStatus = LessonReportStatus.PENDING_REVIEW,
@@ -82,6 +79,6 @@ class LessonReport(
                 LessonReportStatus.APPROVED -> setOf(LessonReportStatus.PENDING_REVIEW)
                 LessonReportStatus.REJECTED -> setOf(LessonReportStatus.PENDING_REVIEW)
             }
-        require(status in allowed) { "Cannot transition from $status to $target" }
+        if (status !in allowed) throw LessonReportInvalidStatusTransitionException()
     }
 }

@@ -26,7 +26,9 @@ class LessonAdaptor(
 
     fun findAllByStudent(studentUserId: String): List<Lesson> = lessonRepository.findAllByStudentUserId(studentUserId)
 
-    fun findAllByAssignedTeacher(teacherUserId: String): List<Lesson> = lessonRepository.findAllByAssignedTeacherUserId(teacherUserId)
+    fun findAllByTeacher(teacherUserId: String): List<Lesson> = lessonRepository.findAllByEffectiveTeacher(teacherUserId)
+
+    fun findAllBySubstituteTeacher(teacherUserId: String): List<Lesson> = lessonRepository.findAllBySubstituteTeacherUserId(teacherUserId)
 
     fun findCompletedByActualTeacher(teacherUserId: String): List<Lesson> =
         lessonRepository.findAllByActualTeacherUserIdAndStatus(teacherUserId, LessonStatus.COMPLETED)

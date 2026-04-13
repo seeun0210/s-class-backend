@@ -20,7 +20,7 @@ class CreateLessonInquiryPlanUseCase(
         request: CreateLessonInquiryPlanRequest,
     ): InquiryPlanResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-        if (lesson.assignedTeacherUserId != userId) {
+        if (!lesson.isTeacher(userId)) {
             throw LessonUnauthorizedAccessException()
         }
         return createInquiryPlanUseCase.execute(
@@ -28,6 +28,7 @@ class CreateLessonInquiryPlanUseCase(
             CreateInquiryPlanRequest(
                 paragraph = request.paragraph,
                 sourceType = InquiryPlanSourceType.LESSON,
+
                 sourceRefId = lessonId,
             ),
         )
