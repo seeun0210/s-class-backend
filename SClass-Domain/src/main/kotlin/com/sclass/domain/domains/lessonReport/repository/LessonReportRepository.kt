@@ -1,7 +1,7 @@
-package com.sclass.domain.domains.lesson.repository
+package com.sclass.domain.domains.lessonReport.repository
 
-import com.sclass.domain.domains.lesson.domain.LessonReport
-import com.sclass.domain.domains.lesson.domain.LessonReportStatus
+import com.sclass.domain.domains.lessonReport.domain.LessonReport
+import com.sclass.domain.domains.lessonReport.domain.LessonReportStatus
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LessonReportRepository : JpaRepository<LessonReport, Long> {

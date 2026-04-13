@@ -1,0 +1,15 @@
+package com.sclass.domain.domains.lessonReport.exception
+
+import com.sclass.common.exception.BusinessException
+
+class LessonReportNotFoundException : BusinessException(LessonReportErrorCode.LESSON_REPORT_NOT_FOUND)
+
+class LessonReportNotPendingException : BusinessException(LessonReportErrorCode.LESSON_REPORT_NOT_PENDING)
+
+class LessonReportAlreadyApprovedException : BusinessException(LessonReportErrorCode.LESSON_REPORT_ALREADY_APPROVED)
+
+class LessonReportInvalidStatusTransitionException : BusinessException(LessonReportErrorCode.LESSON_REPORT_INVALID_STATUS_TRANSITION)
+
+class LessonReportRejectReasonRequiredException : BusinessException(LessonReportErrorCode.LESSON_REPORT_REJECT_REASON_REQUIRED)
+
+class LessonReportAlreadyReportedException : BusinessException(LessonReportErrorCode.LESSON_REPORT_ALREADY_REPORTED)
