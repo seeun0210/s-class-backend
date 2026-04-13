@@ -153,7 +153,7 @@ class HandleNicePayWebhookUseCaseTest {
     @Test
     fun `CourseProduct 결제 시 enrollment가 없으면 무시한다`() {
         val payment = pendingPayment()
-        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12, teacherPayoutPerLessonWon = 20000)
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
@@ -170,13 +170,12 @@ class HandleNicePayWebhookUseCaseTest {
     @Test
     fun `CourseProduct 결제 시 enrollment가 있으면 ACTIVE 처리된다`() {
         val payment = pendingPayment()
-        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12, teacherPayoutPerLessonWon = 20000)
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
-                teacherPayoutPerLessonWon = 20000,
                 paymentId = payment.id,
             )
         val course =
@@ -208,7 +207,6 @@ class HandleNicePayWebhookUseCaseTest {
                 enrollment = any(),
                 course = course,
                 totalLessons = 12,
-                teacherPayoutPerLessonWon = 20000,
             )
         }
     }

@@ -53,7 +53,6 @@ class CommissionConcurrencyTest {
                         studentUserId = "student-user-0000000000001",
                         teacherUserId = "teacher-user-0000000000001",
                         productId = "product-id-00000000000001",
-                        teacherPayoutAmountWon = 50_000,
                         outputFormat = OutputFormat.REPORT,
                         activityType = ActivityType.CAREER_EXPLORATION,
                         status = status,

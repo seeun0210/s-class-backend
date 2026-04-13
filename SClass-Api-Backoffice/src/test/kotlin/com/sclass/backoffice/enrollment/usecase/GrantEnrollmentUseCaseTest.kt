@@ -52,7 +52,6 @@ class GrantEnrollmentUseCaseTest {
             name = "수학 코스",
             priceWon = 300000,
             totalLessons = 12,
-            teacherPayoutPerLessonWon = 20000,
         )
 
     @Nested
@@ -88,7 +87,6 @@ class GrantEnrollmentUseCaseTest {
             useCase.execute("admin-id-000000000001", "student-id-00000000001", 1L, "장학생 혜택")
 
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)
-            assertThat(enrollmentSlot.captured.teacherPayoutPerLessonWon).isEqualTo(20000)
         }
 
         @Test
@@ -105,7 +103,6 @@ class GrantEnrollmentUseCaseTest {
                     enrollment = any(),
                     course = any(),
                     totalLessons = 12,
-                    teacherPayoutPerLessonWon = 20000,
                 )
             }
         }

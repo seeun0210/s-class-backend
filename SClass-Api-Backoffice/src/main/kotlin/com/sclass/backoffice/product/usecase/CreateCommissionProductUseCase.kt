@@ -18,7 +18,6 @@ class CreateCommissionProductUseCase(
                 CommissionProduct(
                     name = request.name,
                     coinCost = request.coinCost,
-                    teacherPayoutAmountWon = request.teacherPayoutAmountWon,
                 ),
             )
         return ProductResponse.from(product)

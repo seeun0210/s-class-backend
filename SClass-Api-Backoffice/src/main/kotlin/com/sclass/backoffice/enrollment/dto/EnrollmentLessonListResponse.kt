@@ -18,7 +18,6 @@ data class EnrollmentLessonResponse(
     val scheduledAt: LocalDateTime?,
     val startedAt: LocalDateTime?,
     val completedAt: LocalDateTime?,
-    val teacherPayoutAmountWon: Int,
     val createdAt: LocalDateTime,
 ) {
     companion object {
@@ -32,7 +31,6 @@ data class EnrollmentLessonResponse(
                 scheduledAt = lesson.scheduledAt,
                 startedAt = lesson.startedAt,
                 completedAt = lesson.completedAt,
-                teacherPayoutAmountWon = lesson.teacherPayoutAmountWon,
                 createdAt = lesson.createdAt,
             )
     }

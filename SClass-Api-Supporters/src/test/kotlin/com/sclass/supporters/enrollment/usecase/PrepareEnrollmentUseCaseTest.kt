@@ -64,7 +64,6 @@ class PrepareEnrollmentUseCaseTest {
             name = "수학 코스",
             priceWon = 300000,
             totalLessons = 12,
-            teacherPayoutPerLessonWon = 20000,
         )
 
     private fun pendingPayment() =
@@ -94,7 +93,6 @@ class PrepareEnrollmentUseCaseTest {
             assertThat(result.amount).isEqualTo(300000)
             assertThat(enrollmentSlot.captured.status).isEqualTo(EnrollmentStatus.PENDING_PAYMENT)
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)
-            assertThat(enrollmentSlot.captured.teacherPayoutPerLessonWon).isEqualTo(20000)
         }
     }
 
@@ -116,7 +114,6 @@ class PrepareEnrollmentUseCaseTest {
                     courseId = 1L,
                     studentUserId = "student-id-00000000001",
                     tuitionAmountWon = 300000,
-                    teacherPayoutPerLessonWon = 20000,
                     paymentId = "payment-id-000000000001",
                 )
             every { courseAdaptor.findById(1L) } returns activeCourse()

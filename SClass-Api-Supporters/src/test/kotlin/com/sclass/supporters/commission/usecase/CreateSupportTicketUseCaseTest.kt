@@ -45,7 +45,6 @@ class CreateSupportTicketUseCaseTest {
             studentUserId = studentUserId,
             teacherUserId = teacherUserId,
             productId = "product-id-0000000000000001",
-            teacherPayoutAmountWon = 50_000,
             outputFormat = OutputFormat.REPORT,
             activityType = ActivityType.CAREER_EXPLORATION,
             status = CommissionStatus.REQUESTED,

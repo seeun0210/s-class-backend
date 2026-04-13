@@ -31,7 +31,6 @@ class GetEnrollmentListUseCaseTest {
                 studentUserId = studentUserId,
                 grantedByUserId = "admin01",
                 grantReason = "테스트",
-                teacherPayoutPerLessonWon = 50000,
                 tuitionAmountWon = 100000,
             ),
         studentName = studentName,
