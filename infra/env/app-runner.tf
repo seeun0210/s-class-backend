@@ -44,7 +44,7 @@ resource "aws_apprunner_service" "services" {
           SMTP_ENABLED               = "true"
           SMTP_HOST                  = var.smtp_host
           SMTP_PORT                  = var.smtp_port
-          CLOUDWATCH_METRICS_ENABLED = var.environment == "dev" ? "false" : "true"
+          CLOUDWATCH_METRICS_ENABLED = var.environment == "prod" ? "true" : "false"
           CLOUDWATCH_NAMESPACE       = "SClass/${title(each.key)}"
           ALIMTALK_ENABLED           = "true"
           ALIMTALK_PLUS_FRIEND_ID    = "@학생부종합전형"
