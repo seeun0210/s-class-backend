@@ -6,7 +6,6 @@ import com.sclass.domain.domains.inquiryplan.domain.InquiryPlanSourceType
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.student.adaptor.StudentAdaptor
-import com.sclass.domain.domains.student.adaptor.StudentDocumentAdaptor
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.activePlatforms
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
@@ -20,7 +19,6 @@ class GetLessonDetailUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val inquiryPlanAdaptor: InquiryPlanAdaptor,
     private val studentAdaptor: StudentAdaptor,
-    private val studentDocumentAdaptor: StudentDocumentAdaptor,
     private val userRoleAdaptor: UserRoleAdaptor,
 ) {
     @Transactional(readOnly = true)
@@ -29,11 +27,11 @@ class GetLessonDetailUseCase(
         lessonId: Long,
     ): LessonDetailResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-        if (!lesson.isTeacher(userId)) {
+        if (userId != lesson.assignedTeacherUserId && userId != lesson.substituteTeacherUserId) {
             throw LessonUnauthorizedAccessException()
         }
         val student = studentAdaptor.findByUserIdWithUser(lesson.studentUserId)
-        val documents = studentDocumentAdaptor.findAllByStudentId(student.id)
+        val documents = studentAdaptor.findDocumentsWithFileByStudentId(student.id)
         val platforms = userRoleAdaptor.findAllByUserId(lesson.studentUserId).activePlatforms()
         val studentProfile =
             StudentProfileResponse.from(
