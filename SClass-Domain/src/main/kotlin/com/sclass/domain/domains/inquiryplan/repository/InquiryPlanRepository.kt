@@ -25,6 +25,11 @@ interface InquiryPlanRepository : JpaRepository<InquiryPlan, Long> {
         sourceRefId: Long,
     ): InquiryPlan?
 
+    fun findAllBySourceTypeAndSourceRefIdOrderByIdDesc(
+        sourceType: InquiryPlanSourceType,
+        sourceRefId: Long,
+    ): List<InquiryPlan>
+
     fun findAllBySourceTypeAndSourceRefIdIn(
         sourceType: InquiryPlanSourceType,
         sourceRefIds: List<Long>,
