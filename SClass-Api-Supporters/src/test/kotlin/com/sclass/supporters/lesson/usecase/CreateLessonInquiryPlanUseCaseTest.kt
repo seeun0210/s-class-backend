@@ -43,7 +43,6 @@ class CreateLessonInquiryPlanUseCaseTest {
             assignedTeacherUserId = teacherUserId,
             lessonNumber = 1,
             name = "수학 1회차",
-            teacherPayoutAmountWon = 50_000,
         )
 
     @Test

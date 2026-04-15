@@ -60,7 +60,6 @@ class PrepareEnrollmentUseCase(
                 courseId = course.id,
                 studentUserId = studentUserId,
                 tuitionAmountWon = product.priceWon,
-                teacherPayoutPerLessonWon = product.teacherPayoutPerLessonWon,
                 paymentId = payment.id,
             ),
         )

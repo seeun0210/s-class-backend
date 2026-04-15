@@ -40,7 +40,6 @@ class TransitionCommissionStatusUseCaseTest {
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
         productId = productId,
-        teacherPayoutAmountWon = 50_000,
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,

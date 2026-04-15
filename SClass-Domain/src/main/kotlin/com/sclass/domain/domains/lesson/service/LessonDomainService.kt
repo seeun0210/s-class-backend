@@ -15,7 +15,6 @@ class LessonDomainService(
         enrollment: Enrollment,
         course: Course,
         totalLessons: Int,
-        teacherPayoutPerLessonWon: Int,
     ): List<Lesson> {
         val lessons =
             (1..totalLessons).map { lessonNumber ->
@@ -26,7 +25,6 @@ class LessonDomainService(
                     assignedTeacherUserId = course.teacherUserId,
                     lessonNumber = lessonNumber,
                     name = "${course.name} ${lessonNumber}회차",
-                    teacherPayoutAmountWon = teacherPayoutPerLessonWon,
                 )
             }
         return lessonAdaptor.saveAll(lessons)

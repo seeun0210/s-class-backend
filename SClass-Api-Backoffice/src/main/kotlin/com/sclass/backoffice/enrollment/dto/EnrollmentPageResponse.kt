@@ -22,7 +22,6 @@ data class EnrollmentListResponse(
     val teacherName: String,
     val enrollmentType: EnrollmentType,
     val tuitionAmountWon: Int,
-    val teacherPayoutPerLessonWon: Int,
     val status: EnrollmentStatus,
     val createdAt: LocalDateTime,
 ) {
@@ -38,7 +37,6 @@ data class EnrollmentListResponse(
                 teacherName = dto.teacherName,
                 enrollmentType = dto.enrollment.enrollmentType,
                 tuitionAmountWon = dto.enrollment.tuitionAmountWon,
-                teacherPayoutPerLessonWon = dto.enrollment.teacherPayoutPerLessonWon,
                 status = dto.enrollment.status,
                 createdAt = dto.enrollment.createdAt,
             )

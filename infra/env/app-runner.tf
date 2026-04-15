@@ -44,7 +44,7 @@ resource "aws_apprunner_service" "services" {
           SMTP_ENABLED               = "true"
           SMTP_HOST                  = var.smtp_host
           SMTP_PORT                  = var.smtp_port
-          CLOUDWATCH_METRICS_ENABLED = "true"
+          CLOUDWATCH_METRICS_ENABLED = var.environment == "prod" ? "true" : "false"
           CLOUDWATCH_NAMESPACE       = "SClass/${title(each.key)}"
           ALIMTALK_ENABLED           = "true"
           ALIMTALK_PLUS_FRIEND_ID    = "@학생부종합전형"
@@ -55,6 +55,11 @@ resource "aws_apprunner_service" "services" {
           REPORT_SERVICE_ENABLED              = contains(["backoffice-api", "supporters-api"], each.key) ? "true" : "false"
           REPORT_SERVICE_BASE_URL             = contains(["backoffice-api", "supporters-api"], each.key) ? var.report_service_base_url : ""
           REPORT_SERVICE_CALLBACK_BASE_URL    = each.key == "supporters-api" ? var.report_service_callback_base_url : ""
+          # Redis Cloud free tier (30 client 제한) 대응: dev는 pool 축소
+          REDIS_CONNECTION_POOL_SIZE         = var.environment == "dev" ? "2" : "8"
+          REDIS_CONNECTION_MIN_IDLE          = var.environment == "dev" ? "1" : "2"
+          REDIS_SUBSCRIPTION_POOL_SIZE       = var.environment == "dev" ? "1" : "4"
+          REDIS_SUBSCRIPTION_MIN_IDLE        = var.environment == "dev" ? "1" : "1"
         }
 
         runtime_environment_secrets = {

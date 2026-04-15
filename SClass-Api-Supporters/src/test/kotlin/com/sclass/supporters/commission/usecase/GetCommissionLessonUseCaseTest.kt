@@ -44,7 +44,6 @@ class GetCommissionLessonUseCaseTest {
             studentUserId = studentUserId,
             assignedTeacherUserId = teacherUserId,
             name = "1회성 수학 의뢰",
-            teacherPayoutAmountWon = 80_000,
         )
 
     @Test

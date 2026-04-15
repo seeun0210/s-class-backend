@@ -24,7 +24,6 @@ class LessonDomainServiceTest {
             studentUserId = "student-id-00000000001",
             grantedByUserId = "admin-id-000000000001",
             grantReason = "테스트",
-            teacherPayoutPerLessonWon = 20000,
             tuitionAmountWon = 300000,
         )
 
@@ -42,7 +41,7 @@ class LessonDomainServiceTest {
         val lessonsSlot = slot<List<Lesson>>()
         every { lessonAdaptor.saveAll(capture(lessonsSlot)) } answers { lessonsSlot.captured }
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 4, teacherPayoutPerLessonWon = 20000)
+        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 4)
 
         assertEquals(4, result.size)
     }
@@ -52,7 +51,7 @@ class LessonDomainServiceTest {
         val lessonsSlot = slot<List<Lesson>>()
         every { lessonAdaptor.saveAll(capture(lessonsSlot)) } answers { lessonsSlot.captured }
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 3, teacherPayoutPerLessonWon = 20000)
+        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 3)
 
         val first = result[0]
         val last = result[2]
@@ -62,7 +61,6 @@ class LessonDomainServiceTest {
             { assertEquals("teacher-id-00000000001", first.assignedTeacherUserId) },
             { assertEquals(1, first.lessonNumber) },
             { assertEquals("수학 기초 1회차", first.name) },
-            { assertEquals(20000, first.teacherPayoutAmountWon) },
             { assertEquals(LessonStatus.SCHEDULED, first.status) },
             { assertEquals(3, last.lessonNumber) },
             { assertEquals("수학 기초 3회차", last.name) },
@@ -73,7 +71,7 @@ class LessonDomainServiceTest {
     fun `totalLessons가 0이면 빈 리스트를 반환한다`() {
         every { lessonAdaptor.saveAll(emptyList()) } returns emptyList()
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 0, teacherPayoutPerLessonWon = 20000)
+        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 0)
 
         assertEquals(0, result.size)
     }

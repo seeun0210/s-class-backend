@@ -38,10 +38,6 @@ class Commission(
     @Column(name = "product_id", nullable = false, length = 26)
     val productId: String,
 
-    // 요청 시점의 교사 보수 스냅샷 (TeacherPayoutResolver 결과를 굳혀둠)
-    @Column(name = "teacher_payout_amount_won", nullable = false)
-    val teacherPayoutAmountWon: Int,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     val outputFormat: OutputFormat,

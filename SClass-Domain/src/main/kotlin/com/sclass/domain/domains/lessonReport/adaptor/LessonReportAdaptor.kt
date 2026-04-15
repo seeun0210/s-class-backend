@@ -1,9 +1,9 @@
-package com.sclass.domain.domains.lesson.adaptor
+package com.sclass.domain.domains.lessonReport.adaptor
 
 import com.sclass.common.annotation.Adaptor
-import com.sclass.domain.domains.lesson.domain.LessonReport
-import com.sclass.domain.domains.lesson.exception.LessonReportNotFoundException
-import com.sclass.domain.domains.lesson.repository.LessonReportRepository
+import com.sclass.domain.domains.lessonReport.domain.LessonReport
+import com.sclass.domain.domains.lessonReport.exception.LessonReportNotFoundException
+import com.sclass.domain.domains.lessonReport.repository.LessonReportRepository
 import org.springframework.data.repository.findByIdOrNull
 
 @Adaptor

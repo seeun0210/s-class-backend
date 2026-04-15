@@ -52,7 +52,6 @@ class SelectTopicUseCase(
                     studentUserId = commission.studentUserId,
                     assignedTeacherUserId = commission.teacherUserId,
                     name = commission.guideInfo.subject,
-                    teacherPayoutAmountWon = commission.teacherPayoutAmountWon,
                 ),
             )
 

@@ -19,7 +19,6 @@ class CreateCourseProductUseCase(
                     name = request.name,
                     priceWon = request.priceWon,
                     totalLessons = request.totalLessons,
-                    teacherPayoutPerLessonWon = request.teacherPayoutPerLessonWon,
                 ),
             )
         return ProductResponse.from(product)

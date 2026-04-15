@@ -1,4 +1,4 @@
-package com.sclass.domain.domains.lesson.domain
+package com.sclass.domain.domains.lessonReport.domain
 
 enum class LessonReportStatus {
     PENDING_REVIEW,

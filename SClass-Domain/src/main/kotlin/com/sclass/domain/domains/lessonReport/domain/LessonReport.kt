@@ -1,6 +1,7 @@
-package com.sclass.domain.domains.lesson.domain
+package com.sclass.domain.domains.lessonReport.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lessonReport.exception.LessonReportInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -31,35 +32,21 @@ class LessonReport(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
-
     @Column(name = "lesson_id", nullable = false)
     val lessonId: Long,
-
     @Column(nullable = false)
     val version: Int,
-
     @Column(name = "submitted_by_user_id", nullable = false, length = 26)
     val submittedByUserId: String,
-
     @Column(columnDefinition = "TEXT", nullable = false)
     var content: String,
-
-    @Column(name = "report_file_id", length = 26)
-    var reportFileId: String? = null,
-
-    @Column(name = "class_video_file_id", length = 26)
-    var classVideoFileId: String? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: LessonReportStatus = LessonReportStatus.PENDING_REVIEW,
-
     @Column(name = "reviewed_by_user_id", length = 26)
     var reviewedByUserId: String? = null,
-
     @Column(name = "reviewed_at")
     var reviewedAt: LocalDateTime? = null,
-
     @Column(name = "reject_reason", length = 1000)
     var rejectReason: String? = null,
 ) : BaseTimeEntity() {
@@ -92,6 +79,6 @@ class LessonReport(
                 LessonReportStatus.APPROVED -> setOf(LessonReportStatus.PENDING_REVIEW)
                 LessonReportStatus.REJECTED -> setOf(LessonReportStatus.PENDING_REVIEW)
             }
-        require(status in allowed) { "Cannot transition from $status to $target" }
+        if (status !in allowed) throw LessonReportInvalidStatusTransitionException()
     }
 }

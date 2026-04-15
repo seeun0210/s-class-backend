@@ -36,6 +36,11 @@ class InquiryPlanAdaptor(
         sourceRefId: Long,
     ): InquiryPlan? = repository.findFirstBySourceTypeAndSourceRefIdOrderByIdDesc(sourceType, sourceRefId)
 
+    fun findAllBySourceOrderByIdDesc(
+        sourceType: InquiryPlanSourceType,
+        sourceRefId: Long,
+    ): List<InquiryPlan> = repository.findAllBySourceTypeAndSourceRefIdOrderByIdDesc(sourceType, sourceRefId)
+
     fun findAllBySourceIn(
         sourceType: InquiryPlanSourceType,
         sourceRefIds: List<Long>,
