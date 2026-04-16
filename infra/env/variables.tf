@@ -9,32 +9,20 @@ variable "environment" {
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "ap-northeast-1"
+  default     = "ap-northeast-2"
 }
 
 variable "domain" {
   description = "Root domain"
   type        = string
-  default     = "aura.co.kr"
+  default     = "sclass.click"
 }
 
 # ──────────────────────────────────────
-# App Runner
+# Services
 # ──────────────────────────────────────
-variable "app_runner_cpu" {
-  description = "App Runner vCPU (256, 512, 1024, 2048, 4096)"
-  type        = string
-  default     = "1024"
-}
-
-variable "app_runner_memory" {
-  description = "App Runner memory in MB (512, 1024, 2048, 3072, 4096, ...)"
-  type        = string
-  default     = "2048"
-}
-
 variable "services" {
-  description = "App Runner services configuration"
+  description = "Service configuration"
   type = map(object({
     port     = string
     min_size = number
@@ -42,30 +30,72 @@ variable "services" {
   }))
 }
 
-variable "enable_custom_domain" {
-  description = "Enable custom domain for App Runner services"
-  type        = bool
-  default     = false
+# ──────────────────────────────────────
+# ECS (prod)
+# ──────────────────────────────────────
+variable "ecs_cpu" {
+  description = "ECS task vCPU (256, 512, 1024, 2048, 4096)"
+  type        = string
+  default     = "1024"
+}
+
+variable "ecs_memory" {
+  description = "ECS task memory in MB"
+  type        = string
+  default     = "2048"
 }
 
 # ──────────────────────────────────────
-# Database (환경별 DB 이름/유저)
+# EC2 (dev)
+# ──────────────────────────────────────
+variable "dev_ec2_instance_type" {
+  description = "EC2 instance type for dev docker-compose"
+  type        = string
+  default     = "t4g.small"
+}
+
+variable "dev_ec2_key_name" {
+  description = "SSH key pair name for dev EC2"
+  type        = string
+  default     = ""
+}
+
+variable "dev_ec2_domain" {
+  description = "Dev EC2 domain for certbot SSL (e.g. dev.aura.co.kr)"
+  type        = string
+  default     = ""
+}
+
+variable "dev_certbot_email" {
+  description = "Email for Let's Encrypt certbot registration"
+  type        = string
+  default     = ""
+}
+
+# ──────────────────────────────────────
+# Database
 # ──────────────────────────────────────
 variable "db_name" {
-  description = "Environment-specific database name (e.g. sclass_dev)"
+  description = "Environment-specific database name"
   type        = string
 }
 
 variable "db_username" {
-  description = "Environment-specific database username"
+  description = "Database username"
   type        = string
   sensitive   = true
 }
 
 variable "db_password" {
-  description = "Environment-specific database password"
+  description = "Database password"
   type        = string
   sensitive   = true
+}
+
+variable "rds_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t4g.micro"
 }
 
 # ──────────────────────────────────────
@@ -77,7 +107,7 @@ variable "cors_allow_origins" {
 }
 
 # ──────────────────────────────────────
-# Application Secrets (SSM에 저장)
+# Application Secrets
 # ──────────────────────────────────────
 variable "jwt_secret_key" {
   type      = string
@@ -100,9 +130,8 @@ variable "kakao_client_id" {
 }
 
 variable "kakao_app_id" {
-  description = "Kakao application ID (numeric) for OAuth audience validation"
-  type        = string
-  default     = ""
+  type    = string
+  default = ""
 }
 
 # ──────────────────────────────────────
@@ -175,55 +204,46 @@ variable "frontend_url" {
 # Report Service
 # ──────────────────────────────────────
 variable "report_service_base_url" {
-  description = "Report service base URL"
-  type        = string
+  type = string
 }
 
 variable "report_service_callback_base_url" {
-  description = "Supporters App Runner base URL (ReportService가 콜백 요청을 보내는 대상)"
-  type        = string
-  default     = ""
+  type    = string
+  default = ""
 }
 
 variable "report_service_callback_secret" {
-  description = "HMAC-SHA256 secret for validating report callbacks"
-  type        = string
-  sensitive   = true
-  default     = ""
+  type      = string
+  sensitive = true
+  default   = ""
 }
 
 # ──────────────────────────────────────
 # NicePay PG
 # ──────────────────────────────────────
 variable "nicepay_client_key" {
-  description = "NicePay client key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "nicepay_secret_key" {
-  description = "NicePay secret key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 # ──────────────────────────────────────
-# Redis (Redis Cloud)
+# Redis
 # ──────────────────────────────────────
 variable "redis_host" {
-  description = "Redis Cloud host"
-  type        = string
+  type = string
 }
 
 variable "redis_port" {
-  description = "Redis Cloud port"
-  type        = string
-  default     = "6379"
+  type    = string
+  default = "6379"
 }
 
 variable "redis_password" {
-  description = "Redis Cloud password"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
-
