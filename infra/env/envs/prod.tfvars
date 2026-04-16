@@ -5,6 +5,9 @@ domain      = "aura.co.kr"
 # Database (환경별 DB 이름)
 db_name = "sclass_prod"
 
+# Dedicated RDS 사용 (shared RDS 분리)
+create_dedicated_rds = true
+
 # App Runner (prod: 기본 스펙)
 app_runner_cpu    = "1024"
 app_runner_memory = "2048"
