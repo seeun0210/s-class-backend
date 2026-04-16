@@ -116,7 +116,7 @@ resource "aws_ssm_parameter" "nicepay_secret_key" {
 resource "aws_ssm_parameter" "redis_host" {
   name      = "/sclass/${var.environment}/REDIS_HOST"
   type      = "String"
-  value     = var.redis_host
+  value     = local.is_prod ? aws_elasticache_cluster.main[0].cache_nodes[0].address : var.redis_host
   overwrite = true
   tags      = { Name = "${local.name_prefix}-ssm-redis-host" }
 }
@@ -124,7 +124,7 @@ resource "aws_ssm_parameter" "redis_host" {
 resource "aws_ssm_parameter" "redis_port" {
   name      = "/sclass/${var.environment}/REDIS_PORT"
   type      = "String"
-  value     = var.redis_port
+  value     = local.is_prod ? tostring(aws_elasticache_cluster.main[0].cache_nodes[0].port) : var.redis_port
   overwrite = true
   tags      = { Name = "${local.name_prefix}-ssm-redis-port" }
 }
@@ -132,7 +132,7 @@ resource "aws_ssm_parameter" "redis_port" {
 resource "aws_ssm_parameter" "redis_password" {
   name      = "/sclass/${var.environment}/REDIS_PASSWORD"
   type      = "SecureString"
-  value     = var.redis_password
+  value     = local.is_prod ? "unused" : var.redis_password
   overwrite = true
   tags      = { Name = "${local.name_prefix}-ssm-redis-password" }
 }
