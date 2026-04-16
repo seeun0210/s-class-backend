@@ -1,4 +1,4 @@
-package com.sclass.lms.diagnosis.usecase
+package com.sclass.supporters.diagnosis.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor

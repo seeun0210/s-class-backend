@@ -16,7 +16,6 @@ on:
         type: choice
         options:
           - supporters-api
-          - lms-api
           - backoffice-api
           - all
 
@@ -37,11 +36,9 @@ jobs:
           SERVICE="${{ inputs.service }}"
 
           if [[ "$SERVICE" == "all" ]]; then
-            matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
+            matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
           elif [[ "$SERVICE" == "supporters-api" ]]; then
             matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"}]'
-          elif [[ "$SERVICE" == "lms-api" ]]; then
-            matrix='[{"service":"lms-api","module":"SClass-Api-Lms"}]'
           elif [[ "$SERVICE" == "backoffice-api" ]]; then
             matrix='[{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
           fi

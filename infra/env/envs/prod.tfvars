@@ -18,11 +18,6 @@ services = {
     min_size = 1
     max_size = 3
   }
-  lms-api = {
-    port     = "8080"
-    min_size = 1
-    max_size = 3
-  }
   backoffice-api = {
     port     = "8080"
     min_size = 1

@@ -137,6 +137,7 @@ resource "aws_security_group_rule" "app_runner_to_rds" {
   protocol                 = "tcp"
   security_group_id        = aws_security_group.app_runner.id
   source_security_group_id = aws_security_group.rds.id
+  description              = "App Runner to RDS MySQL"
 }
 
 resource "aws_security_group_rule" "rds_from_app_runner" {

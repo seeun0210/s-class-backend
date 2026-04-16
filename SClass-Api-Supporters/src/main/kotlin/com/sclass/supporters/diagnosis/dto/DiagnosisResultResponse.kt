@@ -1,4 +1,4 @@
-package com.sclass.lms.diagnosis.dto
+package com.sclass.supporters.diagnosis.dto
 
 import com.sclass.domain.domains.diagnosis.domain.Diagnosis
 import com.sclass.domain.domains.diagnosis.domain.DiagnosisStatus

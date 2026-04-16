@@ -11,7 +11,6 @@
 - [ ] SClass-Domain
 - [ ] SClass-Infrastructure
 - [ ] SClass-Api-Supporters
-- [ ] SClass-Api-Lms
 - [ ] SClass-Api-Backoffice
 - [ ] SClass-Batch
 

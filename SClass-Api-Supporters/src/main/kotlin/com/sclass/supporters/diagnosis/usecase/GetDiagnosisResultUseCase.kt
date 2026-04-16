@@ -1,4 +1,4 @@
-package com.sclass.lms.diagnosis.usecase
+package com.sclass.supporters.diagnosis.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.diagnosis.adaptor.DiagnosisAdaptor
@@ -6,7 +6,7 @@ import com.sclass.domain.domains.diagnosis.exception.DiagnosisPhoneNotMatchExcep
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.verification.domain.VerificationChannel
 import com.sclass.domain.domains.verification.service.VerificationDomainService
-import com.sclass.lms.diagnosis.dto.DiagnosisResultResponse
+import com.sclass.supporters.diagnosis.dto.DiagnosisResultResponse
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase

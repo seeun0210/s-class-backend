@@ -40,7 +40,7 @@ resource "aws_apprunner_service" "services" {
           DDL_AUTO                   = "update" # TODO: prod 테이블 생성 후 validate로 복원
           S3_BUCKET                  = aws_s3_bucket.main.id
           S3_REGION                  = var.aws_region
-          CORS_ALLOW_ORIGINS         = each.key == "lms-api" ? "${var.cors_allow_origins},https://report.aura.co.kr" : var.cors_allow_origins
+          CORS_ALLOW_ORIGINS         = contains(["backoffice-api", "supporters-api"], each.key) ? "${var.cors_allow_origins},https://report.aura.co.kr" : var.cors_allow_origins
           SMTP_ENABLED               = "true"
           SMTP_HOST                  = var.smtp_host
           SMTP_PORT                  = var.smtp_port

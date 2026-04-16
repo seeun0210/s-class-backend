@@ -1,10 +1,10 @@
-package com.sclass.lms.diagnosis.controller
+package com.sclass.supporters.diagnosis.controller
 
 import com.sclass.common.dto.ApiResponse
-import com.sclass.lms.diagnosis.dto.DiagnosisResultResponse
-import com.sclass.lms.diagnosis.dto.SendDiagnosisVerificationRequest
-import com.sclass.lms.diagnosis.usecase.GetDiagnosisResultUseCase
-import com.sclass.lms.diagnosis.usecase.SendDiagnosisPhoneVerificationUseCase
+import com.sclass.supporters.diagnosis.dto.DiagnosisResultResponse
+import com.sclass.supporters.diagnosis.dto.SendDiagnosisVerificationRequest
+import com.sclass.supporters.diagnosis.usecase.GetDiagnosisResultUseCase
+import com.sclass.supporters.diagnosis.usecase.SendDiagnosisPhoneVerificationUseCase
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.web.bind.annotation.PathVariable
