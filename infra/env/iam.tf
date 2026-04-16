@@ -171,3 +171,95 @@ resource "aws_iam_instance_profile" "dev_ec2" {
   name  = "${local.name_prefix}-ec2"
   role  = aws_iam_role.dev_ec2[0].name
 }
+
+# ──────────────────────────────────────
+# GitHub Actions Deployer (CD용)
+# ──────────────────────────────────────
+resource "aws_iam_user" "deployer" {
+  name = "${local.name_prefix}-deployer"
+}
+
+resource "aws_iam_policy" "deployer" {
+  name = "${local.name_prefix}-deploy-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "ECR"
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ECS"
+        Effect = "Allow"
+        Action = [
+          "ecs:UpdateService",
+          "ecs:DescribeServices",
+          "ecs:DescribeClusters"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SSMRunCommand"
+        Effect = "Allow"
+        Action = [
+          "ssm:SendCommand",
+          "ssm:GetCommandInvocation"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "EC2Describe"
+        Effect = "Allow"
+        Action = ["ec2:DescribeInstances"]
+        Resource = "*"
+      },
+      ]
+  })
+}
+
+resource "aws_iam_policy" "deployer_ecs" {
+  count = local.is_prod ? 1 : 0
+  name  = "${local.name_prefix}-deploy-ecs-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "PassRole"
+        Effect = "Allow"
+        Action = ["iam:PassRole"]
+        Resource = [
+          aws_iam_role.ecs_execution[0].arn,
+          aws_iam_role.ecs_task[0].arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user_policy_attachment" "deployer" {
+  user       = aws_iam_user.deployer.name
+  policy_arn = aws_iam_policy.deployer.arn
+}
+
+resource "aws_iam_user_policy_attachment" "deployer_ecs" {
+  count      = local.is_prod ? 1 : 0
+  user       = aws_iam_user.deployer.name
+  policy_arn = aws_iam_policy.deployer_ecs[0].arn
+}
+
+resource "aws_iam_access_key" "deployer" {
+  user = aws_iam_user.deployer.name
+}
