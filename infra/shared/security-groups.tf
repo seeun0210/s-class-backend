@@ -43,20 +43,3 @@ resource "aws_security_group" "nat" {
     create_before_destroy = true
   }
 }
-
-# ──────────────────────────────────────
-# RDS SG (shared)
-# ──────────────────────────────────────
-resource "aws_security_group" "rds" {
-  name_prefix = "${local.name_prefix}-rds-"
-  description = "RDS MySQL"
-  vpc_id      = module.vpc.vpc_id
-
-  tags = {
-    Name = "${local.name_prefix}-rds"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}

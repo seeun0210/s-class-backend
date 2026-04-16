@@ -57,7 +57,7 @@ resource "aws_security_group_rule" "dev_ec2_to_rds" {
   to_port                  = 3306
   protocol                 = "tcp"
   security_group_id        = aws_security_group.dev_ec2[0].id
-  source_security_group_id = local.shared.rds_sg_id
+  source_security_group_id = aws_security_group.rds.id
   description              = "Dev EC2 to RDS MySQL"
 }
 
@@ -68,7 +68,7 @@ resource "aws_security_group_rule" "rds_from_dev_ec2" {
   from_port                = 3306
   to_port                  = 3306
   protocol                 = "tcp"
-  security_group_id        = local.shared.rds_sg_id
+  security_group_id        = aws_security_group.rds.id
   source_security_group_id = aws_security_group.dev_ec2[0].id
   description              = "RDS MySQL from Dev EC2"
 }

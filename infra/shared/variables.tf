@@ -30,30 +30,3 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   default     = ["10.0.10.0/24", "10.0.11.0/24"]
 }
-
-# ──────────────────────────────────────
-# RDS (dev 공유용)
-# ──────────────────────────────────────
-variable "rds_instance_class" {
-  description = "RDS instance class"
-  type        = string
-  default     = "db.t4g.micro"
-}
-
-variable "db_name" {
-  description = "Initial database name"
-  type        = string
-  default     = "sclass"
-}
-
-variable "db_username" {
-  description = "Database master username"
-  type        = string
-  sensitive   = true
-}
-
-variable "db_password" {
-  description = "Database master password"
-  type        = string
-  sensitive   = true
-}

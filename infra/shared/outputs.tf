@@ -17,24 +17,6 @@ output "public_subnets" {
 }
 
 # ──────────────────────────────────────
-# RDS
-# ──────────────────────────────────────
-output "rds_endpoint" {
-  description = "RDS endpoint (host:port)"
-  value       = aws_db_instance.main.endpoint
-}
-
-output "rds_sg_id" {
-  description = "RDS security group ID"
-  value       = aws_security_group.rds.id
-}
-
-output "db_subnet_group_name" {
-  description = "DB subnet group name"
-  value       = aws_db_subnet_group.main.name
-}
-
-# ──────────────────────────────────────
 # Security Groups
 # ──────────────────────────────────────
 output "nat_sg_id" {

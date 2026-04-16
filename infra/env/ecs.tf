@@ -79,7 +79,7 @@ resource "aws_security_group_rule" "ecs_to_rds" {
   to_port                  = 3306
   protocol                 = "tcp"
   security_group_id        = aws_security_group.ecs_tasks[0].id
-  source_security_group_id = var.create_dedicated_rds ? aws_security_group.dedicated_rds[0].id : local.shared.rds_sg_id
+  source_security_group_id = aws_security_group.rds.id
   description              = "ECS Tasks to RDS MySQL"
 }
 
@@ -90,7 +90,7 @@ resource "aws_security_group_rule" "rds_from_ecs" {
   from_port                = 3306
   to_port                  = 3306
   protocol                 = "tcp"
-  security_group_id        = var.create_dedicated_rds ? aws_security_group.dedicated_rds[0].id : local.shared.rds_sg_id
+  security_group_id        = aws_security_group.rds.id
   source_security_group_id = aws_security_group.ecs_tasks[0].id
   description              = "RDS MySQL from ECS Tasks"
 }

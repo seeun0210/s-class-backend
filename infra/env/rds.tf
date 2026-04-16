@@ -1,11 +1,10 @@
 # ──────────────────────────────────────
-# Dedicated RDS (prod 전용)
+# RDS (환경별 독립)
 # ──────────────────────────────────────
 
-resource "aws_security_group" "dedicated_rds" {
-  count       = var.create_dedicated_rds ? 1 : 0
+resource "aws_security_group" "rds" {
   name_prefix = "${local.name_prefix}-rds-"
-  description = "Dedicated RDS MySQL for ${var.environment}"
+  description = "RDS MySQL for ${var.environment}"
   vpc_id      = local.shared.vpc_id
 
   tags = {
@@ -17,21 +16,17 @@ resource "aws_security_group" "dedicated_rds" {
   }
 }
 
-resource "aws_security_group_rule" "dedicated_rds_from_nat" {
-  count = var.create_dedicated_rds ? 1 : 0
-
+resource "aws_security_group_rule" "rds_from_nat" {
   type                     = "ingress"
   from_port                = 3306
   to_port                  = 3306
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.dedicated_rds[0].id
+  security_group_id        = aws_security_group.rds.id
   source_security_group_id = local.shared.nat_sg_id
   description              = "Admin DB access via NAT"
 }
 
-resource "aws_db_subnet_group" "dedicated" {
-  count = var.create_dedicated_rds ? 1 : 0
-
+resource "aws_db_subnet_group" "main" {
   name       = "${local.name_prefix}-db"
   subnet_ids = local.shared.private_subnets
 
@@ -40,16 +35,14 @@ resource "aws_db_subnet_group" "dedicated" {
   }
 }
 
-resource "aws_db_parameter_group" "dedicated" {
-  count = var.create_dedicated_rds ? 1 : 0
-
+resource "aws_db_parameter_group" "main" {
   name_prefix = "${local.name_prefix}-mysql-"
   family      = "mysql8.0"
-  description = "Dedicated RDS parameter group for ${var.environment}"
+  description = "RDS parameter group for ${var.environment}"
 
   parameter {
     name         = "max_connections"
-    value        = "200"
+    value        = local.is_prod ? "200" : "60"
     apply_method = "pending-reboot"
   }
 
@@ -62,14 +55,12 @@ resource "aws_db_parameter_group" "dedicated" {
   }
 }
 
-resource "aws_db_instance" "dedicated" {
-  count = var.create_dedicated_rds ? 1 : 0
-
+resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-mysql"
 
   engine         = "mysql"
   engine_version = "8.0"
-  instance_class = var.dedicated_rds_instance_class
+  instance_class = var.rds_instance_class
 
   allocated_storage     = 20
   max_allocated_storage = 50
@@ -80,16 +71,16 @@ resource "aws_db_instance" "dedicated" {
   username = var.db_username
   password = var.db_password
 
-  db_subnet_group_name   = aws_db_subnet_group.dedicated[0].name
-  parameter_group_name   = aws_db_parameter_group.dedicated[0].name
-  vpc_security_group_ids = [aws_security_group.dedicated_rds[0].id]
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  parameter_group_name   = aws_db_parameter_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
 
   multi_az            = false
   publicly_accessible = false
   skip_final_snapshot = false
 
   final_snapshot_identifier = "${local.name_prefix}-mysql-final-snapshot"
-  backup_retention_period   = 7
+  backup_retention_period   = local.is_prod ? 7 : 1
 
   tags = {
     Name = "${local.name_prefix}-mysql"
@@ -101,5 +92,5 @@ resource "aws_db_instance" "dedicated" {
 }
 
 locals {
-  rds_endpoint = var.create_dedicated_rds ? aws_db_instance.dedicated[0].endpoint : local.shared.rds_endpoint
+  rds_endpoint = aws_db_instance.main.endpoint
 }

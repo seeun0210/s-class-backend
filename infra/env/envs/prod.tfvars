@@ -4,8 +4,6 @@ domain      = "sclass.click"
 
 # Database
 db_name              = "sclass_prod"
-create_dedicated_rds = true
-
 # ECS (prod)
 ecs_cpu    = "1024"
 ecs_memory = "2048"

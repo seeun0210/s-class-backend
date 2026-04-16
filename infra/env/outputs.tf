@@ -25,3 +25,9 @@ output "rds_endpoint" {
   description = "RDS endpoint in use"
   value       = local.rds_endpoint
 }
+
+# Redis endpoint (prod only)
+output "redis_endpoint" {
+  description = "ElastiCache Redis endpoint"
+  value       = local.is_prod ? aws_elasticache_cluster.main[0].cache_nodes[0].address : null
+}

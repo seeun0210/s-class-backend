@@ -92,14 +92,8 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "create_dedicated_rds" {
-  description = "Create an environment-dedicated RDS instance"
-  type        = bool
-  default     = false
-}
-
-variable "dedicated_rds_instance_class" {
-  description = "Instance class for the dedicated RDS"
+variable "rds_instance_class" {
+  description = "RDS instance class"
   type        = string
   default     = "db.t4g.micro"
 }
