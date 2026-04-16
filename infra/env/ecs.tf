@@ -296,7 +296,7 @@ locals {
       { name = "AWS_REGION", value = var.aws_region },
       { name = "SERVER_PORT", value = svc.port },
       { name = "DATASOURCE_URL", value = "jdbc:mysql://${local.rds_endpoint}/${var.db_name}" },
-      { name = "DDL_AUTO", value = local.is_prod ? "validate" : "update" },
+      { name = "SPRING_JPA_HIBERNATE_DDL_AUTO", value = local.is_prod ? "validate" : "update" },
       { name = "S3_BUCKET", value = aws_s3_bucket.main.id },
       { name = "S3_REGION", value = var.aws_region },
       { name = "CORS_ALLOW_ORIGINS", value = "${var.cors_allow_origins},https://report.aura.co.kr" },
@@ -318,7 +318,7 @@ locals {
   }
 
   ecs_secrets = {
-    for key, svc in var.services : key => [
+    for key, svc in var.services : key => concat([
       { name = "DATASOURCE_USERNAME", valueFrom = aws_ssm_parameter.db_username.arn },
       { name = "DATASOURCE_PASSWORD", valueFrom = aws_ssm_parameter.db_password.arn },
       { name = "JWT_SECRET_KEY", valueFrom = aws_ssm_parameter.jwt_secret_key.arn },
@@ -333,11 +333,12 @@ locals {
       { name = "ALIMTALK_SECRET_KEY", valueFrom = aws_ssm_parameter.alimtalk_secret_key.arn },
       { name = "REDIS_HOST", valueFrom = aws_ssm_parameter.redis_host.arn },
       { name = "REDIS_PORT", valueFrom = aws_ssm_parameter.redis_port.arn },
-      { name = "REDIS_PASSWORD", valueFrom = aws_ssm_parameter.redis_password.arn },
       { name = "NICE_PAY_CLIENT_KEY", valueFrom = aws_ssm_parameter.nicepay_client_key.arn },
       { name = "NICE_PAY_SECRET_KEY", valueFrom = aws_ssm_parameter.nicepay_secret_key.arn },
       { name = "REPORT_SERVICE_CALLBACK_SECRET", valueFrom = aws_ssm_parameter.report_service_callback_secret.arn },
-    ]
+    ], local.is_prod ? [] : [
+      { name = "REDIS_PASSWORD", valueFrom = aws_ssm_parameter.redis_password.arn },
+    ])
   }
 }
 
