@@ -1,34 +1,9 @@
 # ──────────────────────────────────────
-# Environment-Dedicated RDS (prod 전용)
-#
-# 배경:
-#   - 기존 shared RDS(sclass-mysql)를 dev/prod가 공유 → dev 부하로 prod까지 영향
-#   - max_connections=60(t4g.micro 기본) 한계로 Connect timed out 다수 발생
-#
-# 목적:
-#   - prod 전용 RDS를 두어 환경 간 격리
-#   - custom parameter group으로 max_connections=200 확보
+# Dedicated RDS (prod 전용)
 # ──────────────────────────────────────
 
-# 전용 RDS 생성 여부 (prod.tfvars에서 true)
-variable "create_dedicated_rds" {
-  description = "Create an environment-dedicated RDS instance (separate from shared)"
-  type        = bool
-  default     = false
-}
-
-variable "dedicated_rds_instance_class" {
-  description = "Instance class for the dedicated RDS"
-  type        = string
-  default     = "db.t4g.micro"
-}
-
-# ──────────────────────────────────────
-# Dedicated RDS SG
-# ──────────────────────────────────────
 resource "aws_security_group" "dedicated_rds" {
-  count = var.create_dedicated_rds ? 1 : 0
-
+  count       = var.create_dedicated_rds ? 1 : 0
   name_prefix = "${local.name_prefix}-rds-"
   description = "Dedicated RDS MySQL for ${var.environment}"
   vpc_id      = local.shared.vpc_id
@@ -42,42 +17,6 @@ resource "aws_security_group" "dedicated_rds" {
   }
 }
 
-resource "aws_security_group_rule" "dedicated_rds_from_app_runner" {
-  count = var.create_dedicated_rds ? 1 : 0
-
-  type                     = "ingress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.dedicated_rds[0].id
-  source_security_group_id = local.shared.app_runner_sg_id
-}
-
-# App Runner SG → dedicated RDS egress 허용
-# (shared SG의 기본 egress는 shared RDS SG로만 열려있어서 별도로 추가)
-resource "aws_security_group_rule" "app_runner_to_dedicated_rds" {
-  count = var.create_dedicated_rds ? 1 : 0
-
-  type                     = "egress"
-  from_port                = 3306
-  to_port                  = 3306
-  protocol                 = "tcp"
-  security_group_id        = local.shared.app_runner_sg_id
-  source_security_group_id = aws_security_group.dedicated_rds[0].id
-}
-
-# NAT Instance → dedicated RDS ingress 허용
-# 로컬에서 SSM Session Manager port-forward를 통해 DB 접속할 때 사용
-# (sclass-prod-db 스크립트, DEV_DB_ACCESS.md 참고)
-data "aws_security_group" "nat" {
-  count = var.create_dedicated_rds ? 1 : 0
-
-  filter {
-    name   = "group-name"
-    values = ["sclass-nat-*"]
-  }
-}
-
 resource "aws_security_group_rule" "dedicated_rds_from_nat" {
   count = var.create_dedicated_rds ? 1 : 0
 
@@ -86,13 +25,10 @@ resource "aws_security_group_rule" "dedicated_rds_from_nat" {
   to_port                  = 3306
   protocol                 = "tcp"
   security_group_id        = aws_security_group.dedicated_rds[0].id
-  source_security_group_id = data.aws_security_group.nat[0].id
-  description              = "Admin DB access via SSM port-forward from NAT"
+  source_security_group_id = local.shared.nat_sg_id
+  description              = "Admin DB access via NAT"
 }
 
-# ──────────────────────────────────────
-# Subnet Group
-# ──────────────────────────────────────
 resource "aws_db_subnet_group" "dedicated" {
   count = var.create_dedicated_rds ? 1 : 0
 
@@ -104,9 +40,6 @@ resource "aws_db_subnet_group" "dedicated" {
   }
 }
 
-# ──────────────────────────────────────
-# Parameter Group — max_connections 확장
-# ──────────────────────────────────────
 resource "aws_db_parameter_group" "dedicated" {
   count = var.create_dedicated_rds ? 1 : 0
 
@@ -129,9 +62,6 @@ resource "aws_db_parameter_group" "dedicated" {
   }
 }
 
-# ──────────────────────────────────────
-# RDS Instance
-# ──────────────────────────────────────
 resource "aws_db_instance" "dedicated" {
   count = var.create_dedicated_rds ? 1 : 0
 
@@ -170,9 +100,6 @@ resource "aws_db_instance" "dedicated" {
   }
 }
 
-# ──────────────────────────────────────
-# Datasource URL (local): 전용 RDS가 있으면 우선 사용
-# ──────────────────────────────────────
 locals {
   rds_endpoint = var.create_dedicated_rds ? aws_db_instance.dedicated[0].endpoint : local.shared.rds_endpoint
 }

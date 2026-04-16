@@ -6,7 +6,7 @@ resource "aws_ecr_repository" "services" {
 
   name                 = "${local.name_prefix}-${each.key}"
   image_tag_mutability = "MUTABLE"
-  force_delete         = var.environment == "dev"
+  force_delete         = !local.is_prod
 
   image_scanning_configuration {
     scan_on_push = true
@@ -17,7 +17,6 @@ resource "aws_ecr_repository" "services" {
   }
 }
 
-# 오래된 이미지 자동 정리 (최근 5개만 유지)
 resource "aws_ecr_lifecycle_policy" "services" {
   for_each = aws_ecr_repository.services
 

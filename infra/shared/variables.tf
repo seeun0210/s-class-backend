@@ -1,13 +1,13 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "ap-northeast-1"
+  default     = "ap-northeast-2"
 }
 
 variable "domain" {
   description = "Root domain"
   type        = string
-  default     = "aura.co.kr"
+  default     = "sclass.click"
 }
 
 # ──────────────────────────────────────
@@ -32,7 +32,7 @@ variable "private_subnet_cidrs" {
 }
 
 # ──────────────────────────────────────
-# RDS
+# RDS (dev 공유용)
 # ──────────────────────────────────────
 variable "rds_instance_class" {
   description = "RDS instance class"

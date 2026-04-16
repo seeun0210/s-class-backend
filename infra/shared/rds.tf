@@ -11,7 +11,7 @@ resource "aws_db_subnet_group" "main" {
 }
 
 # ──────────────────────────────────────
-# RDS MySQL (Single-AZ, dev/prod 공유)
+# RDS MySQL (dev 공유용, Single-AZ)
 # ──────────────────────────────────────
 resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-mysql"
