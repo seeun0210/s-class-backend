@@ -1,20 +1,18 @@
 # ──────────────────────────────────────
-# CloudWatch Dashboard + Alarms
+# CloudWatch Dashboard (prod only)
 # ──────────────────────────────────────
 
 locals {
   cw_service_keys = keys(var.services)
 }
 
-# ──────────────────────────────────────
-# Dashboard (전체 서비스 통합 Overview)
-# ──────────────────────────────────────
 resource "aws_cloudwatch_dashboard" "main" {
+  count = local.is_prod ? 1 : 0
+
   dashboard_name = "${local.name_prefix}-overview"
 
   dashboard_body = jsonencode({
     widgets = [
-      # Row 1: JVM Heap + CPU
       {
         type   = "metric"
         x      = 0
@@ -22,15 +20,13 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title  = "JVM Heap Memory Used"
+          title  = "ECS CPU Utilization"
           region = var.aws_region
           period = 300
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "SUM(SEARCH('{SClass/${title(key)},area,id} MetricName=\"jvm.memory.used\" area=\"heap\"', 'Average', 300))"
-              id         = "heap${i}"
-              label      = key
-            }
+          metrics = [for key in local.cw_service_keys : [
+            "AWS/ECS", "CPUUtilization",
+            "ClusterName", local.name_prefix,
+            "ServiceName", "${local.name_prefix}-${key}"
           ]]
         }
       },
@@ -41,20 +37,16 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title  = "CPU Usage"
+          title  = "ECS Memory Utilization"
           region = var.aws_region
           period = 300
-          yAxis  = { left = { min = 0, max = 1 } }
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "SEARCH('{SClass/${title(key)}} MetricName=\"process.cpu.usage\"', 'Average', 300)"
-              id         = "cpu${i}"
-              label      = key
-            }
+          metrics = [for key in local.cw_service_keys : [
+            "AWS/ECS", "MemoryUtilization",
+            "ClusterName", local.name_prefix,
+            "ServiceName", "${local.name_prefix}-${key}"
           ]]
         }
       },
-      # Row 2: HikariCP + HTTP Requests
       {
         type   = "metric"
         x      = 0
@@ -62,15 +54,13 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title  = "HikariCP Active Connections"
+          title  = "ALB Request Count"
           region = var.aws_region
           period = 300
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "SEARCH('{SClass/${title(key)},pool} MetricName=\"hikaricp.connections.active\"', 'Average', 300)"
-              id         = "hikari${i}"
-              label      = key
-            }
+          metrics = [for key in local.cw_service_keys : [
+            "AWS/ApplicationELB", "RequestCount",
+            "TargetGroup", aws_lb_target_group.services[key].arn_suffix,
+            "LoadBalancer", aws_lb.main[0].arn_suffix
           ]]
         }
       },
@@ -81,54 +71,13 @@ resource "aws_cloudwatch_dashboard" "main" {
         width  = 12
         height = 6
         properties = {
-          title  = "HTTP Request Count"
+          title  = "ALB Target Response Time"
           region = var.aws_region
           period = 300
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "SUM(SEARCH('{SClass/${title(key)},exception,method,outcome,status,uri} MetricName=\"http.server.requests\"', 'SampleCount', 300))"
-              id         = "http${i}"
-              label      = key
-            }
-          ]]
-        }
-      },
-      # Row 3: HTTP Latency (Average + P99)
-      {
-        type   = "metric"
-        x      = 0
-        y      = 12
-        width  = 12
-        height = 6
-        properties = {
-          title  = "HTTP Avg Latency (ms)"
-          region = var.aws_region
-          period = 300
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "AVG(SEARCH('{SClass/${title(key)},exception,method,outcome,status,uri} MetricName=\"http.server.requests\"', 'Average', 300)) * 1000"
-              id         = "latency_avg${i}"
-              label      = key
-            }
-          ]]
-        }
-      },
-      {
-        type   = "metric"
-        x      = 12
-        y      = 12
-        width  = 12
-        height = 6
-        properties = {
-          title  = "HTTP P99 Latency (ms)"
-          region = var.aws_region
-          period = 300
-          metrics = [for i, key in local.cw_service_keys : [
-            {
-              expression = "MAX(SEARCH('{SClass/${title(key)},exception,method,outcome,status,uri} MetricName=\"http.server.requests\"', 'p99', 300)) * 1000"
-              id         = "latency_p99${i}"
-              label      = key
-            }
+          metrics = [for key in local.cw_service_keys : [
+            "AWS/ApplicationELB", "TargetResponseTime",
+            "TargetGroup", aws_lb_target_group.services[key].arn_suffix,
+            "LoadBalancer", aws_lb.main[0].arn_suffix
           ]]
         }
       }
@@ -137,41 +86,24 @@ resource "aws_cloudwatch_dashboard" "main" {
 }
 
 # ──────────────────────────────────────
-# Alarms — CPU 사용률 (서비스별)
+# Alarms — ECS CPU (prod only)
 # ──────────────────────────────────────
-resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  for_each = var.services
+resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
+  for_each = local.is_prod ? var.services : {}
 
   alarm_name          = "${local.name_prefix}-${each.key}-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "process.cpu.usage"
-  namespace           = "SClass/${title(each.key)}"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
   period              = 300
   statistic           = "Average"
-  threshold           = 0.8
-  alarm_description   = "${each.key} CPU usage > 80%"
-  treat_missing_data  = "notBreaching"
-}
-
-# ──────────────────────────────────────
-# Alarms — HikariCP Active Connections (서비스별)
-# ──────────────────────────────────────
-resource "aws_cloudwatch_metric_alarm" "hikari_connections_high" {
-  for_each = var.services
-
-  alarm_name          = "${local.name_prefix}-${each.key}-hikari-high"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 2
-  metric_name         = "hikaricp.connections.active"
-  namespace           = "SClass/${title(each.key)}"
-  period              = 300
-  statistic           = "Average"
-  threshold           = 4
-  alarm_description   = "${each.key} HikariCP active connections > 4 (pool max: 5)"
+  threshold           = 80
+  alarm_description   = "${each.key} ECS CPU > 80%"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    pool = "HikariPool-1"
+    ClusterName = aws_ecs_cluster.main[0].name
+    ServiceName = aws_ecs_service.services[each.key].name
   }
 }

@@ -6,14 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: 'Deploy target (supporters / lms / backoffice / all)'
+        description: 'Deploy target (supporters / backoffice / all)'
         required: true
         default: 'all'
         type: choice
         options:
           - all
           - supporters
-          - lms
           - backoffice
 
 permissions:
@@ -72,22 +71,18 @@ jobs:
               - 'Dockerfile'
             supporters:
               - 'SClass-Api-Supporters/**'
-            lms:
-              - 'SClass-Api-Lms/**'
             backoffice:
               - 'SClass-Api-Backoffice/**'
 
       - name: Build deploy matrix
         id: set-matrix
         run: |
-          ALL='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
+          ALL='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
 
-          # workflow_dispatch → 입력값으로 결정
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             case "${{ inputs.service }}" in
               all)        matrix="$ALL" ;;
               supporters) matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"}]' ;;
-              lms)        matrix='[{"service":"lms-api","module":"SClass-Api-Lms"}]' ;;
               backoffice) matrix='[{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]' ;;
             esac
             echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -95,7 +90,6 @@ jobs:
             exit 0
           fi
 
-          # release 머지 → 전체 서비스 배포
           if [[ "${{ steps.release.outputs.is_release }}" == "true" ]]; then
             echo "matrix=$ALL" >> "$GITHUB_OUTPUT"
             echo "Release merge detected — deploying all services: $ALL"
@@ -106,10 +100,6 @@ jobs:
 
           if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.supporters }}" == "true" ]]; then
             matrix=$(echo "$matrix" | jq -c '. + [{"service": "supporters-api", "module": "SClass-Api-Supporters"}]')
-          fi
-
-          if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.lms }}" == "true" ]]; then
-            matrix=$(echo "$matrix" | jq -c '. + [{"service": "lms-api", "module": "SClass-Api-Lms"}]')
           fi
 
           if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.backoffice }}" == "true" ]]; then
@@ -144,7 +134,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ap-northeast-2
 
       - name: Login to Amazon ECR
         id: ecr-login
@@ -165,24 +155,81 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Deploy to App Runner
-        id: deploy
+      # ── Prod: ECS force new deployment ──
+      - name: Deploy to ECS (prod)
+        if: needs.setup.outputs.env == 'prod'
+        id: deploy-ecs
         env:
-          SERVICE_NAME: sclass-${{ needs.setup.outputs.env }}-${{ matrix.target.service }}
+          CLUSTER: sclass-prod
+          SERVICE_NAME: sclass-prod-${{ matrix.target.service }}
         run: |
-          SERVICE_ARN=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceArn" \
+          aws ecs update-service \
+            --cluster "$CLUSTER" \
+            --service "$SERVICE_NAME" \
+            --force-new-deployment \
+            --no-cli-pager
+
+          echo "ECS deployment triggered for $SERVICE_NAME"
+          echo "service_url=https://${{ matrix.target.service }}.sclass.click" >> "$GITHUB_OUTPUT"
+
+      # ── Dev: EC2 docker compose via SSM ──
+      - name: Deploy to EC2 (dev)
+        if: needs.setup.outputs.env == 'dev'
+        id: deploy-ec2
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPO_SUPPORTERS: sclass-dev-supporters-api
+          ECR_REPO_BACKOFFICE: sclass-dev-backoffice-api
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=sclass-dev-app" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
 
-          if [ -z "$SERVICE_ARN" ]; then
-            echo "::error::App Runner service '${SERVICE_NAME}' not found"
+          if [ "$INSTANCE_ID" == "None" ] || [ -z "$INSTANCE_ID" ]; then
+            echo "::error::Dev EC2 instance not found"
             exit 1
           fi
 
-          SERVICE_URL=$(aws apprunner list-services \
-            --query "ServiceSummaryList[?ServiceName=='${SERVICE_NAME}'].ServiceUrl" \
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters commands="[
+              \"aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${ECR_REGISTRY}\",
+              \"cd /home/ec2-user/app && sed -i '/^ECR_URL_/d' .env && echo 'ECR_URL_SUPPORTERS=${ECR_REGISTRY}/${ECR_REPO_SUPPORTERS}' >> .env && echo 'ECR_URL_BACKOFFICE=${ECR_REGISTRY}/${ECR_REPO_BACKOFFICE}' >> .env && docker compose pull && docker compose up -d\"
+            ]" \
+            --query "Command.CommandId" \
             --output text)
 
-          aws apprunner start-deployment --service-arn "$SERVICE_ARN"
-          echo "Deployment triggered for ${SERVICE_NAME} (${SERVICE_ARN})"
-          echo "service_url=https://${SERVICE_URL}" >> "$GITHUB_OUTPUT"
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            2>/dev/null || true
+
+          STATUS=$(aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "Status" \
+            --output text)
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::SSM command failed with status: $STATUS"
+            aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "StandardErrorContent" \
+              --output text
+            exit 1
+          fi
+
+          echo "Dev deployment completed via SSM"
+          echo "service_url=https://${{ matrix.target.service }}.dev.sclass.click" >> "$GITHUB_OUTPUT"
+
+      - name: Set deploy output
+        id: deploy
+        run: |
+          if [ -n "${{ steps.deploy-ecs.outputs.service_url }}" ]; then
+            echo "service_url=${{ steps.deploy-ecs.outputs.service_url }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "service_url=${{ steps.deploy-ec2.outputs.service_url }}" >> "$GITHUB_OUTPUT"
+          fi

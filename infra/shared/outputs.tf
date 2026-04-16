@@ -17,27 +17,11 @@ output "public_subnets" {
 }
 
 # ──────────────────────────────────────
-# RDS
-# ──────────────────────────────────────
-output "rds_endpoint" {
-  description = "RDS endpoint (host:port)"
-  value       = aws_db_instance.main.endpoint
-}
-
-# ──────────────────────────────────────
 # Security Groups
 # ──────────────────────────────────────
-output "app_runner_sg_id" {
-  description = "App Runner VPC Connector security group ID"
-  value       = aws_security_group.app_runner.id
-}
-
-# ──────────────────────────────────────
-# VPC Connector
-# ──────────────────────────────────────
-output "vpc_connector_arn" {
-  description = "App Runner VPC Connector ARN"
-  value       = aws_apprunner_vpc_connector.main.arn
+output "nat_sg_id" {
+  description = "NAT Instance security group ID"
+  value       = aws_security_group.nat.id
 }
 
 # ──────────────────────────────────────
@@ -49,6 +33,7 @@ output "route53_zone_id" {
 }
 
 output "nameservers" {
-  description = "가비아에 등록할 네임서버 목록"
+  description = "Route53에서 도메인 구매 시 자동 설정됨"
   value       = aws_route53_zone.main.name_servers
 }
+

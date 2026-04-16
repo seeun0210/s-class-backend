@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+  supporters-api:
+    image: ${ECR_URL_SUPPORTERS}:latest
+    container_name: supporters-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - SERVER_PORT=8080
+      - CLOUDWATCH_METRICS_ENABLED=false
+    restart: unless-stopped
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui.html || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  backoffice-api:
+    image: ${ECR_URL_BACKOFFICE}:latest
+    container_name: backoffice-api
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env
+    environment:
+      - SERVER_PORT=8080
+      - CLOUDWATCH_METRICS_ENABLED=false
+    restart: unless-stopped
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui.html || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  redis-data:

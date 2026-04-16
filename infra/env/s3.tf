@@ -2,10 +2,10 @@
 # S3 Bucket (파일 업로드용)
 # ──────────────────────────────────────
 resource "aws_s3_bucket" "main" {
-  bucket = "${local.name_prefix}-files"
+  bucket = "${local.name_prefix}-seoul-files"
 
   tags = {
-    Name = "${local.name_prefix}-files"
+    Name = "${local.name_prefix}-seoul-files"
   }
 }
 
@@ -36,9 +36,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "main" {
   }
 }
 
-# ──────────────────────────────────────
-# CORS (Presigned URL 업로드용)
-# ──────────────────────────────────────
 resource "aws_s3_bucket_cors_configuration" "main" {
   bucket = aws_s3_bucket.main.id
 
