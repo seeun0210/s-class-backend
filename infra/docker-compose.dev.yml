@@ -22,7 +22,7 @@ services:
     depends_on:
       - redis
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui.html || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -42,7 +42,7 @@ services:
     depends_on:
       - redis
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/swagger-ui.html || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
