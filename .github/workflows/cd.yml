@@ -6,14 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       service:
-        description: 'Deploy target (supporters / lms / backoffice / all)'
+        description: 'Deploy target (supporters / backoffice / all)'
         required: true
         default: 'all'
         type: choice
         options:
           - all
           - supporters
-          - lms
           - backoffice
 
 permissions:
@@ -72,22 +71,19 @@ jobs:
               - 'Dockerfile'
             supporters:
               - 'SClass-Api-Supporters/**'
-            lms:
-              - 'SClass-Api-Lms/**'
             backoffice:
               - 'SClass-Api-Backoffice/**'
 
       - name: Build deploy matrix
         id: set-matrix
         run: |
-          ALL='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"lms-api","module":"SClass-Api-Lms"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
+          ALL='[{"service":"supporters-api","module":"SClass-Api-Supporters"},{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]'
 
           # workflow_dispatch → 입력값으로 결정
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             case "${{ inputs.service }}" in
               all)        matrix="$ALL" ;;
               supporters) matrix='[{"service":"supporters-api","module":"SClass-Api-Supporters"}]' ;;
-              lms)        matrix='[{"service":"lms-api","module":"SClass-Api-Lms"}]' ;;
               backoffice) matrix='[{"service":"backoffice-api","module":"SClass-Api-Backoffice"}]' ;;
             esac
             echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
@@ -106,10 +102,6 @@ jobs:
 
           if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.supporters }}" == "true" ]]; then
             matrix=$(echo "$matrix" | jq -c '. + [{"service": "supporters-api", "module": "SClass-Api-Supporters"}]')
-          fi
-
-          if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.lms }}" == "true" ]]; then
-            matrix=$(echo "$matrix" | jq -c '. + [{"service": "lms-api", "module": "SClass-Api-Lms"}]')
           fi
 
           if [[ "${{ steps.filter.outputs.common }}" == "true" || "${{ steps.filter.outputs.backoffice }}" == "true" ]]; then

@@ -11,8 +11,7 @@
 SClass-Common        # 공통 (어노테이션, DTO, 예외, JWT, 유틸)
 SClass-Domain        # 도메인 (엔티티, 리포지토리, 어댑터, 도메인서비스)
 SClass-Infrastructure # 외부 연동 (S3, GCS, OAuth 등)
-SClass-Api-Supporters  # 학생/학부모용 API
-SClass-Api-Lms         # LMS API (수업/탐구/정산, Organization 종속)
+SClass-Api-Supporters  # 통합 API (학생/학부모/교사)
 SClass-Api-Backoffice  # 슈퍼어드민 Backoffice API
 SClass-Batch         # 배치 처리
 ```
@@ -20,7 +19,7 @@ SClass-Batch         # 배치 처리
 ## Module Dependencies
 
 ```
-Api-Supporters / Api-Lms / Api-Backoffice / Batch
+Api-Supporters / Api-Backoffice / Batch
     ↓
 Domain + Infrastructure + Common
     ↓
