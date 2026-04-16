@@ -9,7 +9,6 @@ COPY SClass-Common/build.gradle.kts SClass-Common/
 COPY SClass-Domain/build.gradle.kts SClass-Domain/
 COPY SClass-Infrastructure/build.gradle.kts SClass-Infrastructure/
 COPY SClass-Api-Supporters/build.gradle.kts SClass-Api-Supporters/
-COPY SClass-Api-Lms/build.gradle.kts SClass-Api-Lms/
 COPY SClass-Api-Backoffice/build.gradle.kts SClass-Api-Backoffice/
 COPY SClass-Batch/build.gradle.kts SClass-Batch/
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon || true
