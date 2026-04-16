@@ -31,3 +31,15 @@ output "redis_endpoint" {
   description = "ElastiCache Redis endpoint"
   value       = local.is_prod ? aws_elasticache_cluster.main[0].cache_nodes[0].address : null
 }
+
+# Deployer credentials (GitHub Actions CD용)
+output "deployer_access_key_id" {
+  description = "Deployer IAM access key ID"
+  value       = aws_iam_access_key.deployer.id
+}
+
+output "deployer_secret_access_key" {
+  description = "Deployer IAM secret access key"
+  value       = aws_iam_access_key.deployer.secret
+  sensitive   = true
+}

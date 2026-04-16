@@ -196,7 +196,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters commands="[
               \"aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${ECR_REGISTRY}\",
-              \"cd /home/ec2-user && docker compose pull && docker compose up -d\"
+              \"cd /home/ec2-user/app && sed -i '/^ECR_URL_/d' .env && echo 'ECR_URL_SUPPORTERS=${ECR_REGISTRY}/${ECR_REPO_SUPPORTERS}' >> .env && echo 'ECR_URL_BACKOFFICE=${ECR_REGISTRY}/${ECR_REPO_BACKOFFICE}' >> .env && docker compose pull && docker compose up -d\"
             ]" \
             --query "Command.CommandId" \
             --output text)

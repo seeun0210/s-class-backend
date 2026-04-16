@@ -24,6 +24,14 @@ resource "aws_security_group" "dev_ec2" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # SSH (EC2 Instance Connect)
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # App ports (supporters-api, backoffice-api)
   ingress {
     from_port   = 8080
@@ -113,6 +121,11 @@ resource "aws_instance" "dev" {
     #!/bin/bash
     set -e
     dnf update -y
+
+    # SSM Agent + EC2 Instance Connect
+    dnf install -y amazon-ssm-agent ec2-instance-connect
+    systemctl enable amazon-ssm-agent
+    systemctl start amazon-ssm-agent
 
     # Docker
     dnf install -y docker
