@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.partnership.exception
+
+import com.sclass.common.exception.BusinessException
+
+class PartnershipLeadAlreadyExistsException : BusinessException(PartnershipLeadErrorCode.PARTNERSHIP_LEAD_ALREADY_EXISTS)
