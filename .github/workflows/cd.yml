@@ -140,20 +140,34 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve build platform
+        id: platform
+        run: |
+          if [[ "${{ needs.setup.outputs.env }}" == "dev" ]]; then
+            echo "platform=linux/arm64" >> "$GITHUB_OUTPUT"
+          else
+            echo "platform=linux/amd64" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           ECR_REPOSITORY: sclass-${{ needs.setup.outputs.env }}-${{ matrix.target.service }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build \
+          docker buildx build \
+            --platform ${{ steps.platform.outputs.platform }} \
             --build-arg MODULE=${{ matrix.target.module }} \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --push \
             .
-
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       # ── Prod: ECS force new deployment ──
       - name: Deploy to ECS (prod)
