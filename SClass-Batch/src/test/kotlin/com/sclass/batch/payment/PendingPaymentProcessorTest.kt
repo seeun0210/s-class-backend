@@ -1,12 +1,13 @@
 package com.sclass.batch.payment
 
+import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
-import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
@@ -21,7 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate
 
 class PendingPaymentProcessorTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
-    private lateinit var productAdaptor: ProductAdaptor
+    private lateinit var coinPackageAdaptor: CoinPackageAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var pgGateway: PgGateway
     private lateinit var txTemplate: TransactionTemplate
@@ -31,7 +32,7 @@ class PendingPaymentProcessorTest {
     @BeforeEach
     fun setUp() {
         paymentAdaptor = mockk()
-        productAdaptor = mockk()
+        coinPackageAdaptor = mockk()
         coinDomainService = mockk()
         pgGateway = mockk()
         txTemplate = mockk()
@@ -40,14 +41,15 @@ class PendingPaymentProcessorTest {
             callback.doInTransaction(mockk())
         }
         every { paymentAdaptor.save(any()) } answers { firstArg() }
-        completePaymentUseCase = CompletePaymentUseCase(paymentAdaptor, productAdaptor, coinDomainService, txTemplate)
+        completePaymentUseCase = CompletePaymentUseCase(paymentAdaptor, coinPackageAdaptor, coinDomainService, txTemplate)
         processor = PendingPaymentProcessor(pgGateway, completePaymentUseCase)
     }
 
     private fun createPendingPayment() =
         Payment(
             userId = "user-id-0000000000000000000001",
-            productId = "product-id-000000000000000000001",
+            targetType = PaymentTargetType.COIN_PACKAGE,
+            targetId = "coin-pkg-id-00000000000000001",
             amount = 1000,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-id-000000000000000000001",
@@ -56,10 +58,10 @@ class PendingPaymentProcessorTest {
     @Test
     fun `PG 승인된 결제는 코인 발급 후 COMPLETED 처리된다`() {
         val payment = createPendingPayment()
-        val product = CoinProduct(name = "코인 100", priceWon = 1000, coinAmount = 100)
+        val coinPackage = CoinPackage(name = "코인 100", priceWon = 1000, coinAmount = 100)
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = true, tid = "nicepay-tid-001", amount = 1000)
-        every { productAdaptor.findById(any()) } returns product
+        every { coinPackageAdaptor.findById(any()) } returns coinPackage
         every { paymentAdaptor.findById(any()) } returns payment
         justRun { coinDomainService.issue(any(), any(), any(), any()) }
 
@@ -98,10 +100,10 @@ class PendingPaymentProcessorTest {
         val payment = createPendingPayment()
         val pgApprovedPayment = createPendingPayment()
         pgApprovedPayment.markPgApproved("nicepay-tid-001")
-        val product = CoinProduct(name = "코인 100", priceWon = 1000, coinAmount = 100)
+        val coinPackage = CoinPackage(name = "코인 100", priceWon = 1000, coinAmount = 100)
 
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = true, tid = "nicepay-tid-001", amount = 1000)
-        every { productAdaptor.findById(any()) } returns product
+        every { coinPackageAdaptor.findById(any()) } returns coinPackage
         // findById: TX1(markPgApproved) → TX2(coin issue 실패) → TX3(markIssueCoinFailed)
         every { paymentAdaptor.findById(any()) } returns payment andThen payment andThen pgApprovedPayment
         every { coinDomainService.issue(any(), any(), any(), any()) } throws RuntimeException("코인 발급 DB 에러")

@@ -40,7 +40,7 @@ class GetCommissionDetailUseCaseTest {
             id = id,
             studentUserId = studentUserId,
             teacherUserId = teacherUserId,
-            productId = "product-id-0000000000000001",
+            commissionPolicyId = "policy-id-0000000000000001",
             outputFormat = OutputFormat.REPORT,
             activityType = ActivityType.CAREER_EXPLORATION,
             status = CommissionStatus.REQUESTED,

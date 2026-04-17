@@ -21,8 +21,12 @@ class Payment(
     @Column(nullable = false, length = 26)
     val userId: String,
 
-    @Column(nullable = false, length = 26)
-    val productId: String,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_type", nullable = false, length = 30)
+    val targetType: PaymentTargetType,
+
+    @Column(name = "target_id", nullable = false, length = 26)
+    val targetId: String,
 
     @Column(nullable = false)
     val amount: Int,

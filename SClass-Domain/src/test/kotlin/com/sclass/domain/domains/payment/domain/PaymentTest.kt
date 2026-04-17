@@ -11,7 +11,8 @@ class PaymentTest {
     private fun createPayment(status: PaymentStatus = PaymentStatus.PENDING) =
         Payment(
             userId = "user-id-00000000000",
-            productId = "product-id-000000",
+            targetType = PaymentTargetType.COIN_PACKAGE,
+            targetId = "coin-pkg-id-0001",
             amount = 10000,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-001",
