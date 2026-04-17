@@ -5,12 +5,15 @@ import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class DeactivateCoinPackageUseCase(
+class UpdateCoinPackageActiveUseCase(
     private val coinPackageAdaptor: CoinPackageAdaptor,
 ) {
     @Transactional
-    fun execute(id: String) {
+    fun execute(
+        id: String,
+        active: Boolean,
+    ) {
         val coinPackage = coinPackageAdaptor.findById(id)
-        coinPackage.active = false
+        coinPackage.active = active
     }
 }
