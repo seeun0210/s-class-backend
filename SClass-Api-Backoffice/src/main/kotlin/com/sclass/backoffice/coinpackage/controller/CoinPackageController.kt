@@ -3,9 +3,10 @@ package com.sclass.backoffice.coinpackage.controller
 import com.sclass.backoffice.coinpackage.dto.CoinPackageListResponse
 import com.sclass.backoffice.coinpackage.dto.CoinPackageResponse
 import com.sclass.backoffice.coinpackage.dto.CreateCoinPackageRequest
+import com.sclass.backoffice.coinpackage.dto.UpdateCoinPackageActiveRequest
 import com.sclass.backoffice.coinpackage.usecase.CreateCoinPackageUseCase
-import com.sclass.backoffice.coinpackage.usecase.DeactivateCoinPackageUseCase
 import com.sclass.backoffice.coinpackage.usecase.GetAdminCoinPackageListUseCase
+import com.sclass.backoffice.coinpackage.usecase.UpdateCoinPackageActiveUseCase
 import com.sclass.common.dto.ApiResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 class CoinPackageController(
     private val createCoinPackageUseCase: CreateCoinPackageUseCase,
     private val getAdminCoinPackageListUseCase: GetAdminCoinPackageListUseCase,
-    private val deactivateCoinPackageUseCase: DeactivateCoinPackageUseCase,
+    private val updateCoinPackageActiveUseCase: UpdateCoinPackageActiveUseCase,
 ) {
     @GetMapping
     fun getCoinPackages(): ApiResponse<CoinPackageListResponse> = ApiResponse.success(getAdminCoinPackageListUseCase.execute())
@@ -31,11 +32,12 @@ class CoinPackageController(
         @RequestBody @Valid request: CreateCoinPackageRequest,
     ): ApiResponse<CoinPackageResponse> = ApiResponse.success(createCoinPackageUseCase.execute(request))
 
-    @PatchMapping("/{id}/deactivate")
-    fun deactivate(
+    @PatchMapping("/{id}")
+    fun updateActive(
         @PathVariable id: String,
+        @RequestBody @Valid request: UpdateCoinPackageActiveRequest,
     ): ApiResponse<Unit> {
-        deactivateCoinPackageUseCase.execute(id)
+        updateCoinPackageActiveUseCase.execute(id, request.active)
         return ApiResponse.success(Unit)
     }
 }
