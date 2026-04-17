@@ -9,6 +9,7 @@ import com.sclass.domain.domains.partnership.domain.PartnershipLeadStatus
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -27,7 +28,7 @@ class PartnershipLeadAdminController(
     @GetMapping
     fun list(
         @RequestParam(required = false) status: PartnershipLeadStatus?,
-        @PageableDefault(size = 20) pageable: Pageable,
+        @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<Page<PartnershipLeadDetailResponse>> = ApiResponse.success(getPartnershipLeadsUseCase.execute(status, pageable))
 
     @PatchMapping("/{id}/status")
