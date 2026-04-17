@@ -10,5 +10,5 @@ class GetAdminCoinPackageListUseCase(
     private val coinPackageAdaptor: CoinPackageAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(): CoinPackageListResponse = CoinPackageListResponse.from(coinPackageAdaptor.findAllActive())
+    fun execute(): CoinPackageListResponse = CoinPackageListResponse.from(coinPackageAdaptor.findAll())
 }

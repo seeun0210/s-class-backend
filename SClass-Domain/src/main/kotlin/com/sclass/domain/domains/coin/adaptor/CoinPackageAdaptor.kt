@@ -15,5 +15,7 @@ class CoinPackageAdaptor(
 
     fun findAllActive(): List<CoinPackage> = coinPackageRepository.findAllByActiveTrue()
 
+    fun findAll(): List<CoinPackage> = coinPackageRepository.findAll()
+
     fun save(coinPackage: CoinPackage): CoinPackage = coinPackageRepository.save(coinPackage)
 }
