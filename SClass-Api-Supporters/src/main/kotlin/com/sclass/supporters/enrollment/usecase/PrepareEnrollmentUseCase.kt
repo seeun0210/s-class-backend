@@ -10,6 +10,7 @@ import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
@@ -48,7 +49,8 @@ class PrepareEnrollmentUseCase(
             paymentAdaptor.save(
                 Payment(
                     userId = studentUserId,
-                    productId = product.id,
+                    targetType = PaymentTargetType.COURSE_PRODUCT,
+                    targetId = product.id,
                     amount = product.priceWon,
                     pgType = pgType,
                     pgOrderId = Ulid.generate(),

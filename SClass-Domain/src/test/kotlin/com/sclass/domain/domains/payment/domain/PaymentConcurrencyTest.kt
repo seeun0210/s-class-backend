@@ -57,7 +57,8 @@ class PaymentConcurrencyTest {
             paymentRepository.saveAndFlush(
                 Payment(
                     userId = USER_ID,
-                    productId = "product-01",
+                    targetType = PaymentTargetType.COIN_PACKAGE,
+                    targetId = "coin-pkg-01",
                     amount = 10000,
                     pgType = PgType.NICEPAY,
                     pgOrderId = PG_ORDER_ID,

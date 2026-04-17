@@ -32,7 +32,7 @@ class GetCommissionListUseCaseTest {
         id = 1L,
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
-        productId = "prod01",
+        commissionPolicyId = "policy01",
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,

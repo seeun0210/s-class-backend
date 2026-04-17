@@ -19,7 +19,7 @@ import jakarta.persistence.Version
     indexes = [
         Index(name = "idx_commissions_student", columnList = "student_user_id"),
         Index(name = "idx_commissions_teacher", columnList = "teacher_user_id"),
-        Index(name = "idx_commissions_product", columnList = "product_id"),
+        Index(name = "idx_commissions_policy", columnList = "commission_policy_id"),
         Index(name = "idx_commissions_status", columnList = "status"),
     ],
 )
@@ -34,9 +34,9 @@ class Commission(
     @Column(name = "teacher_user_id", nullable = false, length = 26)
     val teacherUserId: String,
 
-    // 요청 시점의 CommissionProduct 스냅샷 참조
-    @Column(name = "product_id", nullable = false, length = 26)
-    val productId: String,
+    // 요청 시점의 CommissionPolicy 스냅샷 참조
+    @Column(name = "commission_policy_id", nullable = false, length = 26)
+    val commissionPolicyId: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

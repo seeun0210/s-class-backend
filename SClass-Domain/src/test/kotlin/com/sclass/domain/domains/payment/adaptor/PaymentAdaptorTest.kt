@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.payment.adaptor
 
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.payment.exception.PaymentNotFoundException
 import com.sclass.domain.domains.payment.repository.PaymentRepository
@@ -28,7 +29,8 @@ class PaymentAdaptorTest {
     private fun createPayment() =
         Payment(
             userId = "user-id-00000000000",
-            productId = "product-id-000000",
+            targetType = PaymentTargetType.COIN_PACKAGE,
+            targetId = "coin-pkg-id-0001",
             amount = 10000,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-001",
