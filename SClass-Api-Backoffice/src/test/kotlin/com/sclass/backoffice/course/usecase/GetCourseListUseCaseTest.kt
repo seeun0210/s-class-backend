@@ -24,6 +24,7 @@ class GetCourseListUseCaseTest {
         status: CourseStatus = CourseStatus.ACTIVE,
         enrollmentCount: Long = 5,
         totalLessons: Int = 12,
+        priceWon: Int = 300000,
     ) = CourseWithTeacherAndEnrollmentCountDto(
         course =
             Course(
@@ -35,7 +36,7 @@ class GetCourseListUseCaseTest {
         courseProduct =
             CourseProduct(
                 name = courseName,
-                priceWon = 300000,
+                priceWon = priceWon,
                 totalLessons = totalLessons,
                 description = "설명",
             ),
@@ -115,6 +116,17 @@ class GetCourseListUseCaseTest {
         val result = useCase.execute(null, null, pageable)
 
         assertEquals(8, result.content[0].totalLessons)
+    }
+
+    @Test
+    fun `priceWon이 응답에 포함된다`() {
+        val dto = createCourseDto(priceWon = 450000)
+        val pageable = PageRequest.of(0, 20)
+        every { courseAdaptor.searchCourses(null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, pageable)
+
+        assertEquals(450000, result.content[0].priceWon)
     }
 
     @Test
