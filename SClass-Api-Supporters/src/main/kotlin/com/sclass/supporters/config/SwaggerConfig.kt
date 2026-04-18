@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.AnnotatedElementUtils
 
 @Configuration
 class SwaggerConfig {
@@ -35,8 +36,8 @@ class SwaggerConfig {
     fun publicEndpointCustomizer(): OperationCustomizer =
         OperationCustomizer { operation, handlerMethod ->
             val isPublic =
-                handlerMethod.hasMethodAnnotation(Public::class.java) ||
-                    handlerMethod.beanType.isAnnotationPresent(Public::class.java)
+                AnnotatedElementUtils.hasAnnotation(handlerMethod.method, Public::class.java) ||
+                    AnnotatedElementUtils.hasAnnotation(handlerMethod.beanType, Public::class.java)
             if (isPublic) operation.security = emptyList()
             operation
         }

@@ -4,6 +4,7 @@ import com.sclass.common.annotation.Public
 import com.sclass.common.exception.UnauthorizedException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.stereotype.Component
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.HandlerInterceptor
@@ -46,6 +47,6 @@ class JwtAuthInterceptor(
     }
 
     private fun HandlerMethod.isPublic(): Boolean =
-        hasMethodAnnotation(Public::class.java) ||
-            beanType.isAnnotationPresent(Public::class.java)
+        AnnotatedElementUtils.hasAnnotation(method, Public::class.java) ||
+            AnnotatedElementUtils.hasAnnotation(beanType, Public::class.java)
 }
