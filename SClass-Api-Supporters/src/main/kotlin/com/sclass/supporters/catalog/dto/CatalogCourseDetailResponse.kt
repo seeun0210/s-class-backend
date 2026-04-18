@@ -4,16 +4,21 @@ import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import java.time.LocalDateTime
 
-data class CatalogCourseResponse(
+data class CatalogCourseDetailResponse(
     val id: Long,
     val productId: String,
     val name: String,
     val description: String?,
+    val curriculum: String?,
     val thumbnailFileId: String?,
     val priceWon: Int,
     val totalLessons: Int,
+    val maxEnrollments: Int,
+    val remainingSeats: Long,
+    val enrollmentStartAt: LocalDateTime?,
     val enrollmentDeadLine: LocalDateTime?,
     val startAt: LocalDateTime?,
+    val endAt: LocalDateTime?,
     val teacher: TeacherSummary,
 ) {
     data class TeacherSummary(
@@ -26,17 +31,26 @@ data class CatalogCourseResponse(
     )
 
     companion object {
-        fun from(dto: CourseWithTeacherDto) =
-            CatalogCourseResponse(
+        fun from(
+            dto: CourseWithTeacherDto,
+            liveEnrollmentCount: Long,
+        ): CatalogCourseDetailResponse {
+            val remaining = (dto.course.maxEnrollments - liveEnrollmentCount).coerceAtLeast(0L)
+            return CatalogCourseDetailResponse(
                 id = dto.course.id,
                 productId = dto.course.productId,
                 name = dto.courseProduct?.name ?: "",
                 description = dto.courseProduct?.description,
+                curriculum = dto.courseProduct?.curriculum,
                 thumbnailFileId = dto.courseProduct?.thumbnailFileId,
                 priceWon = dto.courseProduct?.priceWon ?: 0,
                 totalLessons = dto.courseProduct?.totalLessons ?: 0,
+                maxEnrollments = dto.course.maxEnrollments,
+                remainingSeats = remaining,
+                enrollmentStartAt = dto.course.enrollmentStartAt,
                 enrollmentDeadLine = dto.course.enrollmentDeadLine,
                 startAt = dto.course.startAt,
+                endAt = dto.course.endAt,
                 teacher =
                     TeacherSummary(
                         userId = dto.course.teacherUserId,
@@ -48,5 +62,6 @@ data class CatalogCourseResponse(
                         major = dto.teacher?.education?.major,
                     ),
             )
+        }
     }
 }

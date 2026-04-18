@@ -25,6 +25,8 @@ class CourseAdaptor(
 
     fun findAllCatalogCourses() = courseRepository.findAllCatalogCourses()
 
+    fun findCatalogCourseById(id: Long) = courseRepository.findCatalogCourseById(id) ?: throw CourseNotFoundException()
+
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)
 

@@ -115,6 +115,30 @@ class CourseCustomRepositoryImpl(
                 )
             }
 
+    override fun findCatalogCourseById(id: Long): CourseWithTeacherDto? =
+        queryFactory
+            .select(course, courseProduct, teacher, user)
+            .from(course)
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
+            .leftJoin(teacher)
+            .on(teacher.user.id.eq(course.teacherUserId))
+            .leftJoin(user)
+            .on(user.id.eq(course.teacherUserId))
+            .where(
+                course.id.eq(id),
+                course.status.eq(CourseStatus.LISTED),
+                courseProduct.visible.isTrue,
+            ).fetchOne()
+            ?.let { tuple ->
+                CourseWithTeacherDto(
+                    course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
+                    teacher = tuple[teacher],
+                    teacherUser = tuple[user],
+                )
+            }
+
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(course.createdAt.desc())
         val coursePath = PathBuilder(Course::class.java, "course")

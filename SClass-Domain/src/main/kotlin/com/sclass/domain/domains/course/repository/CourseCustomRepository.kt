@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable
 interface CourseCustomRepository {
     fun findAllCatalogCourses(): List<CourseWithTeacherDto>
 
+    fun findCatalogCourseById(id: Long): CourseWithTeacherDto?
+
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto>
 
     fun searchCourses(
