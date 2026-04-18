@@ -9,6 +9,7 @@ import com.sclass.domain.domains.course.domain.QCourse.course
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
+import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
 import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
@@ -22,6 +23,28 @@ import org.springframework.data.domain.Sort
 class EnrollmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : EnrollmentCustomRepository {
+    override fun findAllByStudentUserIdWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
+        queryFactory
+            .select(enrollment, course, courseProduct, user.name)
+            .from(enrollment)
+            .leftJoin(course)
+            .on(course.id.eq(enrollment.courseId))
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
+            .leftJoin(user)
+            .on(user.id.eq(course.teacherUserId))
+            .where(enrollment.studentUserId.eq(studentUserId))
+            .orderBy(enrollment.createdAt.desc())
+            .fetch()
+            .map { tuple ->
+                EnrollmentWithCourseDto(
+                    enrollment = tuple[enrollment]!!,
+                    course = tuple[course],
+                    courseProduct = tuple[courseProduct],
+                    teacherName = tuple[user.name],
+                )
+            }
+
     override fun findAllByCourseIdWithStudent(courseId: Long): List<EnrollmentWithStudentDto> =
         queryFactory
             .select(enrollment, user)

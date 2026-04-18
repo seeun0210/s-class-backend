@@ -11,5 +11,5 @@ class GetMyEnrollmentsUseCase(
 ) {
     @Transactional(readOnly = true)
     fun execute(studentUserId: String): List<MyEnrollmentResponse> =
-        enrollmentAdaptor.findAllByStudent(studentUserId).map { MyEnrollmentResponse.from(it) }
+        enrollmentAdaptor.findAllByStudentWithCourse(studentUserId).map { MyEnrollmentResponse.from(it) }
 }

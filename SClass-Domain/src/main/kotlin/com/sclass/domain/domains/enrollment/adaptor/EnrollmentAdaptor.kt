@@ -4,6 +4,7 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
+import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
 import com.sclass.domain.domains.enrollment.exception.EnrollmentNotFoundException
@@ -23,6 +24,9 @@ class EnrollmentAdaptor(
     fun findByIdOrNull(id: Long): Enrollment? = enrollmentRepository.findByIdOrNull(id)
 
     fun findAllByStudent(studentUserId: String): List<Enrollment> = enrollmentRepository.findAllByStudentUserId(studentUserId)
+
+    fun findAllByStudentWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
+        enrollmentRepository.findAllByStudentUserIdWithCourse(studentUserId)
 
     fun findAllByCourseWithStudent(courseId: Long): List<EnrollmentWithStudentDto> =
         enrollmentRepository.findAllByCourseIdWithStudent(courseId)
