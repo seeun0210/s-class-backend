@@ -1,6 +1,10 @@
 package com.sclass.domain.domains.course.domain
 
+import com.sclass.domain.domains.course.exception.CourseAlreadyStartedException
+import com.sclass.domain.domains.course.exception.CourseInvalidScheduleException
+import com.sclass.domain.domains.course.exception.CourseMaxEnrollmentsTooLowException
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -94,5 +98,132 @@ class CourseTest {
         val course = newListedCourse(maxEnrollments = 3)
 
         assertTrue(course.canEnroll(LocalDateTime.now(), currentCount = 2))
+    }
+
+    @Test
+    fun `startAt 이전이면 hasStarted는 false`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse().also { it.startAt = now.plusDays(1) }
+
+        assertFalse(course.hasStarted(now))
+    }
+
+    @Test
+    fun `startAt과 같거나 이후면 hasStarted는 true`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse().also { it.startAt = now }
+
+        assertTrue(course.hasStarted(now))
+    }
+
+    @Test
+    fun `startAt이 null이면 hasStarted는 false`() {
+        val course = newListedCourse()
+
+        assertFalse(course.hasStarted(LocalDateTime.now()))
+    }
+
+    @Test
+    fun `이미 시작된 코스는 모집 조건을 변경할 수 없다`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse().also { it.startAt = now.minusDays(1) }
+
+        assertThrows(CourseAlreadyStartedException::class.java) {
+            course.updateEnrollmentConstraints(now, newMaxEnrollments = 10, null, null, currentLiveCount = 0)
+        }
+    }
+
+    @Test
+    fun `maxEnrollments를 현재 등록자 수보다 낮추면 예외`() {
+        val course = newListedCourse(maxEnrollments = 10)
+
+        assertThrows(CourseMaxEnrollmentsTooLowException::class.java) {
+            course.updateEnrollmentConstraints(
+                now = LocalDateTime.of(2026, 4, 1, 0, 0),
+                newMaxEnrollments = 2,
+                newEnrollmentStartAt = null,
+                newEnrollmentDeadLine = null,
+                currentLiveCount = 3,
+            )
+        }
+    }
+
+    @Test
+    fun `모집 시작이 모집 마감보다 뒤면 예외`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse()
+
+        assertThrows(CourseInvalidScheduleException::class.java) {
+            course.updateEnrollmentConstraints(
+                now = now,
+                newMaxEnrollments = null,
+                newEnrollmentStartAt = now.plusDays(10),
+                newEnrollmentDeadLine = now.plusDays(5),
+                currentLiveCount = 0,
+            )
+        }
+    }
+
+    @Test
+    fun `정상 입력이면 모집 조건이 반영된다`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse()
+
+        course.updateEnrollmentConstraints(
+            now = now,
+            newMaxEnrollments = 20,
+            newEnrollmentStartAt = now.plusDays(1),
+            newEnrollmentDeadLine = now.plusDays(5),
+            currentLiveCount = 0,
+        )
+
+        assertTrue(course.maxEnrollments == 20)
+        assertTrue(course.enrollmentStartAt == now.plusDays(1))
+        assertTrue(course.enrollmentDeadLine == now.plusDays(5))
+    }
+
+    @Test
+    fun `이미 시작된 코스는 일정을 변경할 수 없다`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse().also { it.startAt = now.minusDays(1) }
+
+        assertThrows(CourseAlreadyStartedException::class.java) {
+            course.updateSchedule(now, newStartTime = now.plusDays(1), newEndAt = now.plusDays(5))
+        }
+    }
+
+    @Test
+    fun `startAt이 endAt보다 뒤면 예외`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse()
+
+        assertThrows(CourseInvalidScheduleException::class.java) {
+            course.updateSchedule(now, newStartTime = now.plusDays(10), newEndAt = now.plusDays(5))
+        }
+    }
+
+    @Test
+    fun `모집 마감이 개강보다 뒤면 예외`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course =
+            newListedCourse(
+                enrollmentStartAt = now.plusDays(1),
+                enrollmentDeadLine = now.plusDays(10),
+            )
+
+        assertThrows(CourseInvalidScheduleException::class.java) {
+            course.updateSchedule(now, newStartTime = now.plusDays(5), newEndAt = now.plusDays(30))
+        }
+    }
+
+    @Test
+    fun `정상 입력이면 일정이 반영된다`() {
+        val now = LocalDateTime.of(2026, 4, 1, 0, 0)
+        val course = newListedCourse()
+
+        course.updateSchedule(now, newStartTime = now.plusDays(10), newEndAt = now.plusDays(40))
+
+        assertTrue(course.startAt == now.plusDays(10))
+        assertTrue(course.endAt == now.plusDays(40))
     }
 }

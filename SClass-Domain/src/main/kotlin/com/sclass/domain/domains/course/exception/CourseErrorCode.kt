@@ -12,4 +12,7 @@ enum class CourseErrorCode(
     COURSE_INVALID_STATUS_TRANSITION("COURSE_003", "잘못된 코스 상태 전이입니다", 400),
     COURSE_PRODUCT_NOT_FOUND("COURSE_004", "코스에 연결된 상품을 찾을 수 없습니다", 404),
     COURSE_NOT_ENROLLABLE("COURSE_005", "등록할 수 없는 코스입니다", 400),
+    COURSE_ALREADY_STARTED("COURSE_006", "이미 시작된 코스는 일정/모집 조건을 변경할 수 없습니다", 400),
+    COURSE_MAX_ENROLLMENTS_TOO_LOW("COURSE_007", "최대 정원은 현재 등록자 수보다 작을 수 없습니다", 400),
+    COURSE_INVALID_SCHEDULE("COURSE_008", "모집 시작 < 모집 마감 ≤ 개강 < 종강 순이어야 합니다", 400),
 }

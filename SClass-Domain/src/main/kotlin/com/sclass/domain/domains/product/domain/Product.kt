@@ -36,4 +36,16 @@ abstract class Product(
     fun hide() {
         visible = false
     }
+
+    fun updateCatalog(
+        newName: String?,
+        newDescription: String?,
+        newThumbnailFileId: String?,
+        newPriceWon: Int?,
+    ) {
+        newName?.let { name = it }
+        newDescription?.let { description = it }
+        newThumbnailFileId?.let { thumbnailFileId = it }
+        newPriceWon?.let { priceWon = it }
+    }
 }

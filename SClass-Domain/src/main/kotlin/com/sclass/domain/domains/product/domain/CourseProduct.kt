@@ -22,4 +22,8 @@ class CourseProduct(
         priceWon = priceWon,
         description = description,
         thumbnailFileId = thumbnailFileId,
-    )
+    ) {
+    fun updateCurriculum(newCurriculum: String?) {
+        newCurriculum?.let { curriculum = it }
+    }
+}
