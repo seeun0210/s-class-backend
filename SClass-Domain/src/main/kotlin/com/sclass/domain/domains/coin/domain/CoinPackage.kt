@@ -48,9 +48,10 @@ class CoinPackage(
     private fun validateTransition(target: CoinPackageStatus) {
         val allowed =
             when (target) {
-                CoinPackageStatus.ACTIVE -> setOf(CoinPackageStatus.INACTIVE)
-                CoinPackageStatus.INACTIVE -> setOf(CoinPackageStatus.ACTIVE)
-                CoinPackageStatus.ARCHIVED -> setOf(CoinPackageStatus.ACTIVE, CoinPackageStatus.INACTIVE)
+                CoinPackageStatus.ACTIVE -> setOf(CoinPackageStatus.ACTIVE, CoinPackageStatus.INACTIVE)
+                CoinPackageStatus.INACTIVE -> setOf(CoinPackageStatus.ACTIVE, CoinPackageStatus.INACTIVE)
+                CoinPackageStatus.ARCHIVED ->
+                    setOf(CoinPackageStatus.ACTIVE, CoinPackageStatus.INACTIVE, CoinPackageStatus.ARCHIVED)
             }
         if (status !in allowed) throw CoinPackageInvalidStatusTransitionException()
     }

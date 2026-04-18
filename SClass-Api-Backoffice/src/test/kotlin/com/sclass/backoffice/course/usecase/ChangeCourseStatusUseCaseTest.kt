@@ -113,6 +113,23 @@ class ChangeCourseStatusUseCaseTest {
     }
 
     @Test
+    fun `이미 LISTED 인 코스에 LISTED 전이를 요청해도 멱등하게 성공한다`() {
+        val product = product().also { it.show() }
+        val course = courseOf(product.id, CourseStatus.LISTED)
+        every { courseAdaptor.findById(course.id) } returns course
+        every { productAdaptor.findById(product.id) } returns product
+        every { courseAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(course.id, CourseStatus.LISTED)
+
+        assertAll(
+            { assertEquals(CourseStatus.LISTED, course.status) },
+            { assertTrue(product.visible) },
+        )
+    }
+
+    @Test
     fun `코스와 상품을 모두 save 한다`() {
         val product = product()
         val course = courseOf(product.id, CourseStatus.DRAFT)

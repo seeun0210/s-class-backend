@@ -58,6 +58,16 @@ class ChangeCoinPackageStatusUseCaseTest {
         }
 
         @Test
+        fun `이미 ACTIVE 인 패키지에 ACTIVE 전이를 요청해도 멱등하게 성공한다`() {
+            val target = coinPackage(status = CoinPackageStatus.ACTIVE)
+            every { coinPackageAdaptor.findById(target.id) } returns target
+
+            useCase.execute(target.id, CoinPackageStatus.ACTIVE)
+
+            assertEquals(CoinPackageStatus.ACTIVE, target.status)
+        }
+
+        @Test
         fun `ARCHIVED 패키지를 ACTIVE로 되돌리려 하면 예외가 발생한다`() {
             val target = coinPackage(status = CoinPackageStatus.ARCHIVED)
             every { coinPackageAdaptor.findById(target.id) } returns target

@@ -58,9 +58,10 @@ class Course(
         val allowed =
             when (target) {
                 CourseStatus.DRAFT -> emptySet()
-                CourseStatus.LISTED -> setOf(CourseStatus.DRAFT, CourseStatus.UNLISTED)
-                CourseStatus.UNLISTED -> setOf(CourseStatus.LISTED)
-                CourseStatus.ARCHIVED -> setOf(CourseStatus.DRAFT, CourseStatus.LISTED, CourseStatus.UNLISTED)
+                CourseStatus.LISTED -> setOf(CourseStatus.DRAFT, CourseStatus.LISTED, CourseStatus.UNLISTED)
+                CourseStatus.UNLISTED -> setOf(CourseStatus.LISTED, CourseStatus.UNLISTED)
+                CourseStatus.ARCHIVED ->
+                    setOf(CourseStatus.DRAFT, CourseStatus.LISTED, CourseStatus.UNLISTED, CourseStatus.ARCHIVED)
             }
         if (status !in allowed) throw CourseInvalidStatusTransitionException()
     }
