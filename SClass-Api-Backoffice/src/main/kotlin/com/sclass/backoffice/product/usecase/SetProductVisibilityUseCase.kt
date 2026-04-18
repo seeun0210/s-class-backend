@@ -5,12 +5,15 @@ import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class DeactivateProductUseCase(
+class SetProductVisibilityUseCase(
     private val productAdaptor: ProductAdaptor,
 ) {
     @Transactional
-    fun execute(id: String) {
+    fun execute(
+        id: String,
+        visible: Boolean,
+    ) {
         val product = productAdaptor.findById(id)
-        product.active = false
+        if (visible) product.show() else product.hide()
     }
 }

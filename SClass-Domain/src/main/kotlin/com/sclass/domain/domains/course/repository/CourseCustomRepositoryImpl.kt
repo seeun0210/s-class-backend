@@ -2,6 +2,7 @@ package com.sclass.domain.domains.course.repository
 
 import com.querydsl.core.types.Order
 import com.querydsl.core.types.OrderSpecifier
+import com.querydsl.core.types.Projections.tuple
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
@@ -23,27 +24,6 @@ import org.springframework.data.domain.Sort
 class CourseCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : CourseCustomRepository {
-    override fun findAllActiveWithTeacher(): List<CourseWithTeacherDto> =
-        queryFactory
-            .select(course, courseProduct, teacher, user)
-            .from(course)
-            .leftJoin(courseProduct)
-            .on(courseProduct.id.eq(course.productId))
-            .leftJoin(teacher)
-            .on(teacher.user.id.eq(course.teacherUserId))
-            .leftJoin(user)
-            .on(user.id.eq(course.teacherUserId))
-            .where(course.status.eq(CourseStatus.ACTIVE))
-            .fetch()
-            .map { tuple ->
-                CourseWithTeacherDto(
-                    course = tuple[course]!!,
-                    courseProduct = tuple[courseProduct],
-                    teacher = tuple[teacher],
-                    teacherUser = tuple[user],
-                )
-            }
-
     override fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         queryFactory
             .select(course, courseProduct, enrollment.count())
@@ -110,6 +90,30 @@ class CourseCustomRepositoryImpl(
 
         return PageImpl(content, pageable, total)
     }
+
+    override fun findAllCatalogCourses(): List<CourseWithTeacherDto> =
+        queryFactory
+            .select(course, courseProduct, teacher, user)
+            .from(course)
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
+            .leftJoin(teacher)
+            .on(teacher.user.id.eq(course.teacherUserId))
+            .leftJoin(user)
+            .on(user.id.eq(course.teacherUserId))
+            .where(
+                course.status.eq(CourseStatus.ACTIVE),
+                courseProduct.visible.isTrue,
+            ).orderBy(course.createdAt.desc())
+            .fetch()
+            .map { tuple ->
+                CourseWithTeacherDto(
+                    course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
+                    teacher = tuple[teacher],
+                    teacherUser = tuple[user],
+                )
+            }
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(course.createdAt.desc())

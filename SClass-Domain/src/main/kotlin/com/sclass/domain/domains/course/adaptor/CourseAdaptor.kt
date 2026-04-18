@@ -5,7 +5,6 @@ import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
-import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.course.exception.CourseNotFoundException
 import com.sclass.domain.domains.course.repository.CourseRepository
 import org.springframework.data.domain.Page
@@ -26,7 +25,7 @@ class CourseAdaptor(
 
     fun findAllActive(): List<Course> = courseRepository.findAllByStatus(CourseStatus.ACTIVE)
 
-    fun findAllActiveWithTeacher(): List<CourseWithTeacherDto> = courseRepository.findAllActiveWithTeacher()
+    fun findAllCatalogCourses() = courseRepository.findAllCatalogCourses()
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)

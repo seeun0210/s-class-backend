@@ -9,7 +9,7 @@ data class ProductResponse(
     val name: String,
     val priceWon: Int,
     val totalLessons: Int?,
-    val active: Boolean,
+    val visible: Boolean,
 ) {
     companion object {
         fun from(product: Product) =
@@ -20,7 +20,7 @@ data class ProductResponse(
                         name = product.name,
                         priceWon = product.priceWon,
                         totalLessons = product.totalLessons,
-                        active = product.active,
+                        visible = product.visible,
                     )
                 else -> throw UnknownProductTypeException()
             }
