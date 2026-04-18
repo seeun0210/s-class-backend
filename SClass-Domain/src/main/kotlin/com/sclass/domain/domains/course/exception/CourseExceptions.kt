@@ -9,3 +9,5 @@ class CourseNotListedException : BusinessException(CourseErrorCode.COURSE_NOT_LI
 class CourseInvalidStatusTransitionException : BusinessException(CourseErrorCode.COURSE_INVALID_STATUS_TRANSITION)
 
 class CourseProductNotFoundException : BusinessException(CourseErrorCode.COURSE_PRODUCT_NOT_FOUND)
+
+class CourseNotEnrollableException : BusinessException(CourseErrorCode.COURSE_NOT_ENROLLABLE)

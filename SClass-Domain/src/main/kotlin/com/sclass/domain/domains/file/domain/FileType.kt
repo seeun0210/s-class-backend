@@ -31,4 +31,7 @@ enum class FileType {
 
     // 과제
     TASK_SUBMISSION,
+
+    // 카탈로그 자산
+    COURSE_THUMBNAIL,
 }

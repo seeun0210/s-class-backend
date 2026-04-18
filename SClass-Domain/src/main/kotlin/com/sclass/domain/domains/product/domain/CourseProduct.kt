@@ -15,4 +15,10 @@ class CourseProduct(
 
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
+
+    @Column(columnDefinition = "TEXT")
+    var curriculum: String? = null,
+
+    @Column(name = "thumbnail_file_id", length = 26)
+    var thumbnailFileId: String? = null,
 ) : Product(name = name, priceWon = priceWon)

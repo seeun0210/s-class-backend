@@ -60,4 +60,10 @@ class EnrollmentAdaptor(
         enrollmentRepository.findByPaymentId(paymentId) ?: throw EnrollmentNotFoundException()
 
     fun findByPaymentIdOrNull(paymentId: String): Enrollment? = enrollmentRepository.findByPaymentId(paymentId)
+
+    fun countLiveEnrollments(courseId: Long): Long =
+        enrollmentRepository.countByCourseIdAndStatusIn(
+            courseId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+        )
 }

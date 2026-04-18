@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -38,6 +39,21 @@ class Course(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: CourseStatus = CourseStatus.DRAFT,
+
+    @Column(name = "max_enrollments", nullable = false)
+    var maxEnrollments: Int = 1,
+
+    @Column(name = "enrollment_start_at")
+    var enrollmentStartAt: LocalDateTime? = null,
+
+    @Column(name = "enrollment_deadline")
+    var enrollmentDeadLine: LocalDateTime? = null,
+
+    @Column(name = "start_at")
+    var startAt: LocalDateTime? = null,
+
+    @Column(name = "end_at")
+    var endAt: LocalDateTime? = null,
 ) : BaseTimeEntity() {
     fun list() {
         validateTransition(CourseStatus.LISTED)
@@ -52,6 +68,17 @@ class Course(
     fun archive() {
         validateTransition(CourseStatus.ARCHIVED)
         this.status = CourseStatus.ARCHIVED
+    }
+
+    fun canEnroll(
+        now: LocalDateTime,
+        currentCount: Int,
+    ): Boolean {
+        if (status !== CourseStatus.LISTED)return false
+        if (enrollmentStartAt !== null && now.isBefore(enrollmentStartAt))return false
+        if (enrollmentDeadLine !== null && now.isAfter(enrollmentDeadLine))return false
+        if (currentCount >= maxEnrollments) return false
+        return true
     }
 
     private fun validateTransition(target: CourseStatus) {
