@@ -1,14 +1,12 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
-import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
-import com.sclass.domain.domains.product.domain.CourseProduct
-import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import com.sclass.infrastructure.redis.DistributedLock
@@ -20,7 +18,7 @@ import org.springframework.transaction.support.TransactionTemplate
 @UseCase
 class HandleNicePayReturnUseCase(
     private val paymentAdaptor: PaymentAdaptor,
-    private val productAdaptor: ProductAdaptor,
+    private val coinPackageAdaptor: CoinPackageAdaptor,
     private val coinDomainService: CoinDomainService,
     private val enrollmentAdaptor: EnrollmentAdaptor,
     private val pgGateway: PgGateway,
@@ -74,8 +72,6 @@ class HandleNicePayReturnUseCase(
             return failureUrl()
         }
 
-        val product = productAdaptor.findById(payment.productId)
-
         // PG 승인 (외부 API - 트랜잭션 밖)
         val pgResult =
             try {
@@ -97,25 +93,26 @@ class HandleNicePayReturnUseCase(
             paymentAdaptor.save(fresh)
         }
 
-        // TX2: 상품 타입별 처리
+        // TX2: 결제 대상별 처리
         return try {
-            when (product) {
-                is CoinProduct -> {
+            when (payment.targetType) {
+                PaymentTargetType.COIN_PACKAGE -> {
+                    val coinPackage = coinPackageAdaptor.findById(payment.targetId)
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         coinDomainService.issue(
                             userId = fresh.userId,
-                            amount = product.coinAmount,
+                            amount = coinPackage.coinAmount,
                             referenceId = fresh.id,
-                            description = "결제 완료 - ${product.name}",
+                            description = "결제 완료 - ${coinPackage.name}",
                         )
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)
                     }
                     log.info("결제 완료(코인): paymentId={}", payment.id)
-                    successUrl(product.coinAmount)
+                    successUrl(coinPackage.coinAmount)
                 }
-                is CourseProduct -> {
+                PaymentTargetType.COURSE_PRODUCT -> {
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
@@ -127,7 +124,6 @@ class HandleNicePayReturnUseCase(
                     log.info("결제 완료(수강): paymentId={}", payment.id)
                     successUrl(null)
                 }
-                else -> throw ProductTypeMismatchException()
             }
         } catch (e: Exception) {
             log.error("결제 후처리 실패: paymentId={}", payment.id, e)

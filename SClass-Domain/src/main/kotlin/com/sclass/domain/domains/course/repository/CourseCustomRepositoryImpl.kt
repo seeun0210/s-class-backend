@@ -25,8 +25,10 @@ class CourseCustomRepositoryImpl(
 ) : CourseCustomRepository {
     override fun findAllActiveWithTeacher(): List<CourseWithTeacherDto> =
         queryFactory
-            .select(course, teacher, user)
+            .select(course, courseProduct, teacher, user)
             .from(course)
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
             .leftJoin(teacher)
             .on(teacher.user.id.eq(course.teacherUserId))
             .leftJoin(user)
@@ -36,6 +38,7 @@ class CourseCustomRepositoryImpl(
             .map { tuple ->
                 CourseWithTeacherDto(
                     course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
                     teacher = tuple[teacher],
                     teacherUser = tuple[user],
                 )
@@ -43,16 +46,19 @@ class CourseCustomRepositoryImpl(
 
     override fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         queryFactory
-            .select(course, enrollment.count())
+            .select(course, courseProduct, enrollment.count())
             .from(course)
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
             .leftJoin(enrollment)
             .on(enrollment.courseId.eq(course.id))
             .where(course.teacherUserId.eq(teacherUserId))
-            .groupBy(course.id)
+            .groupBy(course.id, courseProduct.id)
             .fetch()
             .map { tuple ->
                 CourseWithEnrollmentCountDto(
                     course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
                     enrollmentCount = tuple[enrollment.count()] ?: 0L,
                 )
             }
@@ -70,18 +76,18 @@ class CourseCustomRepositoryImpl(
             queryFactory
                 .select(
                     course,
+                    courseProduct,
                     user.name,
                     enrollment.count(),
-                    courseProduct.totalLessons,
                 ).from(course)
+                .leftJoin(courseProduct)
+                .on(courseProduct.id.eq(course.productId))
                 .leftJoin(user)
                 .on(user.id.eq(course.teacherUserId))
                 .leftJoin(enrollment)
                 .on(enrollment.courseId.eq(course.id))
-                .leftJoin(courseProduct)
-                .on(courseProduct.id.eq(course.productId))
                 .where(*where.toTypedArray())
-                .groupBy(course, user.name, courseProduct.totalLessons)
+                .groupBy(course, courseProduct, user.name)
                 .orderBy(*pageable.sort.toOrderSpecifiers())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
@@ -89,9 +95,9 @@ class CourseCustomRepositoryImpl(
                 .map { tuple ->
                     CourseWithTeacherAndEnrollmentCountDto(
                         course = tuple[course]!!,
+                        courseProduct = tuple[courseProduct],
                         teacherName = tuple[user.name] ?: "-",
                         enrollmentCount = tuple[enrollment.count()] ?: 0L,
-                        totalLessons = tuple[courseProduct.totalLessons] ?: 0,
                     )
                 }
 

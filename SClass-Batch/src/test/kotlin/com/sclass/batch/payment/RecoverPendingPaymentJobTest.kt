@@ -2,6 +2,7 @@ package com.sclass.batch.payment
 
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import io.mockk.every
 import io.mockk.justRun
@@ -25,7 +26,8 @@ class RecoverPendingPaymentJobTest {
     private fun createPendingPayment(id: String = "payment-id-00000000000000000001") =
         Payment(
             userId = "user-id-0000000000000000000001",
-            productId = "product-id-000000000000000000001",
+            targetType = PaymentTargetType.COIN_PACKAGE,
+            targetId = "coin-pkg-id-00000000000000001",
             amount = 1000,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-id-$id",

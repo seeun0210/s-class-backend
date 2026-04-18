@@ -1,7 +1,5 @@
 package com.sclass.domain.domains.lesson.service
 
-import com.sclass.domain.domains.course.domain.Course
-import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
@@ -27,21 +25,21 @@ class LessonDomainServiceTest {
             tuitionAmountWon = 300000,
         )
 
-    private fun course() =
-        Course(
-            id = 1L,
-            productId = "product-id-00000000001",
-            teacherUserId = "teacher-id-00000000001",
-            name = "수학 기초",
-            status = CourseStatus.ACTIVE,
-        )
+    private val teacherUserId = "teacher-id-00000000001"
+    private val courseName = "수학 기초"
 
     @Test
     fun `totalLessons만큼 레슨이 생성된다`() {
         val lessonsSlot = slot<List<Lesson>>()
         every { lessonAdaptor.saveAll(capture(lessonsSlot)) } answers { lessonsSlot.captured }
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 4)
+        val result =
+            service.createLessonsForEnrollment(
+                enrollment(),
+                teacherUserId = teacherUserId,
+                courseName = courseName,
+                totalLessons = 4,
+            )
 
         assertEquals(4, result.size)
     }
@@ -51,7 +49,13 @@ class LessonDomainServiceTest {
         val lessonsSlot = slot<List<Lesson>>()
         every { lessonAdaptor.saveAll(capture(lessonsSlot)) } answers { lessonsSlot.captured }
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 3)
+        val result =
+            service.createLessonsForEnrollment(
+                enrollment(),
+                teacherUserId = teacherUserId,
+                courseName = courseName,
+                totalLessons = 3,
+            )
 
         val first = result[0]
         val last = result[2]
@@ -71,7 +75,13 @@ class LessonDomainServiceTest {
     fun `totalLessons가 0이면 빈 리스트를 반환한다`() {
         every { lessonAdaptor.saveAll(emptyList()) } returns emptyList()
 
-        val result = service.createLessonsForEnrollment(enrollment(), course(), totalLessons = 0)
+        val result =
+            service.createLessonsForEnrollment(
+                enrollment(),
+                teacherUserId = teacherUserId,
+                courseName = courseName,
+                totalLessons = 0,
+            )
 
         assertEquals(0, result.size)
     }

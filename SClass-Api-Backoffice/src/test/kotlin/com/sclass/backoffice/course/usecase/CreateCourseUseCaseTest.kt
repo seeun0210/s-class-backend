@@ -27,33 +27,31 @@ class CreateCourseUseCaseTest {
         useCase = CreateCourseUseCase(courseAdaptor, productAdaptor)
     }
 
-    private fun courseProduct() =
-        CourseProduct(
-            name = "수학 코스",
-            priceWon = 300000,
-            totalLessons = 12,
-        )
-
     private fun request() =
         CreateCourseRequest(
-            productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
             organizationId = null,
             name = "2025 수학 코스",
             description = "수학 심화 과정",
+            priceWon = 300000,
+            totalLessons = 12,
         )
 
     @Nested
     inner class Success {
         @Test
-        fun `코스를 생성하고 DRAFT 상태로 반환한다`() {
+        fun `코스와 상품을 한 트랜잭션에서 생성한다`() {
+            val productSlot = slot<CourseProduct>()
             val courseSlot = slot<Course>()
-            val product = courseProduct()
-            every { productAdaptor.findById("product-id-00000000001") } returns product
+            every { productAdaptor.save(capture(productSlot)) } answers { productSlot.captured }
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             val result = useCase.execute(request())
 
+            assertThat(productSlot.captured.name).isEqualTo("2025 수학 코스")
+            assertThat(productSlot.captured.priceWon).isEqualTo(300000)
+            assertThat(productSlot.captured.totalLessons).isEqualTo(12)
+            assertThat(productSlot.captured.description).isEqualTo("수학 심화 과정")
             assertThat(result.status).isEqualTo(CourseStatus.DRAFT)
             assertThat(result.name).isEqualTo("2025 수학 코스")
             assertThat(result.teacherUserId).isEqualTo("teacher-id-00000000001")
@@ -63,7 +61,7 @@ class CreateCourseUseCaseTest {
         @Test
         fun `organizationId가 있으면 코스에 포함된다`() {
             val courseSlot = slot<Course>()
-            every { productAdaptor.findById(any()) } returns courseProduct()
+            every { productAdaptor.save(any()) } answers { firstArg() }
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request().copy(organizationId = "org-id-000000000001"))
@@ -72,13 +70,16 @@ class CreateCourseUseCaseTest {
         }
 
         @Test
-        fun `productAdaptor로 상품 유효성을 검증한다`() {
-            every { productAdaptor.findById("product-id-00000000001") } returns courseProduct()
-            every { courseAdaptor.save(any()) } answers { firstArg() }
+        fun `생성된 상품의 id를 코스의 productId로 연결한다`() {
+            val courseSlot = slot<Course>()
+            every { productAdaptor.save(any()) } answers { firstArg() }
+            every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request())
 
-            verify(exactly = 1) { productAdaptor.findById("product-id-00000000001") }
+            verify(exactly = 1) { productAdaptor.save(any()) }
+            verify(exactly = 1) { courseAdaptor.save(any()) }
+            assertThat(courseSlot.captured.productId).isNotBlank
         }
     }
 }

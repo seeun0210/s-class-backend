@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
 data class PreparePaymentRequest(
-    @field:NotBlank val productId: String,
+    @field:NotBlank val coinPackageId: String,
     @field:NotNull val pgType: PgType,
 )

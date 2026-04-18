@@ -1,5 +1,7 @@
 package com.sclass.supporters.payment.usecase
 
+import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
@@ -11,9 +13,9 @@ import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
@@ -30,6 +32,7 @@ import org.springframework.transaction.support.TransactionTemplate
 class HandleNicePayWebhookUseCaseTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
     private lateinit var productAdaptor: ProductAdaptor
+    private lateinit var coinPackageAdaptor: CoinPackageAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var courseAdaptor: CourseAdaptor
@@ -42,6 +45,7 @@ class HandleNicePayWebhookUseCaseTest {
     fun setUp() {
         paymentAdaptor = mockk()
         productAdaptor = mockk()
+        coinPackageAdaptor = mockk()
         coinDomainService = mockk()
         pgGateway = mockk()
         txTemplate = mockk()
@@ -57,6 +61,7 @@ class HandleNicePayWebhookUseCaseTest {
             HandleNicePayWebhookUseCase(
                 paymentAdaptor,
                 productAdaptor,
+                coinPackageAdaptor,
                 coinDomainService,
                 pgGateway,
                 txTemplate,
@@ -69,12 +74,12 @@ class HandleNicePayWebhookUseCaseTest {
     @Test
     fun `정상 웹훅 수신 시 PG_APPROVED 후 코인 발급하고 COMPLETED 처리된다`() {
         val payment = pendingPayment()
-        val product = CoinProduct(name = "코인 100", priceWon = 1000, coinAmount = 100)
+        val coinPackage = CoinPackage(name = "코인 100", priceWon = 1000, coinAmount = 100)
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
         every { paymentAdaptor.findById(payment.id) } returns payment
-        every { productAdaptor.findById(payment.productId) } returns product
+        every { coinPackageAdaptor.findById(payment.targetId) } returns coinPackage
         justRun { coinDomainService.issue(any(), any(), any(), any()) }
 
         useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
@@ -90,11 +95,11 @@ class HandleNicePayWebhookUseCaseTest {
         val payment = pendingPayment()
         val pgApprovedPayment = pendingPayment()
         pgApprovedPayment.markPgApproved("tid-001")
-        val product = CoinProduct(name = "코인 100", priceWon = 1000, coinAmount = 100)
+        val coinPackage = CoinPackage(name = "코인 100", priceWon = 1000, coinAmount = 100)
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
-        every { productAdaptor.findById(payment.productId) } returns product
+        every { coinPackageAdaptor.findById(payment.targetId) } returns coinPackage
         // findById: TX1(markPgApproved) → TX2(coin issue 실패) → TX3(markIssueCoinFailed)
         every { paymentAdaptor.findById(payment.id) } returns payment andThen payment andThen pgApprovedPayment
         every { coinDomainService.issue(any(), any(), any(), any()) } throws RuntimeException("코인 발급 실패")
@@ -148,11 +153,12 @@ class HandleNicePayWebhookUseCaseTest {
         useCase.execute("unknown-order", successPayload("unknown-order"))
 
         verify(exactly = 0) { productAdaptor.findById(any()) }
+        verify(exactly = 0) { coinPackageAdaptor.findById(any()) }
     }
 
     @Test
     fun `CourseProduct 결제 시 enrollment가 없으면 무시한다`() {
-        val payment = pendingPayment()
+        val payment = courseProductPayment()
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
@@ -169,7 +175,7 @@ class HandleNicePayWebhookUseCaseTest {
 
     @Test
     fun `CourseProduct 결제 시 enrollment가 있으면 ACTIVE 처리된다`() {
-        val payment = pendingPayment()
+        val payment = courseProductPayment()
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
@@ -183,7 +189,6 @@ class HandleNicePayWebhookUseCaseTest {
                 id = 1L,
                 productId = "prod-00000000000000000000000001",
                 teacherUserId = "teacher-id-00000000001",
-                name = "수학 코스",
                 status = CourseStatus.ACTIVE,
             )
 
@@ -205,7 +210,8 @@ class HandleNicePayWebhookUseCaseTest {
         verify {
             lessonService.createLessonsForEnrollment(
                 enrollment = any(),
-                course = course,
+                teacherUserId = "teacher-id-00000000001",
+                courseName = "수학 코스",
                 totalLessons = 12,
             )
         }
@@ -214,10 +220,21 @@ class HandleNicePayWebhookUseCaseTest {
     private fun pendingPayment() =
         Payment(
             userId = "user-00000000000000000000000001",
-            productId = "prod-00000000000000000000000001",
+            targetType = PaymentTargetType.COIN_PACKAGE,
+            targetId = "cp-0000000000000000000000001",
             amount = 1000,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-00000000000000000000000001",
+        )
+
+    private fun courseProductPayment() =
+        Payment(
+            userId = "user-00000000000000000000000001",
+            targetType = PaymentTargetType.COURSE_PRODUCT,
+            targetId = "prod-00000000000000000000000001",
+            amount = 300000,
+            pgType = PgType.NICEPAY,
+            pgOrderId = "order-00000000000000000000000002",
         )
 
     private fun successPayload(orderId: String) = webhookPayload(orderId, resultCode = "0000")

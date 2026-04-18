@@ -23,8 +23,8 @@ data class CourseResponse(
         fun from(dto: CourseWithTeacherDto) =
             CourseResponse(
                 id = dto.course.id,
-                name = dto.course.name,
-                description = dto.course.description,
+                name = dto.courseProduct?.name ?: "",
+                description = dto.courseProduct?.description,
                 productId = dto.course.productId,
                 teacher =
                     TeacherSummary(

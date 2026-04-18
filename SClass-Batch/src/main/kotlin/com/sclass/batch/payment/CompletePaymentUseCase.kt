@@ -1,13 +1,12 @@
 package com.sclass.batch.payment
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
-import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
-import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import com.sclass.infrastructure.redis.DistributedLock
@@ -18,7 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate
 @UseCase
 class CompletePaymentUseCase(
     private val paymentAdaptor: PaymentAdaptor,
-    private val productAdaptor: ProductAdaptor,
+    private val coinPackageAdaptor: CoinPackageAdaptor,
     private val coinDomainService: CoinDomainService,
     private val txTemplate: TransactionTemplate,
 ) {
@@ -30,6 +29,12 @@ class CompletePaymentUseCase(
         payment: Payment,
         result: PgInquiryResult,
     ) {
+        // 코인 복구 배치는 COIN_PACKAGE 결제만 처리. CourseProduct는 별도 enrollment 흐름.
+        if (payment.targetType != PaymentTargetType.COIN_PACKAGE) {
+            log.info("배치 대상 아님(코인 외) paymentId={} targetType={}", payment.id, payment.targetType)
+            return
+        }
+
         // TX1: 상태 확인 + PG 승인/미승인 처리
         val coinContext =
             txTemplate.execute {
@@ -43,9 +48,8 @@ class CompletePaymentUseCase(
                 if (result.approved && tid != null) {
                     fresh.markPgApproved(tid)
                     paymentAdaptor.save(fresh)
-                    val product = productAdaptor.findById(fresh.productId)
-                    val coinAmount = (product as? CoinProduct)?.coinAmount ?: throw ProductTypeMismatchException()
-                    CoinIssueContext(fresh.userId, coinAmount, fresh.id, product.name)
+                    val coinPackage = coinPackageAdaptor.findById(fresh.targetId)
+                    CoinIssueContext(fresh.userId, coinPackage.coinAmount, fresh.id, coinPackage.name)
                 } else {
                     fresh.markPgApproveFailed()
                     paymentAdaptor.save(fresh)

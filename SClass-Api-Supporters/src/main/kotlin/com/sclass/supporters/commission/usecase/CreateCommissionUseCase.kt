@@ -4,11 +4,11 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
+import com.sclass.domain.domains.commission.adaptor.CommissionPolicyAdaptor
 import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionFile
 import com.sclass.domain.domains.commission.domain.GuideInfo
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
-import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.supporters.commission.dto.CommissionResponse
@@ -28,7 +28,7 @@ class CreateCommissionUseCase(
     private val eventPublisher: ApplicationEventPublisher,
     private val commissionReminderScheduler: CommissionReminderScheduler,
     private val coinDomainService: CoinDomainService,
-    private val productAdaptor: ProductAdaptor,
+    private val commissionPolicyAdaptor: CommissionPolicyAdaptor,
 ) {
     @Transactional
     fun execute(
@@ -42,14 +42,14 @@ class CreateCommissionUseCase(
                 organizationId = null,
             )
 
-        val commissionProduct = productAdaptor.findActiveCommissionProduct()
+        val commissionPolicy = commissionPolicyAdaptor.findActive()
 
         val commission =
             commissionAdaptor.save(
                 Commission(
                     studentUserId = studentUserId,
                     teacherUserId = assignment.teacherUserId,
-                    productId = commissionProduct.id,
+                    commissionPolicyId = commissionPolicy.id,
                     outputFormat = request.outputFormat,
                     activityType = request.activityType,
                     guideInfo =
@@ -65,7 +65,7 @@ class CreateCommissionUseCase(
 
         coinDomainService.deduct(
             userId = studentUserId,
-            amount = commissionProduct.coinCost,
+            amount = commissionPolicy.coinCost,
             referenceId = commission.id.toString(),
             description = "의뢰 생성 코인 차감",
         )

@@ -4,6 +4,7 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
+import com.sclass.domain.domains.product.domain.CourseProduct
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -23,19 +24,24 @@ class GetCourseListUseCaseTest {
         status: CourseStatus = CourseStatus.ACTIVE,
         enrollmentCount: Long = 5,
         totalLessons: Int = 12,
+        priceWon: Int = 300000,
     ) = CourseWithTeacherAndEnrollmentCountDto(
         course =
             Course(
                 id = 1L,
                 productId = "prod01",
                 teacherUserId = teacherUserId,
-                name = courseName,
-                description = "설명",
                 status = status,
+            ),
+        courseProduct =
+            CourseProduct(
+                name = courseName,
+                priceWon = priceWon,
+                totalLessons = totalLessons,
+                description = "설명",
             ),
         teacherName = teacherName,
         enrollmentCount = enrollmentCount,
-        totalLessons = totalLessons,
     )
 
     @Test
@@ -110,6 +116,17 @@ class GetCourseListUseCaseTest {
         val result = useCase.execute(null, null, pageable)
 
         assertEquals(8, result.content[0].totalLessons)
+    }
+
+    @Test
+    fun `priceWon이 응답에 포함된다`() {
+        val dto = createCourseDto(priceWon = 450000)
+        val pageable = PageRequest.of(0, 20)
+        every { courseAdaptor.searchCourses(null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, pageable)
+
+        assertEquals(450000, result.content[0].priceWon)
     }
 
     @Test

@@ -9,8 +9,8 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import io.mockk.every
 import io.mockk.mockk
@@ -43,7 +43,6 @@ class GrantEnrollmentUseCaseTest {
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            name = "2025 수학 코스",
             status = CourseStatus.ACTIVE,
         )
 
@@ -101,7 +100,8 @@ class GrantEnrollmentUseCaseTest {
             verify {
                 lessonService.createLessonsForEnrollment(
                     enrollment = any(),
-                    course = any(),
+                    teacherUserId = "teacher-id-00000000001",
+                    courseName = "수학 코스",
                     totalLessons = 12,
                 )
             }
@@ -113,7 +113,7 @@ class GrantEnrollmentUseCaseTest {
         @Test
         fun `CourseProduct가 아닌 상품이면 ProductTypeMismatchException이 발생한다`() {
             every { courseAdaptor.findById(1L) } returns activeCourse()
-            every { productAdaptor.findById(any()) } returns CoinProduct(name = "코인", priceWon = 10000, coinAmount = 100)
+            every { productAdaptor.findById(any()) } returns mockk<Product>()
 
             assertThatThrownBy {
                 useCase.execute("admin-id-000000000001", "student-id-00000000001", 1L, "혜택")

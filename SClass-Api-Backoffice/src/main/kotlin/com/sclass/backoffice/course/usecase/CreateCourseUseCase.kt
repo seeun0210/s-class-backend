@@ -6,6 +6,7 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
@@ -15,17 +16,23 @@ class CreateCourseUseCase(
 ) {
     @Transactional
     fun execute(request: CreateCourseRequest): CourseResponse {
-        productAdaptor.findById(request.productId)
+        val product =
+            productAdaptor.save(
+                CourseProduct(
+                    name = request.name,
+                    priceWon = request.priceWon,
+                    totalLessons = request.totalLessons,
+                    description = request.description,
+                ),
+            ) as CourseProduct
         val course =
             courseAdaptor.save(
                 Course(
-                    productId = request.productId,
+                    productId = product.id,
                     teacherUserId = request.teacherUserId,
                     organizationId = request.organizationId,
-                    name = request.name,
-                    description = request.description,
                 ),
             )
-        return CourseResponse.from(course)
+        return CourseResponse.from(course, product)
     }
 }

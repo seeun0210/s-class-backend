@@ -50,7 +50,7 @@ class SelectTopicUseCaseTest {
         id = id,
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
-        productId = "product-id-00000000000001",
+        commissionPolicyId = "policy-id-00000000000001",
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,

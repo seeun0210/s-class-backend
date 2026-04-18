@@ -1,14 +1,15 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
+import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CoinProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
@@ -22,6 +23,7 @@ import org.springframework.transaction.support.TransactionTemplate
 class HandleNicePayWebhookUseCase(
     private val paymentAdaptor: PaymentAdaptor,
     private val productAdaptor: ProductAdaptor,
+    private val coinPackageAdaptor: CoinPackageAdaptor,
     private val coinDomainService: CoinDomainService,
     private val pgGateway: PgGateway,
     private val txTemplate: TransactionTemplate,
@@ -70,8 +72,9 @@ class HandleNicePayWebhookUseCase(
             return
         }
 
-        when (val product = productAdaptor.findById(payment.productId)) {
-            is CoinProduct -> {
+        when (payment.targetType) {
+            PaymentTargetType.COIN_PACKAGE -> {
+                val coinPackage = coinPackageAdaptor.findById(payment.targetId)
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     fresh.markPgApproved(payload.tid)
@@ -82,9 +85,9 @@ class HandleNicePayWebhookUseCase(
                         val fresh = paymentAdaptor.findById(payment.id)
                         coinDomainService.issue(
                             userId = fresh.userId,
-                            amount = product.coinAmount,
+                            amount = coinPackage.coinAmount,
                             referenceId = fresh.id,
-                            description = "결제 완료 (웹훅) - ${product.name}",
+                            description = "결제 완료 (웹훅) - ${coinPackage.name}",
                         )
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)
@@ -98,7 +101,10 @@ class HandleNicePayWebhookUseCase(
                     }
                 }
             }
-            is CourseProduct -> {
+            PaymentTargetType.COURSE_PRODUCT -> {
+                val product =
+                    productAdaptor.findById(payment.targetId) as? CourseProduct
+                        ?: throw ProductTypeMismatchException()
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     fresh.markPgApproved(payload.tid)
@@ -120,12 +126,12 @@ class HandleNicePayWebhookUseCase(
                     val course = courseAdaptor.findById(freshEnrollment.courseId)
                     lessonService.createLessonsForEnrollment(
                         freshEnrollment,
-                        course,
+                        teacherUserId = course.teacherUserId,
+                        courseName = product.name,
                         totalLessons = product.totalLessons,
                     )
                 }
             }
-            else -> throw ProductTypeMismatchException()
         }
     }
 

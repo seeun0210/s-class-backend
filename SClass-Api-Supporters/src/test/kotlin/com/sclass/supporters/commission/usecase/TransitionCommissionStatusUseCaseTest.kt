@@ -23,7 +23,7 @@ class TransitionCommissionStatusUseCaseTest {
 
     private val studentUserId = "student-user-id-0000000001"
     private val teacherUserId = "teacher-user-id-00000000001"
-    private val productId = "product-id-0000000000000001"
+    private val commissionPolicyId = "policy-id-0000000000000001"
 
     @BeforeEach
     fun setUp() {
@@ -39,7 +39,7 @@ class TransitionCommissionStatusUseCaseTest {
         id = id,
         studentUserId = studentUserId,
         teacherUserId = teacherUserId,
-        productId = productId,
+        commissionPolicyId = commissionPolicyId,
         outputFormat = OutputFormat.REPORT,
         activityType = ActivityType.CAREER_EXPLORATION,
         status = status,

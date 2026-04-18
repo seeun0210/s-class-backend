@@ -1,0 +1,5 @@
+package com.sclass.domain.domains.commission.exception
+
+import com.sclass.common.exception.BusinessException
+
+class CommissionPolicyNotConfiguredException : BusinessException(CommissionErrorCode.COMMISSION_POLICY_NOT_CONFIGURED)
