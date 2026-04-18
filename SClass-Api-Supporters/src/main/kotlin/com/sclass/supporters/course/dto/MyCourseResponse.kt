@@ -11,7 +11,7 @@ data class MyCourseResponse(
     val productId: String,
     val status: CourseStatus,
     val enrollmentCount: Long,
-    val maxEnrollments: Int,
+    val maxEnrollments: Int?,
     val enrollmentDeadLine: LocalDateTime?,
     val startAt: LocalDateTime?,
     val endAt: LocalDateTime?,

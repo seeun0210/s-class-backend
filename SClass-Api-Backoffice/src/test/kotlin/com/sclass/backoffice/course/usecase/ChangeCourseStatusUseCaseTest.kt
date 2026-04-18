@@ -6,6 +6,7 @@ import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.exception.CourseInvalidStatusTransitionException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -21,13 +22,16 @@ import org.junit.jupiter.api.Test
 class ChangeCourseStatusUseCaseTest {
     private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var productAdaptor: ProductAdaptor
+    private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: ChangeCourseStatusUseCase
 
     @BeforeEach
     fun setUp() {
         courseAdaptor = mockk()
         productAdaptor = mockk()
-        useCase = ChangeCourseStatusUseCase(courseAdaptor, productAdaptor)
+        thumbnailUrlResolver = mockk()
+        every { thumbnailUrlResolver.resolve(any()) } returns null
+        useCase = ChangeCourseStatusUseCase(courseAdaptor, productAdaptor, thumbnailUrlResolver)
     }
 
     private fun courseOf(

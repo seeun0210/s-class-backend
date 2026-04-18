@@ -3,6 +3,7 @@ package com.sclass.domain.domains.course.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
+import com.sclass.domain.domains.course.dto.CatalogCourseDto
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.course.exception.CourseNotFoundException
@@ -23,9 +24,12 @@ class CourseAdaptor(
 
     fun findByIdOrNull(id: Long): Course? = courseRepository.findByIdOrNull(id)
 
-    fun findAllCatalogCourses() = courseRepository.findAllCatalogCourses()
+    fun findAllCatalogCourses(pageable: Pageable): Page<CatalogCourseDto> = courseRepository.findAllCatalogCourses(pageable)
 
     fun findCatalogCourseById(id: Long) = courseRepository.findCatalogCourseById(id) ?: throw CourseNotFoundException()
+
+    fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto =
+        courseRepository.findCourseDetailById(id) ?: throw CourseNotFoundException()
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)

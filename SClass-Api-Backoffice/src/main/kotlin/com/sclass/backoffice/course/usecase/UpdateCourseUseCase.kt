@@ -8,6 +8,7 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
@@ -16,6 +17,7 @@ class UpdateCourseUseCase(
     private val courseAdaptor: CourseAdaptor,
     private val productAdaptor: ProductAdaptor,
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val thumbnailUrlResolver: ThumbnailUrlResolver,
 ) {
     @Transactional
     fun execute(
@@ -50,6 +52,6 @@ class UpdateCourseUseCase(
             course.updateSchedule(now, request.startAt, request.endAt)
         }
 
-        return CourseResponse.from(course, product)
+        return CourseResponse.from(course, product, thumbnailUrlResolver.resolve(product.thumbnailFileId))
     }
 }

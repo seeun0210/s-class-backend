@@ -1,6 +1,6 @@
 package com.sclass.supporters.catalog.dto
 
-import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
+import com.sclass.domain.domains.course.dto.CatalogCourseDto
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 import java.time.LocalDateTime
 
@@ -9,9 +9,11 @@ data class CatalogCourseResponse(
     val productId: String,
     val name: String,
     val description: String?,
-    val thumbnailFileId: String?,
+    val thumbnailUrl: String?,
     val priceWon: Int,
     val totalLessons: Int,
+    val maxEnrollments: Int?,
+    val remainingSeats: Long?,
     val enrollmentDeadLine: LocalDateTime?,
     val startAt: LocalDateTime?,
     val teacher: TeacherSummary,
@@ -26,15 +28,21 @@ data class CatalogCourseResponse(
     )
 
     companion object {
-        fun from(dto: CourseWithTeacherDto) =
-            CatalogCourseResponse(
+        fun from(
+            dto: CatalogCourseDto,
+            thumbnailUrl: String?,
+        ): CatalogCourseResponse {
+            val remaining = dto.course.maxEnrollments?.let { (it - dto.liveEnrollmentCount).coerceAtLeast(0L) }
+            return CatalogCourseResponse(
                 id = dto.course.id,
                 productId = dto.course.productId,
                 name = dto.courseProduct?.name ?: "",
                 description = dto.courseProduct?.description,
-                thumbnailFileId = dto.courseProduct?.thumbnailFileId,
+                thumbnailUrl = thumbnailUrl,
                 priceWon = dto.courseProduct?.priceWon ?: 0,
                 totalLessons = dto.courseProduct?.totalLessons ?: 0,
+                maxEnrollments = dto.course.maxEnrollments,
+                remainingSeats = remaining,
                 enrollmentDeadLine = dto.course.enrollmentDeadLine,
                 startAt = dto.course.startAt,
                 teacher =
@@ -48,5 +56,6 @@ data class CatalogCourseResponse(
                         major = dto.teacher?.education?.major,
                     ),
             )
+        }
     }
 }

@@ -6,6 +6,7 @@ import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -19,13 +20,18 @@ import java.time.LocalDateTime
 class CreateCourseUseCaseTest {
     private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var productAdaptor: ProductAdaptor
+    private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: CreateCourseUseCase
 
     @BeforeEach
     fun setUp() {
         courseAdaptor = mockk()
         productAdaptor = mockk()
-        useCase = CreateCourseUseCase(courseAdaptor, productAdaptor)
+        thumbnailUrlResolver = mockk()
+        every { thumbnailUrlResolver.resolve(any()) } answers {
+            firstArg<String?>()?.let { "https://static.test.sclass.click/course_thumbnail/$it" }
+        }
+        useCase = CreateCourseUseCase(courseAdaptor, productAdaptor, thumbnailUrlResolver)
     }
 
     private fun request() =
@@ -95,25 +101,37 @@ class CreateCourseUseCaseTest {
             val courseStart = LocalDateTime.of(2026, 6, 1, 0, 0)
             val courseEnd = LocalDateTime.of(2026, 8, 31, 23, 59)
 
-            useCase.execute(
-                request().copy(
-                    curriculum = "1주차: 함수\n2주차: 극한",
-                    thumbnailFileId = "file-id-000000000001",
-                    maxEnrollments = 20,
-                    enrollmentStartAt = enrollStart,
-                    enrollmentDeadLine = enrollEnd,
-                    startAt = courseStart,
-                    endAt = courseEnd,
-                ),
-            )
+            val result =
+                useCase.execute(
+                    request().copy(
+                        curriculum = "1주차: 함수\n2주차: 극한",
+                        thumbnailFileId = "file-id-000000000001",
+                        maxEnrollments = 20,
+                        enrollmentStartAt = enrollStart,
+                        enrollmentDeadLine = enrollEnd,
+                        startAt = courseStart,
+                        endAt = courseEnd,
+                    ),
+                )
 
             assertThat(productSlot.captured.curriculum).isEqualTo("1주차: 함수\n2주차: 극한")
             assertThat(productSlot.captured.thumbnailFileId).isEqualTo("file-id-000000000001")
+            assertThat(result.thumbnailUrl).isEqualTo("https://static.test.sclass.click/course_thumbnail/file-id-000000000001")
             assertThat(courseSlot.captured.maxEnrollments).isEqualTo(20)
             assertThat(courseSlot.captured.enrollmentStartAt).isEqualTo(enrollStart)
             assertThat(courseSlot.captured.enrollmentDeadLine).isEqualTo(enrollEnd)
             assertThat(courseSlot.captured.startAt).isEqualTo(courseStart)
             assertThat(courseSlot.captured.endAt).isEqualTo(courseEnd)
+        }
+
+        @Test
+        fun `thumbnailFileId가 null이면 응답의 thumbnailUrl도 null`() {
+            every { productAdaptor.save(any()) } answers { firstArg() }
+            every { courseAdaptor.save(any()) } answers { firstArg() }
+
+            val result = useCase.execute(request())
+
+            assertThat(result.thumbnailUrl).isNull()
         }
     }
 }

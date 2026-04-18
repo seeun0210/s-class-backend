@@ -14,7 +14,7 @@ data class CreateCourseRequest(
     val thumbnailFileId: String? = null,
     @field:Min(0) val priceWon: Int,
     @field:Min(1) val totalLessons: Int,
-    @field:Min(1) val maxEnrollments: Int = 1,
+    @field:Min(1) val maxEnrollments: Int? = null,
     val enrollmentStartAt: LocalDateTime? = null,
     val enrollmentDeadLine: LocalDateTime? = null,
     val startAt: LocalDateTime? = null,

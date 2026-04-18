@@ -7,12 +7,14 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class CreateCourseUseCase(
     private val courseAdaptor: CourseAdaptor,
     private val productAdaptor: ProductAdaptor,
+    private val thumbnailUrlResolver: ThumbnailUrlResolver,
 ) {
     @Transactional
     fun execute(request: CreateCourseRequest): CourseResponse {
@@ -40,6 +42,6 @@ class CreateCourseUseCase(
                     endAt = request.endAt,
                 ),
             )
-        return CourseResponse.from(course, product)
+        return CourseResponse.from(course, product, thumbnailUrlResolver.resolve(product.thumbnailFileId))
     }
 }

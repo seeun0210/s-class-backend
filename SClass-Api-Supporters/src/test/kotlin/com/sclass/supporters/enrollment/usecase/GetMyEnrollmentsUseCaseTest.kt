@@ -7,6 +7,7 @@ import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -19,12 +20,17 @@ import java.time.LocalDateTime
 
 class GetMyEnrollmentsUseCaseTest {
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: GetMyEnrollmentsUseCase
 
     @BeforeEach
     fun setUp() {
         enrollmentAdaptor = mockk()
-        useCase = GetMyEnrollmentsUseCase(enrollmentAdaptor)
+        thumbnailUrlResolver = mockk()
+        every { thumbnailUrlResolver.resolve(any()) } answers {
+            firstArg<String?>()?.let { "https://static.test.sclass.click/course_thumbnail/$it" }
+        }
+        useCase = GetMyEnrollmentsUseCase(enrollmentAdaptor, thumbnailUrlResolver)
     }
 
     private fun makeDto(
@@ -78,7 +84,7 @@ class GetMyEnrollmentsUseCaseTest {
             { assertEquals(300000, result[0].tuitionAmountWon) },
             { assertEquals("수학 기초", summary.name) },
             { assertEquals("수학 심화", summary.description) },
-            { assertEquals("file-id-00000000000000001", summary.thumbnailFileId) },
+            { assertEquals("https://static.test.sclass.click/course_thumbnail/file-id-00000000000000001", summary.thumbnailUrl) },
             { assertEquals("김선생", summary.teacherName) },
             { assertEquals(CourseStatus.LISTED, summary.courseStatus) },
             { assertEquals(LocalDateTime.of(2026, 4, 30, 0, 0), summary.enrollmentDeadLine) },

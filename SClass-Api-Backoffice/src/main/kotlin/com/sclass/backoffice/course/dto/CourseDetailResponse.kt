@@ -4,14 +4,7 @@ import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import java.time.LocalDateTime
 
-data class CoursePageResponse(
-    val content: List<CourseListResponse>,
-    val totalElements: Long,
-    val totalPages: Int,
-    val currentPage: Int,
-)
-
-data class CourseListResponse(
+data class CourseDetailResponse(
     val id: Long,
     val productId: String,
     val teacherUserId: String,
@@ -19,12 +12,13 @@ data class CourseListResponse(
     val organizationId: String?,
     val name: String,
     val description: String?,
+    val curriculum: String?,
     val thumbnailUrl: String?,
+    val priceWon: Int,
+    val totalLessons: Int,
     val status: CourseStatus,
     val enrollmentCount: Long,
     val maxEnrollments: Int?,
-    val totalLessons: Int,
-    val priceWon: Int,
     val enrollmentStartAt: LocalDateTime?,
     val enrollmentDeadLine: LocalDateTime?,
     val startAt: LocalDateTime?,
@@ -35,7 +29,7 @@ data class CourseListResponse(
         fun from(
             dto: CourseWithTeacherAndEnrollmentCountDto,
             thumbnailUrl: String?,
-        ) = CourseListResponse(
+        ) = CourseDetailResponse(
             id = dto.course.id,
             productId = dto.course.productId,
             teacherUserId = dto.course.teacherUserId,
@@ -43,12 +37,13 @@ data class CourseListResponse(
             organizationId = dto.course.organizationId,
             name = dto.courseProduct?.name ?: "",
             description = dto.courseProduct?.description,
+            curriculum = dto.courseProduct?.curriculum,
             thumbnailUrl = thumbnailUrl,
+            priceWon = dto.courseProduct?.priceWon ?: 0,
+            totalLessons = dto.courseProduct?.totalLessons ?: 0,
             status = dto.course.status,
             enrollmentCount = dto.enrollmentCount,
             maxEnrollments = dto.course.maxEnrollments,
-            totalLessons = dto.courseProduct?.totalLessons ?: 0,
-            priceWon = dto.courseProduct?.priceWon ?: 0,
             enrollmentStartAt = dto.course.enrollmentStartAt,
             enrollmentDeadLine = dto.course.enrollmentDeadLine,
             startAt = dto.course.startAt,

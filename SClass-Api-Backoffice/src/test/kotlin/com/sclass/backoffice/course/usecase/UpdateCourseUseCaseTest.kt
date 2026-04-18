@@ -11,6 +11,7 @@ import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +26,7 @@ class UpdateCourseUseCaseTest {
     private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: UpdateCourseUseCase
 
     @BeforeEach
@@ -32,7 +34,11 @@ class UpdateCourseUseCaseTest {
         courseAdaptor = mockk()
         productAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        useCase = UpdateCourseUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor)
+        thumbnailUrlResolver = mockk()
+        every { thumbnailUrlResolver.resolve(any()) } answers {
+            firstArg<String?>()?.let { "https://static.test.sclass.click/course_thumbnail/$it" }
+        }
+        useCase = UpdateCourseUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor, thumbnailUrlResolver)
     }
 
     private fun listedCourse(startAt: LocalDateTime? = null) =
@@ -61,16 +67,17 @@ class UpdateCourseUseCaseTest {
             every { courseAdaptor.findById(1L) } returns course
             every { productAdaptor.findById("product-id-00000000001") } returns product
 
-            useCase.execute(
-                1L,
-                UpdateCourseRequest(
-                    name = "고급 수학 코스",
-                    description = "새 설명",
-                    curriculum = "1주차: 미분",
-                    thumbnailFileId = "file-id-000000000001",
-                    priceWon = 400000,
-                ),
-            )
+            val result =
+                useCase.execute(
+                    1L,
+                    UpdateCourseRequest(
+                        name = "고급 수학 코스",
+                        description = "새 설명",
+                        curriculum = "1주차: 미분",
+                        thumbnailFileId = "file-id-000000000001",
+                        priceWon = 400000,
+                    ),
+                )
 
             assertAll(
                 { assertThat(product.name).isEqualTo("고급 수학 코스") },
@@ -78,6 +85,7 @@ class UpdateCourseUseCaseTest {
                 { assertThat(product.curriculum).isEqualTo("1주차: 미분") },
                 { assertThat(product.thumbnailFileId).isEqualTo("file-id-000000000001") },
                 { assertThat(product.priceWon).isEqualTo(400000) },
+                { assertThat(result.thumbnailUrl).isEqualTo("https://static.test.sclass.click/course_thumbnail/file-id-000000000001") },
             )
         }
 

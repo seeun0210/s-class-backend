@@ -34,4 +34,12 @@ enum class FileType {
 
     // 카탈로그 자산
     COURSE_THUMBNAIL,
+    ;
+
+    val isPublic: Boolean
+        get() =
+            when (this) {
+                COURSE_THUMBNAIL -> true
+                else -> false
+            }
 }

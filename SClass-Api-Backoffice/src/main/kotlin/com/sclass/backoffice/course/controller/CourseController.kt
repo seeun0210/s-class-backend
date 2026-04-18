@@ -1,12 +1,14 @@
 package com.sclass.backoffice.course.controller
 
 import com.sclass.backoffice.course.dto.ChangeCourseStatusRequest
+import com.sclass.backoffice.course.dto.CourseDetailResponse
 import com.sclass.backoffice.course.dto.CoursePageResponse
 import com.sclass.backoffice.course.dto.CourseResponse
 import com.sclass.backoffice.course.dto.CreateCourseRequest
 import com.sclass.backoffice.course.dto.UpdateCourseRequest
 import com.sclass.backoffice.course.usecase.ChangeCourseStatusUseCase
 import com.sclass.backoffice.course.usecase.CreateCourseUseCase
+import com.sclass.backoffice.course.usecase.GetCourseDetailUseCase
 import com.sclass.backoffice.course.usecase.GetCourseListUseCase
 import com.sclass.backoffice.course.usecase.UpdateCourseUseCase
 import com.sclass.common.dto.ApiResponse
@@ -31,6 +33,7 @@ class CourseController(
     private val createCourseUseCase: CreateCourseUseCase,
     private val changeCourseStatusUseCase: ChangeCourseStatusUseCase,
     private val getCourseListUseCase: GetCourseListUseCase,
+    private val getCourseDetailUseCase: GetCourseDetailUseCase,
     private val updateCourseUseCase: UpdateCourseUseCase,
 ) {
     @PostMapping
@@ -50,6 +53,11 @@ class CourseController(
         @RequestParam(required = false) status: CourseStatus?,
         @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<CoursePageResponse> = ApiResponse.success(getCourseListUseCase.execute(teacherUserId, status, pageable))
+
+    @GetMapping("/{courseId}")
+    fun getCourseDetail(
+        @PathVariable courseId: Long,
+    ): ApiResponse<CourseDetailResponse> = ApiResponse.success(getCourseDetailUseCase.execute(courseId))
 
     @PutMapping("/{courseId}")
     fun updateCourse(

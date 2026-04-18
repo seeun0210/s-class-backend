@@ -13,7 +13,12 @@ class GetFileDownloadUrlUseCase(
 ) {
     fun execute(fileId: String): DownloadUrlResponse {
         val file = fileAdaptor.findById(Ulid.parse(fileId))
-        val downloadUrl = s3Service.generatePresignedGetUrl(key = file.storedFilename)
+        val downloadUrl =
+            if (file.fileType.isPublic) {
+                s3Service.getPublicUrl(file.storedFilename)
+            } else {
+                s3Service.generatePresignedGetUrl(key = file.storedFilename)
+            }
 
         return DownloadUrlResponse(
             downloadUrl = downloadUrl,
