@@ -10,4 +10,5 @@ enum class CoinErrorCode(
     COIN_BALANCE_NOT_FOUND("COIN_001", "코인 잔액 정보를 찾을 수 없습니다", 404),
     INSUFFICIENT_COIN("COIN_002", "코인 잔액이 부족합니다", 400),
     COIN_PACKAGE_NOT_FOUND("COIN_003", "코인 패키지를 찾을 수 없습니다", 404),
+    COIN_PACKAGE_INVALID_STATUS_TRANSITION("COIN_004", "잘못된 코인 패키지 상태 전이입니다", 400),
 }

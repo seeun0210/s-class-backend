@@ -2,8 +2,11 @@ package com.sclass.domain.domains.coin.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.common.vo.Ulid
+import com.sclass.domain.domains.coin.exception.CoinPackageInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 
@@ -23,6 +26,32 @@ class CoinPackage(
     @Column(nullable = false)
     var coinAmount: Int,
 
-    @Column(nullable = false)
-    var active: Boolean = true,
-) : BaseTimeEntity()
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: CoinPackageStatus = CoinPackageStatus.ACTIVE,
+) : BaseTimeEntity() {
+    fun activate() {
+        validateTransition(CoinPackageStatus.ACTIVE)
+        this.status = CoinPackageStatus.ACTIVE
+    }
+
+    fun deactivate() {
+        validateTransition(CoinPackageStatus.INACTIVE)
+        this.status = CoinPackageStatus.INACTIVE
+    }
+
+    fun archive() {
+        validateTransition(CoinPackageStatus.ARCHIVED)
+        this.status = CoinPackageStatus.ARCHIVED
+    }
+
+    private fun validateTransition(target: CoinPackageStatus) {
+        val allowed =
+            when (target) {
+                CoinPackageStatus.ACTIVE -> setOf(CoinPackageStatus.INACTIVE)
+                CoinPackageStatus.INACTIVE -> setOf(CoinPackageStatus.ACTIVE)
+                CoinPackageStatus.ARCHIVED -> setOf(CoinPackageStatus.ACTIVE, CoinPackageStatus.INACTIVE)
+            }
+        if (status !in allowed) throw CoinPackageInvalidStatusTransitionException()
+    }
+}
