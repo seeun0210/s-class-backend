@@ -23,6 +23,8 @@ class CreateCourseUseCase(
                     priceWon = request.priceWon,
                     totalLessons = request.totalLessons,
                     description = request.description,
+                    curriculum = request.curriculum,
+                    thumbnailFileId = request.thumbnailFileId,
                 ),
             ) as CourseProduct
         val course =
@@ -31,6 +33,11 @@ class CreateCourseUseCase(
                     productId = product.id,
                     teacherUserId = request.teacherUserId,
                     organizationId = request.organizationId,
+                    maxEnrollments = request.maxEnrollments,
+                    enrollmentStartAt = request.enrollmentStartAt,
+                    enrollmentDeadLine = request.enrollmentDeadLine,
+                    startAt = request.startAt,
+                    endAt = request.endAt,
                 ),
             )
         return CourseResponse.from(course, product)
