@@ -4,7 +4,7 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.CourseStatus
-import com.sclass.domain.domains.course.exception.CourseNotActiveException
+import com.sclass.domain.domains.course.exception.CourseNotListedException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
@@ -35,7 +35,7 @@ class PrepareEnrollmentUseCase(
         pgType: PgType,
     ): PrepareEnrollmentResponse {
         val course = courseAdaptor.findById(courseId)
-        if (course.status != CourseStatus.ACTIVE) throw CourseNotActiveException()
+        if (course.status != CourseStatus.LISTED) throw CourseNotListedException()
 
         val product =
             productAdaptor.findById(course.productId) as? CourseProduct

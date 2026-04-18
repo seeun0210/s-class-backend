@@ -48,7 +48,7 @@ class GetEnrollmentLessonsUseCaseTest {
             id = courseId,
             productId = "product-id-0000000000000001",
             teacherUserId = teacherUserId,
-            status = CourseStatus.ACTIVE,
+            status = CourseStatus.LISTED,
         )
 
     private fun lesson(lessonNumber: Int = 1) =

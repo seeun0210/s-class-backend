@@ -102,7 +102,7 @@ class CourseCustomRepositoryImpl(
             .leftJoin(user)
             .on(user.id.eq(course.teacherUserId))
             .where(
-                course.status.eq(CourseStatus.ACTIVE),
+                course.status.eq(CourseStatus.LISTED),
                 courseProduct.visible.isTrue,
             ).orderBy(course.createdAt.desc())
             .fetch()

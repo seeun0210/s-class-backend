@@ -189,7 +189,7 @@ class HandleNicePayWebhookUseCaseTest {
                 id = 1L,
                 productId = "prod-00000000000000000000000001",
                 teacherUserId = "teacher-id-00000000001",
-                status = CourseStatus.ACTIVE,
+                status = CourseStatus.LISTED,
             )
 
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true

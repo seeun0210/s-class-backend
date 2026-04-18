@@ -2,18 +2,23 @@ package com.sclass.backoffice.coinpackage.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinPackageStatus
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class UpdateCoinPackageActiveUseCase(
+class ChangeCoinPackageStatusUseCase(
     private val coinPackageAdaptor: CoinPackageAdaptor,
 ) {
     @Transactional
     fun execute(
         id: String,
-        active: Boolean,
+        targetStatus: CoinPackageStatus,
     ) {
         val coinPackage = coinPackageAdaptor.findById(id)
-        coinPackage.active = active
+        when (targetStatus) {
+            CoinPackageStatus.ACTIVE -> coinPackage.activate()
+            CoinPackageStatus.INACTIVE -> coinPackage.deactivate()
+            CoinPackageStatus.ARCHIVED -> coinPackage.archive()
+        }
     }
 }

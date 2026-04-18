@@ -43,7 +43,7 @@ class GrantEnrollmentUseCaseTest {
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            status = CourseStatus.ACTIVE,
+            status = CourseStatus.LISTED,
         )
 
     private fun courseProduct() =

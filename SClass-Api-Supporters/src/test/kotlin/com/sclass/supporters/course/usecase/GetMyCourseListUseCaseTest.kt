@@ -39,7 +39,7 @@ class GetMyCourseListUseCaseTest {
                 id = id,
                 productId = "product-id-0000000000000001",
                 teacherUserId = USER_ID,
-                status = CourseStatus.ACTIVE,
+                status = CourseStatus.LISTED,
             ),
         courseProduct =
             CourseProduct(
