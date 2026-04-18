@@ -9,10 +9,21 @@ import jakarta.persistence.Entity
 class CourseProduct(
     name: String,
     priceWon: Int,
+    description: String? = null,
+    thumbnailFileId: String? = null,
 
     @Column(name = "total_lessons", nullable = true)
     val totalLessons: Int,
 
     @Column(columnDefinition = "TEXT")
-    var description: String? = null,
-) : Product(name = name, priceWon = priceWon)
+    var curriculum: String? = null,
+) : Product(
+        name = name,
+        priceWon = priceWon,
+        description = description,
+        thumbnailFileId = thumbnailFileId,
+    ) {
+    fun updateCurriculum(newCurriculum: String?) {
+        newCurriculum?.let { curriculum = it }
+    }
+}

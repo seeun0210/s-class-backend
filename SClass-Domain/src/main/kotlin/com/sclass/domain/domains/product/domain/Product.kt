@@ -15,10 +15,16 @@ abstract class Product(
     val id: String = Ulid.generate(),
 
     @Column(nullable = false)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false)
-    val priceWon: Int,
+    var priceWon: Int,
+
+    @Column(columnDefinition = "TEXT")
+    var description: String? = null,
+
+    @Column(name = "thumbnail_file_id", length = 26)
+    var thumbnailFileId: String? = null,
 
     @Column(nullable = false)
     var visible: Boolean = false,
@@ -29,5 +35,17 @@ abstract class Product(
 
     fun hide() {
         visible = false
+    }
+
+    fun updateCatalog(
+        newName: String?,
+        newDescription: String?,
+        newThumbnailFileId: String?,
+        newPriceWon: Int?,
+    ) {
+        newName?.let { name = it }
+        newDescription?.let { description = it }
+        newThumbnailFileId?.let { thumbnailFileId = it }
+        newPriceWon?.let { priceWon = it }
     }
 }
