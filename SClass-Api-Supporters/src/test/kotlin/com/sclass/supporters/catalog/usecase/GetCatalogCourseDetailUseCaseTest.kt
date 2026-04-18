@@ -13,6 +13,7 @@ import com.sclass.domain.domains.teacher.domain.TeacherEducation
 import com.sclass.domain.domains.teacher.domain.TeacherProfile
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -25,13 +26,18 @@ import java.time.LocalDateTime
 class GetCatalogCourseDetailUseCaseTest {
     private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: GetCatalogCourseDetailUseCase
 
     @BeforeEach
     fun setUp() {
         courseAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        useCase = GetCatalogCourseDetailUseCase(courseAdaptor, enrollmentAdaptor)
+        thumbnailUrlResolver = mockk()
+        every { thumbnailUrlResolver.resolve(any()) } answers {
+            firstArg<String?>()?.let { "https://static.test.sclass.click/course_thumbnail/$it" }
+        }
+        useCase = GetCatalogCourseDetailUseCase(courseAdaptor, enrollmentAdaptor, thumbnailUrlResolver)
     }
 
     private fun makeDto(
@@ -101,7 +107,7 @@ class GetCatalogCourseDetailUseCaseTest {
             { assertEquals("수학 기초", result.name) },
             { assertEquals("수학 심화 과정", result.description) },
             { assertEquals("주 1회 12주 커리큘럼", result.curriculum) },
-            { assertEquals("file-id-00000000000000001", result.thumbnailFileId) },
+            { assertEquals("https://static.test.sclass.click/course_thumbnail/file-id-00000000000000001", result.thumbnailUrl) },
             { assertEquals(300000, result.priceWon) },
             { assertEquals(12, result.totalLessons) },
             { assertEquals(10, result.maxEnrollments) },

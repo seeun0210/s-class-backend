@@ -10,11 +10,11 @@ data class CatalogCourseDetailResponse(
     val name: String,
     val description: String?,
     val curriculum: String?,
-    val thumbnailFileId: String?,
+    val thumbnailUrl: String?,
     val priceWon: Int,
     val totalLessons: Int,
-    val maxEnrollments: Int,
-    val remainingSeats: Long,
+    val maxEnrollments: Int?,
+    val remainingSeats: Long?,
     val enrollmentStartAt: LocalDateTime?,
     val enrollmentDeadLine: LocalDateTime?,
     val startAt: LocalDateTime?,
@@ -34,15 +34,16 @@ data class CatalogCourseDetailResponse(
         fun from(
             dto: CourseWithTeacherDto,
             liveEnrollmentCount: Long,
+            thumbnailUrl: String?,
         ): CatalogCourseDetailResponse {
-            val remaining = (dto.course.maxEnrollments - liveEnrollmentCount).coerceAtLeast(0L)
+            val remaining = dto.course.maxEnrollments?.let { (it - liveEnrollmentCount).coerceAtLeast(0L) }
             return CatalogCourseDetailResponse(
                 id = dto.course.id,
                 productId = dto.course.productId,
                 name = dto.courseProduct?.name ?: "",
                 description = dto.courseProduct?.description,
                 curriculum = dto.courseProduct?.curriculum,
-                thumbnailFileId = dto.courseProduct?.thumbnailFileId,
+                thumbnailUrl = thumbnailUrl,
                 priceWon = dto.courseProduct?.priceWon ?: 0,
                 totalLessons = dto.courseProduct?.totalLessons ?: 0,
                 maxEnrollments = dto.course.maxEnrollments,

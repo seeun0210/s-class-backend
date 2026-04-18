@@ -43,8 +43,8 @@ class Course(
     @Column(nullable = false, length = 20)
     var status: CourseStatus = CourseStatus.DRAFT,
 
-    @Column(name = "max_enrollments", nullable = false)
-    var maxEnrollments: Int = 1,
+    @Column(name = "max_enrollments")
+    var maxEnrollments: Int? = null,
 
     @Column(name = "enrollment_start_at")
     var enrollmentStartAt: LocalDateTime? = null,
@@ -80,7 +80,7 @@ class Course(
         if (status != CourseStatus.LISTED) return false
         if (enrollmentStartAt != null && now.isBefore(enrollmentStartAt)) return false
         if (enrollmentDeadLine != null && now.isAfter(enrollmentDeadLine)) return false
-        if (currentCount >= maxEnrollments) return false
+        maxEnrollments?.let { if (currentCount >= it) return false }
         return true
     }
 
@@ -111,7 +111,7 @@ class Course(
         val nextStart = newEnrollmentStartAt ?: enrollmentStartAt
         val nextDeadLine = newEnrollmentDeadLine ?: enrollmentDeadLine
 
-        if (nextMax < currentLiveCount)throw CourseMaxEnrollmentsTooLowException()
+        if (nextMax != null && nextMax < currentLiveCount) throw CourseMaxEnrollmentsTooLowException()
         validateSchedule(nextStart, nextDeadLine, startAt, endAt)
 
         maxEnrollments = nextMax

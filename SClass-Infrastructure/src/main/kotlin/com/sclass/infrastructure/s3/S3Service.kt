@@ -72,4 +72,16 @@ class S3Service(
 
         s3Client.deleteObject(deleteRequest)
     }
+
+    fun getPublicUrl(key: String): String {
+        require(key.startsWith(PUBLIC_PREFIX)) {
+            "Public URL is only available for keys under '$PUBLIC_PREFIX' prefix (got: $key)"
+        }
+        val baseUrl = requireNotNull(s3Properties.publicBaseUrl) { "cloud.aws.s3.public-base-url is not configured" }
+        return "${baseUrl.trimEnd('/')}/${key.removePrefix(PUBLIC_PREFIX)}"
+    }
+
+    companion object {
+        const val PUBLIC_PREFIX = "public/"
+    }
 }

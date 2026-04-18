@@ -17,7 +17,7 @@ data class MyEnrollmentResponse(
     data class CourseSummary(
         val name: String,
         val description: String?,
-        val thumbnailFileId: String?,
+        val thumbnailUrl: String?,
         val teacherName: String?,
         val courseStatus: CourseStatus,
         val enrollmentDeadLine: LocalDateTime?,
@@ -26,13 +26,16 @@ data class MyEnrollmentResponse(
     )
 
     companion object {
-        fun from(dto: EnrollmentWithCourseDto): MyEnrollmentResponse {
+        fun from(
+            dto: EnrollmentWithCourseDto,
+            thumbnailUrl: String?,
+        ): MyEnrollmentResponse {
             val summary =
                 dto.course?.let { course ->
                     CourseSummary(
                         name = dto.courseProduct?.name ?: "",
                         description = dto.courseProduct?.description,
-                        thumbnailFileId = dto.courseProduct?.thumbnailFileId,
+                        thumbnailUrl = thumbnailUrl,
                         teacherName = dto.teacherName,
                         courseStatus = course.status,
                         enrollmentDeadLine = course.enrollmentDeadLine,

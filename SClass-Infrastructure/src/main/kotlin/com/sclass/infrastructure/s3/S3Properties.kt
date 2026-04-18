@@ -9,4 +9,5 @@ data class S3Properties(
     val accessKey: String = "",
     val secretKey: String = "",
     val endpoint: String? = null,
+    val publicBaseUrl: String? = null,
 )

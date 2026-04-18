@@ -43,3 +43,14 @@ output "deployer_secret_access_key" {
   value       = aws_iam_access_key.deployer.secret
   sensitive   = true
 }
+
+# Static CDN
+output "static_cdn_domain" {
+  description = "Static assets CDN domain (static.{env}.sclass.click)"
+  value       = local.static_domain
+}
+
+output "static_cdn_distribution_id" {
+  description = "CloudFront distribution ID for static CDN"
+  value       = aws_cloudfront_distribution.static_cdn.id
+}

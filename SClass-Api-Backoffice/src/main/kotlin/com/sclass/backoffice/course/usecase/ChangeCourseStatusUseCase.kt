@@ -8,12 +8,14 @@ import com.sclass.domain.domains.course.exception.CourseInvalidStatusTransitionE
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class ChangeCourseStatusUseCase(
     private val courseAdaptor: CourseAdaptor,
     private val productAdaptor: ProductAdaptor,
+    private val thumbnailUrlResolver: ThumbnailUrlResolver,
 ) {
     @Transactional
     fun execute(
@@ -43,6 +45,6 @@ class ChangeCourseStatusUseCase(
 
         val saved = courseAdaptor.save(course)
         productAdaptor.save(product)
-        return CourseResponse.from(saved, product)
+        return CourseResponse.from(saved, product, thumbnailUrlResolver.resolve(product.thumbnailFileId))
     }
 }
