@@ -16,11 +16,15 @@ class ActivateCourseUseCase(
     @Transactional
     fun execute(courseId: Long): CourseResponse {
         val course = courseAdaptor.findById(courseId)
-        course.activate()
-        val saved = courseAdaptor.save(course)
         val product =
-            productAdaptor.findById(saved.productId) as? CourseProduct
+            productAdaptor.findById(course.productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
+
+        course.activate()
+        product.show()
+
+        val saved = courseAdaptor.save(course)
+        productAdaptor.save(product)
         return CourseResponse.from(saved, product)
     }
 }

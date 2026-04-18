@@ -12,7 +12,7 @@ class ProductCustomRepositoryImpl(
         queryFactory
             .selectFrom(QProduct.product)
             .where(
-                QProduct.product.active.isTrue,
+                QProduct.product.visible.isTrue,
                 type?.let { QProduct.product.instanceOf(it.entityClass) },
             ).fetch()
 }

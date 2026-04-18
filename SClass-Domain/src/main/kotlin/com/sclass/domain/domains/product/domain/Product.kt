@@ -21,5 +21,13 @@ abstract class Product(
     val priceWon: Int,
 
     @Column(nullable = false)
-    var active: Boolean = true,
-) : BaseTimeEntity()
+    var visible: Boolean = false,
+) : BaseTimeEntity() {
+    fun show() {
+        visible = true
+    }
+
+    fun hide() {
+        visible = false
+    }
+}

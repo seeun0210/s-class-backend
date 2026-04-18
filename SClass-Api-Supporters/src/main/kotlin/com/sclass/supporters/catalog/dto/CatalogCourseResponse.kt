@@ -1,13 +1,15 @@
-package com.sclass.supporters.course.dto
+package com.sclass.supporters.catalog.dto
 
 import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.teacher.domain.MajorCategory
 
-data class CourseResponse(
+data class CatalogCourseResponse(
     val id: Long,
+    val productId: String,
     val name: String,
     val description: String?,
-    val productId: String,
+    val priceWon: Int,
+    val totalLessons: Int,
     val teacher: TeacherSummary,
 ) {
     data class TeacherSummary(
@@ -21,16 +23,19 @@ data class CourseResponse(
 
     companion object {
         fun from(dto: CourseWithTeacherDto) =
-            CourseResponse(
+            CatalogCourseResponse(
                 id = dto.course.id,
+                productId = dto.course.productId,
                 name = dto.courseProduct?.name ?: "",
                 description = dto.courseProduct?.description,
-                productId = dto.course.productId,
+                priceWon = dto.courseProduct?.priceWon ?: 0,
+                totalLessons = dto.courseProduct?.totalLessons ?: 0,
                 teacher =
                     TeacherSummary(
                         userId = dto.course.teacherUserId,
                         name = dto.teacherUser?.name ?: "",
-                        selfIntroduction = dto.teacher?.profile?.selfIntroduction,
+                        selfIntroduction =
+                            dto.teacher?.profile?.selfIntroduction,
                         majorCategory = dto.teacher?.education?.majorCategory,
                         university = dto.teacher?.education?.university,
                         major = dto.teacher?.education?.major,

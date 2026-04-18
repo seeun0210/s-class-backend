@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface CourseCustomRepository {
-    fun findAllActiveWithTeacher(): List<CourseWithTeacherDto>
+    fun findAllCatalogCourses(): List<CourseWithTeacherDto>
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto>
 
