@@ -9,16 +9,17 @@ import jakarta.persistence.Entity
 class CourseProduct(
     name: String,
     priceWon: Int,
+    description: String? = null,
+    thumbnailFileId: String? = null,
 
     @Column(name = "total_lessons", nullable = true)
     val totalLessons: Int,
 
     @Column(columnDefinition = "TEXT")
-    var description: String? = null,
-
-    @Column(columnDefinition = "TEXT")
     var curriculum: String? = null,
-
-    @Column(name = "thumbnail_file_id", length = 26)
-    var thumbnailFileId: String? = null,
-) : Product(name = name, priceWon = priceWon)
+) : Product(
+        name = name,
+        priceWon = priceWon,
+        description = description,
+        thumbnailFileId = thumbnailFileId,
+    )

@@ -15,10 +15,16 @@ abstract class Product(
     val id: String = Ulid.generate(),
 
     @Column(nullable = false)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false)
-    val priceWon: Int,
+    var priceWon: Int,
+
+    @Column(columnDefinition = "TEXT")
+    var description: String? = null,
+
+    @Column(name = "thumbnail_file_id", length = 26)
+    var thumbnailFileId: String? = null,
 
     @Column(nullable = false)
     var visible: Boolean = false,
