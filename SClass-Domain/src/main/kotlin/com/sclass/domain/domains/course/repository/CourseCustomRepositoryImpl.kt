@@ -104,7 +104,8 @@ class CourseCustomRepositoryImpl(
             .where(
                 course.status.eq(CourseStatus.ACTIVE),
                 courseProduct.visible.isTrue,
-            ).fetch()
+            ).orderBy(course.createdAt.desc())
+            .fetch()
             .map { tuple ->
                 CourseWithTeacherDto(
                     course = tuple[course]!!,
