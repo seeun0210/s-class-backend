@@ -1,5 +1,6 @@
 package com.sclass.common.jwt
 
+import com.sclass.common.annotation.Public
 import com.sclass.common.exception.UnauthorizedException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.web.method.HandlerMethod
 
 class JwtAuthInterceptorTest {
     private lateinit var jwtTokenProvider: JwtTokenProvider
@@ -16,6 +18,23 @@ class JwtAuthInterceptorTest {
 
     private val jwtSecretKey = "test-secret-key-that-is-at-least-32-bytes-long!!"
     private val aesSecretKey = "test-aes-secret-key-32-bytes-ok!"
+
+    private class SecuredController {
+        fun secured() = Unit
+
+        @Public
+        fun publicMethod() = Unit
+    }
+
+    @Public
+    private class PublicController {
+        fun anyMethod() = Unit
+    }
+
+    private fun handlerMethod(
+        bean: Any,
+        methodName: String,
+    ): HandlerMethod = HandlerMethod(bean, bean::class.java.getDeclaredMethod(methodName))
 
     @BeforeEach
     fun setUp() {
@@ -58,6 +77,39 @@ class JwtAuthInterceptorTest {
 
         assertThrows<UnauthorizedException> {
             interceptor.preHandle(request, response, Any())
+        }
+    }
+
+    @Test
+    fun `@Public 메서드면 Authorization 헤더 없이도 통과한다`() {
+        val request = MockHttpServletRequest()
+        val response = MockHttpServletResponse()
+        val handler = handlerMethod(SecuredController(), "publicMethod")
+
+        val result = interceptor.preHandle(request, response, handler)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `@Public 클래스의 모든 메서드는 Authorization 헤더 없이도 통과한다`() {
+        val request = MockHttpServletRequest()
+        val response = MockHttpServletResponse()
+        val handler = handlerMethod(PublicController(), "anyMethod")
+
+        val result = interceptor.preHandle(request, response, handler)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `@Public 이 없는 메서드는 Authorization 헤더가 없으면 UnauthorizedException 이 발생한다`() {
+        val request = MockHttpServletRequest()
+        val response = MockHttpServletResponse()
+        val handler = handlerMethod(SecuredController(), "secured")
+
+        assertThrows<UnauthorizedException> {
+            interceptor.preHandle(request, response, handler)
         }
     }
 }

@@ -1,10 +1,12 @@
 package com.sclass.backoffice.config
 
+import com.sclass.common.annotation.Public
 import io.swagger.v3.oas.models.Components
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
+import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -28,4 +30,14 @@ class SwaggerConfig {
             ).addSecurityItem(SecurityRequirement().addList(securitySchemeName))
             .components(Components().addSecuritySchemes(securitySchemeName, securityScheme))
     }
+
+    @Bean
+    fun publicEndpointCustomizer(): OperationCustomizer =
+        OperationCustomizer { operation, handlerMethod ->
+            val isPublic =
+                handlerMethod.hasMethodAnnotation(Public::class.java) ||
+                    handlerMethod.beanType.isAnnotationPresent(Public::class.java)
+            if (isPublic) operation.security = emptyList()
+            operation
+        }
 }
