@@ -25,7 +25,7 @@ class CourseTest {
 
     @Test
     fun `LISTED 상태에 정원이 남고 기간 제약이 없으면 등록 가능하다`() {
-        assertTrue(newListedCourse().canEnroll(LocalDateTime.now(), currentCount = 0))
+        assertTrue(newListedCourse().canEnroll(LocalDateTime.now(), currentCount = 0L))
     }
 
     @Test
@@ -37,21 +37,21 @@ class CourseTest {
                 status = CourseStatus.DRAFT,
             )
 
-        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0))
+        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0L))
     }
 
     @Test
     fun `UNLISTED 상태면 등록 불가능하다`() {
         val course = newListedCourse().also { it.unlist() }
 
-        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0))
+        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0L))
     }
 
     @Test
     fun `ARCHIVED 상태면 등록 불가능하다`() {
         val course = newListedCourse().also { it.archive() }
 
-        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0))
+        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 0L))
     }
 
     @Test
@@ -59,7 +59,7 @@ class CourseTest {
         val now = LocalDateTime.of(2026, 4, 1, 0, 0)
         val course = newListedCourse(enrollmentStartAt = now.plusDays(1))
 
-        assertFalse(course.canEnroll(now, currentCount = 0))
+        assertFalse(course.canEnroll(now, currentCount = 0L))
     }
 
     @Test
@@ -67,7 +67,7 @@ class CourseTest {
         val now = LocalDateTime.of(2026, 4, 1, 0, 0)
         val course = newListedCourse(enrollmentStartAt = now.minusDays(1))
 
-        assertTrue(course.canEnroll(now, currentCount = 0))
+        assertTrue(course.canEnroll(now, currentCount = 0L))
     }
 
     @Test
@@ -75,7 +75,7 @@ class CourseTest {
         val now = LocalDateTime.of(2026, 4, 1, 0, 0)
         val course = newListedCourse(enrollmentDeadLine = now.minusDays(1))
 
-        assertFalse(course.canEnroll(now, currentCount = 0))
+        assertFalse(course.canEnroll(now, currentCount = 0L))
     }
 
     @Test
@@ -83,21 +83,21 @@ class CourseTest {
         val now = LocalDateTime.of(2026, 4, 1, 0, 0)
         val course = newListedCourse(enrollmentDeadLine = now.plusDays(1))
 
-        assertTrue(course.canEnroll(now, currentCount = 0))
+        assertTrue(course.canEnroll(now, currentCount = 0L))
     }
 
     @Test
     fun `정원이 가득 차면 등록 불가능하다`() {
         val course = newListedCourse(maxEnrollments = 3)
 
-        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 3))
+        assertFalse(course.canEnroll(LocalDateTime.now(), currentCount = 3L))
     }
 
     @Test
     fun `정원이 남아있으면 등록 가능하다`() {
         val course = newListedCourse(maxEnrollments = 3)
 
-        assertTrue(course.canEnroll(LocalDateTime.now(), currentCount = 2))
+        assertTrue(course.canEnroll(LocalDateTime.now(), currentCount = 2L))
     }
 
     @Test

@@ -36,7 +36,7 @@ class PrepareEnrollmentUseCase(
     ): PrepareEnrollmentResponse {
         val course = courseAdaptor.findById(courseId)
         val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId)
-        if (!course.canEnroll(LocalDateTime.now(), liveCount.toInt())) {
+        if (!course.canEnroll(LocalDateTime.now(), liveCount)) {
             throw CourseNotEnrollableException()
         }
 

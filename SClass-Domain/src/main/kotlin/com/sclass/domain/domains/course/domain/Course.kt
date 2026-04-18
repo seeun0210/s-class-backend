@@ -75,11 +75,11 @@ class Course(
 
     fun canEnroll(
         now: LocalDateTime,
-        currentCount: Int,
+        currentCount: Long,
     ): Boolean {
-        if (status !== CourseStatus.LISTED)return false
-        if (enrollmentStartAt !== null && now.isBefore(enrollmentStartAt))return false
-        if (enrollmentDeadLine !== null && now.isAfter(enrollmentDeadLine))return false
+        if (status != CourseStatus.LISTED) return false
+        if (enrollmentStartAt != null && now.isBefore(enrollmentStartAt)) return false
+        if (enrollmentDeadLine != null && now.isAfter(enrollmentDeadLine)) return false
         if (currentCount >= maxEnrollments) return false
         return true
     }
@@ -96,7 +96,7 @@ class Course(
         if (status !in allowed) throw CourseInvalidStatusTransitionException()
     }
 
-    fun hasStarted(now: LocalDateTime): Boolean = startAt !== null && !now.isBefore(startAt)
+    fun hasStarted(now: LocalDateTime): Boolean = startAt != null && !now.isBefore(startAt)
 
     fun updateEnrollmentConstraints(
         now: LocalDateTime,
