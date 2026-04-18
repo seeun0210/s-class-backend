@@ -61,6 +61,7 @@ class CreateFileUseCase(
             "public/${fileType.name.lowercase()}/$fileId"
         } else {
             val datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"))
-            "supporters/${fileType.name.lowercase()}/$datePath/${fileId}_$originalFilename"
+            val sanitizedFilename = originalFilename.replace(Regex("[/\\\\]"), "_")
+            "supporters/${fileType.name.lowercase()}/$datePath/${fileId}_$sanitizedFilename"
         }
 }
