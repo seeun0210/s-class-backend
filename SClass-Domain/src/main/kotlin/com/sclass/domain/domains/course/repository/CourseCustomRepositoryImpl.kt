@@ -36,6 +36,7 @@ class CourseCustomRepositoryImpl(
             .map { tuple ->
                 CourseWithTeacherDto(
                     course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
                     teacher = tuple[teacher],
                     teacherUser = tuple[user],
                 )
@@ -53,6 +54,7 @@ class CourseCustomRepositoryImpl(
             .map { tuple ->
                 CourseWithEnrollmentCountDto(
                     course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
                     enrollmentCount = tuple[enrollment.count()] ?: 0L,
                 )
             }
@@ -89,9 +91,9 @@ class CourseCustomRepositoryImpl(
                 .map { tuple ->
                     CourseWithTeacherAndEnrollmentCountDto(
                         course = tuple[course]!!,
+                        courseProduct = tuple[courseProduct],
                         teacherName = tuple[user.name] ?: "-",
                         enrollmentCount = tuple[enrollment.count()] ?: 0L,
-                        totalLessons = tuple[courseProduct.totalLessons] ?: 0,
                     )
                 }
 

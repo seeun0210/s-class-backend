@@ -4,6 +4,7 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
+import com.sclass.domain.domains.product.domain.CourseProduct
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -29,13 +30,17 @@ class GetCourseListUseCaseTest {
                 id = 1L,
                 productId = "prod01",
                 teacherUserId = teacherUserId,
-                name = courseName,
-                description = "설명",
                 status = status,
+            ),
+        courseProduct =
+            CourseProduct(
+                name = courseName,
+                priceWon = 300000,
+                totalLessons = totalLessons,
+                description = "설명",
             ),
         teacherName = teacherName,
         enrollmentCount = enrollmentCount,
-        totalLessons = totalLessons,
     )
 
     @Test

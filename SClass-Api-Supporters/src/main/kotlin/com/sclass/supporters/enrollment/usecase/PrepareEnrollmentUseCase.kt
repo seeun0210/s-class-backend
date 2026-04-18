@@ -71,7 +71,7 @@ class PrepareEnrollmentUseCase(
             pgOrderId = payment.pgOrderId,
             amount = payment.amount,
             courseId = course.id,
-            courseName = course.name,
+            courseName = product.name,
         )
     }
 }

@@ -43,7 +43,6 @@ class GrantEnrollmentUseCaseTest {
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            name = "2025 수학 코스",
             status = CourseStatus.ACTIVE,
         )
 
@@ -101,7 +100,8 @@ class GrantEnrollmentUseCaseTest {
             verify {
                 lessonService.createLessonsForEnrollment(
                     enrollment = any(),
-                    course = any(),
+                    teacherUserId = "teacher-id-00000000001",
+                    courseName = "수학 코스",
                     totalLessons = 12,
                 )
             }

@@ -48,7 +48,6 @@ class GetEnrollmentLessonsUseCaseTest {
             id = courseId,
             productId = "product-id-0000000000000001",
             teacherUserId = teacherUserId,
-            name = "수학반",
             status = CourseStatus.ACTIVE,
         )
 

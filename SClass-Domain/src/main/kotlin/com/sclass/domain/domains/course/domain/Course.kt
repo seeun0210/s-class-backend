@@ -34,12 +34,6 @@ class Course(
     @Column(name = "organization_id", length = 26)
     val organizationId: String? = null,
 
-    @Column(nullable = false, length = 200)
-    var name: String,
-
-    @Column(columnDefinition = "TEXT")
-    var description: String? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: CourseStatus = CourseStatus.DRAFT,

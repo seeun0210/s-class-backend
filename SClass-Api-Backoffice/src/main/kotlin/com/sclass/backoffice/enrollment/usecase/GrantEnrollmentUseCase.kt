@@ -46,7 +46,8 @@ class GrantEnrollmentUseCase(
 
         lessonService.createLessonsForEnrollment(
             enrollment,
-            course,
+            teacherUserId = course.teacherUserId,
+            courseName = product.name,
             totalLessons = product.totalLessons,
         )
 
