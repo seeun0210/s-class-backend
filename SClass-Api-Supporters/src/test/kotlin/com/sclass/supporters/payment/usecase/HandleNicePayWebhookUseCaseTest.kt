@@ -189,7 +189,6 @@ class HandleNicePayWebhookUseCaseTest {
                 id = 1L,
                 productId = "prod-00000000000000000000000001",
                 teacherUserId = "teacher-id-00000000001",
-                name = "수학 코스",
                 status = CourseStatus.ACTIVE,
             )
 
@@ -211,7 +210,8 @@ class HandleNicePayWebhookUseCaseTest {
         verify {
             lessonService.createLessonsForEnrollment(
                 enrollment = any(),
-                course = course,
+                teacherUserId = "teacher-id-00000000001",
+                courseName = "수학 코스",
                 totalLessons = 12,
             )
         }

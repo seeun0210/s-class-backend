@@ -5,6 +5,7 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.user.adaptor.UserRoleAdaptor
 import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
@@ -38,8 +39,13 @@ class GetMyCourseListUseCaseTest {
                 id = id,
                 productId = "product-id-0000000000000001",
                 teacherUserId = USER_ID,
-                name = "코스 $id",
                 status = CourseStatus.ACTIVE,
+            ),
+        courseProduct =
+            CourseProduct(
+                name = "코스 $id",
+                priceWon = 300000,
+                totalLessons = 12,
             ),
         enrollmentCount = enrollmentCount,
     )

@@ -126,7 +126,8 @@ class HandleNicePayWebhookUseCase(
                     val course = courseAdaptor.findById(freshEnrollment.courseId)
                     lessonService.createLessonsForEnrollment(
                         freshEnrollment,
-                        course,
+                        teacherUserId = course.teacherUserId,
+                        courseName = product.name,
                         totalLessons = product.totalLessons,
                     )
                 }

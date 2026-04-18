@@ -47,7 +47,6 @@ class PrepareEnrollmentUseCaseTest {
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            name = "2025 수학 코스",
             status = CourseStatus.ACTIVE,
         )
 
@@ -56,7 +55,6 @@ class PrepareEnrollmentUseCaseTest {
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            name = "2025 수학 코스",
             status = CourseStatus.DRAFT,
         )
 
@@ -91,7 +89,7 @@ class PrepareEnrollmentUseCaseTest {
             val result = useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
 
             assertThat(result.courseId).isEqualTo(1L)
-            assertThat(result.courseName).isEqualTo("2025 수학 코스")
+            assertThat(result.courseName).isEqualTo("수학 코스")
             assertThat(result.amount).isEqualTo(300000)
             assertThat(enrollmentSlot.captured.status).isEqualTo(EnrollmentStatus.PENDING_PAYMENT)
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)

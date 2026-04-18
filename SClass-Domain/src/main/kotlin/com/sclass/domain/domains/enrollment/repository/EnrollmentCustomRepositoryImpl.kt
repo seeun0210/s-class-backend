@@ -11,6 +11,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
+import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
 import com.sclass.domain.domains.user.domain.QUser
 import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
@@ -54,10 +55,12 @@ class EnrollmentCustomRepositoryImpl(
 
         val content =
             queryFactory
-                .select(enrollment, studentUser.name, course.name, course.teacherUserId, teacherUser.name)
+                .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name)
                 .from(enrollment)
                 .join(course)
                 .on(course.id.eq(enrollment.courseId))
+                .leftJoin(courseProduct)
+                .on(courseProduct.id.eq(course.productId))
                 .leftJoin(studentUser)
                 .on(studentUser.id.eq(enrollment.studentUserId))
                 .leftJoin(teacherUser)
@@ -71,7 +74,7 @@ class EnrollmentCustomRepositoryImpl(
                     EnrollmentWithDetailDto(
                         enrollment = tuple[enrollment]!!,
                         studentName = tuple[studentUser.name] ?: "",
-                        courseName = tuple[course.name] ?: "",
+                        courseName = tuple[courseProduct.name] ?: "",
                         teacherUserId = tuple[course.teacherUserId] ?: "",
                         teacherName = tuple[teacherUser.name] ?: "",
                     )

@@ -15,8 +15,8 @@ data class MyCourseResponse(
         fun from(dto: CourseWithEnrollmentCountDto) =
             MyCourseResponse(
                 id = dto.course.id,
-                name = dto.course.name,
-                description = dto.course.description,
+                name = dto.courseProduct?.name ?: "",
+                description = dto.courseProduct?.description,
                 productId = dto.course.productId,
                 status = dto.course.status,
                 enrollmentCount = dto.enrollmentCount,
