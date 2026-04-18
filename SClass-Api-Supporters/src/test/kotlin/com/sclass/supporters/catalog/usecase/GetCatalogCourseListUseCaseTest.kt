@@ -65,7 +65,7 @@ class GetCatalogCourseListUseCaseTest {
                     id = courseId,
                     productId = productId,
                     teacherUserId = user.id,
-                    status = CourseStatus.ACTIVE,
+                    status = CourseStatus.LISTED,
                 ),
             courseProduct =
                 CourseProduct(

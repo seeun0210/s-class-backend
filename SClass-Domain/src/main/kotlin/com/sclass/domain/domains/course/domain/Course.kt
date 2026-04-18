@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.course.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.course.exception.CourseInvalidStatusTransitionException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -38,29 +39,29 @@ class Course(
     @Column(nullable = false, length = 20)
     var status: CourseStatus = CourseStatus.DRAFT,
 ) : BaseTimeEntity() {
-    fun activate() {
-        validateTransition(CourseStatus.ACTIVE)
-        this.status = CourseStatus.ACTIVE
+    fun list() {
+        validateTransition(CourseStatus.LISTED)
+        this.status = CourseStatus.LISTED
     }
 
-    fun complete() {
-        validateTransition(CourseStatus.COMPLETED)
-        this.status = CourseStatus.COMPLETED
+    fun unlist() {
+        validateTransition(CourseStatus.UNLISTED)
+        this.status = CourseStatus.UNLISTED
     }
 
-    fun cancel() {
-        validateTransition(CourseStatus.CANCELLED)
-        this.status = CourseStatus.CANCELLED
+    fun archive() {
+        validateTransition(CourseStatus.ARCHIVED)
+        this.status = CourseStatus.ARCHIVED
     }
 
     private fun validateTransition(target: CourseStatus) {
         val allowed =
             when (target) {
                 CourseStatus.DRAFT -> emptySet()
-                CourseStatus.ACTIVE -> setOf(CourseStatus.DRAFT)
-                CourseStatus.COMPLETED -> setOf(CourseStatus.ACTIVE)
-                CourseStatus.CANCELLED -> setOf(CourseStatus.DRAFT, CourseStatus.ACTIVE)
+                CourseStatus.LISTED -> setOf(CourseStatus.DRAFT, CourseStatus.UNLISTED)
+                CourseStatus.UNLISTED -> setOf(CourseStatus.LISTED)
+                CourseStatus.ARCHIVED -> setOf(CourseStatus.DRAFT, CourseStatus.LISTED, CourseStatus.UNLISTED)
             }
-        require(status in allowed) { "Cannot transition from $status to $target" }
+        if (status !in allowed) throw CourseInvalidStatusTransitionException()
     }
 }

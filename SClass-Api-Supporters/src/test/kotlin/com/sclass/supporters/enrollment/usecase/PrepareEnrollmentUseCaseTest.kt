@@ -3,7 +3,7 @@ package com.sclass.supporters.enrollment.usecase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
-import com.sclass.domain.domains.course.exception.CourseNotActiveException
+import com.sclass.domain.domains.course.exception.CourseNotListedException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
@@ -42,12 +42,12 @@ class PrepareEnrollmentUseCaseTest {
         useCase = PrepareEnrollmentUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor, paymentAdaptor)
     }
 
-    private fun activeCourse() =
+    private fun listedCourse() =
         Course(
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            status = CourseStatus.ACTIVE,
+            status = CourseStatus.LISTED,
         )
 
     private fun draftCourse() =
@@ -80,7 +80,7 @@ class PrepareEnrollmentUseCaseTest {
         @Test
         fun `결제 준비 시 Payment와 Enrollment가 생성된다`() {
             val enrollmentSlot = slot<Enrollment>()
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
             every { productAdaptor.findById("product-id-00000000001") } returns courseProduct()
             every { enrollmentAdaptor.findLiveEnrollment(1L, "student-id-00000000001") } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
@@ -99,12 +99,12 @@ class PrepareEnrollmentUseCaseTest {
     @Nested
     inner class Failure {
         @Test
-        fun `코스가 ACTIVE가 아니면 CourseNotActiveException이 발생한다`() {
+        fun `코스가 LISTED가 아니면 CourseNotListedException이 발생한다`() {
             every { courseAdaptor.findById(1L) } returns draftCourse()
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
-            }.isInstanceOf(CourseNotActiveException::class.java)
+            }.isInstanceOf(CourseNotListedException::class.java)
         }
 
         @Test
@@ -116,7 +116,7 @@ class PrepareEnrollmentUseCaseTest {
                     tuitionAmountWon = 300000,
                     paymentId = "payment-id-000000000001",
                 )
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
             every { productAdaptor.findById(any()) } returns courseProduct()
             every { enrollmentAdaptor.findLiveEnrollment(1L, "student-id-00000000001") } returns existingEnrollment
 
@@ -127,7 +127,7 @@ class PrepareEnrollmentUseCaseTest {
 
         @Test
         fun `CourseProduct가 아닌 상품이면 ProductTypeMismatchException이 발생한다`() {
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
             every { productAdaptor.findById(any()) } returns mockk<Product>()
             every { enrollmentAdaptor.findLiveEnrollment(any(), any()) } returns null
 
@@ -138,7 +138,7 @@ class PrepareEnrollmentUseCaseTest {
 
         @Test
         fun `결제 준비 시 paymentAdaptor와 enrollmentAdaptor save를 각각 호출한다`() {
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
             every { productAdaptor.findById(any()) } returns courseProduct()
             every { enrollmentAdaptor.findLiveEnrollment(any(), any()) } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()

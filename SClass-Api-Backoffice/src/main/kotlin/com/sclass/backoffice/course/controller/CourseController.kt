@@ -1,9 +1,10 @@
 package com.sclass.backoffice.course.controller
 
+import com.sclass.backoffice.course.dto.ChangeCourseStatusRequest
 import com.sclass.backoffice.course.dto.CoursePageResponse
 import com.sclass.backoffice.course.dto.CourseResponse
 import com.sclass.backoffice.course.dto.CreateCourseRequest
-import com.sclass.backoffice.course.usecase.ActivateCourseUseCase
+import com.sclass.backoffice.course.usecase.ChangeCourseStatusUseCase
 import com.sclass.backoffice.course.usecase.CreateCourseUseCase
 import com.sclass.backoffice.course.usecase.GetCourseListUseCase
 import com.sclass.common.dto.ApiResponse
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/courses")
 class CourseController(
     private val createCourseUseCase: CreateCourseUseCase,
-    private val activateCourseUseCase: ActivateCourseUseCase,
+    private val changeCourseStatusUseCase: ChangeCourseStatusUseCase,
     private val getCourseListUseCase: GetCourseListUseCase,
 ) {
     @PostMapping
@@ -33,10 +34,11 @@ class CourseController(
         @RequestBody @Valid request: CreateCourseRequest,
     ): ApiResponse<CourseResponse> = ApiResponse.success(createCourseUseCase.execute(request))
 
-    @PatchMapping("/{courseId}/activate")
-    fun activateCourse(
+    @PatchMapping("/{courseId}/status")
+    fun changeCourseStatus(
         @PathVariable courseId: Long,
-    ): ApiResponse<CourseResponse> = ApiResponse.success(activateCourseUseCase.execute(courseId))
+        @RequestBody @Valid request: ChangeCourseStatusRequest,
+    ): ApiResponse<CourseResponse> = ApiResponse.success(changeCourseStatusUseCase.execute(courseId, request.status))
 
     @GetMapping
     fun getCourseList(

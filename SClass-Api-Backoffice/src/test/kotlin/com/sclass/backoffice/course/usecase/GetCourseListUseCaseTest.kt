@@ -21,7 +21,7 @@ class GetCourseListUseCaseTest {
         teacherUserId: String = "teacher01",
         teacherName: String = "김선생",
         courseName: String = "수학 기초",
-        status: CourseStatus = CourseStatus.ACTIVE,
+        status: CourseStatus = CourseStatus.LISTED,
         enrollmentCount: Long = 5,
         totalLessons: Int = 12,
         priceWon: Int = 300000,

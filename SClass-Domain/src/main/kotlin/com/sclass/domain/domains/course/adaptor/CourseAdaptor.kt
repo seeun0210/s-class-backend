@@ -23,8 +23,6 @@ class CourseAdaptor(
 
     fun findByIdOrNull(id: Long): Course? = courseRepository.findByIdOrNull(id)
 
-    fun findAllActive(): List<Course> = courseRepository.findAllByStatus(CourseStatus.ACTIVE)
-
     fun findAllCatalogCourses() = courseRepository.findAllCatalogCourses()
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
@@ -37,9 +35,6 @@ class CourseAdaptor(
     ): Page<CourseWithTeacherAndEnrollmentCountDto> = courseRepository.searchCourses(teacherUserId, status, pageable)
 
     fun findAllByTeacherUserId(teacherUserId: String): List<Course> = courseRepository.findAllByTeacherUserId(teacherUserId)
-
-    fun findActiveByTeacherUserId(teacherUserId: String): List<Course> =
-        courseRepository.findAllByTeacherUserIdAndStatus(teacherUserId, CourseStatus.ACTIVE)
 
     fun findAllByProductId(productId: String): List<Course> = courseRepository.findAllByProductId(productId)
 
