@@ -13,6 +13,8 @@ interface CourseCustomRepository {
 
     fun findCatalogCourseById(id: Long): CourseWithTeacherDto?
 
+    fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto?
+
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto>
 
     fun searchCourses(

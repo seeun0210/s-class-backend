@@ -145,6 +145,28 @@ class CourseCustomRepositoryImpl(
         return PageImpl(content, pageable, total)
     }
 
+    override fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto? =
+        queryFactory
+            .select(course, courseProduct, user.name, enrollment.count())
+            .from(course)
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
+            .leftJoin(user)
+            .on(user.id.eq(course.teacherUserId))
+            .leftJoin(enrollment)
+            .on(enrollment.courseId.eq(course.id))
+            .where(course.id.eq(id))
+            .groupBy(course, courseProduct, user.name)
+            .fetchOne()
+            ?.let { tuple ->
+                CourseWithTeacherAndEnrollmentCountDto(
+                    course = tuple[course]!!,
+                    courseProduct = tuple[courseProduct],
+                    teacherName = tuple[user.name] ?: "-",
+                    enrollmentCount = tuple[enrollment.count()] ?: 0L,
+                )
+            }
+
     override fun findCatalogCourseById(id: Long): CourseWithTeacherDto? =
         queryFactory
             .select(course, courseProduct, teacher, user)
