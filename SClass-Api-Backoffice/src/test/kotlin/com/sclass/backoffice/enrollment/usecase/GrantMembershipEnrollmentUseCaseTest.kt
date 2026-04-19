@@ -1,6 +1,7 @@
 package com.sclass.backoffice.enrollment.usecase
 
 import com.sclass.backoffice.enrollment.dto.GrantMembershipEnrollmentRequest
+import com.sclass.common.exception.BusinessException
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.domain.CoinPackage
@@ -22,7 +23,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class GrantMembershipEnrollmentUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
@@ -30,6 +34,7 @@ class GrantMembershipEnrollmentUseCaseTest {
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var useCase: GrantMembershipEnrollmentUseCase
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
 
     @BeforeEach
     fun setUp() {
@@ -37,7 +42,7 @@ class GrantMembershipEnrollmentUseCaseTest {
         coinPackageAdaptor = mockk()
         enrollmentAdaptor = mockk()
         coinDomainService = mockk(relaxed = true)
-        useCase = GrantMembershipEnrollmentUseCase(productAdaptor, coinPackageAdaptor, enrollmentAdaptor, coinDomainService)
+        useCase = GrantMembershipEnrollmentUseCase(productAdaptor, coinPackageAdaptor, enrollmentAdaptor, coinDomainService, fixedClock)
     }
 
     private fun mockProduct(periodDays: Int = 30): RollingMembershipProduct {
@@ -126,6 +131,26 @@ class GrantMembershipEnrollmentUseCaseTest {
 
         assertEquals(customStart, slot.captured.startAt)
         assertEquals(customEnd, slot.captured.endAt)
+    }
+
+    @Test
+    fun `startAt만 전달하면 예외가 발생한다`() {
+        mockProduct()
+        mockCoinPackage()
+
+        assertThrows<BusinessException> {
+            useCase.execute(
+                adminUserId = "admin-id-000000000000000000001",
+                request =
+                    GrantMembershipEnrollmentRequest(
+                        studentUserId = "student-id-0000000000000000001",
+                        membershipProductId = "product-id-000000000000000000001",
+                        grantReason = "테스트",
+                        startAt = LocalDateTime.of(2026, 5, 1, 0, 0),
+                        endAt = null,
+                    ),
+            )
+        }
     }
 
     @Test

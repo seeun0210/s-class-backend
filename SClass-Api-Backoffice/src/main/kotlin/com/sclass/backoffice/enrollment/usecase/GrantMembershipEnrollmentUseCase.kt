@@ -3,6 +3,8 @@ package com.sclass.backoffice.enrollment.usecase
 import com.sclass.backoffice.enrollment.dto.EnrollmentResponse
 import com.sclass.backoffice.enrollment.dto.GrantMembershipEnrollmentRequest
 import com.sclass.common.annotation.UseCase
+import com.sclass.common.exception.BusinessException
+import com.sclass.common.exception.GlobalErrorCode
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
@@ -13,6 +15,7 @@ import com.sclass.domain.domains.product.domain.ActivePeriod
 import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.LocalDateTime
 
 @UseCase
@@ -21,6 +24,7 @@ class GrantMembershipEnrollmentUseCase(
     private val coinPackageAdaptor: CoinPackageAdaptor,
     private val enrollmentAdaptor: EnrollmentAdaptor,
     private val coinDomainService: CoinDomainService,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     @Transactional
     fun execute(
@@ -32,10 +36,14 @@ class GrantMembershipEnrollmentUseCase(
                 ?: throw ProductTypeMismatchException()
         val coinPackage = coinPackageAdaptor.findById(product.coinPackageId)
 
-        val now = LocalDateTime.now()
+        val hasStartAt = request.startAt != null
+        val hasEndAt = request.endAt != null
+        if (hasStartAt xor hasEndAt) throw BusinessException(GlobalErrorCode.INVALID_INPUT)
+
+        val now = LocalDateTime.now(clock)
         val period =
-            if (request.startAt != null && request.endAt != null) {
-                ActivePeriod(startAt = request.startAt, endAt = request.endAt)
+            if (hasStartAt && hasEndAt) {
+                ActivePeriod(startAt = request.startAt!!, endAt = request.endAt!!)
             } else {
                 product.resolveActivePeriod(now)
             }
