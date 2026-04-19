@@ -86,7 +86,7 @@ class EnrollmentCustomRepositoryImpl(
             queryFactory
                 .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name)
                 .from(enrollment)
-                .join(course)
+                .leftJoin(course)
                 .on(course.id.eq(enrollment.courseId))
                 .leftJoin(courseProduct)
                 .on(courseProduct.id.eq(course.productId))
@@ -113,7 +113,7 @@ class EnrollmentCustomRepositoryImpl(
             queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
-                .join(course)
+                .leftJoin(course)
                 .on(course.id.eq(enrollment.courseId))
                 .where(*where.toTypedArray())
                 .fetchOne() ?: 0L
