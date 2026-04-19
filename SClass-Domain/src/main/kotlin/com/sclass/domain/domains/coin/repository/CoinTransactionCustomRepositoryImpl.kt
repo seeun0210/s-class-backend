@@ -34,7 +34,7 @@ class CoinTransactionCustomRepositoryImpl(
                     Projections.constructor(
                         CoinTransactionGroupDto::class.java,
                         coinTransaction.type,
-                        coinTransaction.amount.sum(),
+                        coinTransaction.amount.sum().longValue(),
                         coinTransaction.referenceId,
                         coinTransaction.description.max(),
                         coinTransaction.createdAt.min(),
