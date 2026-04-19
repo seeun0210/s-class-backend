@@ -35,14 +35,9 @@ class GetCatalogMembershipListUseCase(
                         val live = liveCounts[product.id] ?: 0L
                         (cap - live).coerceAtLeast(0L)
                     }
-                CatalogMembershipResponse(
-                    productId = product.id,
-                    name = product.name,
-                    description = product.description,
+                CatalogMembershipResponse.from(
+                    product = product,
                     thumbnailUrl = thumbnailUrlResolver.resolve(product.thumbnailFileId),
-                    priceWon = product.priceWon,
-                    periodDays = product.periodDays,
-                    maxEnrollments = product.maxEnrollments,
                     remainingSeats = remaining,
                     coinAmount = row.coinPackage?.coinAmount ?: 0,
                 )

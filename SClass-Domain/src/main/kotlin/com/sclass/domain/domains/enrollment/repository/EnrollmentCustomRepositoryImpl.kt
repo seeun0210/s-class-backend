@@ -14,19 +14,21 @@ import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
 import com.sclass.domain.domains.enrollment.dto.ProductEnrollmentCountDto
 import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
+import com.sclass.domain.domains.product.domain.QMembershipProduct.membershipProduct
 import com.sclass.domain.domains.user.domain.QUser
 import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import java.time.LocalDateTime
 
 class EnrollmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : EnrollmentCustomRepository {
     override fun findAllByStudentUserIdWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
         queryFactory
-            .select(enrollment, course, courseProduct, user.name)
+            .select(enrollment, course, courseProduct, user.name, membershipProduct)
             .from(enrollment)
             .leftJoin(course)
             .on(course.id.eq(enrollment.courseId))
@@ -34,6 +36,8 @@ class EnrollmentCustomRepositoryImpl(
             .on(courseProduct.id.eq(course.productId))
             .leftJoin(user)
             .on(user.id.eq(course.teacherUserId))
+            .leftJoin(membershipProduct)
+            .on(membershipProduct.id.eq(enrollment.productId))
             .where(enrollment.studentUserId.eq(studentUserId))
             .orderBy(enrollment.createdAt.desc())
             .fetch()
@@ -43,6 +47,7 @@ class EnrollmentCustomRepositoryImpl(
                     course = tuple[course],
                     courseProduct = tuple[courseProduct],
                     teacherName = tuple[user.name],
+                    membershipProduct = tuple[membershipProduct],
                 )
             }
 
@@ -131,6 +136,20 @@ class EnrollmentCustomRepositoryImpl(
                 ProductEnrollmentCountDto(productId = productId, count = tuple[enrollment.count()] ?: 0L)
             }
     }
+
+    override fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Boolean =
+        queryFactory
+            .selectOne()
+            .from(enrollment)
+            .where(
+                enrollment.studentUserId.eq(studentUserId),
+                enrollment.productId.isNotNull,
+                enrollment.status.eq(EnrollmentStatus.ACTIVE),
+                enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
+            ).fetchFirst() != null
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(enrollment.createdAt.desc())

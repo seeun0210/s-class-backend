@@ -92,4 +92,10 @@ class EnrollmentAdaptor(
         enrollmentRepository
             .countLiveMembershipEnrollmentsByProductIds(productIds)
             .associate { it.productId to it.count }
+
+    fun hasActiveMembershipEnrollment(studentUserId: String): Boolean =
+        enrollmentRepository.hasActiveMembershipEnrollment(
+            studentUserId = studentUserId,
+            now = java.time.LocalDateTime.now(),
+        )
 }

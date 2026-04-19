@@ -3,6 +3,8 @@ package com.sclass.supporters.payment.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.NoActiveMembershipException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class PreparePaymentUseCase(
     private val coinPackageAdaptor: CoinPackageAdaptor,
+    private val enrollmentAdaptor: EnrollmentAdaptor,
     private val paymentAdaptor: PaymentAdaptor,
 ) {
     @Transactional
@@ -20,6 +23,7 @@ class PreparePaymentUseCase(
         userId: String,
         request: PreparePaymentRequest,
     ): PreparePaymentResponse {
+        if (!enrollmentAdaptor.hasActiveMembershipEnrollment(userId)) throw NoActiveMembershipException()
         val coinPackage = coinPackageAdaptor.findById(request.coinPackageId)
 
         val payment =

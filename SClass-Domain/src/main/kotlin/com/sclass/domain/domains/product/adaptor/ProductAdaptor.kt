@@ -20,7 +20,8 @@ class ProductAdaptor(
     fun save(product: Product): Product = productRepository.save(product)
 
     fun findMembershipsWithCoinPackage(
+        type: ProductType? = null,
         visibleOnly: Boolean,
         pageable: Pageable,
-    ): Page<MembershipProductWithCoinPackageDto> = productRepository.findMembershipsWithCoinPackage(visibleOnly, pageable)
+    ): Page<MembershipProductWithCoinPackageDto> = productRepository.findMembershipsWithCoinPackage(type, visibleOnly, pageable)
 }

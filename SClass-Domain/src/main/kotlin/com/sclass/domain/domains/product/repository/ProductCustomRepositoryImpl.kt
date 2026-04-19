@@ -1,8 +1,8 @@
 package com.sclass.domain.domains.product.repository
 
-import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.coin.domain.QCoinPackage
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.domain.ProductType
 import com.sclass.domain.domains.product.domain.QMembershipProduct
@@ -24,12 +24,24 @@ class ProductCustomRepositoryImpl(
             ).fetch()
 
     override fun findMembershipsWithCoinPackage(
+        type: ProductType?,
         visibleOnly: Boolean,
         pageable: Pageable,
     ): Page<MembershipProductWithCoinPackageDto> {
         val qMembership = QMembershipProduct.membershipProduct
         val qCoin = QCoinPackage.coinPackage
-        val where: BooleanExpression? = if (visibleOnly) qMembership.visible.isTrue else null
+        val conditions =
+            listOfNotNull(
+                if (visibleOnly) qMembership.visible.isTrue else null,
+                type?.let {
+                    require(it.entityClass != null && MembershipProduct::class.java.isAssignableFrom(it.entityClass)) {
+                        "ProductType $it is not a subtype of MembershipProduct"
+                    }
+                    @Suppress("UNCHECKED_CAST")
+                    qMembership.instanceOf(it.entityClass as Class<out MembershipProduct>)
+                },
+            )
+        val whereArr = conditions.toTypedArray()
 
         val content =
             queryFactory
@@ -37,7 +49,7 @@ class ProductCustomRepositoryImpl(
                 .from(qMembership)
                 .leftJoin(qCoin)
                 .on(qMembership.coinPackageId.eq(qCoin.id))
-                .where(where)
+                .where(*whereArr)
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .orderBy(qMembership.createdAt.desc())
@@ -52,7 +64,7 @@ class ProductCustomRepositoryImpl(
             queryFactory
                 .select(qMembership.count())
                 .from(qMembership)
-                .where(where)
+                .where(*whereArr)
                 .fetchOne() ?: 0L
         return PageImpl(content, pageable, total)
     }

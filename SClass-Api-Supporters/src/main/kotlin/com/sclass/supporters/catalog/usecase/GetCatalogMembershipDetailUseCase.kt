@@ -31,14 +31,9 @@ class GetCatalogMembershipDetailUseCase(
                 val live = enrollmentAdaptor.countLiveMembershipEnrollments(product.id)
                 (cap - live).coerceAtLeast(0L)
             }
-        return CatalogMembershipResponse(
-            productId = product.id,
-            name = product.name,
-            description = product.description,
+        return CatalogMembershipResponse.from(
+            product = product,
             thumbnailUrl = thumbnailUrlResolver.resolve(product.thumbnailFileId),
-            priceWon = product.priceWon,
-            periodDays = product.periodDays,
-            maxEnrollments = product.maxEnrollments,
             remainingSeats = remaining,
             coinAmount = coinPackage.coinAmount,
         )

@@ -16,4 +16,5 @@ enum class EnrollmentErrorCode(
     ENROLLMENT_TYPE_MISMATCH("ENROLLMENT_007", "해당 작업은 이 등록 유형에서 허용되지 않습니다", 400),
     ENROLLMENT_UNAUTHORIZED_ACCESS("ENROLLMENT_008", "해당 수강에 대한 권한이 없습니다", 403),
     MEMBERSHIP_CAPACITY_EXCEEDED("ENROLLMENT_009", "멤버십 정원이 초과되었습니다", 409),
+    NO_ACTIVE_MEMBERSHIP("ENROLLMENT_010", "활성 멤버십이 없습니다", 403),
 }

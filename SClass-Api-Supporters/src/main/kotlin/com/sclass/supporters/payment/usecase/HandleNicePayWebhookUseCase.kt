@@ -158,8 +158,8 @@ class HandleNicePayWebhookUseCase(
                         val fresh = paymentAdaptor.findById(payment.id)
                         val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
-                        val endAt = now.plusDays(product.periodDays.toLong())
-                        freshEnrollment.markPaid(startAt = now, endAt = endAt)
+                        val period = product.resolveActivePeriod(now)
+                        freshEnrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(freshEnrollment)
 
                         coinDomainService.issue(
@@ -168,7 +168,7 @@ class HandleNicePayWebhookUseCase(
                             referenceId = fresh.id,
                             description = "멤버십 가입 (웹훅) - ${product.name}",
                             enrollmentId = freshEnrollment.id,
-                            expireAt = endAt,
+                            expireAt = period.endAt,
                             sourceType = CoinLotSourceType.PURCHASE,
                             sourceMeta = """{"membershipProductId":"${product.id}"}""",
                         )

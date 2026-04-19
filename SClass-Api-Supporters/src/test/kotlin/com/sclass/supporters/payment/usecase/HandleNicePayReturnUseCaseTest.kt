@@ -12,7 +12,7 @@ import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.MembershipProduct
+import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
@@ -250,7 +250,7 @@ class HandleNicePayReturnUseCaseTest {
     fun `멤버십 결제 성공 시 enrollment가 ACTIVE로 전환되고 멤버십 코인이 발급된다`() {
         val payment = membershipPayment(amount = 10000)
         val product =
-            MembershipProduct(
+            RollingMembershipProduct(
                 name = "프리미엄 멤버십",
                 priceWon = 10000,
                 periodDays = 30,
