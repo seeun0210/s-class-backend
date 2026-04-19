@@ -299,6 +299,7 @@ locals {
       { name = "SPRING_JPA_HIBERNATE_DDL_AUTO", value = local.is_prod ? "validate" : "update" },
       { name = "S3_BUCKET", value = aws_s3_bucket.main.id },
       { name = "S3_REGION", value = var.aws_region },
+      { name = "S3_PUBLIC_BASE_URL", value = "https://${local.static_domain}" },
       { name = "CORS_ALLOW_ORIGINS", value = "${var.cors_allow_origins},https://report.aura.co.kr" },
       { name = "SMTP_ENABLED", value = "true" },
       { name = "SMTP_HOST", value = var.smtp_host },
