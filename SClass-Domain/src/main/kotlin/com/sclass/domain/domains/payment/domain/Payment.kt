@@ -92,7 +92,7 @@ class Payment(
     }
 
     fun markCancelled() {
-        if (status != PaymentStatus.COMPLETED) {
+        if (status !in setOf(PaymentStatus.PENDING, PaymentStatus.PG_APPROVED, PaymentStatus.COMPLETED)) {
             throw InvalidPaymentStatusException()
         }
         this.status = PaymentStatus.CANCELLED

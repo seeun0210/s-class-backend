@@ -93,6 +93,9 @@ class EnrollmentAdaptor(
             .countLiveMembershipEnrollmentsByProductIds(productIds)
             .associate { it.productId to it.count }
 
+    fun findPendingPaymentOlderThan(threshold: java.time.LocalDateTime): List<Enrollment> =
+        enrollmentRepository.findAllByStatusAndCreatedAtBefore(EnrollmentStatus.PENDING_PAYMENT, threshold)
+
     fun hasActiveMembershipEnrollment(studentUserId: String): Boolean =
         enrollmentRepository.hasActiveMembershipEnrollment(
             studentUserId = studentUserId,
