@@ -14,6 +14,10 @@ class GetMyEnrollmentsUseCase(
     @Transactional(readOnly = true)
     fun execute(studentUserId: String): List<MyEnrollmentResponse> =
         enrollmentAdaptor.findAllByStudentWithCourse(studentUserId).map {
-            MyEnrollmentResponse.from(it, thumbnailUrlResolver.resolve(it.courseProduct?.thumbnailFileId))
+            MyEnrollmentResponse.from(
+                dto = it,
+                courseThumbnailUrl = thumbnailUrlResolver.resolve(it.courseProduct?.thumbnailFileId),
+                membershipThumbnailUrl = thumbnailUrlResolver.resolve(it.membershipProduct?.thumbnailFileId),
+            )
         }
 }
