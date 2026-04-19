@@ -4,9 +4,11 @@ import com.sclass.backoffice.enrollment.dto.EnrollmentLessonListResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentPageResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentResponse
 import com.sclass.backoffice.enrollment.dto.GrantEnrollmentRequest
+import com.sclass.backoffice.enrollment.dto.GrantMembershipEnrollmentRequest
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentLessonListUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentListUseCase
 import com.sclass.backoffice.enrollment.usecase.GrantEnrollmentUseCase
+import com.sclass.backoffice.enrollment.usecase.GrantMembershipEnrollmentUseCase
 import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
@@ -26,11 +28,18 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/enrollments")
 class EnrollmentController(
     private val grantEnrollmentUseCase: GrantEnrollmentUseCase,
+    private val grantMembershipEnrollmentUseCase: GrantMembershipEnrollmentUseCase,
     private val getEnrollmentListUseCase: GetEnrollmentListUseCase,
     private val getEnrollmentLessonListUseCase: GetEnrollmentLessonListUseCase,
 ) {
-    @PostMapping("/grant")
-    fun grantEnrollment(
+    @PostMapping("/membership")
+    fun grantMembershipEnrollment(
+        @CurrentUserId userId: String,
+        @RequestBody @Valid request: GrantMembershipEnrollmentRequest,
+    ): ApiResponse<EnrollmentResponse> = ApiResponse.success(grantMembershipEnrollmentUseCase.execute(userId, request))
+
+    @PostMapping("/course")
+    fun grantCourseEnrollment(
         @CurrentUserId userId: String,
         @RequestBody @Valid request: GrantEnrollmentRequest,
     ): ApiResponse<EnrollmentResponse> =

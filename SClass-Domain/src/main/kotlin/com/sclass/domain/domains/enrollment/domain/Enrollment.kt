@@ -173,6 +173,27 @@ class Enrollment private constructor(
                 status = EnrollmentStatus.PENDING_PAYMENT,
             )
 
+        fun createMembershipByGrant(
+            productId: String,
+            studentUserId: String,
+            grantedByUserId: String,
+            grantReason: String,
+            startAt: LocalDateTime,
+            endAt: LocalDateTime,
+        ): Enrollment =
+            Enrollment(
+                courseId = null,
+                productId = productId,
+                studentUserId = studentUserId,
+                enrollmentType = EnrollmentType.ADMIN_GRANT,
+                tuitionAmountWon = 0,
+                status = EnrollmentStatus.ACTIVE,
+                grantedByUserId = grantedByUserId,
+                grantReason = grantReason,
+                startAt = startAt,
+                endAt = endAt,
+            )
+
         /**
          * 백오피스/LMS 관리자가 직접 등록.
          * 결제 절차 없이 바로 ACTIVE 상태로 생성.
