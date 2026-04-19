@@ -8,6 +8,7 @@ import com.sclass.domain.domains.payment.domain.PaymentStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.Clock
 import java.time.LocalDateTime
 
 @BatchJob
@@ -15,12 +16,13 @@ class CleanupStalePendingEnrollmentsJob(
     private val enrollmentAdaptor: EnrollmentAdaptor,
     private val paymentAdaptor: PaymentAdaptor,
     private val txTemplate: TransactionTemplate,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     @Scheduled(fixedDelay = INTERVAL_MS)
     fun execute() {
-        val threshold = LocalDateTime.now().minusMinutes(TTL_MINUTES)
+        val threshold = LocalDateTime.now(clock).minusMinutes(TTL_MINUTES)
         val staleEnrollments = enrollmentAdaptor.findPendingPaymentOlderThan(threshold)
 
         if (staleEnrollments.isEmpty()) return
@@ -36,9 +38,21 @@ class CleanupStalePendingEnrollmentsJob(
 
                     val paymentId = enrollment.paymentId ?: return@execute null
                     val payment = paymentAdaptor.findById(paymentId)
-                    if (payment.status == PaymentStatus.PENDING) {
-                        payment.markCancelled()
-                        paymentAdaptor.save(payment)
+                    when (payment.status) {
+                        PaymentStatus.PENDING -> {
+                            payment.markCancelled()
+                            paymentAdaptor.save(payment)
+                        }
+                        PaymentStatus.CANCELLED -> {}
+                        else -> {
+                            // PG_APPROVED/COMPLETED 등 결제가 이미 진행 중 — 건너뜀
+                            log.warn(
+                                "PENDING_PAYMENT enrollment이지만 결제 상태가 취소 불가 enrollmentId={} paymentStatus={}",
+                                enrollment.id,
+                                payment.status,
+                            )
+                            return@execute null
+                        }
                     }
                     enrollment.cancel("결제 시간 초과 (${TTL_MINUTES}분)")
                     enrollmentAdaptor.save(enrollment)

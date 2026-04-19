@@ -18,12 +18,16 @@ import org.junit.jupiter.api.Test
 import org.springframework.transaction.TransactionStatus
 import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 class CleanupStalePendingEnrollmentsJobTest {
     private val enrollmentAdaptor = mockk<EnrollmentAdaptor>()
     private val paymentAdaptor = mockk<PaymentAdaptor>()
     private val txTemplate = mockk<TransactionTemplate>()
-    private val job = CleanupStalePendingEnrollmentsJob(enrollmentAdaptor, paymentAdaptor, txTemplate)
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
+    private val job = CleanupStalePendingEnrollmentsJob(enrollmentAdaptor, paymentAdaptor, txTemplate, fixedClock)
 
     @BeforeEach
     fun setUp() {
@@ -99,6 +103,24 @@ class CleanupStalePendingEnrollmentsJobTest {
         job.execute()
 
         verify(exactly = 0) { paymentAdaptor.findById(any()) }
+        verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `payment가 PG_APPROVED 상태이면 enrollment를 취소하지 않고 건너뛴다`() {
+        val enrollment = createPendingEnrollment()
+        val payment = createPayment().also { it.markPgApproved("tid-001") }
+
+        every { enrollmentAdaptor.findPendingPaymentOlderThan(any()) } returns listOf(enrollment)
+        every { enrollmentAdaptor.findById(enrollment.id) } returns enrollment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+
+        job.execute()
+
+        assertAll(
+            { assertEquals(EnrollmentStatus.PENDING_PAYMENT, enrollment.status) },
+            { assertEquals(PaymentStatus.PG_APPROVED, payment.status) },
+        )
         verify(exactly = 0) { enrollmentAdaptor.save(any()) }
     }
 
