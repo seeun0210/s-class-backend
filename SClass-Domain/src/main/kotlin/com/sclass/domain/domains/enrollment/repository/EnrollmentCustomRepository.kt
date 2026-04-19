@@ -22,4 +22,9 @@ interface EnrollmentCustomRepository {
     ): Page<EnrollmentWithDetailDto>
 
     fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): List<ProductEnrollmentCountDto>
+
+    fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: java.time.LocalDateTime,
+    ): Boolean
 }

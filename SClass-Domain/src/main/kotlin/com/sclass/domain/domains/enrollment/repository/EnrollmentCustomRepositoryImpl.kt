@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import java.time.LocalDateTime
 
 class EnrollmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -131,6 +132,20 @@ class EnrollmentCustomRepositoryImpl(
                 ProductEnrollmentCountDto(productId = productId, count = tuple[enrollment.count()] ?: 0L)
             }
     }
+
+    override fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Boolean =
+        queryFactory
+            .selectOne()
+            .from(enrollment)
+            .where(
+                enrollment.studentUserId.eq(studentUserId),
+                enrollment.productId.isNotNull,
+                enrollment.status.eq(EnrollmentStatus.ACTIVE),
+                enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
+            ).fetchFirst() != null
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(enrollment.createdAt.desc())

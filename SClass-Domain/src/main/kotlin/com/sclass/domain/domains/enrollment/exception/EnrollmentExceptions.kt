@@ -15,3 +15,5 @@ class EnrollmentDuplicatePaymentException : BusinessException(EnrollmentErrorCod
 class EnrollmentNotActiveException : BusinessException(EnrollmentErrorCode.ENROLLMENT_NOT_ACTIVE)
 
 class EnrollmentTypeMismatchException : BusinessException(EnrollmentErrorCode.ENROLLMENT_TYPE_MISMATCH)
+
+class NoActiveMembershipException : BusinessException(EnrollmentErrorCode.NO_ACTIVE_MEMBERSHIP)
