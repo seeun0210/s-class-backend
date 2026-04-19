@@ -5,11 +5,14 @@ import com.sclass.domain.domains.coin.domain.CoinLot
 import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
@@ -25,6 +28,7 @@ import org.springframework.transaction.support.TransactionTemplate
 
 class HandleNicePayReturnUseCaseTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
+    private lateinit var productAdaptor: ProductAdaptor
     private lateinit var coinPackageAdaptor: CoinPackageAdaptor
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
@@ -37,6 +41,7 @@ class HandleNicePayReturnUseCaseTest {
     @BeforeEach
     fun setUp() {
         paymentAdaptor = mockk()
+        productAdaptor = mockk()
         coinPackageAdaptor = mockk()
         coinDomainService = mockk()
         pgGateway = mockk()
@@ -50,6 +55,7 @@ class HandleNicePayReturnUseCaseTest {
         useCase =
             HandleNicePayReturnUseCase(
                 paymentAdaptor,
+                productAdaptor,
                 coinPackageAdaptor,
                 coinDomainService,
                 enrollmentAdaptor,
@@ -240,6 +246,95 @@ class HandleNicePayReturnUseCaseTest {
         assertTrue(result.contains("status=FAILED"))
     }
 
+    @Test
+    fun `멤버십 결제 성공 시 enrollment가 ACTIVE로 전환되고 멤버십 코인이 발급된다`() {
+        val payment = membershipPayment(amount = 10000)
+        val product =
+            MembershipProduct(
+                name = "프리미엄 멤버십",
+                priceWon = 10000,
+                periodDays = 30,
+                coinPackageId = "cp-000000000000000000000000001",
+            )
+        val coinPackage = CoinPackage(name = "코인 1000", priceWon = 10000, coinAmount = 1000)
+        val enrollment =
+            Enrollment.createForMembershipPurchase(
+                productId = product.id,
+                studentUserId = payment.userId,
+                tuitionAmountWon = 10000,
+                paymentId = payment.id,
+            )
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { productAdaptor.findById(payment.targetId) } returns product
+        every { coinPackageAdaptor.findById(product.coinPackageId) } returns coinPackage
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.approve(any(), any(), any()) } returns
+            PgApproveResult(tid = "tid-001", pgOrderId = payment.pgOrderId, amount = 10000)
+        every {
+            coinDomainService.issue(any(), any(), any(), any(), any(), any(), any(), any())
+        } returns mockk<CoinLot>()
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 10000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=COMPLETED")) },
+            { assertTrue(result.contains("issuedCoinAmount=1000")) },
+            { assertEquals(PaymentStatus.COMPLETED, payment.status) },
+            { assertEquals(com.sclass.domain.domains.enrollment.domain.EnrollmentStatus.ACTIVE, enrollment.status) },
+            { assertTrue(enrollment.startAt != null && enrollment.endAt != null) },
+        )
+        verify(exactly = 1) {
+            coinDomainService.issue(any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `멤버십 결제 대상이 MembershipProduct가 아니면 FAILED URL을 반환한다`() {
+        val payment = membershipPayment(amount = 10000)
+        val otherProduct =
+            com.sclass.domain.domains.product.domain.CourseProduct(
+                name = "수학 코스",
+                priceWon = 10000,
+                totalLessons = 12,
+            )
+        val pgApprovedPayment = membershipPayment(amount = 10000)
+        pgApprovedPayment.markPgApproved("tid-001")
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment andThen pgApprovedPayment
+        every { productAdaptor.findById(payment.targetId) } returns otherProduct
+        every { pgGateway.approve(any(), any(), any()) } returns
+            PgApproveResult(tid = "tid-001", pgOrderId = payment.pgOrderId, amount = 10000)
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 10000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=FAILED")) },
+            { assertEquals(PaymentStatus.ISSUE_COIN_FAILED, pgApprovedPayment.status) },
+        )
+    }
+
     private fun pendingPayment(amount: Int = 1000) =
         Payment(
             userId = "user-00000000000000000000000001",
@@ -248,5 +343,15 @@ class HandleNicePayReturnUseCaseTest {
             amount = amount,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-00000000000000000000000001",
+        )
+
+    private fun membershipPayment(amount: Int = 10000) =
+        Payment(
+            userId = "user-00000000000000000000000001",
+            targetType = PaymentTargetType.MEMBERSHIP_PRODUCT,
+            targetId = "mp-000000000000000000000000001",
+            amount = amount,
+            pgType = PgType.NICEPAY,
+            pgOrderId = "order-00000000000000000000000002",
         )
 }

@@ -4,4 +4,5 @@ enum class ProductType(
     val entityClass: Class<out Product>,
 ) {
     COURSE(CourseProduct::class.java),
+    MEMBERSHIP(MembershipProduct::class.java),
 }
