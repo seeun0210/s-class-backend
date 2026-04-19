@@ -1,19 +1,15 @@
 package com.sclass.domain.domains.product.domain
 
 import jakarta.persistence.Column
-import jakarta.persistence.DiscriminatorValue
 import jakarta.persistence.Entity
+import java.time.LocalDateTime
 
 @Entity
-@DiscriminatorValue("MEMBERSHIP")
-class MembershipProduct(
+abstract class MembershipProduct(
     name: String,
     priceWon: Int,
     description: String? = null,
     thumbnailFileId: String? = null,
-
-    @Column(name = "period_days", nullable = true)
-    var periodDays: Int,
 
     @Column(name = "max_enrollments", nullable = true)
     var maxEnrollments: Int? = null,
@@ -26,13 +22,15 @@ class MembershipProduct(
         description = description,
         thumbnailFileId = thumbnailFileId,
     ) {
-    fun updateMembership(
-        newPeriodDays: Int?,
+    fun updateMembershipShared(
         newMaxEnrollments: Int?,
         newCoinPackageId: String?,
     ) {
-        newPeriodDays?.let { periodDays = it }
         newMaxEnrollments?.let { maxEnrollments = it }
         newCoinPackageId?.let { coinPackageId = it }
     }
+
+    abstract fun resolveActivePeriod(now: LocalDateTime): ActivePeriod
+
+    abstract fun validateSaleable(now: LocalDateTime)
 }

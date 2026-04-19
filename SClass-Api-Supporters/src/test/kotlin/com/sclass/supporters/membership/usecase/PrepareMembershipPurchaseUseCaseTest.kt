@@ -10,8 +10,11 @@ import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CohortMembershipProduct
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.MembershipProduct
+import com.sclass.domain.domains.product.domain.RollingMembershipProduct
+import com.sclass.domain.domains.product.exception.CohortSaleEndedException
 import com.sclass.domain.domains.product.exception.ProductNotPurchasableException
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import io.mockk.every
@@ -23,6 +26,7 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
 
 class PrepareMembershipPurchaseUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
@@ -43,7 +47,7 @@ class PrepareMembershipPurchaseUseCaseTest {
 
     private fun visibleMembership(maxEnrollments: Int? = null): MembershipProduct {
         val product =
-            MembershipProduct(
+            RollingMembershipProduct(
                 name = "프리미엄 멤버십",
                 priceWon = 10000,
                 periodDays = 30,
@@ -55,12 +59,28 @@ class PrepareMembershipPurchaseUseCaseTest {
     }
 
     private fun hiddenMembership(): MembershipProduct =
-        MembershipProduct(
+        RollingMembershipProduct(
             name = "비공개 멤버십",
             priceWon = 10000,
             periodDays = 30,
             coinPackageId = "cp-0000000000000000000000001",
         )
+
+    private fun visibleCohortMembership(
+        startAt: LocalDateTime,
+        endAt: LocalDateTime,
+    ): CohortMembershipProduct {
+        val product =
+            CohortMembershipProduct(
+                name = "2026 봄 기수",
+                priceWon = 10000,
+                coinPackageId = "cp-0000000000000000000000001",
+                startAt = startAt,
+                endAt = endAt,
+            )
+        product.show()
+        return product
+    }
 
     private fun pendingPayment() =
         Payment(
@@ -153,6 +173,21 @@ class PrepareMembershipPurchaseUseCaseTest {
             assertThatThrownBy {
                 useCase.execute(studentUserId, membershipProductId, PgType.NICEPAY)
             }.isInstanceOf(MembershipCapacityExceededException::class.java)
+        }
+
+        @Test
+        fun `Cohort 판매 기간이 종료되었으면 CohortSaleEndedException이 발생한다`() {
+            val now = LocalDateTime.now()
+            val product =
+                visibleCohortMembership(
+                    startAt = now.minusDays(30),
+                    endAt = now.minusDays(1),
+                )
+            every { productAdaptor.findById(membershipProductId) } returns product
+
+            assertThatThrownBy {
+                useCase.execute(studentUserId, membershipProductId, PgType.NICEPAY)
+            }.isInstanceOf(CohortSaleEndedException::class.java)
         }
 
         @Test

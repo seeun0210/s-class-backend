@@ -18,6 +18,7 @@ import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import com.sclass.supporters.membership.dto.PrepareMembershipPurchaseResponse
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @UseCase
 class PrepareMembershipPurchaseUseCase(
@@ -36,6 +37,7 @@ class PrepareMembershipPurchaseUseCase(
             productAdaptor.findById(membershipProductId) as? MembershipProduct
                 ?: throw ProductTypeMismatchException()
         if (!product.visible) throw ProductNotPurchasableException()
+        product.validateSaleable(LocalDateTime.now())
 
         product.maxEnrollments?.let { cap ->
             val live = enrollmentAdaptor.countLiveMembershipEnrollments(product.id)

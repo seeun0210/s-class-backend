@@ -139,8 +139,8 @@ class HandleNicePayReturnUseCase(
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
-                        val endAt = now.plusDays(product.periodDays.toLong())
-                        enrollment.markPaid(startAt = now, endAt = endAt)
+                        val period = product.resolveActivePeriod(now)
+                        enrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(enrollment)
 
                         coinDomainService.issue(
@@ -149,7 +149,7 @@ class HandleNicePayReturnUseCase(
                             referenceId = fresh.id,
                             description = "멤버십 가입 - ${product.name}",
                             enrollmentId = enrollment.id,
-                            expireAt = endAt,
+                            expireAt = period.endAt,
                             sourceType = CoinLotSourceType.PURCHASE,
                             sourceMeta = """{"membershipProductId":"${product.id}"}""",
                         )

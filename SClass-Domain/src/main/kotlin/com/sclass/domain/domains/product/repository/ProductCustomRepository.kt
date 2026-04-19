@@ -10,6 +10,7 @@ interface ProductCustomRepository {
     fun findAllActiveByType(type: ProductType?): List<Product>
 
     fun findMembershipsWithCoinPackage(
+        type: ProductType?,
         visibleOnly: Boolean,
         pageable: Pageable,
     ): Page<MembershipProductWithCoinPackageDto>
