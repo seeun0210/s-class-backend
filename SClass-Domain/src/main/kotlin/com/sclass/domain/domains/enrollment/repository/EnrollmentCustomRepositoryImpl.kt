@@ -84,12 +84,14 @@ class EnrollmentCustomRepositoryImpl(
 
         val content =
             queryFactory
-                .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name)
+                .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name, membershipProduct.name)
                 .from(enrollment)
                 .leftJoin(course)
                 .on(course.id.eq(enrollment.courseId))
                 .leftJoin(courseProduct)
                 .on(courseProduct.id.eq(course.productId))
+                .leftJoin(membershipProduct)
+                .on(membershipProduct.id.eq(enrollment.productId))
                 .leftJoin(studentUser)
                 .on(studentUser.id.eq(enrollment.studentUserId))
                 .leftJoin(teacherUser)
@@ -106,6 +108,7 @@ class EnrollmentCustomRepositoryImpl(
                         courseName = tuple[courseProduct.name] ?: "",
                         teacherUserId = tuple[course.teacherUserId] ?: "",
                         teacherName = tuple[teacherUser.name] ?: "",
+                        productName = tuple[membershipProduct.name] ?: "",
                     )
                 }
 
