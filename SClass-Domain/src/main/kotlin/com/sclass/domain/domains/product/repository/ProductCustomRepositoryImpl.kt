@@ -34,6 +34,9 @@ class ProductCustomRepositoryImpl(
             listOfNotNull(
                 if (visibleOnly) qMembership.visible.isTrue else null,
                 type?.let {
+                    require(it.entityClass != null && MembershipProduct::class.java.isAssignableFrom(it.entityClass)) {
+                        "ProductType $it is not a subtype of MembershipProduct"
+                    }
                     @Suppress("UNCHECKED_CAST")
                     qMembership.instanceOf(it.entityClass as Class<out MembershipProduct>)
                 },
