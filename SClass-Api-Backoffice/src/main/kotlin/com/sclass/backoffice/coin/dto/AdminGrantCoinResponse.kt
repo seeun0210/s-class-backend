@@ -8,6 +8,7 @@ data class AdminGrantCoinResponse(
     val lotId: String,
     val userId: String,
     val amount: Int,
+    val enrollmentId: Long?,
     val sourceType: CoinLotSourceType,
     val expireAt: LocalDateTime?,
 ) {
@@ -17,6 +18,7 @@ data class AdminGrantCoinResponse(
                 lotId = lot.id,
                 userId = lot.userId,
                 amount = lot.amount,
+                enrollmentId = lot.enrollmentId,
                 sourceType = lot.sourceType,
                 expireAt = lot.expireAt,
             )
