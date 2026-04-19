@@ -28,14 +28,13 @@
 
 ## Module Structure
 
-서비스별 트래픽 프로파일이 다르기 때문에(Supporters > LMS > Backoffice) API 모듈을 분리하여 독립 배포·스케일링이 가능하도록 설계했습니다. 도메인 모듈을 공유하여 강사·학생 등 핵심 엔티티의 중복 없이 여러 서비스에서 재사용합니다.
+서비스별 트래픽 프로파일이 다르기 때문에(Supporters > Backoffice) API 모듈을 분리하여 독립 배포·스케일링이 가능하도록 설계했습니다. 도메인 모듈을 공유하여 강사·학생 등 핵심 엔티티의 중복 없이 여러 서비스에서 재사용합니다.
 
 ```
 SClass-Common           # 공통 (어노테이션, DTO, 예외, JWT, 유틸)
 SClass-Domain           # 도메인 (엔티티, 리포지토리, 어댑터, 도메인서비스)
 SClass-Infrastructure   # 외부 연동 (S3, OAuth, NicePay, 알림톡, Quartz 등)
-SClass-Api-Supporters   # Supporters API — 트래픽 최다, 독립 스케일링
-SClass-Api-Lms          # LMS API — 학원 단위 수업·탐구·정산
+SClass-Api-Supporters   # Supporters API — 학생/학부모/교사 통합 플랫폼
 SClass-Api-Backoffice   # Backoffice API — 내부 운영진 전용
 SClass-Batch            # 배치 처리
 ```
