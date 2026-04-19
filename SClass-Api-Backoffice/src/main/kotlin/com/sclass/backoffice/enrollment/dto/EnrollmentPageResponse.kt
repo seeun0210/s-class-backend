@@ -25,6 +25,8 @@ data class EnrollmentListResponse(
     val enrollmentType: EnrollmentType,
     val tuitionAmountWon: Int,
     val status: EnrollmentStatus,
+    val startAt: LocalDateTime?,
+    val endAt: LocalDateTime?,
     val createdAt: LocalDateTime,
 ) {
     companion object {
@@ -42,6 +44,8 @@ data class EnrollmentListResponse(
                 enrollmentType = dto.enrollment.enrollmentType,
                 tuitionAmountWon = dto.enrollment.tuitionAmountWon,
                 status = dto.enrollment.status,
+                startAt = dto.enrollment.startAt,
+                endAt = dto.enrollment.endAt,
                 createdAt = dto.enrollment.createdAt,
             )
     }
