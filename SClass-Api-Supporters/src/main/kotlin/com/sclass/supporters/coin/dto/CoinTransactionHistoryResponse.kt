@@ -13,7 +13,7 @@ data class CoinTransactionHistoryResponse(
 ) {
     data class CoinTransactionItem(
         val type: CoinTransactionType,
-        val totalAmount: Int,
+        val totalAmount: Long,
         val referenceId: String?,
         val description: String?,
         val createdAt: LocalDateTime,

@@ -1,4 +1,4 @@
-package com.sclass.supporters.coin.usecase
+package com.sclass.backoffice.coin.usecase
 
 import com.sclass.domain.domains.coin.adaptor.CoinAdaptor
 import com.sclass.domain.domains.coin.domain.CoinTransactionType
@@ -13,18 +13,18 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
 
-class GetCoinTransactionHistoryUseCaseTest {
+class GetAdminCoinTransactionHistoryUseCaseTest {
     private lateinit var coinAdaptor: CoinAdaptor
-    private lateinit var useCase: GetCoinTransactionHistoryUseCase
+    private lateinit var useCase: GetAdminCoinTransactionHistoryUseCase
 
     @BeforeEach
     fun setUp() {
         coinAdaptor = mockk()
-        useCase = GetCoinTransactionHistoryUseCase(coinAdaptor)
+        useCase = GetAdminCoinTransactionHistoryUseCase(coinAdaptor)
     }
 
     @Test
-    fun `트랜잭션 히스토리를 그룹핑하여 반환한다`() {
+    fun `userId 기준으로 트랜잭션 히스토리를 반환한다`() {
         val now = LocalDateTime.of(2026, 4, 19, 12, 0)
         val items =
             listOf(

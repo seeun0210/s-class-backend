@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 data class CoinTransactionGroupDto(
     val type: CoinTransactionType,
-    val totalAmount: Int,
+    val totalAmount: Long,
     val referenceId: String?,
     val description: String?,
     val createdAt: LocalDateTime,

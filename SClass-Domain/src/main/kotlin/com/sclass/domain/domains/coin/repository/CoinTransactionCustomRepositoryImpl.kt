@@ -42,26 +42,21 @@ class CoinTransactionCustomRepositoryImpl(
                 ).from(coinTransaction)
                 .where(*conditions)
                 .groupBy(coinTransaction.type, coinTransaction.referenceId)
-                .orderBy(coinTransaction.createdAt.min().desc())
+                .orderBy(coinTransaction.createdAt.min().desc(), coinTransaction.id.min().asc())
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
                 .fetch()
 
-        // referenceId가 있는 그룹 수 + referenceId가 null인 row 수
-        val groupedCount =
+        val total =
             queryFactory
-                .select(coinTransaction.referenceId.countDistinct())
+                .select(coinTransaction.type, coinTransaction.referenceId)
                 .from(coinTransaction)
-                .where(*conditions, coinTransaction.referenceId.isNotNull)
-                .fetchOne() ?: 0L
+                .where(*conditions)
+                .groupBy(coinTransaction.type, coinTransaction.referenceId)
+                .fetch()
+                .size
+                .toLong()
 
-        val ungroupedCount =
-            queryFactory
-                .select(coinTransaction.count())
-                .from(coinTransaction)
-                .where(*conditions, coinTransaction.referenceId.isNull)
-                .fetchOne() ?: 0L
-
-        return PageImpl(content, pageable, groupedCount + ungroupedCount)
+        return PageImpl(content, pageable, total)
     }
 }
