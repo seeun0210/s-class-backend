@@ -4,7 +4,9 @@ import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
+import com.sclass.domain.domains.product.domain.CohortMembershipProduct
 import com.sclass.domain.domains.product.domain.ProductType
+import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import java.time.LocalDateTime
 
 data class MyEnrollmentResponse(
@@ -61,10 +63,8 @@ data class MyEnrollmentResponse(
                         productId = mp.id,
                         productType =
                             when (mp) {
-                                is com.sclass.domain.domains.product.domain.RollingMembershipProduct ->
-                                    ProductType.ROLLING_MEMBERSHIP
-                                is com.sclass.domain.domains.product.domain.CohortMembershipProduct ->
-                                    ProductType.COHORT_MEMBERSHIP
+                                is RollingMembershipProduct -> ProductType.ROLLING_MEMBERSHIP
+                                is CohortMembershipProduct -> ProductType.COHORT_MEMBERSHIP
                                 else -> error("Unknown MembershipProduct subtype")
                             },
                         productName = mp.name,
