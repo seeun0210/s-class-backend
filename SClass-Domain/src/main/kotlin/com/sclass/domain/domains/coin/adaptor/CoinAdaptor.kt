@@ -8,7 +8,9 @@ import com.sclass.domain.domains.coin.dto.CoinTransactionGroupDto
 import com.sclass.domain.domains.coin.repository.CoinLotRepository
 import com.sclass.domain.domains.coin.repository.CoinTransactionRepository
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import java.time.LocalDateTime
 
 @Adaptor
@@ -36,6 +38,11 @@ class CoinAdaptor(
     ): Int = coinLotRepository.sumActive(userId, now)
 
     fun findLotsByEnrollmentId(enrollmentId: Long): List<CoinLot> = coinLotRepository.findAllByEnrollmentId(enrollmentId)
+
+    fun findLotsByUserId(
+        userId: String,
+        pageable: Pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt")),
+    ): Page<CoinLot> = coinLotRepository.findAllByUserId(userId, pageable)
 
     fun findExpiringLots(
         now: LocalDateTime,
