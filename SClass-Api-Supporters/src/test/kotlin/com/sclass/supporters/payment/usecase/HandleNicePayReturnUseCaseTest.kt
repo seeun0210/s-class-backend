@@ -1,6 +1,7 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinLot
 import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
@@ -13,7 +14,6 @@ import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertAll
@@ -70,7 +70,7 @@ class HandleNicePayReturnUseCaseTest {
         every { coinPackageAdaptor.findById(payment.targetId) } returns coinPackage
         every { pgGateway.approve(any(), any(), any()) } returns
             PgApproveResult(tid = "tid-001", pgOrderId = payment.pgOrderId, amount = 1000)
-        justRun { coinDomainService.issue(any(), any(), any(), any()) }
+        every { coinDomainService.issue(any(), any(), any(), any()) } returns mockk<CoinLot>()
 
         val result =
             useCase.execute(

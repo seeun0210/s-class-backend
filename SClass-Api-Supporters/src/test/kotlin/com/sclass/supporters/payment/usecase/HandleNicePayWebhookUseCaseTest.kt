@@ -1,6 +1,7 @@
 package com.sclass.supporters.payment.usecase
 
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinLot
 import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
@@ -20,7 +21,6 @@ import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertAll
@@ -80,7 +80,7 @@ class HandleNicePayWebhookUseCaseTest {
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { coinPackageAdaptor.findById(payment.targetId) } returns coinPackage
-        justRun { coinDomainService.issue(any(), any(), any(), any()) }
+        every { coinDomainService.issue(any(), any(), any(), any()) } returns mockk<CoinLot>()
 
         useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
 

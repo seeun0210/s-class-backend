@@ -2,10 +2,14 @@ package com.sclass.domain.domains.coin.service
 
 import com.sclass.common.annotation.DomainService
 import com.sclass.domain.domains.coin.adaptor.CoinAdaptor
-import com.sclass.domain.domains.coin.domain.CoinBalance
+import com.sclass.domain.domains.coin.domain.CoinLot
+import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.domain.CoinTransaction
 import com.sclass.domain.domains.coin.domain.CoinTransactionType
+import com.sclass.domain.domains.coin.exception.InsufficientCoinException
+import com.sclass.domain.domains.coin.exception.InvalidCoinAmountException
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @DomainService
 class CoinDomainService(
@@ -17,23 +21,36 @@ class CoinDomainService(
         amount: Int,
         referenceId: String? = null,
         description: String? = null,
-    ) {
-        val balance =
-            coinAdaptor.findBalanceByUserIdOrNull(userId)
-                ?: coinAdaptor.saveBalance(CoinBalance(userId = userId))
-
-        balance.issue(amount)
-        coinAdaptor.saveBalance(balance)
+        expireAt: LocalDateTime? = null,
+        enrollmentId: Long? = null,
+        sourceType: CoinLotSourceType = CoinLotSourceType.PURCHASE,
+        sourceMeta: String? = null,
+    ): CoinLot {
+        if (amount <= 0) throw InvalidCoinAmountException()
+        val lot =
+            coinAdaptor.saveLot(
+                CoinLot(
+                    userId = userId,
+                    amount = amount,
+                    remaining = amount,
+                    expireAt = expireAt,
+                    enrollmentId = enrollmentId,
+                    sourceType = sourceType,
+                    sourceMeta = sourceMeta,
+                ),
+            )
         coinAdaptor.saveTransaction(
             CoinTransaction(
                 userId = userId,
                 type = CoinTransactionType.ISSUED,
                 amount = amount,
-                balanceAfter = balance.balance,
+                balanceAfter = coinAdaptor.sumActiveLots(userId),
                 referenceId = referenceId,
                 description = description,
+                lotId = lot.id,
             ),
         )
+        return lot
     }
 
     @Transactional
@@ -43,19 +60,35 @@ class CoinDomainService(
         referenceId: String? = null,
         description: String? = null,
     ) {
-        val balance = coinAdaptor.findBalanceByUserId(userId)
+        if (amount <= 0) throw InvalidCoinAmountException()
+        val now = LocalDateTime.now()
+        val lots = coinAdaptor.findActiveLotsForUpdate(userId, now)
+        val available = lots.sumOf { it.remaining }
+        if (available < amount) throw InsufficientCoinException()
 
-        balance.deduct(amount)
-        coinAdaptor.saveBalance(balance)
-        coinAdaptor.saveTransaction(
-            CoinTransaction(
-                userId = userId,
-                type = CoinTransactionType.DEDUCTED,
-                amount = amount,
-                balanceAfter = balance.balance,
-                referenceId = referenceId,
-                description = description,
-            ),
+        var left = amount
+        val touched = mutableListOf<Pair<CoinLot, Int>>()
+        for (lot in lots) {
+            if (left <= 0) break
+            val used = lot.consume(left)
+            left -= used
+            touched += lot to used
+        }
+        coinAdaptor.saveLots(touched.map { it.first })
+
+        val balanceAfter = coinAdaptor.sumActiveLots(userId, now)
+        coinAdaptor.saveTransactions(
+            touched.map { (lot, used) ->
+                CoinTransaction(
+                    userId = userId,
+                    type = CoinTransactionType.DEDUCTED,
+                    amount = used,
+                    balanceAfter = balanceAfter,
+                    referenceId = referenceId,
+                    description = description,
+                    lotId = lot.id,
+                )
+            },
         )
     }
 
@@ -65,20 +98,35 @@ class CoinDomainService(
         amount: Int,
         referenceId: String? = null,
         description: String? = null,
-    ) {
-        val balance = coinAdaptor.findBalanceByUserId(userId)
-
-        balance.refund(amount)
-        coinAdaptor.saveBalance(balance)
+        enrollmentId: Long? = null,
+        expireAt: LocalDateTime? = null,
+    ): CoinLot {
+        if (amount <= 0) throw InvalidCoinAmountException()
+        val lot =
+            coinAdaptor.saveLot(
+                CoinLot(
+                    userId = userId,
+                    amount = amount,
+                    remaining = amount,
+                    expireAt = expireAt,
+                    enrollmentId = enrollmentId,
+                    sourceType = CoinLotSourceType.REFUND,
+                ),
+            )
         coinAdaptor.saveTransaction(
             CoinTransaction(
                 userId = userId,
                 type = CoinTransactionType.REFUNDED,
                 amount = amount,
-                balanceAfter = balance.balance,
+                balanceAfter = coinAdaptor.sumActiveLots(userId),
                 referenceId = referenceId,
                 description = description,
+                lotId = lot.id,
             ),
         )
+        return lot
     }
+
+    @Transactional(readOnly = true)
+    fun getBalance(userId: String): Int = coinAdaptor.sumActiveLots(userId)
 }
