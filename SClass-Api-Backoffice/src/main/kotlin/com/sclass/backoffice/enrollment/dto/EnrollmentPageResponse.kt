@@ -14,7 +14,7 @@ data class EnrollmentPageResponse(
 
 data class EnrollmentListResponse(
     val id: Long,
-    val courseId: Long,
+    val courseId: Long?,
     val courseName: String,
     val studentUserId: String,
     val studentName: String,

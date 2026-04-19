@@ -60,6 +60,17 @@ class EnrollmentAdaptor(
                 setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
             ).firstOrNull()
 
+    fun findLiveMembershipEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? =
+        enrollmentRepository
+            .findAllByProductIdAndStudentUserIdAndStatusIn(
+                productId,
+                studentUserId,
+                setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+            ).firstOrNull()
+
     fun findByPaymentId(paymentId: String): Enrollment =
         enrollmentRepository.findByPaymentId(paymentId) ?: throw EnrollmentNotFoundException()
 
@@ -70,4 +81,15 @@ class EnrollmentAdaptor(
             courseId,
             setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
         )
+
+    fun countLiveMembershipEnrollments(productId: String): Long =
+        enrollmentRepository.countByProductIdAndStatusIn(
+            productId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+        )
+
+    fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): Map<String, Long> =
+        enrollmentRepository
+            .countLiveMembershipEnrollmentsByProductIds(productIds)
+            .associate { it.productId to it.count }
 }

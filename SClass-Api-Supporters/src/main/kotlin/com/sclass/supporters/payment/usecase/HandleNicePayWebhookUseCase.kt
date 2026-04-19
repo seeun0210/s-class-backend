@@ -2,6 +2,7 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
@@ -11,6 +12,7 @@ import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
@@ -18,6 +20,7 @@ import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 
 @UseCase
 class HandleNicePayWebhookUseCase(
@@ -123,13 +126,62 @@ class HandleNicePayWebhookUseCase(
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
 
-                    val course = courseAdaptor.findById(freshEnrollment.courseId)
+                    val courseId =
+                        freshEnrollment.courseId
+                            ?: error("COURSE_PRODUCT enrollment must have courseId")
+                    val course = courseAdaptor.findById(courseId)
                     lessonService.createLessonsForEnrollment(
                         freshEnrollment,
                         teacherUserId = course.teacherUserId,
                         courseName = product.name,
                         totalLessons = product.totalLessons,
                     )
+                }
+            }
+            PaymentTargetType.MEMBERSHIP_PRODUCT -> {
+                val product =
+                    productAdaptor.findById(payment.targetId) as? MembershipProduct
+                        ?: throw ProductTypeMismatchException()
+                val coinPackage = coinPackageAdaptor.findById(product.coinPackageId)
+                txTemplate.execute {
+                    val fresh = paymentAdaptor.findById(payment.id)
+                    fresh.markPgApproved(payload.tid)
+                    paymentAdaptor.save(fresh)
+                }
+                val enrollment = enrollmentAdaptor.findByPaymentIdOrNull(payment.id)
+                if (enrollment == null) {
+                    log.warn("웹훅 수신: enrollment 없음 paymentId={}", payment.id)
+                    return
+                }
+                try {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+                        val now = LocalDateTime.now()
+                        val endAt = now.plusDays(product.periodDays.toLong())
+                        freshEnrollment.markPaid(startAt = now, endAt = endAt)
+                        enrollmentAdaptor.save(freshEnrollment)
+
+                        coinDomainService.issue(
+                            userId = fresh.userId,
+                            amount = coinPackage.coinAmount,
+                            referenceId = fresh.id,
+                            description = "멤버십 가입 (웹훅) - ${product.name}",
+                            enrollmentId = freshEnrollment.id,
+                            expireAt = endAt,
+                            sourceType = CoinLotSourceType.PURCHASE,
+                            sourceMeta = """{"membershipProductId":"${product.id}"}""",
+                        )
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                } catch (e: Exception) {
+                    log.error("웹훅 수신: 멤버십 발급 실패 paymentId={}", payment.id, e)
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        fresh.markIssueCoinFailed()
+                        paymentAdaptor.save(fresh)
+                    }
                 }
             }
         }

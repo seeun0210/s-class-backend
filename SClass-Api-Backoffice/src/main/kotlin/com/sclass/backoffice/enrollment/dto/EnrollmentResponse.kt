@@ -6,7 +6,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 
 data class EnrollmentResponse(
     val id: Long,
-    val courseId: Long,
+    val courseId: Long?,
     val studentUserId: String,
     val enrollmentType: EnrollmentType,
     val tuitionAmountWon: Int,
