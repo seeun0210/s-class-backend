@@ -10,6 +10,8 @@ import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionPolicy
 import com.sclass.domain.domains.commission.domain.CommissionStatus
 import com.sclass.domain.domains.commission.domain.OutputFormat
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.NoActiveMembershipException
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.file.domain.File
 import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
@@ -39,6 +41,7 @@ class CreateCommissionUseCaseTest {
     private lateinit var commissionReminderScheduler: CommissionReminderScheduler
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var commissionPolicyAdaptor: CommissionPolicyAdaptor
+    private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var useCase: CreateCommissionUseCase
 
     @BeforeEach
@@ -51,6 +54,8 @@ class CreateCommissionUseCaseTest {
         commissionReminderScheduler = mockk(relaxed = true)
         coinDomainService = mockk(relaxed = true)
         commissionPolicyAdaptor = mockk()
+        enrollmentAdaptor = mockk()
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any()) } returns true
         useCase =
             CreateCommissionUseCase(
                 commissionAdaptor,
@@ -61,6 +66,7 @@ class CreateCommissionUseCaseTest {
                 commissionReminderScheduler,
                 coinDomainService,
                 commissionPolicyAdaptor,
+                enrollmentAdaptor,
             )
     }
 
@@ -117,6 +123,15 @@ class CreateCommissionUseCaseTest {
             { assertEquals("미시경제학", result.guideInfo.subject) },
             { assertEquals("A4 3매 이내", result.guideInfo.volume) },
         )
+    }
+
+    @Test
+    fun `활성 멤버십이 없으면 의뢰 생성이 거부된다`() {
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any()) } returns false
+
+        assertThrows<NoActiveMembershipException> {
+            useCase.execute("student-user-id-0000000001", createRequest())
+        }
     }
 
     @Test

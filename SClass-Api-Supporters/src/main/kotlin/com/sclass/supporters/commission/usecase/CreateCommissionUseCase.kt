@@ -8,6 +8,8 @@ import com.sclass.domain.domains.commission.adaptor.CommissionPolicyAdaptor
 import com.sclass.domain.domains.commission.domain.Commission
 import com.sclass.domain.domains.commission.domain.CommissionFile
 import com.sclass.domain.domains.commission.domain.GuideInfo
+import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.NoActiveMembershipException
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.teacherassignment.adaptor.TeacherAssignmentAdaptor
 import com.sclass.domain.domains.user.domain.Platform
@@ -29,12 +31,15 @@ class CreateCommissionUseCase(
     private val commissionReminderScheduler: CommissionReminderScheduler,
     private val coinDomainService: CoinDomainService,
     private val commissionPolicyAdaptor: CommissionPolicyAdaptor,
+    private val enrollmentAdaptor: EnrollmentAdaptor,
 ) {
     @Transactional
     fun execute(
         studentUserId: String,
         request: CreateCommissionRequest,
     ): CommissionResponse {
+        if (!enrollmentAdaptor.hasActiveMembershipEnrollment(studentUserId)) throw NoActiveMembershipException()
+
         val assignment =
             teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(
                 studentUserId = studentUserId,
