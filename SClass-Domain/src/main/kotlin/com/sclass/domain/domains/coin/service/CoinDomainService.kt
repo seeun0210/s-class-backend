@@ -76,7 +76,7 @@ class CoinDomainService(
         }
         coinAdaptor.saveLots(touched.map { it.first })
 
-        val balanceAfter = coinAdaptor.sumActiveLots(userId, now)
+        val balanceAfter = available - amount
         coinAdaptor.saveTransactions(
             touched.map { (lot, used) ->
                 CoinTransaction(

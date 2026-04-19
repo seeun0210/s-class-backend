@@ -50,7 +50,7 @@ class CoinLot(
     val sourceMeta: String? = null,
 
     @Version
-    val version: Long = 0,
+    var version: Long = 0,
 ) : BaseTimeEntity() {
     fun isActive(now: LocalDateTime = LocalDateTime.now()): Boolean {
         val exp = expireAt

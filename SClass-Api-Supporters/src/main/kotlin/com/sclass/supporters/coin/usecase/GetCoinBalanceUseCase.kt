@@ -10,10 +10,5 @@ class GetCoinBalanceUseCase(
     private val coinAdaptor: CoinAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(userId: String): CoinBalanceResponse =
-        CoinBalanceResponse(
-            balance = coinAdaptor.sumActiveLots(userId),
-            totalIssued = 0,
-            totalUsed = 0,
-        )
+    fun execute(userId: String): CoinBalanceResponse = CoinBalanceResponse(balance = coinAdaptor.sumActiveLots(userId))
 }
