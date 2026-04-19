@@ -14,6 +14,11 @@ interface CoinLotCustomRepository {
         now: LocalDateTime,
     ): Int
 
+    fun findActive(
+        userId: String,
+        now: LocalDateTime,
+    ): List<CoinLot>
+
     fun findExpiringBefore(
         now: LocalDateTime,
         limit: Int,

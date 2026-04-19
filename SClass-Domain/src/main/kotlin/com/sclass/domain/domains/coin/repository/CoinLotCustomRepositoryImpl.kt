@@ -46,6 +46,27 @@ class CoinLotCustomRepositoryImpl(
                 coinLot.expireAt.isNull.or(coinLot.expireAt.gt(now)),
             ).fetchOne() ?: 0
 
+    override fun findActive(
+        userId: String,
+        now: LocalDateTime,
+    ): List<CoinLot> =
+        queryFactory
+            .selectFrom(coinLot)
+            .where(
+                coinLot.userId.eq(userId),
+                coinLot.remaining.gt(0),
+                coinLot.expireAt.isNull.or(coinLot.expireAt.gt(now)),
+            ).orderBy(
+                Expressions
+                    .numberTemplate(
+                        Int::class.java,
+                        "case when {0} is null then 1 else 0 end",
+                        coinLot.expireAt,
+                    ).asc(),
+                coinLot.expireAt.asc(),
+                coinLot.createdAt.asc(),
+            ).fetch()
+
     override fun findExpiringBefore(
         now: LocalDateTime,
         limit: Int,
