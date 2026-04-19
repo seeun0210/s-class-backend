@@ -7,6 +7,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
+import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
 import com.sclass.domain.domains.enrollment.exception.EnrollmentNotFoundException
 import com.sclass.domain.domains.enrollment.repository.EnrollmentRepository
 import org.springframework.data.domain.Page
@@ -60,6 +61,15 @@ class EnrollmentAdaptor(
                 setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
             ).firstOrNull()
 
+    fun findResumableEnrollment(
+        courseId: Long,
+        studentUserId: String,
+    ): Enrollment? {
+        val live = findLiveEnrollment(courseId, studentUserId) ?: return null
+        if (live.status == EnrollmentStatus.ACTIVE) throw EnrollmentAlreadyExistsException()
+        return live
+    }
+
     fun findLiveMembershipEnrollment(
         productId: String,
         studentUserId: String,
@@ -70,6 +80,15 @@ class EnrollmentAdaptor(
                 studentUserId,
                 setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
             ).firstOrNull()
+
+    fun findResumableMembershipEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? {
+        val live = findLiveMembershipEnrollment(productId, studentUserId) ?: return null
+        if (live.status == EnrollmentStatus.ACTIVE) throw EnrollmentAlreadyExistsException()
+        return live
+    }
 
     fun findByPaymentId(paymentId: String): Enrollment =
         enrollmentRepository.findByPaymentId(paymentId) ?: throw EnrollmentNotFoundException()

@@ -4,7 +4,6 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.common.vo.Ulid
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
-import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
 import com.sclass.domain.domains.enrollment.exception.MembershipCapacityExceededException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
@@ -39,12 +38,14 @@ class PrepareMembershipPurchaseUseCase(
         if (!product.visible) throw ProductNotPurchasableException()
         product.validateSaleable(LocalDateTime.now())
 
+        enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId)?.let { live ->
+            val payment = paymentAdaptor.findById(live.paymentId!!)
+            return PrepareMembershipPurchaseResponse(payment.id, payment.pgOrderId, payment.amount, product.id, product.name)
+        }
+
         product.maxEnrollments?.let { cap ->
             val live = enrollmentAdaptor.countLiveMembershipEnrollments(product.id)
             if (live >= cap) throw MembershipCapacityExceededException()
-        }
-        if (enrollmentAdaptor.findLiveMembershipEnrollment(product.id, studentUserId) != null) {
-            throw EnrollmentAlreadyExistsException()
         }
 
         val payment =

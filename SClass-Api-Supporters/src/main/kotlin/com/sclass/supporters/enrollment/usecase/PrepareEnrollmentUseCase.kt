@@ -6,7 +6,6 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.exception.CourseNotEnrollableException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
-import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
@@ -35,17 +34,18 @@ class PrepareEnrollmentUseCase(
         pgType: PgType,
     ): PrepareEnrollmentResponse {
         val course = courseAdaptor.findById(courseId)
-        val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId)
-        if (!course.canEnroll(LocalDateTime.now(), liveCount)) {
-            throw CourseNotEnrollableException()
-        }
-
         val product =
             productAdaptor.findById(course.productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
 
-        if (enrollmentAdaptor.findLiveEnrollment(courseId, studentUserId) != null) {
-            throw EnrollmentAlreadyExistsException()
+        enrollmentAdaptor.findResumableEnrollment(courseId, studentUserId)?.let { live ->
+            val payment = paymentAdaptor.findById(live.paymentId!!)
+            return PrepareEnrollmentResponse(payment.id, payment.pgOrderId, payment.amount, course.id, product.name)
+        }
+
+        val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId)
+        if (!course.canEnroll(LocalDateTime.now(), liveCount)) {
+            throw CourseNotEnrollableException()
         }
 
         val payment =

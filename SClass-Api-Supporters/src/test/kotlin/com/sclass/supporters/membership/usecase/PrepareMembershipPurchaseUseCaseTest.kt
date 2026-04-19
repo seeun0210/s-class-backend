@@ -99,7 +99,7 @@ class PrepareMembershipPurchaseUseCaseTest {
             val product = visibleMembership()
             val enrollmentSlot = slot<Enrollment>()
             every { productAdaptor.findById(membershipProductId) } returns product
-            every { enrollmentAdaptor.findLiveMembershipEnrollment(product.id, studentUserId) } returns null
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(capture(enrollmentSlot)) } answers { enrollmentSlot.captured }
 
@@ -119,7 +119,7 @@ class PrepareMembershipPurchaseUseCaseTest {
         fun `maxEnrollments null이면 정원 검증을 건너뛴다`() {
             val product = visibleMembership(maxEnrollments = null)
             every { productAdaptor.findById(membershipProductId) } returns product
-            every { enrollmentAdaptor.findLiveMembershipEnrollment(product.id, studentUserId) } returns null
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
@@ -133,7 +133,7 @@ class PrepareMembershipPurchaseUseCaseTest {
             val product = visibleMembership(maxEnrollments = 10)
             every { productAdaptor.findById(membershipProductId) } returns product
             every { enrollmentAdaptor.countLiveMembershipEnrollments(product.id) } returns 5L
-            every { enrollmentAdaptor.findLiveMembershipEnrollment(product.id, studentUserId) } returns null
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
@@ -168,6 +168,7 @@ class PrepareMembershipPurchaseUseCaseTest {
         fun `정원 초과 시 MembershipCapacityExceededException이 발생한다`() {
             val product = visibleMembership(maxEnrollments = 10)
             every { productAdaptor.findById(membershipProductId) } returns product
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } returns null
             every { enrollmentAdaptor.countLiveMembershipEnrollments(product.id) } returns 10L
 
             assertThatThrownBy {
@@ -191,7 +192,19 @@ class PrepareMembershipPurchaseUseCaseTest {
         }
 
         @Test
-        fun `활성 멤버십이 이미 있으면 EnrollmentAlreadyExistsException이 발생한다`() {
+        fun `ACTIVE 멤버십이 이미 있으면 EnrollmentAlreadyExistsException이 발생한다`() {
+            val product = visibleMembership()
+            every { productAdaptor.findById(membershipProductId) } returns product
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } throws
+                EnrollmentAlreadyExistsException()
+
+            assertThatThrownBy {
+                useCase.execute(studentUserId, membershipProductId, PgType.NICEPAY)
+            }.isInstanceOf(EnrollmentAlreadyExistsException::class.java)
+        }
+
+        @Test
+        fun `PENDING_PAYMENT 멤버십이 이미 있으면 기존 결제 정보를 반환한다`() {
             val product = visibleMembership()
             val existing =
                 Enrollment.createForMembershipPurchase(
@@ -201,11 +214,14 @@ class PrepareMembershipPurchaseUseCaseTest {
                     paymentId = "payment-id-000000000001",
                 )
             every { productAdaptor.findById(membershipProductId) } returns product
-            every { enrollmentAdaptor.findLiveMembershipEnrollment(product.id, studentUserId) } returns existing
+            every { enrollmentAdaptor.findResumableMembershipEnrollment(product.id, studentUserId) } returns existing
+            every { paymentAdaptor.findById("payment-id-000000000001") } returns pendingPayment()
 
-            assertThatThrownBy {
-                useCase.execute(studentUserId, membershipProductId, PgType.NICEPAY)
-            }.isInstanceOf(EnrollmentAlreadyExistsException::class.java)
+            val result = useCase.execute(studentUserId, membershipProductId, PgType.NICEPAY)
+
+            assertThat(result.pgOrderId).isEqualTo("order-id-000000000001")
+            verify(exactly = 0) { paymentAdaptor.save(any()) }
+            verify(exactly = 0) { enrollmentAdaptor.save(any()) }
         }
     }
 }
