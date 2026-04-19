@@ -217,6 +217,121 @@ class HandleNicePayWebhookUseCaseTest {
         }
     }
 
+    @Test
+    fun `CourseProduct 결제 시 코스가 UNLISTED이면 자동 환불 처리된다`() {
+        val payment = courseProductPayment()
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
+        val enrollment =
+            Enrollment.createForPurchase(
+                courseId = 1L,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+            )
+        val course =
+            Course(
+                id = 1L,
+                productId = "prod-00000000000000000000000001",
+                teacherUserId = "teacher-id-00000000001",
+                status = CourseStatus.UNLISTED,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { courseAdaptor.findById(1L) } returns course
+        every { pgGateway.cancel(any(), any(), any()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(EnrollmentStatus.CANCELLED, enrollment.status) },
+        )
+        verify(exactly = 0) { lessonService.createLessonsForEnrollment(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `CourseProduct 결제 시 코스가 ARCHIVED이면 자동 환불 처리된다`() {
+        val payment = courseProductPayment()
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
+        val enrollment =
+            Enrollment.createForPurchase(
+                courseId = 1L,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+            )
+        val course =
+            Course(
+                id = 1L,
+                productId = "prod-00000000000000000000000001",
+                teacherUserId = "teacher-id-00000000001",
+                status = CourseStatus.ARCHIVED,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { courseAdaptor.findById(1L) } returns course
+        every { pgGateway.cancel(any(), any(), any()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(EnrollmentStatus.CANCELLED, enrollment.status) },
+        )
+    }
+
+    @Test
+    fun `자동 환불 시 PG 취소 API 실패하면 PG_CANCEL_FAILED로 마킹된다`() {
+        val payment = courseProductPayment()
+        val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
+        val enrollment =
+            Enrollment.createForPurchase(
+                courseId = 1L,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+            )
+        val course =
+            Course(
+                id = 1L,
+                productId = "prod-00000000000000000000000001",
+                teacherUserId = "teacher-id-00000000001",
+                status = CourseStatus.UNLISTED,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { courseAdaptor.findById(1L) } returns course
+        every { pgGateway.cancel(any(), any(), any()) } throws RuntimeException("PG 오류")
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(EnrollmentStatus.CANCELLED, enrollment.status) },
+        )
+    }
+
     private fun pendingPayment() =
         Payment(
             userId = "user-00000000000000000000000001",
