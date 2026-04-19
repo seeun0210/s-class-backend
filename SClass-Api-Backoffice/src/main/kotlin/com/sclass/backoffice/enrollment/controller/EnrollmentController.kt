@@ -3,8 +3,10 @@ package com.sclass.backoffice.enrollment.controller
 import com.sclass.backoffice.enrollment.dto.EnrollmentLessonListResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentPageResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentResponse
+import com.sclass.backoffice.enrollment.dto.ExtendMembershipExpireRequest
 import com.sclass.backoffice.enrollment.dto.GrantEnrollmentRequest
 import com.sclass.backoffice.enrollment.dto.GrantMembershipEnrollmentRequest
+import com.sclass.backoffice.enrollment.usecase.ExtendMembershipExpireUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentLessonListUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentListUseCase
 import com.sclass.backoffice.enrollment.usecase.GrantEnrollmentUseCase
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.data.web.PageableDefault
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 class EnrollmentController(
     private val grantEnrollmentUseCase: GrantEnrollmentUseCase,
     private val grantMembershipEnrollmentUseCase: GrantMembershipEnrollmentUseCase,
+    private val extendMembershipExpireUseCase: ExtendMembershipExpireUseCase,
     private val getEnrollmentListUseCase: GetEnrollmentListUseCase,
     private val getEnrollmentLessonListUseCase: GetEnrollmentLessonListUseCase,
 ) {
@@ -54,6 +58,12 @@ class EnrollmentController(
         @PageableDefault(size = 20, sort = ["createdAt"], direction = Sort.Direction.DESC) pageable: Pageable,
     ): ApiResponse<EnrollmentPageResponse> =
         ApiResponse.success(getEnrollmentListUseCase.execute(studentUserId, teacherUserId, courseId, status, pageable))
+
+    @PatchMapping("/{enrollmentId}/expire-at")
+    fun extendMembershipExpire(
+        @PathVariable enrollmentId: Long,
+        @RequestBody @Valid request: ExtendMembershipExpireRequest,
+    ): ApiResponse<EnrollmentResponse> = ApiResponse.success(extendMembershipExpireUseCase.execute(enrollmentId, request))
 
     @GetMapping("/{enrollmentId}/lessons")
     fun getEnrollmentLessonList(
