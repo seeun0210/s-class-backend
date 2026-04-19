@@ -12,6 +12,7 @@ import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
+import com.sclass.domain.domains.enrollment.dto.ProductEnrollmentCountDto
 import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
 import com.sclass.domain.domains.user.domain.QUser
 import com.sclass.domain.domains.user.domain.QUser.user
@@ -113,6 +114,22 @@ class EnrollmentCustomRepositoryImpl(
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
+    }
+
+    override fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): List<ProductEnrollmentCountDto> {
+        if (productIds.isEmpty()) return emptyList()
+        return queryFactory
+            .select(enrollment.productId, enrollment.count())
+            .from(enrollment)
+            .where(
+                enrollment.productId.`in`(productIds),
+                enrollment.status.`in`(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+            ).groupBy(enrollment.productId)
+            .fetch()
+            .mapNotNull { tuple ->
+                val productId = tuple[enrollment.productId] ?: return@mapNotNull null
+                ProductEnrollmentCountDto(productId = productId, count = tuple[enrollment.count()] ?: 0L)
+            }
     }
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {

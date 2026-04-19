@@ -25,7 +25,7 @@ class UpdateMembershipProductUseCase(
             productAdaptor.findById(productId) as? MembershipProduct
                 ?: throw ProductTypeMismatchException()
 
-        request.coinPackageId?.let { coinPackageAdaptor.findById(it) }
+        val newCoinPackage = request.coinPackageId?.let { coinPackageAdaptor.findById(it) }
 
         product.updateCatalog(
             newName = request.name,
@@ -39,7 +39,7 @@ class UpdateMembershipProductUseCase(
             newCoinPackageId = request.coinPackageId,
         )
 
-        val coinPackage = coinPackageAdaptor.findById(product.coinPackageId)
+        val coinPackage = newCoinPackage ?: coinPackageAdaptor.findById(product.coinPackageId)
         return MembershipProductResponse.from(
             product = product,
             thumbnailUrl = thumbnailUrlResolver.resolve(product.thumbnailFileId),

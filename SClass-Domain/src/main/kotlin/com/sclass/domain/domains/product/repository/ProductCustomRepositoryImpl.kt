@@ -1,9 +1,13 @@
 package com.sclass.domain.domains.product.repository
 
+import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
+import com.sclass.domain.domains.coin.domain.QCoinPackage
 import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.domain.ProductType
+import com.sclass.domain.domains.product.domain.QMembershipProduct
 import com.sclass.domain.domains.product.domain.QProduct
+import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -19,49 +23,35 @@ class ProductCustomRepositoryImpl(
                 type?.let { QProduct.product.instanceOf(it.entityClass) },
             ).fetch()
 
-    override fun findVisibleByType(
-        type: ProductType,
+    override fun findMembershipsWithCoinPackage(
+        visibleOnly: Boolean,
         pageable: Pageable,
-    ): Page<Product> {
-        val where =
-            arrayOf(
-                QProduct.product.visible.isTrue,
-                QProduct.product.instanceOf(type.entityClass),
-            )
-        val content =
-            queryFactory
-                .selectFrom(QProduct.product)
-                .where(*where)
-                .offset(pageable.offset)
-                .limit(pageable.pageSize.toLong())
-                .orderBy(QProduct.product.createdAt.desc())
-                .fetch()
-        val total =
-            queryFactory
-                .select(QProduct.product.count())
-                .from(QProduct.product)
-                .where(*where)
-                .fetchOne() ?: 0L
-        return PageImpl(content, pageable, total)
-    }
+    ): Page<MembershipProductWithCoinPackageDto> {
+        val qMembership = QMembershipProduct.membershipProduct
+        val qCoin = QCoinPackage.coinPackage
+        val where: BooleanExpression? = if (visibleOnly) qMembership.visible.isTrue else null
 
-    override fun findByType(
-        type: ProductType,
-        pageable: Pageable,
-    ): Page<Product> {
-        val where = QProduct.product.instanceOf(type.entityClass)
         val content =
             queryFactory
-                .selectFrom(QProduct.product)
+                .select(qMembership, qCoin)
+                .from(qMembership)
+                .leftJoin(qCoin)
+                .on(qMembership.coinPackageId.eq(qCoin.id))
                 .where(where)
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
-                .orderBy(QProduct.product.createdAt.desc())
+                .orderBy(qMembership.createdAt.desc())
                 .fetch()
+                .map { tuple ->
+                    MembershipProductWithCoinPackageDto(
+                        product = tuple[qMembership]!!,
+                        coinPackage = tuple[qCoin],
+                    )
+                }
         val total =
             queryFactory
-                .select(QProduct.product.count())
-                .from(QProduct.product)
+                .select(qMembership.count())
+                .from(qMembership)
                 .where(where)
                 .fetchOne() ?: 0L
         return PageImpl(content, pageable, total)

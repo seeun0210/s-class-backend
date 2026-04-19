@@ -87,4 +87,9 @@ class EnrollmentAdaptor(
             productId,
             setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
         )
+
+    fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): Map<String, Long> =
+        enrollmentRepository
+            .countLiveMembershipEnrollmentsByProductIds(productIds)
+            .associate { it.productId to it.count }
 }

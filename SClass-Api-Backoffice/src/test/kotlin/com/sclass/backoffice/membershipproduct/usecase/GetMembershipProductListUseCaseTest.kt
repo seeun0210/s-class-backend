@@ -1,9 +1,9 @@
 package com.sclass.backoffice.membershipproduct.usecase
 
-import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.MembershipProduct
+import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
@@ -15,16 +15,14 @@ import org.springframework.data.domain.PageRequest
 
 class GetMembershipProductListUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
-    private lateinit var coinPackageAdaptor: CoinPackageAdaptor
     private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: GetMembershipProductListUseCase
 
     @BeforeEach
     fun setUp() {
         productAdaptor = mockk()
-        coinPackageAdaptor = mockk()
         thumbnailUrlResolver = mockk()
-        useCase = GetMembershipProductListUseCase(productAdaptor, coinPackageAdaptor, thumbnailUrlResolver)
+        useCase = GetMembershipProductListUseCase(productAdaptor, thumbnailUrlResolver)
     }
 
     @Test
@@ -34,9 +32,20 @@ class GetMembershipProductListUseCaseTest {
         val hidden =
             MembershipProduct(name = "B", priceWon = 20000, periodDays = 60, coinPackageId = "cp-2")
         val pageable = PageRequest.of(0, 20)
-        every { productAdaptor.findAllMemberships(pageable) } returns PageImpl(listOf(visible, hidden), pageable, 2)
-        every { coinPackageAdaptor.findById("cp-1") } returns CoinPackage(name = "1", priceWon = 10000, coinAmount = 1000)
-        every { coinPackageAdaptor.findById("cp-2") } returns CoinPackage(name = "2", priceWon = 20000, coinAmount = 2000)
+        val rows =
+            listOf(
+                MembershipProductWithCoinPackageDto(
+                    product = visible,
+                    coinPackage = CoinPackage(name = "1", priceWon = 10000, coinAmount = 1000),
+                ),
+                MembershipProductWithCoinPackageDto(
+                    product = hidden,
+                    coinPackage = CoinPackage(name = "2", priceWon = 20000, coinAmount = 2000),
+                ),
+            )
+        every {
+            productAdaptor.findMembershipsWithCoinPackage(visibleOnly = false, pageable = pageable)
+        } returns PageImpl(rows, pageable, 2)
         every { thumbnailUrlResolver.resolve(any()) } returns null
 
         val result = useCase.execute(pageable)
