@@ -10,5 +10,9 @@ class GetCoinBalanceUseCase(
     private val coinAdaptor: CoinAdaptor,
 ) {
     @Transactional(readOnly = true)
-    fun execute(userId: String): CoinBalanceResponse = CoinBalanceResponse(balance = coinAdaptor.sumActiveLots(userId))
+    fun execute(userId: String): CoinBalanceResponse {
+        val lots = coinAdaptor.findActiveLots(userId)
+        val balance = lots.sumOf { it.remaining }
+        return CoinBalanceResponse.of(balance, lots)
+    }
 }

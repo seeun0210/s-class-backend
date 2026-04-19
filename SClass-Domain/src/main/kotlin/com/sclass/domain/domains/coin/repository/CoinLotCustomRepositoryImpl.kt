@@ -1,6 +1,5 @@
 package com.sclass.domain.domains.coin.repository
 
-import com.querydsl.core.types.dsl.Expressions
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.coin.domain.CoinLot
 import com.sclass.domain.domains.coin.domain.QCoinLot.coinLot
@@ -21,14 +20,7 @@ class CoinLotCustomRepositoryImpl(
                 coinLot.remaining.gt(0),
                 coinLot.expireAt.isNull.or(coinLot.expireAt.gt(now)),
             ).orderBy(
-                // expireAt null 을 뒤로 (만료 임박 순)
-                Expressions
-                    .numberTemplate(
-                        Int::class.java,
-                        "case when {0} is null then 1 else 0 end",
-                        coinLot.expireAt,
-                    ).asc(),
-                coinLot.expireAt.asc(),
+                coinLot.expireAt.asc().nullsLast(),
                 coinLot.createdAt.asc(),
             ).setLockMode(LockModeType.PESSIMISTIC_WRITE)
             .fetch()
@@ -45,6 +37,21 @@ class CoinLotCustomRepositoryImpl(
                 coinLot.remaining.gt(0),
                 coinLot.expireAt.isNull.or(coinLot.expireAt.gt(now)),
             ).fetchOne() ?: 0
+
+    override fun findActive(
+        userId: String,
+        now: LocalDateTime,
+    ): List<CoinLot> =
+        queryFactory
+            .selectFrom(coinLot)
+            .where(
+                coinLot.userId.eq(userId),
+                coinLot.remaining.gt(0),
+                coinLot.expireAt.isNull.or(coinLot.expireAt.gt(now)),
+            ).orderBy(
+                coinLot.expireAt.asc().nullsLast(),
+                coinLot.createdAt.asc(),
+            ).fetch()
 
     override fun findExpiringBefore(
         now: LocalDateTime,
