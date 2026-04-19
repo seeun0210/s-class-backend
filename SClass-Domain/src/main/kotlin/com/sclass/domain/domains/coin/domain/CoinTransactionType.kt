@@ -4,4 +4,5 @@ enum class CoinTransactionType {
     ISSUED,
     DEDUCTED,
     REFUNDED,
+    EXPIRED,
 }

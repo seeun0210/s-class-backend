@@ -39,6 +39,9 @@ class CoinTransaction(
     @Column
     val description: String? = null,
 
+    @Column(name = "lot_id", length = 26)
+    val lotId: String? = null,
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: LocalDateTime = LocalDateTime.MIN,
