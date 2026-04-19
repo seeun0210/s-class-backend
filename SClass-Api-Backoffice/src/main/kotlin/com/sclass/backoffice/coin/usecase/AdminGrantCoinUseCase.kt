@@ -21,6 +21,7 @@ class AdminGrantCoinUseCase(
                 userId = request.studentUserId,
                 amount = request.amount,
                 description = "어드민 코인 지급 - ${request.grantReason}",
+                enrollmentId = request.enrollmentId,
                 expireAt = request.expireAt,
                 sourceType = CoinLotSourceType.ADMIN_GRANT,
                 sourceMeta = """{"grantedByUserId":"$adminUserId","reason":"${request.grantReason}"}""",
