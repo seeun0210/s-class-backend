@@ -16,7 +16,7 @@ brew install --cask session-manager-plugin
 
 ```bash
 aws ssm start-session \
-  --region ap-northeast-1 \
+  --region ap-northeast-2 \
   --target <NAT_INSTANCE_ID> \
   --document-name AWS-StartPortForwardingSessionToRemoteHost \
   --parameters '{"host":["<RDS_ENDPOINT>"],"portNumber":["3306"],"localPortNumber":["13306"]}'
