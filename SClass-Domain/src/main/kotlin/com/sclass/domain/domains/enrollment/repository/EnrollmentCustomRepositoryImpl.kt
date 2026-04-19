@@ -9,19 +9,48 @@ import com.sclass.domain.domains.course.domain.QCourse.course
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
+import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
+import com.sclass.domain.domains.enrollment.dto.ProductEnrollmentCountDto
 import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
+import com.sclass.domain.domains.product.domain.QMembershipProduct.membershipProduct
 import com.sclass.domain.domains.user.domain.QUser
 import com.sclass.domain.domains.user.domain.QUser.user
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
+import java.time.LocalDateTime
 
 class EnrollmentCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : EnrollmentCustomRepository {
+    override fun findAllByStudentUserIdWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
+        queryFactory
+            .select(enrollment, course, courseProduct, user.name, membershipProduct)
+            .from(enrollment)
+            .leftJoin(course)
+            .on(course.id.eq(enrollment.courseId))
+            .leftJoin(courseProduct)
+            .on(courseProduct.id.eq(course.productId))
+            .leftJoin(user)
+            .on(user.id.eq(course.teacherUserId))
+            .leftJoin(membershipProduct)
+            .on(membershipProduct.id.eq(enrollment.productId))
+            .where(enrollment.studentUserId.eq(studentUserId))
+            .orderBy(enrollment.createdAt.desc())
+            .fetch()
+            .map { tuple ->
+                EnrollmentWithCourseDto(
+                    enrollment = tuple[enrollment]!!,
+                    course = tuple[course],
+                    courseProduct = tuple[courseProduct],
+                    teacherName = tuple[user.name],
+                    membershipProduct = tuple[membershipProduct],
+                )
+            }
+
     override fun findAllByCourseIdWithStudent(courseId: Long): List<EnrollmentWithStudentDto> =
         queryFactory
             .select(enrollment, user)
@@ -55,12 +84,14 @@ class EnrollmentCustomRepositoryImpl(
 
         val content =
             queryFactory
-                .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name)
+                .select(enrollment, studentUser.name, courseProduct.name, course.teacherUserId, teacherUser.name, membershipProduct.name)
                 .from(enrollment)
-                .join(course)
+                .leftJoin(course)
                 .on(course.id.eq(enrollment.courseId))
                 .leftJoin(courseProduct)
                 .on(courseProduct.id.eq(course.productId))
+                .leftJoin(membershipProduct)
+                .on(membershipProduct.id.eq(enrollment.productId))
                 .leftJoin(studentUser)
                 .on(studentUser.id.eq(enrollment.studentUserId))
                 .leftJoin(teacherUser)
@@ -77,6 +108,7 @@ class EnrollmentCustomRepositoryImpl(
                         courseName = tuple[courseProduct.name] ?: "",
                         teacherUserId = tuple[course.teacherUserId] ?: "",
                         teacherName = tuple[teacherUser.name] ?: "",
+                        productName = tuple[membershipProduct.name] ?: "",
                     )
                 }
 
@@ -84,13 +116,43 @@ class EnrollmentCustomRepositoryImpl(
             queryFactory
                 .select(enrollment.count())
                 .from(enrollment)
-                .join(course)
+                .leftJoin(course)
                 .on(course.id.eq(enrollment.courseId))
                 .where(*where.toTypedArray())
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
     }
+
+    override fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): List<ProductEnrollmentCountDto> {
+        if (productIds.isEmpty()) return emptyList()
+        return queryFactory
+            .select(enrollment.productId, enrollment.count())
+            .from(enrollment)
+            .where(
+                enrollment.productId.`in`(productIds),
+                enrollment.status.`in`(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+            ).groupBy(enrollment.productId)
+            .fetch()
+            .mapNotNull { tuple ->
+                val productId = tuple[enrollment.productId] ?: return@mapNotNull null
+                ProductEnrollmentCountDto(productId = productId, count = tuple[enrollment.count()] ?: 0L)
+            }
+    }
+
+    override fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Boolean =
+        queryFactory
+            .selectOne()
+            .from(enrollment)
+            .where(
+                enrollment.studentUserId.eq(studentUserId),
+                enrollment.productId.isNotNull,
+                enrollment.status.eq(EnrollmentStatus.ACTIVE),
+                enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
+            ).fetchFirst() != null
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(enrollment.createdAt.desc())

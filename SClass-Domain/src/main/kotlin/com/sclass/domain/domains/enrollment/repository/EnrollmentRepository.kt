@@ -28,6 +28,27 @@ interface EnrollmentRepository :
         statuses: Collection<EnrollmentStatus>,
     ): List<Enrollment>
 
+    fun findAllByProductIdAndStudentUserIdAndStatusIn(
+        productId: String,
+        studentUserId: String,
+        statuses: Collection<EnrollmentStatus>,
+    ): List<Enrollment>
+
     // Payment → Enrollment 역조회 (콜백 처리용)
     fun findByPaymentId(paymentId: String): Enrollment?
+
+    fun findAllByStatusAndCreatedAtBefore(
+        status: EnrollmentStatus,
+        createdAt: java.time.LocalDateTime,
+    ): List<Enrollment>
+
+    fun countByCourseIdAndStatusIn(
+        courseId: Long,
+        statuses: Collection<EnrollmentStatus>,
+    ): Long
+
+    fun countByProductIdAndStatusIn(
+        productId: String,
+        statuses: Collection<EnrollmentStatus>,
+    ): Long
 }

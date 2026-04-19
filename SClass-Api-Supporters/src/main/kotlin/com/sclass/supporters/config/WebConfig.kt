@@ -22,8 +22,6 @@ class WebConfig(
                 "/api/v1/auth/**",
                 "/api/v1/oauth/**",
                 "/api/v1/auth/phone/**",
-                "/api/v1/payments/nicepay",
-                "/api/v1/partnership-leads",
             )
     }
 

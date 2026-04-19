@@ -2,11 +2,15 @@ package com.sclass.supporters.payment.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.MembershipProduct
+import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import com.sclass.infrastructure.redis.DistributedLock
@@ -14,10 +18,12 @@ import com.sclass.infrastructure.redis.LockKey
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 
 @UseCase
 class HandleNicePayReturnUseCase(
     private val paymentAdaptor: PaymentAdaptor,
+    private val productAdaptor: ProductAdaptor,
     private val coinPackageAdaptor: CoinPackageAdaptor,
     private val coinDomainService: CoinDomainService,
     private val enrollmentAdaptor: EnrollmentAdaptor,
@@ -123,6 +129,35 @@ class HandleNicePayReturnUseCase(
                     }
                     log.info("결제 완료(수강): paymentId={}", payment.id)
                     successUrl(null)
+                }
+                PaymentTargetType.MEMBERSHIP_PRODUCT -> {
+                    val product =
+                        productAdaptor.findById(payment.targetId) as? MembershipProduct
+                            ?: throw ProductTypeMismatchException()
+                    val coinPackage = coinPackageAdaptor.findById(product.coinPackageId)
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+                        val now = LocalDateTime.now()
+                        val period = product.resolveActivePeriod(now)
+                        enrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
+                        enrollmentAdaptor.save(enrollment)
+
+                        coinDomainService.issue(
+                            userId = fresh.userId,
+                            amount = coinPackage.coinAmount,
+                            referenceId = fresh.id,
+                            description = "멤버십 가입 - ${product.name}",
+                            enrollmentId = enrollment.id,
+                            expireAt = period.endAt,
+                            sourceType = CoinLotSourceType.PURCHASE,
+                            sourceMeta = """{"membershipProductId":"${product.id}"}""",
+                        )
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    log.info("결제 완료(멤버십): paymentId={}", payment.id)
+                    successUrl(coinPackage.coinAmount)
                 }
             }
         } catch (e: Exception) {

@@ -5,6 +5,7 @@ import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertAll
@@ -15,16 +16,23 @@ import org.springframework.data.domain.PageRequest
 
 class GetCourseListUseCaseTest {
     private val courseAdaptor = mockk<CourseAdaptor>()
-    private val useCase = GetCourseListUseCase(courseAdaptor)
+    private val thumbnailUrlResolver =
+        mockk<ThumbnailUrlResolver>().also {
+            every { it.resolve(any()) } answers {
+                firstArg<String?>()?.let { id -> "https://static.test.sclass.click/course_thumbnail/$id" }
+            }
+        }
+    private val useCase = GetCourseListUseCase(courseAdaptor, thumbnailUrlResolver)
 
     private fun createCourseDto(
         teacherUserId: String = "teacher01",
         teacherName: String = "김선생",
         courseName: String = "수학 기초",
-        status: CourseStatus = CourseStatus.ACTIVE,
+        status: CourseStatus = CourseStatus.LISTED,
         enrollmentCount: Long = 5,
         totalLessons: Int = 12,
         priceWon: Int = 300000,
+        thumbnailFileId: String? = null,
     ) = CourseWithTeacherAndEnrollmentCountDto(
         course =
             Course(
@@ -39,6 +47,7 @@ class GetCourseListUseCaseTest {
                 priceWon = priceWon,
                 totalLessons = totalLessons,
                 description = "설명",
+                thumbnailFileId = thumbnailFileId,
             ),
         teacherName = teacherName,
         enrollmentCount = enrollmentCount,
@@ -140,5 +149,30 @@ class GetCourseListUseCaseTest {
             { assertEquals(0, result.totalElements) },
             { assertEquals(0, result.content.size) },
         )
+    }
+
+    @Test
+    fun `썸네일이 있으면 thumbnailUrl을 CDN 경로로 채운다`() {
+        val dto = createCourseDto(thumbnailFileId = "file-id-001")
+        val pageable = PageRequest.of(0, 20)
+        every { courseAdaptor.searchCourses(null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, pageable)
+
+        assertEquals(
+            "https://static.test.sclass.click/course_thumbnail/file-id-001",
+            result.content[0].thumbnailUrl,
+        )
+    }
+
+    @Test
+    fun `썸네일이 없으면 thumbnailUrl은 null`() {
+        val dto = createCourseDto(thumbnailFileId = null)
+        val pageable = PageRequest.of(0, 20)
+        every { courseAdaptor.searchCourses(null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, pageable)
+
+        assertEquals(null, result.content[0].thumbnailUrl)
     }
 }

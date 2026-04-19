@@ -12,4 +12,6 @@ dependencies {
     testImplementation("software.amazon.awssdk:s3")
     testImplementation(platform("com.google.cloud:libraries-bom:26.55.0"))
     testImplementation("com.google.cloud:google-cloud-storage")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 }

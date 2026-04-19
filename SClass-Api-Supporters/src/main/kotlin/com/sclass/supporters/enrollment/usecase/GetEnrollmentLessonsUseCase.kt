@@ -20,7 +20,8 @@ class GetEnrollmentLessonsUseCase(
         enrollmentId: Long,
     ): List<LessonResponse> {
         val enrollment = enrollmentAdaptor.findById(enrollmentId)
-        val course = courseAdaptor.findById(enrollment.courseId)
+        val courseId = enrollment.courseId ?: throw EnrollmentUnauthorizedAccessException()
+        val course = courseAdaptor.findById(courseId)
 
         val isStudent = enrollment.studentUserId == userId
         val isTeacher = course.teacherUserId == userId

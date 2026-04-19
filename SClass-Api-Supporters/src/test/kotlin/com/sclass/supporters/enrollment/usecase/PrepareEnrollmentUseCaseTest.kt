@@ -3,7 +3,7 @@ package com.sclass.supporters.enrollment.usecase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
-import com.sclass.domain.domains.course.exception.CourseNotActiveException
+import com.sclass.domain.domains.course.exception.CourseNotEnrollableException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
@@ -42,12 +42,12 @@ class PrepareEnrollmentUseCaseTest {
         useCase = PrepareEnrollmentUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor, paymentAdaptor)
     }
 
-    private fun activeCourse() =
+    private fun listedCourse() =
         Course(
             id = 1L,
             productId = "product-id-00000000001",
             teacherUserId = "teacher-id-00000000001",
-            status = CourseStatus.ACTIVE,
+            status = CourseStatus.LISTED,
         )
 
     private fun draftCourse() =
@@ -80,9 +80,10 @@ class PrepareEnrollmentUseCaseTest {
         @Test
         fun `결제 준비 시 Payment와 Enrollment가 생성된다`() {
             val enrollmentSlot = slot<Enrollment>()
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
+            every { enrollmentAdaptor.countLiveEnrollments(1L) } returns 0L
             every { productAdaptor.findById("product-id-00000000001") } returns courseProduct()
-            every { enrollmentAdaptor.findLiveEnrollment(1L, "student-id-00000000001") } returns null
+            every { enrollmentAdaptor.findResumableEnrollment(1L, "student-id-00000000001") } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(capture(enrollmentSlot)) } answers { enrollmentSlot.captured }
 
@@ -99,26 +100,22 @@ class PrepareEnrollmentUseCaseTest {
     @Nested
     inner class Failure {
         @Test
-        fun `코스가 ACTIVE가 아니면 CourseNotActiveException이 발생한다`() {
+        fun `코스가 등록 불가능하면 CourseNotEnrollableException이 발생한다`() {
             every { courseAdaptor.findById(1L) } returns draftCourse()
+            every { productAdaptor.findById(any()) } returns courseProduct()
+            every { enrollmentAdaptor.findResumableEnrollment(any(), any()) } returns null
+            every { enrollmentAdaptor.countLiveEnrollments(1L) } returns 0L
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
-            }.isInstanceOf(CourseNotActiveException::class.java)
+            }.isInstanceOf(CourseNotEnrollableException::class.java)
         }
 
         @Test
-        fun `이미 등록된 코스이면 EnrollmentAlreadyExistsException이 발생한다`() {
-            val existingEnrollment =
-                Enrollment.createForPurchase(
-                    courseId = 1L,
-                    studentUserId = "student-id-00000000001",
-                    tuitionAmountWon = 300000,
-                    paymentId = "payment-id-000000000001",
-                )
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+        fun `ACTIVE enrollment이 있으면 EnrollmentAlreadyExistsException이 발생한다`() {
+            every { courseAdaptor.findById(1L) } returns listedCourse()
             every { productAdaptor.findById(any()) } returns courseProduct()
-            every { enrollmentAdaptor.findLiveEnrollment(1L, "student-id-00000000001") } returns existingEnrollment
+            every { enrollmentAdaptor.findResumableEnrollment(1L, "student-id-00000000001") } throws EnrollmentAlreadyExistsException()
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
@@ -126,10 +123,32 @@ class PrepareEnrollmentUseCaseTest {
         }
 
         @Test
+        fun `PENDING_PAYMENT enrollment이 있으면 기존 결제 정보를 그대로 반환한다`() {
+            val existingEnrollment =
+                Enrollment.createForPurchase(
+                    courseId = 1L,
+                    studentUserId = "student-id-00000000001",
+                    tuitionAmountWon = 300000,
+                    paymentId = "payment-id-000000000001",
+                )
+            every { courseAdaptor.findById(1L) } returns listedCourse()
+            every { productAdaptor.findById(any()) } returns courseProduct()
+            every { enrollmentAdaptor.findResumableEnrollment(1L, "student-id-00000000001") } returns existingEnrollment
+            every { paymentAdaptor.findById("payment-id-000000000001") } returns pendingPayment()
+
+            val result = useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+
+            assertThat(result.pgOrderId).isEqualTo("order-id-000000000001")
+            verify(exactly = 0) { paymentAdaptor.save(any()) }
+            verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+        }
+
+        @Test
         fun `CourseProduct가 아닌 상품이면 ProductTypeMismatchException이 발생한다`() {
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
+            every { enrollmentAdaptor.countLiveEnrollments(1L) } returns 0L
             every { productAdaptor.findById(any()) } returns mockk<Product>()
-            every { enrollmentAdaptor.findLiveEnrollment(any(), any()) } returns null
+            every { enrollmentAdaptor.findResumableEnrollment(any(), any()) } returns null
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
@@ -138,9 +157,10 @@ class PrepareEnrollmentUseCaseTest {
 
         @Test
         fun `결제 준비 시 paymentAdaptor와 enrollmentAdaptor save를 각각 호출한다`() {
-            every { courseAdaptor.findById(1L) } returns activeCourse()
+            every { courseAdaptor.findById(1L) } returns listedCourse()
+            every { enrollmentAdaptor.countLiveEnrollments(1L) } returns 0L
             every { productAdaptor.findById(any()) } returns courseProduct()
-            every { enrollmentAdaptor.findLiveEnrollment(any(), any()) } returns null
+            every { enrollmentAdaptor.findResumableEnrollment(any(), any()) } returns null
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 

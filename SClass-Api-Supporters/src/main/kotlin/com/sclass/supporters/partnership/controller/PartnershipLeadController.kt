@@ -1,5 +1,6 @@
 package com.sclass.supporters.partnership.controller
 
+import com.sclass.common.annotation.Public
 import com.sclass.common.dto.ApiResponse
 import com.sclass.supporters.partnership.dto.CreatePartnershipLeadRequest
 import com.sclass.supporters.partnership.dto.PartnershipLeadResponse
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 class PartnershipLeadController(
     private val createPartnershipLeadUseCase: CreatePartnershipLeadUseCase,
 ) {
+    @Public
     @PostMapping
     fun create(
         @Valid @RequestBody request: CreatePartnershipLeadRequest,

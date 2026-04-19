@@ -1,6 +1,7 @@
 package com.sclass.supporters.payment.controller
 
 import com.sclass.common.annotation.CurrentUserId
+import com.sclass.common.annotation.Public
 import com.sclass.common.dto.ApiResponse
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
 import com.sclass.supporters.payment.dto.PreparePaymentRequest
@@ -32,6 +33,7 @@ class PaymentController(
         @Valid @RequestBody request: PreparePaymentRequest,
     ): ApiResponse<PreparePaymentResponse> = ApiResponse.success(preparePaymentUseCase.execute(userId, request))
 
+    @Public
     @PostMapping("/nicepay/webhook", produces = [MediaType.TEXT_HTML_VALUE])
     fun handleNicepayWebhook(
         @RequestBody request: NicePayWebhookPayload,
@@ -40,6 +42,7 @@ class PaymentController(
         return "OK"
     }
 
+    @Public
     @PostMapping("/nicepay")
     fun handleNicePayReturn(
         @RequestParam authResultCode: String,

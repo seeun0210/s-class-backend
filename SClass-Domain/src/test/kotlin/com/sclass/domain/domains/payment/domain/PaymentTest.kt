@@ -23,6 +23,7 @@ class PaymentTest {
                     it.markPgApproved("tid-001")
                     it.markCompleted()
                 }
+                PaymentStatus.PG_APPROVE_FAILED -> it.markPgApproveFailed()
                 else -> {}
             }
         }
@@ -84,8 +85,26 @@ class PaymentTest {
         }
 
         @Test
-        fun `COMPLETED가 아닌 상태에서 취소 시 예외가 발생한다`() {
+        fun `PENDING 상태에서 취소 시 CANCELLED로 변경된다`() {
             val payment = createPayment()
+
+            payment.markCancelled()
+
+            assertEquals(PaymentStatus.CANCELLED, payment.status)
+        }
+
+        @Test
+        fun `PG_APPROVED 상태에서 취소 시 CANCELLED로 변경된다`() {
+            val payment = createPayment(PaymentStatus.PG_APPROVED)
+
+            payment.markCancelled()
+
+            assertEquals(PaymentStatus.CANCELLED, payment.status)
+        }
+
+        @Test
+        fun `PG_APPROVE_FAILED 상태에서 취소 시 예외가 발생한다`() {
+            val payment = createPayment(PaymentStatus.PG_APPROVE_FAILED)
 
             assertThrows<InvalidPaymentStatusException> {
                 payment.markCancelled()

@@ -1,13 +1,14 @@
 package com.sclass.backoffice.coinpackage.dto
 
 import com.sclass.domain.domains.coin.domain.CoinPackage
+import com.sclass.domain.domains.coin.domain.CoinPackageStatus
 
 data class CoinPackageResponse(
     val id: String,
     val name: String,
     val priceWon: Int,
     val coinAmount: Int,
-    val active: Boolean,
+    val status: CoinPackageStatus,
 ) {
     companion object {
         fun from(coinPackage: CoinPackage) =
@@ -16,7 +17,7 @@ data class CoinPackageResponse(
                 name = coinPackage.name,
                 priceWon = coinPackage.priceWon,
                 coinAmount = coinPackage.coinAmount,
-                active = coinPackage.active,
+                status = coinPackage.status,
             )
     }
 }

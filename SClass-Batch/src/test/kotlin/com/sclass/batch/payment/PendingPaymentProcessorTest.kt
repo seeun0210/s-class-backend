@@ -1,6 +1,7 @@
 package com.sclass.batch.payment
 
 import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
+import com.sclass.domain.domains.coin.domain.CoinLot
 import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
@@ -12,7 +13,6 @@ import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -63,7 +63,7 @@ class PendingPaymentProcessorTest {
         every { pgGateway.inquiry(any()) } returns PgInquiryResult(approved = true, tid = "nicepay-tid-001", amount = 1000)
         every { coinPackageAdaptor.findById(any()) } returns coinPackage
         every { paymentAdaptor.findById(any()) } returns payment
-        justRun { coinDomainService.issue(any(), any(), any(), any()) }
+        every { coinDomainService.issue(any(), any(), any(), any()) } returns mockk<CoinLot>()
 
         processor.process(payment)
 

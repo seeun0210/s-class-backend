@@ -1,0 +1,43 @@
+package com.sclass.backoffice.coin.dto
+
+import com.sclass.domain.domains.coin.domain.CoinTransactionType
+import com.sclass.domain.domains.coin.dto.CoinTransactionGroupDto
+import org.springframework.data.domain.Page
+import java.time.LocalDateTime
+
+data class AdminCoinTransactionHistoryResponse(
+    val content: List<CoinTransactionItem>,
+    val totalElements: Long,
+    val totalPages: Int,
+    val currentPage: Int,
+) {
+    data class CoinTransactionItem(
+        val type: CoinTransactionType,
+        val totalAmount: Long,
+        val referenceId: String?,
+        val description: String?,
+        val createdAt: LocalDateTime,
+    )
+
+    companion object {
+        fun from(
+            page: Page<CoinTransactionGroupDto>,
+            currentPage: Int,
+        ): AdminCoinTransactionHistoryResponse =
+            AdminCoinTransactionHistoryResponse(
+                content =
+                    page.content.map {
+                        CoinTransactionItem(
+                            type = it.type,
+                            totalAmount = it.totalAmount,
+                            referenceId = it.referenceId,
+                            description = it.description,
+                            createdAt = it.createdAt,
+                        )
+                    },
+                totalElements = page.totalElements,
+                totalPages = page.totalPages,
+                currentPage = currentPage,
+            )
+    }
+}

@@ -4,8 +4,10 @@ import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
+import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithStudentDto
+import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
 import com.sclass.domain.domains.enrollment.exception.EnrollmentNotFoundException
 import com.sclass.domain.domains.enrollment.repository.EnrollmentRepository
 import org.springframework.data.domain.Page
@@ -23,6 +25,9 @@ class EnrollmentAdaptor(
     fun findByIdOrNull(id: Long): Enrollment? = enrollmentRepository.findByIdOrNull(id)
 
     fun findAllByStudent(studentUserId: String): List<Enrollment> = enrollmentRepository.findAllByStudentUserId(studentUserId)
+
+    fun findAllByStudentWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
+        enrollmentRepository.findAllByStudentUserIdWithCourse(studentUserId)
 
     fun findAllByCourseWithStudent(courseId: Long): List<EnrollmentWithStudentDto> =
         enrollmentRepository.findAllByCourseIdWithStudent(courseId)
@@ -56,8 +61,63 @@ class EnrollmentAdaptor(
                 setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
             ).firstOrNull()
 
+    fun findResumableEnrollment(
+        courseId: Long,
+        studentUserId: String,
+    ): Enrollment? {
+        val live = findLiveEnrollment(courseId, studentUserId) ?: return null
+        if (live.status == EnrollmentStatus.ACTIVE) throw EnrollmentAlreadyExistsException()
+        return live
+    }
+
+    fun findLiveMembershipEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? =
+        enrollmentRepository
+            .findAllByProductIdAndStudentUserIdAndStatusIn(
+                productId,
+                studentUserId,
+                setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+            ).firstOrNull()
+
+    fun findResumableMembershipEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? {
+        val live = findLiveMembershipEnrollment(productId, studentUserId) ?: return null
+        if (live.status == EnrollmentStatus.ACTIVE) throw EnrollmentAlreadyExistsException()
+        return live
+    }
+
     fun findByPaymentId(paymentId: String): Enrollment =
         enrollmentRepository.findByPaymentId(paymentId) ?: throw EnrollmentNotFoundException()
 
     fun findByPaymentIdOrNull(paymentId: String): Enrollment? = enrollmentRepository.findByPaymentId(paymentId)
+
+    fun countLiveEnrollments(courseId: Long): Long =
+        enrollmentRepository.countByCourseIdAndStatusIn(
+            courseId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+        )
+
+    fun countLiveMembershipEnrollments(productId: String): Long =
+        enrollmentRepository.countByProductIdAndStatusIn(
+            productId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+        )
+
+    fun countLiveMembershipEnrollmentsByProductIds(productIds: Collection<String>): Map<String, Long> =
+        enrollmentRepository
+            .countLiveMembershipEnrollmentsByProductIds(productIds)
+            .associate { it.productId to it.count }
+
+    fun findPendingPaymentOlderThan(threshold: java.time.LocalDateTime): List<Enrollment> =
+        enrollmentRepository.findAllByStatusAndCreatedAtBefore(EnrollmentStatus.PENDING_PAYMENT, threshold)
+
+    fun hasActiveMembershipEnrollment(studentUserId: String): Boolean =
+        enrollmentRepository.hasActiveMembershipEnrollment(
+            studentUserId = studentUserId,
+            now = java.time.LocalDateTime.now(),
+        )
 }

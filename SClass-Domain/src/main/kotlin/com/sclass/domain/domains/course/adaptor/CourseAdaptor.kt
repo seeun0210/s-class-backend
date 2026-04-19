@@ -3,9 +3,9 @@ package com.sclass.domain.domains.course.adaptor
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
+import com.sclass.domain.domains.course.dto.CatalogCourseDto
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
-import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.course.exception.CourseNotFoundException
 import com.sclass.domain.domains.course.repository.CourseRepository
 import org.springframework.data.domain.Page
@@ -24,9 +24,12 @@ class CourseAdaptor(
 
     fun findByIdOrNull(id: Long): Course? = courseRepository.findByIdOrNull(id)
 
-    fun findAllActive(): List<Course> = courseRepository.findAllByStatus(CourseStatus.ACTIVE)
+    fun findAllCatalogCourses(pageable: Pageable): Page<CatalogCourseDto> = courseRepository.findAllCatalogCourses(pageable)
 
-    fun findAllActiveWithTeacher(): List<CourseWithTeacherDto> = courseRepository.findAllActiveWithTeacher()
+    fun findCatalogCourseById(id: Long) = courseRepository.findCatalogCourseById(id) ?: throw CourseNotFoundException()
+
+    fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto =
+        courseRepository.findCourseDetailById(id) ?: throw CourseNotFoundException()
 
     fun findAllByTeacherUserIdWithEnrollmentCount(teacherUserId: String): List<CourseWithEnrollmentCountDto> =
         courseRepository.findAllByTeacherUserIdWithEnrollmentCount(teacherUserId)
@@ -38,9 +41,6 @@ class CourseAdaptor(
     ): Page<CourseWithTeacherAndEnrollmentCountDto> = courseRepository.searchCourses(teacherUserId, status, pageable)
 
     fun findAllByTeacherUserId(teacherUserId: String): List<Course> = courseRepository.findAllByTeacherUserId(teacherUserId)
-
-    fun findActiveByTeacherUserId(teacherUserId: String): List<Course> =
-        courseRepository.findAllByTeacherUserIdAndStatus(teacherUserId, CourseStatus.ACTIVE)
 
     fun findAllByProductId(productId: String): List<Course> = courseRepository.findAllByProductId(productId)
 

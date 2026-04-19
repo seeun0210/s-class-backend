@@ -25,9 +25,7 @@ class CreateFileUseCase(
         fileType: FileType,
     ): PresignedUrlResponse {
         val fileId = Ulid.generate()
-        val directoryPath = generateDirectoryPath(fileType)
-        val sanitizedFilename = originalFilename.replace(Regex("[/\\\\]"), "_")
-        val storedFilename = "$directoryPath/${fileId}_$sanitizedFilename"
+        val storedFilename = generateStoredFilename(fileType, fileId, originalFilename)
 
         val file =
             File.create(
@@ -54,9 +52,16 @@ class CreateFileUseCase(
         )
     }
 
-    private fun generateDirectoryPath(fileType: FileType): String {
-        val today = LocalDate.now()
-        val datePath = today.format(DateTimeFormatter.ofPattern("yyyy/MM"))
-        return "backoffice/${fileType.name.lowercase()}/$datePath"
-    }
+    private fun generateStoredFilename(
+        fileType: FileType,
+        fileId: String,
+        originalFilename: String,
+    ): String =
+        if (fileType.isPublic) {
+            "public/${fileType.name.lowercase()}/$fileId"
+        } else {
+            val datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"))
+            val sanitizedFilename = originalFilename.replace(Regex("[/\\\\]"), "_")
+            "backoffice/${fileType.name.lowercase()}/$datePath/${fileId}_$sanitizedFilename"
+        }
 }

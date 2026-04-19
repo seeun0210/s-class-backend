@@ -1,8 +1,7 @@
 package com.sclass.domain.domains.payment.domain
 
 import com.sclass.domain.config.ConcurrencyTest
-import com.sclass.domain.domains.coin.domain.CoinBalance
-import com.sclass.domain.domains.coin.repository.CoinBalanceRepository
+import com.sclass.domain.domains.coin.repository.CoinLotRepository
 import com.sclass.domain.domains.coin.repository.CoinTransactionRepository
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.payment.repository.PaymentRepository
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -23,7 +23,7 @@ class PaymentConcurrencyTest {
     private lateinit var paymentRepository: PaymentRepository
 
     @Autowired
-    private lateinit var coinBalanceRepository: CoinBalanceRepository
+    private lateinit var coinLotRepository: CoinLotRepository
 
     @Autowired
     private lateinit var coinTransactionRepository: CoinTransactionRepository
@@ -47,13 +47,10 @@ class PaymentConcurrencyTest {
         txTemplate = TransactionTemplate(txManager)
         txTemplate.execute {
             coinTransactionRepository.deleteAllInBatch()
-            coinBalanceRepository.deleteAllInBatch()
+            coinLotRepository.deleteAllInBatch()
             paymentRepository.deleteAllInBatch()
         }
         txTemplate.execute {
-            coinBalanceRepository.saveAndFlush(
-                CoinBalance(userId = USER_ID, balance = 0, totalIssued = 0),
-            )
             paymentRepository.saveAndFlush(
                 Payment(
                     userId = USER_ID,
@@ -111,14 +108,14 @@ class PaymentConcurrencyTest {
 
         val finalBalance =
             txTemplate.execute {
-                coinBalanceRepository.findByUserId(USER_ID)!!
+                coinLotRepository.sumActive(USER_ID, LocalDateTime.now())
             }!!
         val finalPayment =
             txTemplate.execute {
                 paymentRepository.findByPgOrderId(PG_ORDER_ID)!!
             }!!
 
-        assertThat(finalBalance.balance)
+        assertThat(finalBalance)
             .describedAs("코인이 중복 지급되었습니다!")
             .isEqualTo(COIN_AMOUNT)
         assertThat(successes.size).isEqualTo(1)
@@ -167,10 +164,10 @@ class PaymentConcurrencyTest {
 
         val finalBalance =
             txTemplate.execute {
-                coinBalanceRepository.findByUserId(USER_ID)!!
+                coinLotRepository.sumActive(USER_ID, LocalDateTime.now())
             }!!
 
-        assertThat(finalBalance.balance)
+        assertThat(finalBalance)
             .describedAs("코인이 중복 지급되었습니다!")
             .isLessThanOrEqualTo(COIN_AMOUNT)
     }

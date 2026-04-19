@@ -29,8 +29,12 @@ class Enrollment private constructor(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L,
 
-    @Column(name = "course_id", nullable = false)
-    val courseId: Long,
+    @Column(name = "course_id")
+    val courseId: Long? = null,
+
+    // MEMBERSHIP 구매 시 저장
+    @Column(name = "product_id", length = 26)
+    val productId: String? = null,
 
     @Column(name = "student_user_id", nullable = false, length = 26)
     val studentUserId: String,
@@ -60,17 +64,34 @@ class Enrollment private constructor(
     @Column(nullable = false, length = 20)
     var status: EnrollmentStatus,
 
+    // ===== 유효기간 (MEMBERSHIP 구매 시에만 채워짐) =====
+    @Column(name = "start_at")
+    var startAt: LocalDateTime? = null,
+
+    @Column(name = "end_at")
+    var endAt: LocalDateTime? = null,
+
     @Column(name = "cancelled_at")
     var cancelledAt: LocalDateTime? = null,
 
     @Column(name = "cancel_reason", length = 500)
     var cancelReason: String? = null,
 ) : BaseTimeEntity() {
-    fun markPaid() {
+    fun markPaid(
+        startAt: LocalDateTime? = null,
+        endAt: LocalDateTime? = null,
+    ) {
         require(enrollmentType == EnrollmentType.PURCHASE) {
             "markPaid is only valid for PURCHASE enrollments"
         }
         require(paymentId != null) { "paymentId must be set before markPaid" }
+        if (productId != null) {
+            require(startAt != null && endAt != null) {
+                "membership enrollment requires startAt/endAt on markPaid"
+            }
+            this.startAt = startAt
+            this.endAt = endAt
+        }
         validateTransition(EnrollmentStatus.ACTIVE)
         this.status = EnrollmentStatus.ACTIVE
     }
@@ -136,12 +157,49 @@ class Enrollment private constructor(
                 status = EnrollmentStatus.PENDING_PAYMENT,
             )
 
+        fun createForMembershipPurchase(
+            productId: String,
+            studentUserId: String,
+            tuitionAmountWon: Int,
+            paymentId: String,
+        ): Enrollment =
+            Enrollment(
+                courseId = null,
+                productId = productId,
+                studentUserId = studentUserId,
+                enrollmentType = EnrollmentType.PURCHASE,
+                tuitionAmountWon = tuitionAmountWon,
+                paymentId = paymentId,
+                status = EnrollmentStatus.PENDING_PAYMENT,
+            )
+
+        fun createMembershipByGrant(
+            productId: String,
+            studentUserId: String,
+            grantedByUserId: String,
+            grantReason: String,
+            startAt: LocalDateTime,
+            endAt: LocalDateTime,
+        ): Enrollment =
+            Enrollment(
+                courseId = null,
+                productId = productId,
+                studentUserId = studentUserId,
+                enrollmentType = EnrollmentType.ADMIN_GRANT,
+                tuitionAmountWon = 0,
+                status = EnrollmentStatus.ACTIVE,
+                grantedByUserId = grantedByUserId,
+                grantReason = grantReason,
+                startAt = startAt,
+                endAt = endAt,
+            )
+
         /**
          * 백오피스/LMS 관리자가 직접 등록.
          * 결제 절차 없이 바로 ACTIVE 상태로 생성.
          */
         fun createByGrant(
-            courseId: Long,
+            courseId: Long?,
             studentUserId: String,
             grantedByUserId: String,
             grantReason: String,
