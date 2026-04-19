@@ -16,6 +16,8 @@ data class EnrollmentListResponse(
     val id: Long,
     val courseId: Long?,
     val courseName: String,
+    val productId: String?,
+    val productName: String,
     val studentUserId: String,
     val studentName: String,
     val teacherUserId: String,
@@ -23,6 +25,8 @@ data class EnrollmentListResponse(
     val enrollmentType: EnrollmentType,
     val tuitionAmountWon: Int,
     val status: EnrollmentStatus,
+    val startAt: LocalDateTime?,
+    val endAt: LocalDateTime?,
     val createdAt: LocalDateTime,
 ) {
     companion object {
@@ -31,6 +35,8 @@ data class EnrollmentListResponse(
                 id = dto.enrollment.id,
                 courseId = dto.enrollment.courseId,
                 courseName = dto.courseName,
+                productId = dto.enrollment.productId,
+                productName = dto.productName,
                 studentUserId = dto.enrollment.studentUserId,
                 studentName = dto.studentName,
                 teacherUserId = dto.teacherUserId,
@@ -38,6 +44,8 @@ data class EnrollmentListResponse(
                 enrollmentType = dto.enrollment.enrollmentType,
                 tuitionAmountWon = dto.enrollment.tuitionAmountWon,
                 status = dto.enrollment.status,
+                startAt = dto.enrollment.startAt,
+                endAt = dto.enrollment.endAt,
                 createdAt = dto.enrollment.createdAt,
             )
     }

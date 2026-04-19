@@ -37,6 +37,7 @@ class GetEnrollmentListUseCaseTest {
         courseName = courseName,
         teacherUserId = teacherUserId,
         teacherName = teacherName,
+        productName = "",
     )
 
     @Test

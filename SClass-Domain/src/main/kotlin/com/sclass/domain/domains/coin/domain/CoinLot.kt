@@ -37,7 +37,7 @@ class CoinLot(
     var remaining: Int,
 
     @Column(name = "expire_at")
-    val expireAt: LocalDateTime? = null,
+    var expireAt: LocalDateTime? = null,
 
     @Column(name = "enrollment_id")
     val enrollmentId: Long? = null,
