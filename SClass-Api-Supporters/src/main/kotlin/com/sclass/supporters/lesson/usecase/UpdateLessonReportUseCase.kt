@@ -59,10 +59,13 @@ class UpdateLessonReportUseCase(
                 lessonReportFileAdaptor.saveAll(reportFiles).map { it.file.id }
             }
 
-        removedFiles.forEach { file ->
-            fileAdaptor.delete(file.id)
-            s3Service.deleteObject(file.storedFilename)
-        }
+        removedFiles
+            .distinctBy { it.id }
+            .filterNot { lessonReportFileAdaptor.existsByFileId(it.id) }
+            .forEach { file ->
+                fileAdaptor.delete(file.id)
+                s3Service.deleteObject(file.storedFilename)
+            }
 
         return LessonReportResponse.of(report, savedFileIds)
     }

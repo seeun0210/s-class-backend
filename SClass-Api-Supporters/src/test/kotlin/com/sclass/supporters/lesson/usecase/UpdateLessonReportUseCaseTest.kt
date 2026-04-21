@@ -97,6 +97,7 @@ class UpdateLessonReportUseCaseTest {
         every { lessonReportAdaptor.save(report) } returns report
         every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
+        every { lessonReportFileAdaptor.existsByFileId("file-id-1") } returns false
         every { fileAdaptor.findAllByIds(fileIds) } returns fileIds.map(::fakeFile)
         every { fileAdaptor.delete("file-id-1") } just Runs
         every { s3Service.deleteObject("k/file-id-1") } just Runs
@@ -163,6 +164,8 @@ class UpdateLessonReportUseCaseTest {
         every { lessonReportAdaptor.save(report) } returns report
         every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
+        every { lessonReportFileAdaptor.existsByFileId("file-id-1") } returns false
+        every { lessonReportFileAdaptor.existsByFileId("file-id-2") } returns false
         every { fileAdaptor.delete("file-id-1") } just Runs
         every { fileAdaptor.delete("file-id-2") } just Runs
         every { s3Service.deleteObject("k/file-id-1") } just Runs
@@ -197,5 +200,33 @@ class UpdateLessonReportUseCaseTest {
         verify(exactly = 0) { lessonReportFileAdaptor.saveAll(any()) }
         verify(exactly = 0) { fileAdaptor.delete(any()) }
         verify(exactly = 0) { s3Service.deleteObject(any()) }
+    }
+
+    @Test
+    fun `다른 리포트가 참조 중인 첨부는 파일 레코드와 S3에서 삭제하지 않는다`() {
+        val lesson = newLesson()
+        val report = newRejectedReport()
+        val existingReportFiles =
+            listOf(
+                LessonReportFile(lessonReport = report, file = fakeFile("shared-file-id")),
+                LessonReportFile(lessonReport = report, file = fakeFile("unique-file-id")),
+            )
+
+        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonReportAdaptor.findByLesson(1L) } returns report
+        every { lessonReportAdaptor.save(report) } returns report
+        every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
+        every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
+        every { lessonReportFileAdaptor.existsByFileId("shared-file-id") } returns true
+        every { lessonReportFileAdaptor.existsByFileId("unique-file-id") } returns false
+        every { fileAdaptor.delete("unique-file-id") } just Runs
+        every { s3Service.deleteObject("k/unique-file-id") } just Runs
+
+        useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = emptyList()))
+
+        verify(exactly = 0) { fileAdaptor.delete("shared-file-id") }
+        verify(exactly = 0) { s3Service.deleteObject("k/shared-file-id") }
+        verify { fileAdaptor.delete("unique-file-id") }
+        verify { s3Service.deleteObject("k/unique-file-id") }
     }
 }

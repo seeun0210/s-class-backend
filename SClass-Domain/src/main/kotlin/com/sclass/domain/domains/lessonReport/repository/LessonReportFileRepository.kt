@@ -7,4 +7,6 @@ interface LessonReportFileRepository :
     JpaRepository<LessonReportFile, Long>,
     LessonReportFileCustomRepository {
     fun deleteAllByLessonReportId(lessonReportId: Long)
+
+    fun existsByFileId(fileId: String): Boolean
 }

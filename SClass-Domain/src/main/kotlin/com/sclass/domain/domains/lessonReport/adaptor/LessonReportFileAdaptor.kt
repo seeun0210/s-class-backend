@@ -16,4 +16,6 @@ class LessonReportFileAdaptor(
     fun saveAll(files: List<LessonReportFile>): List<LessonReportFile> = lessonReportFileRepository.saveAll(files)
 
     fun deleteAllByLessonReportId(lessonReportId: Long) = lessonReportFileRepository.deleteAllByLessonReportId(lessonReportId)
+
+    fun existsByFileId(fileId: String): Boolean = lessonReportFileRepository.existsByFileId(fileId)
 }
