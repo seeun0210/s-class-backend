@@ -73,8 +73,8 @@ class SubmitLessonReportUseCaseTest {
     fun `assigned teacher가 제출하면 lesson이 COMPLETED로 바뀌고 report 저장`() {
         val lesson = newLesson()
         every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns null
-        every { lessonReportAdaptor.nextVersion(1L) } returns 1
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         val saved = slot<LessonReport>()
         every { lessonReportAdaptor.save(capture(saved)) } answers { saved.captured }
 
@@ -84,18 +84,18 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(LessonStatus.COMPLETED, lesson.status) },
             { assertEquals(assignedTeacher, lesson.actualTeacherUserId) },
             { assertEquals("ok", result.content) },
-            { assertEquals(1, result.version) },
             { assertEquals(assignedTeacher, result.submittedByUserId) },
             { assertEquals(0, result.fileIds.size) },
         )
+        verify { lessonAdaptor.save(lesson) }
     }
 
     @Test
     fun `substitute 선생님도 제출 가능`() {
         val lesson = newLesson(substituteTeacherUserId = substitute)
         every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns null
-        every { lessonReportAdaptor.nextVersion(1L) } returns 1
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         every { lessonReportAdaptor.save(any()) } answers { firstArg() }
 
         val result = useCase.execute(substitute, 1L, SubmitLessonReportRequest(content = "c"))
@@ -105,6 +105,7 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(substitute, lesson.actualTeacherUserId) },
             { assertEquals(substitute, result.submittedByUserId) },
         )
+        verify { lessonAdaptor.save(lesson) }
     }
 
     @Test
@@ -118,14 +119,13 @@ class SubmitLessonReportUseCaseTest {
     }
 
     @Test
-    fun `이미 PENDING_REVIEW 리포트가 있으면 재제출 불가`() {
+    fun `이미 리포트가 있으면 재제출 불가`() {
         val lesson = newLesson(status = LessonStatus.COMPLETED)
         every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns
+        every { lessonReportAdaptor.findByLessonOrNull(1L) } returns
             LessonReport(
                 id = 99L,
                 lessonId = 1L,
-                version = 1,
                 submittedByUserId = assignedTeacher,
                 content = "prev",
                 status = LessonReportStatus.PENDING_REVIEW,
@@ -137,32 +137,11 @@ class SubmitLessonReportUseCaseTest {
     }
 
     @Test
-    fun `REJECTED 리포트가 있으면 재제출 가능 (version 증가)`() {
-        val lesson = newLesson(status = LessonStatus.COMPLETED)
-        every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns
-            LessonReport(
-                id = 99L,
-                lessonId = 1L,
-                version = 1,
-                submittedByUserId = assignedTeacher,
-                content = "prev",
-                status = LessonReportStatus.REJECTED,
-            )
-        every { lessonReportAdaptor.nextVersion(1L) } returns 2
-        every { lessonReportAdaptor.save(any()) } answers { firstArg() }
-
-        val result = useCase.execute(assignedTeacher, 1L, SubmitLessonReportRequest(content = "v2"))
-
-        assertEquals(2, result.version)
-    }
-
-    @Test
     fun `파일이 있으면 LessonReportFile 저장됨`() {
         val lesson = newLesson()
         every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns null
-        every { lessonReportAdaptor.nextVersion(1L) } returns 1
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         every { lessonReportAdaptor.save(any()) } answers { firstArg() }
         val fileIds = listOf("file-id-000000000000000001", "file-id-000000000000000002")
         every { fileAdaptor.findAllByIds(fileIds) } returns fileIds.map(::fakeFile)
@@ -175,6 +154,7 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(2, result.fileIds.size) },
             { assertEquals(fileIds.toSet(), result.fileIds.toSet()) },
         )
+        verify { lessonAdaptor.save(lesson) }
         verify { lessonReportFileAdaptor.saveAll(match { it.size == 2 }) }
     }
 
@@ -182,12 +162,22 @@ class SubmitLessonReportUseCaseTest {
     fun `COMPLETED 상태에서 제출 시 complete 다시 호출하지 않음`() {
         val lesson = newLesson(status = LessonStatus.COMPLETED)
         every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findLatestByLesson(1L) } returns null
-        every { lessonReportAdaptor.nextVersion(1L) } returns 1
+        every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         every { lessonReportAdaptor.save(any()) } answers { firstArg() }
 
         useCase.execute(assignedTeacher, 1L, SubmitLessonReportRequest(content = "c"))
 
         assertEquals(LessonStatus.COMPLETED, lesson.status)
+        verify(exactly = 0) { lessonAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `CANCELLED 상태면 제출 불가`() {
+        val lesson = newLesson(status = LessonStatus.CANCELLED)
+        every { lessonAdaptor.findById(1L) } returns lesson
+
+        assertThrows<com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException> {
+            useCase.execute(assignedTeacher, 1L, SubmitLessonReportRequest(content = "x"))
+        }
     }
 }

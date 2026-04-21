@@ -1,0 +1,13 @@
+-- lessonReport 단일 리소스 전환 마이그레이션 실행 가이드.
+-- MySQL의 ALTER TABLE은 implicit commit을 발생시키므로
+-- 데이터 정리와 스키마 변경을 하나의 트랜잭션으로 묶을 수 없다.
+--
+-- 아래 순서대로 수동 실행한다.
+-- 1. scripts/lesson-report-single-resource-migration-phase1-data.sql
+-- 2. 데이터 정리 결과 검증
+--    예시: lesson별 report가 1건 이하인지 확인
+--    SELECT lesson_id, COUNT(*) AS report_count
+--    FROM lesson_reports
+--    GROUP BY lesson_id
+--    HAVING COUNT(*) > 1;
+-- 3. scripts/lesson-report-single-resource-migration-phase2-schema.sql

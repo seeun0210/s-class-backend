@@ -35,7 +35,6 @@ class ReviewLessonReportUseCaseTest {
         LessonReport(
             id = 1L,
             lessonId = 1L,
-            version = 1,
             submittedByUserId = submitter,
             content = "c",
             status = status,

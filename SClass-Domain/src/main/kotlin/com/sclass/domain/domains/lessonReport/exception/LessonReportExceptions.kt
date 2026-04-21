@@ -13,3 +13,5 @@ class LessonReportInvalidStatusTransitionException : BusinessException(LessonRep
 class LessonReportRejectReasonRequiredException : BusinessException(LessonReportErrorCode.LESSON_REPORT_REJECT_REASON_REQUIRED)
 
 class LessonReportAlreadyReportedException : BusinessException(LessonReportErrorCode.LESSON_REPORT_ALREADY_REPORTED)
+
+class LessonReportNotRejectedException : BusinessException(LessonReportErrorCode.LESSON_REPORT_NOT_REJECTED)

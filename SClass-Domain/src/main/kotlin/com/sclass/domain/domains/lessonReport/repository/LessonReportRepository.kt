@@ -1,18 +1,8 @@
 package com.sclass.domain.domains.lessonReport.repository
 
 import com.sclass.domain.domains.lessonReport.domain.LessonReport
-import com.sclass.domain.domains.lessonReport.domain.LessonReportStatus
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LessonReportRepository : JpaRepository<LessonReport, Long> {
-    fun findAllByLessonIdOrderByVersionDesc(lessonId: Long): List<LessonReport>
-
-    fun findTopByLessonIdOrderByVersionDesc(lessonId: Long): LessonReport?
-
-    fun findAllByLessonIdAndStatus(
-        lessonId: Long,
-        status: LessonReportStatus,
-    ): List<LessonReport>
-
-    fun countByLessonId(lessonId: Long): Int
+    fun findByLessonId(lessonId: Long): LessonReport?
 }

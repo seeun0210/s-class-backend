@@ -2,21 +2,18 @@ package com.sclass.supporters.lesson.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
+import com.sclass.domain.domains.file.exception.FileNotFoundException
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
-import com.sclass.domain.domains.lesson.domain.LessonStatus
-import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportAdaptor
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportFileAdaptor
-import com.sclass.domain.domains.lessonReport.domain.LessonReport
 import com.sclass.domain.domains.lessonReport.domain.LessonReportFile
-import com.sclass.domain.domains.lessonReport.exception.LessonReportAlreadyReportedException
 import com.sclass.supporters.lesson.dto.LessonReportResponse
-import com.sclass.supporters.lesson.dto.SubmitLessonReportRequest
+import com.sclass.supporters.lesson.dto.UpdateLessonReportRequest
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class SubmitLessonReportUseCase(
+class UpdateLessonReportUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val lessonReportAdaptor: LessonReportAdaptor,
     private val lessonReportFileAdaptor: LessonReportFileAdaptor,
@@ -26,38 +23,33 @@ class SubmitLessonReportUseCase(
     fun execute(
         userId: String,
         lessonId: Long,
-        request: SubmitLessonReportRequest,
+        request: UpdateLessonReportRequest,
     ): LessonReportResponse {
         val lesson = lessonAdaptor.findById(lessonId)
-
         if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
 
-        when (lesson.status) {
-            LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS -> {
-                lesson.complete(userId)
-                lessonAdaptor.save(lesson)
-            }
-            LessonStatus.COMPLETED -> Unit
-            LessonStatus.CANCELLED -> throw LessonInvalidStatusTransitionException()
-        }
-
-        lessonReportAdaptor.findByLessonOrNull(lessonId)?.let { throw LessonReportAlreadyReportedException() }
-
-        val report =
-            lessonReportAdaptor.save(
-                LessonReport(
-                    lessonId = lessonId,
-                    submittedByUserId = userId,
-                    content = request.content,
-                ),
-            )
-
-        val savedFileIds =
+        val report = lessonReportAdaptor.findByLesson(lessonId)
+        val requestedFiles =
             if (request.fileIds.isEmpty()) {
                 emptyList()
             } else {
-                val files = fileAdaptor.findAllByIds(request.fileIds)
-                val reportFiles = files.map { LessonReportFile(lessonReport = report, file = it) }
+                fileAdaptor.findAllByIds(request.fileIds).also { files ->
+                    if (files.map { it.id }.toSet() != request.fileIds.toSet()) {
+                        throw FileNotFoundException()
+                    }
+                }
+            }
+
+        report.resubmit(request.content)
+        lessonReportAdaptor.save(report)
+
+        lessonReportFileAdaptor.deleteAllByLessonReportId(report.id)
+
+        val savedFileIds =
+            if (requestedFiles.isEmpty()) {
+                emptyList()
+            } else {
+                val reportFiles = requestedFiles.map { LessonReportFile(lessonReport = report, file = it) }
                 lessonReportFileAdaptor.saveAll(reportFiles).map { it.file.id }
             }
 
