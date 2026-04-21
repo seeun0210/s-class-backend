@@ -8,7 +8,6 @@ import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessExcept
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportAdaptor
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportFileAdaptor
 import com.sclass.domain.domains.lessonReport.domain.LessonReportFile
-import com.sclass.infrastructure.s3.S3Service
 import com.sclass.supporters.lesson.dto.LessonReportResponse
 import com.sclass.supporters.lesson.dto.UpdateLessonReportRequest
 import org.springframework.transaction.annotation.Transactional
@@ -19,7 +18,6 @@ class UpdateLessonReportUseCase(
     private val lessonReportAdaptor: LessonReportAdaptor,
     private val lessonReportFileAdaptor: LessonReportFileAdaptor,
     private val fileAdaptor: FileAdaptor,
-    private val s3Service: S3Service,
 ) {
     @Transactional
     fun execute(
@@ -45,10 +43,6 @@ class UpdateLessonReportUseCase(
         report.resubmit(request.content)
         lessonReportAdaptor.save(report)
 
-        val existingFiles = lessonReportFileAdaptor.findByLessonReportId(report.id).map { it.file }
-        val requestedFileIds = request.fileIds.toSet()
-        val removedFiles = existingFiles.filter { it.id !in requestedFileIds }
-
         lessonReportFileAdaptor.deleteAllByLessonReportId(report.id)
 
         val savedFileIds =
@@ -57,14 +51,6 @@ class UpdateLessonReportUseCase(
             } else {
                 val reportFiles = requestedFiles.map { LessonReportFile(lessonReport = report, file = it) }
                 lessonReportFileAdaptor.saveAll(reportFiles).map { it.file.id }
-            }
-
-        removedFiles
-            .distinctBy { it.id }
-            .filterNot { lessonReportFileAdaptor.existsByFileId(it.id) }
-            .forEach { file ->
-                fileAdaptor.delete(file.id)
-                s3Service.deleteObject(file.storedFilename)
             }
 
         return LessonReportResponse.of(report, savedFileIds)

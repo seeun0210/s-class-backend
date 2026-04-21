@@ -15,7 +15,6 @@ import com.sclass.domain.domains.lessonReport.domain.LessonReport
 import com.sclass.domain.domains.lessonReport.domain.LessonReportFile
 import com.sclass.domain.domains.lessonReport.domain.LessonReportStatus
 import com.sclass.domain.domains.lessonReport.exception.LessonReportNotRejectedException
-import com.sclass.infrastructure.s3.S3Service
 import com.sclass.supporters.lesson.dto.UpdateLessonReportRequest
 import io.mockk.Runs
 import io.mockk.every
@@ -33,7 +32,6 @@ class UpdateLessonReportUseCaseTest {
     private lateinit var lessonReportAdaptor: LessonReportAdaptor
     private lateinit var lessonReportFileAdaptor: LessonReportFileAdaptor
     private lateinit var fileAdaptor: FileAdaptor
-    private lateinit var s3Service: S3Service
     private lateinit var useCase: UpdateLessonReportUseCase
 
     private val student = "student-user-id-0000000001"
@@ -45,8 +43,7 @@ class UpdateLessonReportUseCaseTest {
         lessonReportAdaptor = mockk()
         lessonReportFileAdaptor = mockk()
         fileAdaptor = mockk()
-        s3Service = mockk()
-        useCase = UpdateLessonReportUseCase(lessonAdaptor, lessonReportAdaptor, lessonReportFileAdaptor, fileAdaptor, s3Service)
+        useCase = UpdateLessonReportUseCase(lessonAdaptor, lessonReportAdaptor, lessonReportFileAdaptor, fileAdaptor)
     }
 
     private fun newLesson() =
@@ -85,22 +82,13 @@ class UpdateLessonReportUseCaseTest {
     fun `REJECTED 리포트 수정 시 PENDING_REVIEW로 돌아가고 첨부가 교체된다`() {
         val lesson = newLesson()
         val report = newRejectedReport()
-        val existingFileIds = listOf("file-id-1", "file-id-2")
         val fileIds = listOf("file-id-2", "file-id-3")
-        val existingReportFiles =
-            existingFileIds.map { fileId ->
-                LessonReportFile(lessonReport = report, file = fakeFile(fileId))
-            }
 
         every { lessonAdaptor.findById(1L) } returns lesson
         every { lessonReportAdaptor.findByLesson(1L) } returns report
         every { lessonReportAdaptor.save(report) } returns report
-        every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
-        every { lessonReportFileAdaptor.existsByFileId("file-id-1") } returns false
         every { fileAdaptor.findAllByIds(fileIds) } returns fileIds.map(::fakeFile)
-        every { fileAdaptor.delete("file-id-1") } just Runs
-        every { s3Service.deleteObject("k/file-id-1") } just Runs
         every { lessonReportFileAdaptor.saveAll(any()) } answers { firstArg<List<LessonReportFile>>() }
 
         val result = useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = fileIds))
@@ -115,8 +103,7 @@ class UpdateLessonReportUseCaseTest {
         verify { lessonReportAdaptor.save(report) }
         verify { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) }
         verify { lessonReportFileAdaptor.saveAll(match { it.size == 2 }) }
-        verify { fileAdaptor.delete("file-id-1") }
-        verify { s3Service.deleteObject("k/file-id-1") }
+        verify(exactly = 0) { fileAdaptor.delete(any()) }
     }
 
     @Test
@@ -150,35 +137,21 @@ class UpdateLessonReportUseCaseTest {
     }
 
     @Test
-    fun `첨부를 비우면 기존 첨부가 파일 레코드와 S3에서 삭제된다`() {
+    fun `첨부를 비우면 기존 첨부 매핑만 제거되고 파일은 유지된다`() {
         val lesson = newLesson()
         val report = newRejectedReport()
-        val existingReportFiles =
-            listOf(
-                LessonReportFile(lessonReport = report, file = fakeFile("file-id-1")),
-                LessonReportFile(lessonReport = report, file = fakeFile("file-id-2")),
-            )
 
         every { lessonAdaptor.findById(1L) } returns lesson
         every { lessonReportAdaptor.findByLesson(1L) } returns report
         every { lessonReportAdaptor.save(report) } returns report
-        every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
-        every { lessonReportFileAdaptor.existsByFileId("file-id-1") } returns false
-        every { lessonReportFileAdaptor.existsByFileId("file-id-2") } returns false
-        every { fileAdaptor.delete("file-id-1") } just Runs
-        every { fileAdaptor.delete("file-id-2") } just Runs
-        every { s3Service.deleteObject("k/file-id-1") } just Runs
-        every { s3Service.deleteObject("k/file-id-2") } just Runs
 
         val result = useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = emptyList()))
 
         assertEquals(emptyList<String>(), result.fileIds)
         verify { lessonReportAdaptor.save(report) }
-        verify { fileAdaptor.delete("file-id-1") }
-        verify { fileAdaptor.delete("file-id-2") }
-        verify { s3Service.deleteObject("k/file-id-1") }
-        verify { s3Service.deleteObject("k/file-id-2") }
+        verify { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) }
+        verify(exactly = 0) { fileAdaptor.delete(any()) }
     }
 
     @Test
@@ -199,34 +172,5 @@ class UpdateLessonReportUseCaseTest {
         verify(exactly = 0) { lessonReportFileAdaptor.deleteAllByLessonReportId(any()) }
         verify(exactly = 0) { lessonReportFileAdaptor.saveAll(any()) }
         verify(exactly = 0) { fileAdaptor.delete(any()) }
-        verify(exactly = 0) { s3Service.deleteObject(any()) }
-    }
-
-    @Test
-    fun `다른 리포트가 참조 중인 첨부는 파일 레코드와 S3에서 삭제하지 않는다`() {
-        val lesson = newLesson()
-        val report = newRejectedReport()
-        val existingReportFiles =
-            listOf(
-                LessonReportFile(lessonReport = report, file = fakeFile("shared-file-id")),
-                LessonReportFile(lessonReport = report, file = fakeFile("unique-file-id")),
-            )
-
-        every { lessonAdaptor.findById(1L) } returns lesson
-        every { lessonReportAdaptor.findByLesson(1L) } returns report
-        every { lessonReportAdaptor.save(report) } returns report
-        every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
-        every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
-        every { lessonReportFileAdaptor.existsByFileId("shared-file-id") } returns true
-        every { lessonReportFileAdaptor.existsByFileId("unique-file-id") } returns false
-        every { fileAdaptor.delete("unique-file-id") } just Runs
-        every { s3Service.deleteObject("k/unique-file-id") } just Runs
-
-        useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = emptyList()))
-
-        verify(exactly = 0) { fileAdaptor.delete("shared-file-id") }
-        verify(exactly = 0) { s3Service.deleteObject("k/shared-file-id") }
-        verify { fileAdaptor.delete("unique-file-id") }
-        verify { s3Service.deleteObject("k/unique-file-id") }
     }
 }
