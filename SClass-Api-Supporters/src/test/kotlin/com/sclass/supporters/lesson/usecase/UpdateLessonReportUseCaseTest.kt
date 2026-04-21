@@ -3,6 +3,7 @@ package com.sclass.supporters.lesson.usecase
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
 import com.sclass.domain.domains.file.domain.File
 import com.sclass.domain.domains.file.domain.FileType
+import com.sclass.domain.domains.file.exception.FileNotFoundException
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonStatus
@@ -93,6 +94,7 @@ class UpdateLessonReportUseCaseTest {
 
         every { lessonAdaptor.findById(1L) } returns lesson
         every { lessonReportAdaptor.findByLesson(1L) } returns report
+        every { lessonReportAdaptor.save(report) } returns report
         every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
         every { fileAdaptor.findAllByIds(fileIds) } returns fileIds.map(::fakeFile)
@@ -109,6 +111,7 @@ class UpdateLessonReportUseCaseTest {
             { assertEquals(null, report.rejectReason) },
             { assertEquals(fileIds, result.fileIds) },
         )
+        verify { lessonReportAdaptor.save(report) }
         verify { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) }
         verify { lessonReportFileAdaptor.saveAll(match { it.size == 2 }) }
         verify { fileAdaptor.delete("file-id-1") }
@@ -157,6 +160,7 @@ class UpdateLessonReportUseCaseTest {
 
         every { lessonAdaptor.findById(1L) } returns lesson
         every { lessonReportAdaptor.findByLesson(1L) } returns report
+        every { lessonReportAdaptor.save(report) } returns report
         every { lessonReportFileAdaptor.findByLessonReportId(10L) } returns existingReportFiles
         every { lessonReportFileAdaptor.deleteAllByLessonReportId(10L) } just Runs
         every { fileAdaptor.delete("file-id-1") } just Runs
@@ -167,9 +171,31 @@ class UpdateLessonReportUseCaseTest {
         val result = useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = emptyList()))
 
         assertEquals(emptyList<String>(), result.fileIds)
+        verify { lessonReportAdaptor.save(report) }
         verify { fileAdaptor.delete("file-id-1") }
         verify { fileAdaptor.delete("file-id-2") }
         verify { s3Service.deleteObject("k/file-id-1") }
         verify { s3Service.deleteObject("k/file-id-2") }
+    }
+
+    @Test
+    fun `요청한 첨부 파일 ID 중 일부가 없으면 기존 첨부를 건드리지 않고 예외`() {
+        val lesson = newLesson()
+        val report = newRejectedReport()
+        val requestedFileIds = listOf("file-id-2", "missing-file-id")
+
+        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonReportAdaptor.findByLesson(1L) } returns report
+        every { fileAdaptor.findAllByIds(requestedFileIds) } returns listOf(fakeFile("file-id-2"))
+
+        assertThrows<FileNotFoundException> {
+            useCase.execute(assignedTeacher, 1L, UpdateLessonReportRequest(content = "new", fileIds = requestedFileIds))
+        }
+
+        verify(exactly = 0) { lessonReportAdaptor.save(any()) }
+        verify(exactly = 0) { lessonReportFileAdaptor.deleteAllByLessonReportId(any()) }
+        verify(exactly = 0) { lessonReportFileAdaptor.saveAll(any()) }
+        verify(exactly = 0) { fileAdaptor.delete(any()) }
+        verify(exactly = 0) { s3Service.deleteObject(any()) }
     }
 }

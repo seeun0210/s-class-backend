@@ -2,6 +2,7 @@ package com.sclass.supporters.lesson.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.file.adaptor.FileAdaptor
+import com.sclass.domain.domains.file.exception.FileNotFoundException
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportAdaptor
@@ -30,7 +31,19 @@ class UpdateLessonReportUseCase(
         if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
 
         val report = lessonReportAdaptor.findByLesson(lessonId)
+        val requestedFiles =
+            if (request.fileIds.isEmpty()) {
+                emptyList()
+            } else {
+                fileAdaptor.findAllByIds(request.fileIds).also { files ->
+                    if (files.map { it.id }.toSet() != request.fileIds.toSet()) {
+                        throw FileNotFoundException()
+                    }
+                }
+            }
+
         report.resubmit(request.content)
+        lessonReportAdaptor.save(report)
 
         val existingFiles = lessonReportFileAdaptor.findByLessonReportId(report.id).map { it.file }
         val requestedFileIds = request.fileIds.toSet()
@@ -39,11 +52,10 @@ class UpdateLessonReportUseCase(
         lessonReportFileAdaptor.deleteAllByLessonReportId(report.id)
 
         val savedFileIds =
-            if (request.fileIds.isEmpty()) {
+            if (requestedFiles.isEmpty()) {
                 emptyList()
             } else {
-                val files = fileAdaptor.findAllByIds(request.fileIds)
-                val reportFiles = files.map { LessonReportFile(lessonReport = report, file = it) }
+                val reportFiles = requestedFiles.map { LessonReportFile(lessonReport = report, file = it) }
                 lessonReportFileAdaptor.saveAll(reportFiles).map { it.file.id }
             }
 

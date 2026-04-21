@@ -73,6 +73,7 @@ class SubmitLessonReportUseCaseTest {
     fun `assigned teacher가 제출하면 lesson이 COMPLETED로 바뀌고 report 저장`() {
         val lesson = newLesson()
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.save(lesson) } returns lesson
         every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         val saved = slot<LessonReport>()
         every { lessonReportAdaptor.save(capture(saved)) } answers { saved.captured }
@@ -86,12 +87,14 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(assignedTeacher, result.submittedByUserId) },
             { assertEquals(0, result.fileIds.size) },
         )
+        verify { lessonAdaptor.save(lesson) }
     }
 
     @Test
     fun `substitute 선생님도 제출 가능`() {
         val lesson = newLesson(substituteTeacherUserId = substitute)
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.save(lesson) } returns lesson
         every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         every { lessonReportAdaptor.save(any()) } answers { firstArg() }
 
@@ -102,6 +105,7 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(substitute, lesson.actualTeacherUserId) },
             { assertEquals(substitute, result.submittedByUserId) },
         )
+        verify { lessonAdaptor.save(lesson) }
     }
 
     @Test
@@ -136,6 +140,7 @@ class SubmitLessonReportUseCaseTest {
     fun `파일이 있으면 LessonReportFile 저장됨`() {
         val lesson = newLesson()
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.save(lesson) } returns lesson
         every { lessonReportAdaptor.findByLessonOrNull(1L) } returns null
         every { lessonReportAdaptor.save(any()) } answers { firstArg() }
         val fileIds = listOf("file-id-000000000000000001", "file-id-000000000000000002")
@@ -149,6 +154,7 @@ class SubmitLessonReportUseCaseTest {
             { assertEquals(2, result.fileIds.size) },
             { assertEquals(fileIds.toSet(), result.fileIds.toSet()) },
         )
+        verify { lessonAdaptor.save(lesson) }
         verify { lessonReportFileAdaptor.saveAll(match { it.size == 2 }) }
     }
 
@@ -162,6 +168,7 @@ class SubmitLessonReportUseCaseTest {
         useCase.execute(assignedTeacher, 1L, SubmitLessonReportRequest(content = "c"))
 
         assertEquals(LessonStatus.COMPLETED, lesson.status)
+        verify(exactly = 0) { lessonAdaptor.save(any()) }
     }
 
     @Test

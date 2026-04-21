@@ -33,7 +33,10 @@ class SubmitLessonReportUseCase(
         if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
 
         when (lesson.status) {
-            LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS -> lesson.complete(userId)
+            LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS -> {
+                lesson.complete(userId)
+                lessonAdaptor.save(lesson)
+            }
             LessonStatus.COMPLETED -> Unit
             LessonStatus.CANCELLED -> throw LessonInvalidStatusTransitionException()
         }
