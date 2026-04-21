@@ -7,13 +7,13 @@ import java.time.LocalDateTime
 data class LessonReportResponse(
     val id: Long,
     val lessonId: Long,
-    val version: Int,
     val content: String,
     val fileIds: List<String>,
     val status: LessonReportStatus,
     val rejectReason: String?,
     val submittedByUserId: String,
     val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime,
 ) {
     companion object {
         fun of(
@@ -23,13 +23,13 @@ data class LessonReportResponse(
             LessonReportResponse(
                 id = report.id,
                 lessonId = report.lessonId,
-                version = report.version,
                 content = report.content,
                 fileIds = fileIds,
                 status = report.status,
                 rejectReason = report.rejectReason,
                 submittedByUserId = report.submittedByUserId,
                 createdAt = report.createdAt,
+                updatedAt = report.updatedAt,
             )
     }
 }

@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface LessonReportFileRepository :
     JpaRepository<LessonReportFile, Long>,
-    LessonReportFileCustomRepository
+    LessonReportFileCustomRepository {
+    fun deleteAllByLessonReportId(lessonReportId: Long)
+}
