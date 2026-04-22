@@ -112,15 +112,18 @@ class GetMyEnrollmentsUseCaseTest {
             { assertEquals(1L, result[0].courseId) },
             { assertEquals(EnrollmentStatus.PENDING_PAYMENT, result[0].status) },
             { assertEquals(300000, result[0].tuitionAmountWon) },
-            { assertNull(result[0].membership) },
-            { assertEquals("수학 기초", summary.name) },
-            { assertEquals("수학 심화", summary.description) },
-            { assertEquals("https://static.test.sclass.click/course_thumbnail/file-id-00000000000000001", summary.thumbnailUrl) },
+            { assertEquals(ProductType.COURSE, result[0].product?.type) },
+            { assertEquals("수학 기초", result[0].product?.name) },
+            { assertEquals("수학 심화", result[0].product?.description) },
+            {
+                assertEquals(
+                    "https://static.test.sclass.click/course_thumbnail/file-id-00000000000000001",
+                    result[0].product?.thumbnailUrl,
+                )
+            },
+            { assertEquals(1L, summary.id) },
             { assertEquals("김선생", summary.teacherName) },
-            { assertEquals(CourseStatus.LISTED, summary.courseStatus) },
-            { assertEquals(LocalDateTime.of(2026, 4, 30, 0, 0), summary.enrollmentDeadLine) },
-            { assertEquals(LocalDateTime.of(2026, 5, 1, 0, 0), summary.startAt) },
-            { assertEquals(LocalDateTime.of(2026, 6, 30, 0, 0), summary.endAt) },
+            { assertEquals(CourseStatus.LISTED, summary.status) },
         )
     }
 
@@ -130,24 +133,67 @@ class GetMyEnrollmentsUseCaseTest {
 
         val result = useCase.execute("student-id-0000000000000001")
 
-        val membership = result[0].membership!!
+        val product = result[0].product!!
         assertAll(
             { assertNull(result[0].course) },
-            { assertNotNull(result[0].membership) },
-            { assertEquals(ProductType.ROLLING_MEMBERSHIP, membership.productType) },
-            { assertEquals("프리미엄 멤버십", membership.productName) },
-            { assertEquals("https://static.test.sclass.click/course_thumbnail/mp-thumb-00000000000000001", membership.thumbnailUrl) },
+            { assertNotNull(result[0].product) },
+            { assertEquals(ProductType.ROLLING_MEMBERSHIP, product.type) },
+            { assertEquals("프리미엄 멤버십", product.name) },
+            { assertEquals("https://static.test.sclass.click/course_thumbnail/mp-thumb-00000000000000001", product.thumbnailUrl) },
         )
     }
 
     @Test
-    fun `코스가 삭제되어 join 결과가 null 이면 course 요약은 null 이다`() {
+    fun `코스가 삭제되어 join 결과가 null 이면 course는 null이고 product 요약은 유지된다`() {
         every { enrollmentAdaptor.findAllByStudentWithCourse("student-id-0000000000000001") } returns
-            listOf(makeCourseDto(course = null, courseProduct = null, teacherName = null))
+            listOf(makeCourseDto(course = null, teacherName = null))
 
         val result = useCase.execute("student-id-0000000000000001")
 
-        assertNull(result[0].course)
+        assertAll(
+            { assertNull(result[0].course) },
+            { assertEquals(ProductType.COURSE, result[0].product?.type) },
+            { assertEquals("수학 기초", result[0].product?.name) },
+        )
+    }
+
+    @Test
+    fun `매칭 대기 enrollment는 course는 null이고 product 요약을 포함한다`() {
+        val enrollment =
+            Enrollment
+                .createForPurchase(
+                    productId = "product-id-0000000000000001",
+                    courseId = null,
+                    studentUserId = "student-id-0000000000000001",
+                    tuitionAmountWon = 300000,
+                    paymentId = "payment-id-00000000000000",
+                ).apply { markPendingMatch() }
+        val dto =
+            EnrollmentWithCourseDto(
+                enrollment = enrollment,
+                course = null,
+                courseProduct =
+                    CourseProduct(
+                        name = "매칭형 수학 기초",
+                        priceWon = 300000,
+                        totalLessons = 12,
+                        description = "강사 배정 대기 중인 코스",
+                        thumbnailFileId = "file-id-00000000000000001",
+                    ),
+                teacherName = null,
+            )
+        every { enrollmentAdaptor.findAllByStudentWithCourse("student-id-0000000000000001") } returns listOf(dto)
+
+        val result = useCase.execute("student-id-0000000000000001")
+
+        assertAll(
+            { assertNull(result[0].courseId) },
+            { assertEquals(EnrollmentStatus.PENDING_MATCH, result[0].status) },
+            { assertNull(result[0].course) },
+            { assertEquals(ProductType.COURSE, result[0].product?.type) },
+            { assertEquals("매칭형 수학 기초", result[0].product?.name) },
+            { assertEquals("강사 배정 대기 중인 코스", result[0].product?.description) },
+        )
     }
 
     @Test

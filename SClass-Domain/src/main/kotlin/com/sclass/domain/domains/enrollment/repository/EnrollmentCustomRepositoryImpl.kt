@@ -29,12 +29,14 @@ class EnrollmentCustomRepositoryImpl(
 ) : EnrollmentCustomRepository {
     override fun findAllByStudentUserIdWithCourse(studentUserId: String): List<EnrollmentWithCourseDto> =
         queryFactory
-            .select(enrollment, course, courseProduct, user.name, membershipProduct)
+            .select(enrollment, course, courseProduct, courseProductFromEnrollment, user.name, membershipProduct)
             .from(enrollment)
             .leftJoin(course)
             .on(course.id.eq(enrollment.courseId))
             .leftJoin(courseProduct)
             .on(courseProduct.id.eq(course.productId))
+            .leftJoin(courseProductFromEnrollment)
+            .on(courseProductFromEnrollment.id.eq(enrollment.productId))
             .leftJoin(user)
             .on(user.id.eq(course.teacherUserId))
             .leftJoin(membershipProduct)
@@ -46,7 +48,7 @@ class EnrollmentCustomRepositoryImpl(
                 EnrollmentWithCourseDto(
                     enrollment = tuple[enrollment]!!,
                     course = tuple[course],
-                    courseProduct = tuple[courseProduct],
+                    courseProduct = tuple[courseProduct] ?: tuple[courseProductFromEnrollment],
                     teacherName = tuple[user.name],
                     membershipProduct = tuple[membershipProduct],
                 )
@@ -189,5 +191,11 @@ class EnrollmentCustomRepositoryImpl(
             val direction = if (order.isAscending) Order.ASC else Order.DESC
             OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
         }.toList().toTypedArray()
+    }
+
+    companion object {
+        private val courseProductFromEnrollment =
+            com.sclass.domain.domains.product.domain
+                .QCourseProduct("courseProductFromEnrollment")
     }
 }
