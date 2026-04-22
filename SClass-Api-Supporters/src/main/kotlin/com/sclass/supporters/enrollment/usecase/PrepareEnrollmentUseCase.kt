@@ -31,22 +31,111 @@ class PrepareEnrollmentUseCase(
     @DistributedLock(prefix = "enrollment")
     fun execute(
         studentUserId: String,
-        productId: String,
-        @LockKey courseId: Long,
+        @LockKey productId: String,
+        @LockKey courseId: Long?,
         pgType: PgType,
     ): PrepareEnrollmentResponse {
-        val course = courseAdaptor.findById(courseId)
-        if (course.productId != productId) throw EnrollmentInvalidPurchaseTargetException()
         val product =
             productAdaptor.findById(productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
 
-        enrollmentAdaptor.findResumableEnrollment(courseId, studentUserId)?.let { live ->
+        return if (product.matchingEnabled) {
+            prepareMatchingEnrollment(
+                studentUserId = studentUserId,
+                productId = productId,
+                product = product,
+                courseId = courseId,
+                pgType = pgType,
+            )
+        } else {
+            prepareRegularEnrollment(
+                studentUserId = studentUserId,
+                productId = productId,
+                product = product,
+                courseId = courseId,
+                pgType = pgType,
+            )
+        }
+    }
+
+    private fun prepareMatchingEnrollment(
+        studentUserId: String,
+        productId: String,
+        product: CourseProduct,
+        courseId: Long?,
+        pgType: PgType,
+    ): PrepareEnrollmentResponse {
+        if (courseId != null) throw EnrollmentInvalidPurchaseTargetException()
+
+        enrollmentAdaptor.findResumableCourseProductEnrollment(productId, studentUserId)?.let { live ->
             val payment = paymentAdaptor.findById(live.paymentId!!)
-            return PrepareEnrollmentResponse(payment.id, payment.pgOrderId, payment.amount, productId, course.id, product.name)
+            return PrepareEnrollmentResponse(
+                paymentId = payment.id,
+                pgOrderId = payment.pgOrderId,
+                amount = payment.amount,
+                productId = productId,
+                courseId = null,
+                courseName = product.name,
+            )
         }
 
-        val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId)
+        val payment =
+            paymentAdaptor.save(
+                Payment(
+                    userId = studentUserId,
+                    targetType = PaymentTargetType.COURSE_PRODUCT,
+                    targetId = productId,
+                    amount = product.priceWon,
+                    pgType = pgType,
+                    pgOrderId = Ulid.generate(),
+                ),
+            )
+
+        enrollmentAdaptor.save(
+            Enrollment.createForPurchase(
+                productId = productId,
+                courseId = null,
+                studentUserId = studentUserId,
+                tuitionAmountWon = product.priceWon,
+                paymentId = payment.id,
+            ),
+        )
+
+        return PrepareEnrollmentResponse(
+            paymentId = payment.id,
+            pgOrderId = payment.pgOrderId,
+            amount = payment.amount,
+            productId = productId,
+            courseId = null,
+            courseName = product.name,
+        )
+    }
+
+    private fun prepareRegularEnrollment(
+        studentUserId: String,
+        productId: String,
+        product: CourseProduct,
+        courseId: Long?,
+        pgType: PgType,
+    ): PrepareEnrollmentResponse {
+        val resolvedCourseId = courseId ?: throw EnrollmentInvalidPurchaseTargetException()
+        val course = courseAdaptor.findById(resolvedCourseId)
+
+        if (course.productId != productId) throw EnrollmentInvalidPurchaseTargetException()
+
+        enrollmentAdaptor.findResumableEnrollment(resolvedCourseId, studentUserId)?.let { live ->
+            val payment = paymentAdaptor.findById(live.paymentId!!)
+            return PrepareEnrollmentResponse(
+                payment.id,
+                payment.pgOrderId,
+                payment.amount,
+                productId,
+                course.id,
+                product.name,
+            )
+        }
+
+        val liveCount = enrollmentAdaptor.countLiveEnrollments(resolvedCourseId)
         if (!course.canEnroll(LocalDateTime.now(), liveCount)) {
             throw CourseNotEnrollableException()
         }

@@ -219,6 +219,38 @@ class HandleNicePayWebhookUseCaseTest {
     }
 
     @Test
+    fun `CourseProduct 결제 시 매칭형 상품이면 PENDING_MATCH 처리된다`() {
+        val payment = courseProductPayment()
+        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, matchingEnabled = true)
+        val enrollment =
+            Enrollment.createForPurchase(
+                productId = payment.targetId,
+                courseId = null,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(EnrollmentStatus.PENDING_MATCH, enrollment.status) },
+            { assertEquals(PaymentStatus.COMPLETED, payment.status) },
+        )
+        verify(exactly = 0) { courseAdaptor.findById(any()) }
+        verify(exactly = 0) { lessonService.createLessonsForEnrollment(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `CourseProduct 결제 시 코스가 UNLISTED이면 자동 환불 처리된다`() {
         val payment = courseProductPayment()
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)

@@ -66,6 +66,14 @@ class PrepareEnrollmentUseCaseTest {
             totalLessons = 12,
         )
 
+    private fun matchingCourseProduct() =
+        CourseProduct(
+            name = "매칭형 수학 코스",
+            priceWon = 300000,
+            totalLessons = 12,
+            matchingEnabled = true,
+        )
+
     private fun pendingPayment() =
         Payment(
             userId = "student-id-00000000001",
@@ -97,6 +105,29 @@ class PrepareEnrollmentUseCaseTest {
             assertThat(enrollmentSlot.captured.productId).isEqualTo("product-id-00000000001")
             assertThat(enrollmentSlot.captured.status).isEqualTo(EnrollmentStatus.PENDING_PAYMENT)
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)
+        }
+
+        @Test
+        fun `매칭형 상품 결제 준비 시 courseId 없이 Payment와 Enrollment가 생성된다`() {
+            val enrollmentSlot = slot<Enrollment>()
+            every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every {
+                enrollmentAdaptor.findResumableCourseProductEnrollment(
+                    "product-id-00000000001",
+                    "student-id-00000000001",
+                )
+            } returns null
+            every { paymentAdaptor.save(any()) } returns pendingPayment()
+            every { enrollmentAdaptor.save(capture(enrollmentSlot)) } answers { enrollmentSlot.captured }
+
+            val result = useCase.execute("student-id-00000000001", "product-id-00000000001", null, PgType.NICEPAY)
+
+            assertThat(result.productId).isEqualTo("product-id-00000000001")
+            assertThat(result.courseId).isNull()
+            assertThat(result.courseName).isEqualTo("매칭형 수학 코스")
+            assertThat(enrollmentSlot.captured.courseId).isNull()
+            assertThat(enrollmentSlot.captured.productId).isEqualTo("product-id-00000000001")
+            verify(exactly = 0) { courseAdaptor.findById(any()) }
         }
     }
 
@@ -163,9 +194,19 @@ class PrepareEnrollmentUseCaseTest {
         @Test
         fun `courseId와 productId 조합이 다르면 EnrollmentInvalidPurchaseTargetException이 발생한다`() {
             every { courseAdaptor.findById(1L) } returns listedCourse()
+            every { productAdaptor.findById("different-product-id") } returns courseProduct()
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", "different-product-id", 1L, PgType.NICEPAY)
+            }.isInstanceOf(EnrollmentInvalidPurchaseTargetException::class.java)
+        }
+
+        @Test
+        fun `매칭형 상품에 courseId를 보내면 EnrollmentInvalidPurchaseTargetException이 발생한다`() {
+            every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+
+            assertThatThrownBy {
+                useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
             }.isInstanceOf(EnrollmentInvalidPurchaseTargetException::class.java)
         }
 

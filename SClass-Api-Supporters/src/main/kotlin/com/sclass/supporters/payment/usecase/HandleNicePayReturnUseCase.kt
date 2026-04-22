@@ -5,10 +5,12 @@ import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
@@ -119,10 +121,18 @@ class HandleNicePayReturnUseCase(
                     successUrl(coinPackage.coinAmount)
                 }
                 PaymentTargetType.COURSE_PRODUCT -> {
+                    val product =
+                        productAdaptor.findById(payment.targetId) as? CourseProduct
+                            ?: throw ProductTypeMismatchException()
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                        enrollment.markCoursePaid()
+                        if (product.matchingEnabled) {
+                            enrollment.markPendingMatch()
+                        } else {
+                            if (enrollment.courseId == null) throw EnrollmentCourseRequiredException()
+                            enrollment.markCoursePaid()
+                        }
                         enrollmentAdaptor.save(enrollment)
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)

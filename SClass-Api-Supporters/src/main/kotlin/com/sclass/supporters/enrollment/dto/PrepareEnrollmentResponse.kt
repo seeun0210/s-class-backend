@@ -5,6 +5,6 @@ data class PrepareEnrollmentResponse(
     val pgOrderId: String,
     val amount: Int,
     val productId: String,
-    val courseId: Long,
+    val courseId: Long?,
     val courseName: String,
 )

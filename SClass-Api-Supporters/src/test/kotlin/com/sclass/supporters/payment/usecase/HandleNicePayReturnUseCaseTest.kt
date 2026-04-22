@@ -6,12 +6,14 @@ import com.sclass.domain.domains.coin.domain.CoinPackage
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
+import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
@@ -247,6 +249,45 @@ class HandleNicePayReturnUseCaseTest {
     }
 
     @Test
+    fun `매칭형 코스 상품 결제 성공 시 enrollment가 PENDING_MATCH로 전환된다`() {
+        val payment = courseProductPayment(amount = 300000)
+        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, matchingEnabled = true)
+        val enrollment =
+            Enrollment.createForPurchase(
+                productId = product.id,
+                studentUserId = payment.userId,
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+                courseId = null,
+            )
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { productAdaptor.findById(payment.targetId) } returns product
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.approve(any(), any(), any()) } returns
+            PgApproveResult(tid = "tid-001", pgOrderId = payment.pgOrderId, amount = 300000)
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 300000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=COMPLETED")) },
+            { assertEquals(PaymentStatus.COMPLETED, payment.status) },
+            { assertEquals(EnrollmentStatus.PENDING_MATCH, enrollment.status) },
+        )
+    }
+
+    @Test
     fun `멤버십 결제 성공 시 enrollment가 ACTIVE로 전환되고 멤버십 코인이 발급된다`() {
         val payment = membershipPayment(amount = 10000)
         val product =
@@ -353,5 +394,15 @@ class HandleNicePayReturnUseCaseTest {
             amount = amount,
             pgType = PgType.NICEPAY,
             pgOrderId = "order-00000000000000000000000002",
+        )
+
+    private fun courseProductPayment(amount: Int = 300000) =
+        Payment(
+            userId = "user-00000000000000000000000001",
+            targetType = PaymentTargetType.COURSE_PRODUCT,
+            targetId = "prod-00000000000000000000000001",
+            amount = amount,
+            pgType = PgType.NICEPAY,
+            pgOrderId = "order-00000000000000000000000003",
         )
 }

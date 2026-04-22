@@ -120,4 +120,9 @@ class EnrollmentAdaptor(
             studentUserId = studentUserId,
             now = java.time.LocalDateTime.now(),
         )
+
+    fun findResumableCourseProductEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? = enrollmentRepository.findResumableCourseProductEnrollment(productId, studentUserId)
 }

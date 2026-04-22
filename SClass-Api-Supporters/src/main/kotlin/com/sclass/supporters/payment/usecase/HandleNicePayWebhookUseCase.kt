@@ -7,6 +7,7 @@ import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
@@ -114,14 +115,29 @@ class HandleNicePayWebhookUseCase(
                     fresh.markPgApproved(payload.tid)
                     paymentAdaptor.save(fresh)
                 }
+
                 val enrollment = enrollmentAdaptor.findByPaymentIdOrNull(payment.id)
                 if (enrollment == null) {
                     log.warn("웹훅 수신: enrollment 없음 paymentId={}", payment.id)
                     return
                 }
 
-                val courseId =
-                    enrollment.courseId ?: error("COURSE_PRODUCT enrollment must have courseId")
+                if (product.matchingEnabled) {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        val freshEnrollment =
+                            enrollmentAdaptor.findByPaymentId(fresh.id)
+
+                        freshEnrollment.markPendingMatch()
+                        enrollmentAdaptor.save(freshEnrollment)
+
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    return
+                }
+
+                val courseId = enrollment.courseId ?: throw EnrollmentCourseRequiredException()
                 val course = courseAdaptor.findById(courseId)
 
                 if (course.status == CourseStatus.UNLISTED || course.status == CourseStatus.ARCHIVED) {
@@ -148,8 +164,10 @@ class HandleNicePayWebhookUseCase(
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
+
                     freshEnrollment.markCoursePaid()
                     enrollmentAdaptor.save(freshEnrollment)
+
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
 
@@ -157,7 +175,7 @@ class HandleNicePayWebhookUseCase(
                         freshEnrollment,
                         teacherUserId = course.teacherUserId,
                         courseName = product.name,
-                        totalLessons = product.totalLessons,
+                        totalLessons = course.totalLessons ?: product.totalLessons,
                     )
                 }
             }

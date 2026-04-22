@@ -156,6 +156,20 @@ class EnrollmentCustomRepositoryImpl(
                 enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
             ).fetchFirst() != null
 
+    override fun findResumableCourseProductEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? =
+        queryFactory
+            .selectFrom(enrollment)
+            .where(
+                enrollment.productId.eq(productId),
+                enrollment.studentUserId.eq(studentUserId),
+                enrollment.courseId.isNull,
+                enrollment.status.eq(EnrollmentStatus.PENDING_PAYMENT),
+            ).orderBy(enrollment.createdAt.desc())
+            .fetchFirst()
+
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(enrollment.createdAt.desc())
         val path = PathBuilder(Enrollment::class.java, "enrollment")

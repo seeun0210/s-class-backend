@@ -52,6 +52,12 @@ class Course(
     @Column(name = "enrollment_deadline")
     var enrollmentDeadLine: LocalDateTime? = null,
 
+    @Column(name = "total_lessons")
+    var totalLessons: Int? = null,
+
+    @Column(columnDefinition = "TEXT")
+    var curriculum: String? = null,
+
     @Column(name = "start_at")
     var startAt: LocalDateTime? = null,
 
@@ -71,6 +77,14 @@ class Course(
     fun archive() {
         validateTransition(CourseStatus.ARCHIVED)
         this.status = CourseStatus.ARCHIVED
+    }
+
+    fun updateFulfillmentInfo(
+        newCurriculum: String?,
+        newTotalLessons: Int?,
+    ) {
+        newCurriculum?.let { curriculum = it }
+        newTotalLessons?.let { totalLessons = it }
     }
 
     fun canEnroll(
