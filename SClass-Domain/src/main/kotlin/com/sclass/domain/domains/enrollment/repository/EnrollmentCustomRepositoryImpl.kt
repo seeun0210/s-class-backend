@@ -3,6 +3,7 @@ package com.sclass.domain.domains.enrollment.repository
 import com.querydsl.core.types.Order
 import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.CaseBuilder
 import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.course.domain.QCourse.course
@@ -165,10 +166,21 @@ class EnrollmentCustomRepositoryImpl(
             .where(
                 enrollment.productId.eq(productId),
                 enrollment.studentUserId.eq(studentUserId),
-                enrollment.courseId.isNull,
-                enrollment.status.eq(EnrollmentStatus.PENDING_PAYMENT),
-            ).orderBy(enrollment.createdAt.desc())
-            .fetchFirst()
+                enrollment.status.`in`(
+                    EnrollmentStatus.PENDING_PAYMENT,
+                    EnrollmentStatus.PENDING_MATCH,
+                    EnrollmentStatus.ACTIVE,
+                ),
+            ).orderBy(
+                CaseBuilder()
+                    .`when`(enrollment.status.eq(EnrollmentStatus.ACTIVE))
+                    .then(0)
+                    .`when`(enrollment.status.eq(EnrollmentStatus.PENDING_MATCH))
+                    .then(1)
+                    .otherwise(2)
+                    .asc(),
+                enrollment.createdAt.desc(),
+            ).fetchFirst()
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(enrollment.createdAt.desc())

@@ -32,7 +32,7 @@ class PrepareEnrollmentUseCase(
     fun execute(
         studentUserId: String,
         @LockKey productId: String,
-        @LockKey courseId: Long?,
+        courseId: Long?,
         pgType: PgType,
     ): PrepareEnrollmentResponse {
         val product =

@@ -129,6 +129,34 @@ class PrepareEnrollmentUseCaseTest {
             assertThat(enrollmentSlot.captured.productId).isEqualTo("product-id-00000000001")
             verify(exactly = 0) { courseAdaptor.findById(any()) }
         }
+
+        @Test
+        fun `매칭형 상품에 PENDING_PAYMENT enrollment이 있으면 기존 결제 정보를 그대로 반환한다`() {
+            val existingEnrollment =
+                Enrollment.createForPurchase(
+                    productId = "product-id-00000000001",
+                    courseId = null,
+                    studentUserId = "student-id-00000000001",
+                    tuitionAmountWon = 300000,
+                    paymentId = "payment-id-000000000001",
+                )
+            every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every {
+                enrollmentAdaptor.findResumableCourseProductEnrollment(
+                    "product-id-00000000001",
+                    "student-id-00000000001",
+                )
+            } returns existingEnrollment
+            every { paymentAdaptor.findById("payment-id-000000000001") } returns pendingPayment()
+
+            val result = useCase.execute("student-id-00000000001", "product-id-00000000001", null, PgType.NICEPAY)
+
+            assertThat(result.productId).isEqualTo("product-id-00000000001")
+            assertThat(result.courseId).isNull()
+            assertThat(result.pgOrderId).isEqualTo("order-id-000000000001")
+            verify(exactly = 0) { paymentAdaptor.save(any()) }
+            verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+        }
     }
 
     @Nested
@@ -208,6 +236,21 @@ class PrepareEnrollmentUseCaseTest {
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
             }.isInstanceOf(EnrollmentInvalidPurchaseTargetException::class.java)
+        }
+
+        @Test
+        fun `매칭형 상품에 PENDING_MATCH enrollment이 있으면 EnrollmentAlreadyExistsException이 발생한다`() {
+            every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every {
+                enrollmentAdaptor.findResumableCourseProductEnrollment(
+                    "product-id-00000000001",
+                    "student-id-00000000001",
+                )
+            } throws EnrollmentAlreadyExistsException()
+
+            assertThatThrownBy {
+                useCase.execute("student-id-00000000001", "product-id-00000000001", null, PgType.NICEPAY)
+            }.isInstanceOf(EnrollmentAlreadyExistsException::class.java)
         }
 
         @Test

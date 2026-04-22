@@ -124,5 +124,11 @@ class EnrollmentAdaptor(
     fun findResumableCourseProductEnrollment(
         productId: String,
         studentUserId: String,
-    ): Enrollment? = enrollmentRepository.findResumableCourseProductEnrollment(productId, studentUserId)
+    ): Enrollment? {
+        val live = enrollmentRepository.findResumableCourseProductEnrollment(productId, studentUserId) ?: return null
+        if (live.status in setOf(EnrollmentStatus.ACTIVE, EnrollmentStatus.PENDING_MATCH)) {
+            throw EnrollmentAlreadyExistsException()
+        }
+        return live
+    }
 }
