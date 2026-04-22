@@ -71,7 +71,7 @@ class PrepareEnrollmentUseCaseTest {
             name = "매칭형 수학 코스",
             priceWon = 300000,
             totalLessons = 12,
-            matchingEnabled = true,
+            requiresMatching = true,
         )
 
     private fun pendingPayment() =

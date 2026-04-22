@@ -39,7 +39,7 @@ class PrepareEnrollmentUseCase(
             productAdaptor.findById(productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
 
-        return if (product.matchingEnabled) {
+        return if (product.requiresMatching) {
             prepareMatchingEnrollment(
                 studentUserId = studentUserId,
                 productId = productId,

@@ -221,7 +221,7 @@ class HandleNicePayWebhookUseCaseTest {
     @Test
     fun `CourseProduct 결제 시 매칭형 상품이면 PENDING_MATCH 처리된다`() {
         val payment = courseProductPayment()
-        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, matchingEnabled = true)
+        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, requiresMatching = true)
         val enrollment =
             Enrollment.createForPurchase(
                 productId = payment.targetId,

@@ -123,7 +123,7 @@ class HandleNicePayWebhookUseCase(
                     return
                 }
 
-                if (product.matchingEnabled) {
+                if (product.requiresMatching) {
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val freshEnrollment =

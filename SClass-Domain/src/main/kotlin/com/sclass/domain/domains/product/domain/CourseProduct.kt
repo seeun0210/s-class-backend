@@ -19,7 +19,7 @@ class CourseProduct(
     var curriculum: String? = null,
 
     @Column(name = "matching_enabled", nullable = true)
-    var matchingEnabled: Boolean = false,
+    var requiresMatching: Boolean = false,
 ) : Product(
         name = name,
         priceWon = priceWon,

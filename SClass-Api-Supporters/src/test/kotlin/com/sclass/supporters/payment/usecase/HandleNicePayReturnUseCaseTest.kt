@@ -251,7 +251,7 @@ class HandleNicePayReturnUseCaseTest {
     @Test
     fun `매칭형 코스 상품 결제 성공 시 enrollment가 PENDING_MATCH로 전환된다`() {
         val payment = courseProductPayment(amount = 300000)
-        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, matchingEnabled = true)
+        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, requiresMatching = true)
         val enrollment =
             Enrollment.createForPurchase(
                 productId = product.id,

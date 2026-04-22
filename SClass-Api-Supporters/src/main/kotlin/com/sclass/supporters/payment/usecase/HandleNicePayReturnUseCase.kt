@@ -127,7 +127,7 @@ class HandleNicePayReturnUseCase(
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                        if (product.matchingEnabled) {
+                        if (product.requiresMatching) {
                             enrollment.markPendingMatch()
                         } else {
                             if (enrollment.courseId == null) throw EnrollmentCourseRequiredException()
