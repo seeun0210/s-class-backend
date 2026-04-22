@@ -1,6 +1,9 @@
 package com.sclass.domain.domains.enrollment.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.enrollment.exception.EnrollmentInvalidStatusTransitionException
+import com.sclass.domain.domains.enrollment.exception.EnrollmentPaymentRequiredException
+import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -78,8 +81,8 @@ class Enrollment private constructor(
     var cancelReason: String? = null,
 ) : BaseTimeEntity() {
     fun markCoursePaid() {
-        require(enrollmentType == EnrollmentType.PURCHASE)
-        require(paymentId != null)
+        requirePurchaseEnrollment()
+        requirePayment()
         validateTransition(EnrollmentStatus.ACTIVE)
         this.status = EnrollmentStatus.ACTIVE
     }
@@ -88,8 +91,8 @@ class Enrollment private constructor(
         startAt: LocalDateTime,
         endAt: LocalDateTime,
     ) {
-        require(enrollmentType == EnrollmentType.PURCHASE)
-        require(paymentId != null)
+        requirePurchaseEnrollment()
+        requirePayment()
         this.startAt = startAt
         this.endAt = endAt
         validateTransition(EnrollmentStatus.ACTIVE)
@@ -115,9 +118,7 @@ class Enrollment private constructor(
         reason: String,
         refundedAt: LocalDateTime = LocalDateTime.now(),
     ) {
-        require(enrollmentType == EnrollmentType.PURCHASE) {
-            "refund is only valid for PURCHASE enrollments"
-        }
+        requirePurchaseEnrollment()
         validateTransition(EnrollmentStatus.REFUNDED)
         this.status = EnrollmentStatus.REFUNDED
         this.cancelledAt = refundedAt
@@ -133,7 +134,15 @@ class Enrollment private constructor(
                 EnrollmentStatus.CANCELLED -> setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE)
                 EnrollmentStatus.REFUNDED -> setOf(EnrollmentStatus.ACTIVE, EnrollmentStatus.CANCELLED)
             }
-        require(status in allowed) { "Cannot transition from $status to $target" }
+        if (status !in allowed) throw EnrollmentInvalidStatusTransitionException()
+    }
+
+    private fun requirePurchaseEnrollment() {
+        if (enrollmentType != EnrollmentType.PURCHASE) throw EnrollmentTypeMismatchException()
+    }
+
+    private fun requirePayment() {
+        if (paymentId == null) throw EnrollmentPaymentRequiredException()
     }
 
     companion object {
@@ -208,9 +217,7 @@ class Enrollment private constructor(
             tuitionAmountWon: Int = 0,
             type: EnrollmentType = EnrollmentType.ADMIN_GRANT,
         ): Enrollment {
-            require(type != EnrollmentType.PURCHASE) {
-                "createByGrant cannot be used for PURCHASE type"
-            }
+            if (type == EnrollmentType.PURCHASE) throw EnrollmentTypeMismatchException()
             return Enrollment(
                 courseId = courseId,
                 studentUserId = studentUserId,
