@@ -6,12 +6,15 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.coin.adaptor.CoinAdaptor
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class ExtendMembershipExpireUseCase(
     private val enrollmentAdaptor: EnrollmentAdaptor,
     private val coinAdaptor: CoinAdaptor,
+    private val productAdaptor: ProductAdaptor,
 ) {
     @Transactional
     fun execute(
@@ -19,7 +22,8 @@ class ExtendMembershipExpireUseCase(
         request: ExtendMembershipExpireRequest,
     ): EnrollmentResponse {
         val enrollment = enrollmentAdaptor.findById(enrollmentId)
-        if (enrollment.productId == null) throw EnrollmentTypeMismatchException()
+        val productId = enrollment.productId ?: throw EnrollmentTypeMismatchException()
+        if (productAdaptor.findById(productId) !is MembershipProduct) throw EnrollmentTypeMismatchException()
 
         enrollment.endAt = request.newEndAt
 

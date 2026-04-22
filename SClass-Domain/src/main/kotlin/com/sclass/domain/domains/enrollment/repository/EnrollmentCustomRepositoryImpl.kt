@@ -147,9 +147,11 @@ class EnrollmentCustomRepositoryImpl(
         queryFactory
             .selectOne()
             .from(enrollment)
+            .leftJoin(membershipProduct)
+            .on(membershipProduct.id.eq(enrollment.productId))
             .where(
                 enrollment.studentUserId.eq(studentUserId),
-                enrollment.productId.isNotNull,
+                membershipProduct.id.isNotNull,
                 enrollment.status.eq(EnrollmentStatus.ACTIVE),
                 enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
             ).fetchFirst() != null

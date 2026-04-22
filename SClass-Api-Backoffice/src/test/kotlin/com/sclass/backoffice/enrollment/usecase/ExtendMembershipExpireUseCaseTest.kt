@@ -7,6 +7,9 @@ import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -20,13 +23,15 @@ import java.time.LocalDateTime
 class ExtendMembershipExpireUseCaseTest {
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var coinAdaptor: CoinAdaptor
+    private lateinit var productAdaptor: ProductAdaptor
     private lateinit var useCase: ExtendMembershipExpireUseCase
 
     @BeforeEach
     fun setUp() {
         enrollmentAdaptor = mockk()
         coinAdaptor = mockk(relaxed = true)
-        useCase = ExtendMembershipExpireUseCase(enrollmentAdaptor, coinAdaptor)
+        productAdaptor = mockk()
+        useCase = ExtendMembershipExpireUseCase(enrollmentAdaptor, coinAdaptor, productAdaptor)
     }
 
     @Test
@@ -51,6 +56,13 @@ class ExtendMembershipExpireUseCaseTest {
                 sourceType = CoinLotSourceType.ADMIN_GRANT,
             )
         every { enrollmentAdaptor.findById(1L) } returns enrollment
+        every { productAdaptor.findById("product-id-000000000000000000001") } returns
+            RollingMembershipProduct(
+                name = "프리미엄 멤버십",
+                priceWon = 50000,
+                periodDays = 30,
+                coinPackageId = "coin-package-id-000000001",
+            )
         every { coinAdaptor.findLotsByEnrollmentId(1L) } returns listOf(lot)
         val savedSlot = slot<Enrollment>()
         every { enrollmentAdaptor.save(capture(savedSlot)) } answers { savedSlot.captured }
@@ -65,8 +77,14 @@ class ExtendMembershipExpireUseCaseTest {
     @Test
     fun `코스 enrollment이면 예외가 발생한다`() {
         val enrollment = mockk<Enrollment>()
-        every { enrollment.productId } returns null
+        every { enrollment.productId } returns "course-product-id-000000000001"
         every { enrollmentAdaptor.findById(2L) } returns enrollment
+        every { productAdaptor.findById("course-product-id-000000000001") } returns
+            CourseProduct(
+                name = "수학 코스",
+                priceWon = 300000,
+                totalLessons = 12,
+            )
 
         assertThrows<EnrollmentTypeMismatchException> {
             useCase.execute(2L, ExtendMembershipExpireRequest(LocalDateTime.of(2026, 12, 31, 23, 59)))

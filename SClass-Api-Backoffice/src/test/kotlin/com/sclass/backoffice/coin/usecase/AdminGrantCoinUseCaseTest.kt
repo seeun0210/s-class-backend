@@ -7,6 +7,9 @@ import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -20,25 +23,42 @@ import java.time.LocalDateTime
 class AdminGrantCoinUseCaseTest {
     private lateinit var coinDomainService: CoinDomainService
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var productAdaptor: ProductAdaptor
     private lateinit var useCase: AdminGrantCoinUseCase
 
     @BeforeEach
     fun setUp() {
         coinDomainService = mockk()
         enrollmentAdaptor = mockk()
-        useCase = AdminGrantCoinUseCase(coinDomainService, enrollmentAdaptor)
+        productAdaptor = mockk()
+        useCase = AdminGrantCoinUseCase(coinDomainService, enrollmentAdaptor, productAdaptor)
     }
 
     private fun mockMembershipEnrollment(id: Long): Enrollment =
         mockk<Enrollment>().also {
-            every { it.productId } returns "product-id-000000000000000000001"
+            val productId = "membership-product-id-000000001"
+            every { it.productId } returns productId
             every { enrollmentAdaptor.findById(id) } returns it
+            every { productAdaptor.findById(productId) } returns
+                RollingMembershipProduct(
+                    name = "프리미엄 멤버십",
+                    priceWon = 50000,
+                    periodDays = 30,
+                    coinPackageId = "coin-package-id-000000001",
+                )
         }
 
     private fun mockCourseEnrollment(id: Long): Enrollment =
         mockk<Enrollment>().also {
-            every { it.productId } returns null
+            val productId = "course-product-id-000000000001"
+            every { it.productId } returns productId
             every { enrollmentAdaptor.findById(id) } returns it
+            every { productAdaptor.findById(productId) } returns
+                CourseProduct(
+                    name = "수학 코스",
+                    priceWon = 300000,
+                    totalLessons = 12,
+                )
         }
 
     @Test

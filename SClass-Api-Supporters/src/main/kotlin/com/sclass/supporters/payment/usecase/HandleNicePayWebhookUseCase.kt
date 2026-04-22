@@ -148,7 +148,7 @@ class HandleNicePayWebhookUseCase(
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                    freshEnrollment.markPaid()
+                    freshEnrollment.markCoursePaid()
                     enrollmentAdaptor.save(freshEnrollment)
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
@@ -182,7 +182,7 @@ class HandleNicePayWebhookUseCase(
                         val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
                         val period = product.resolveActivePeriod(now)
-                        freshEnrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
+                        freshEnrollment.markMembershipPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(freshEnrollment)
 
                         coinDomainService.issue(

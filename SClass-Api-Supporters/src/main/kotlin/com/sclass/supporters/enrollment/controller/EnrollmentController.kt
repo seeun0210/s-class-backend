@@ -33,7 +33,8 @@ class EnrollmentController(
     fun prepareEnrollment(
         @CurrentUserId userId: String,
         @RequestBody @Valid request: PrepareEnrollmentRequest,
-    ): ApiResponse<PrepareEnrollmentResponse> = success(prepareEnrollmentUseCase.execute(userId, request.courseId, request.pgType))
+    ): ApiResponse<PrepareEnrollmentResponse> =
+        success(prepareEnrollmentUseCase.execute(userId, request.productId, request.courseId, request.pgType))
 
     @GetMapping("/me")
     fun getMyEnrollments(

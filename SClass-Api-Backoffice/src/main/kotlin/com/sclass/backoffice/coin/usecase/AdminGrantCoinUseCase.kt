@@ -7,12 +7,15 @@ import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
+import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class AdminGrantCoinUseCase(
     private val coinDomainService: CoinDomainService,
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val productAdaptor: ProductAdaptor,
 ) {
     @Transactional
     fun execute(
@@ -21,7 +24,8 @@ class AdminGrantCoinUseCase(
     ): AdminGrantCoinResponse {
         request.enrollmentId?.let { id ->
             val enrollment = enrollmentAdaptor.findById(id)
-            if (enrollment.productId == null) throw EnrollmentTypeMismatchException()
+            val productId = enrollment.productId ?: throw EnrollmentTypeMismatchException()
+            if (productAdaptor.findById(productId) !is MembershipProduct) throw EnrollmentTypeMismatchException()
         }
 
         val lot =

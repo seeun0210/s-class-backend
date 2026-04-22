@@ -6,6 +6,7 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.exception.CourseNotEnrollableException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
+import com.sclass.domain.domains.enrollment.exception.EnrollmentInvalidPurchaseTargetException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
@@ -30,17 +31,19 @@ class PrepareEnrollmentUseCase(
     @DistributedLock(prefix = "enrollment")
     fun execute(
         studentUserId: String,
+        productId: String,
         @LockKey courseId: Long,
         pgType: PgType,
     ): PrepareEnrollmentResponse {
         val course = courseAdaptor.findById(courseId)
+        if (course.productId != productId) throw EnrollmentInvalidPurchaseTargetException()
         val product =
-            productAdaptor.findById(course.productId) as? CourseProduct
+            productAdaptor.findById(productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
 
         enrollmentAdaptor.findResumableEnrollment(courseId, studentUserId)?.let { live ->
             val payment = paymentAdaptor.findById(live.paymentId!!)
-            return PrepareEnrollmentResponse(payment.id, payment.pgOrderId, payment.amount, course.id, product.name)
+            return PrepareEnrollmentResponse(payment.id, payment.pgOrderId, payment.amount, productId, course.id, product.name)
         }
 
         val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId)
@@ -53,7 +56,7 @@ class PrepareEnrollmentUseCase(
                 Payment(
                     userId = studentUserId,
                     targetType = PaymentTargetType.COURSE_PRODUCT,
-                    targetId = product.id,
+                    targetId = productId,
                     amount = product.priceWon,
                     pgType = pgType,
                     pgOrderId = Ulid.generate(),
@@ -62,6 +65,7 @@ class PrepareEnrollmentUseCase(
 
         enrollmentAdaptor.save(
             Enrollment.createForPurchase(
+                productId = productId,
                 courseId = course.id,
                 studentUserId = studentUserId,
                 tuitionAmountWon = product.priceWon,
@@ -73,6 +77,7 @@ class PrepareEnrollmentUseCase(
             paymentId = payment.id,
             pgOrderId = payment.pgOrderId,
             amount = payment.amount,
+            productId = productId,
             courseId = course.id,
             courseName = product.name,
         )
