@@ -77,6 +77,7 @@ class HandleNicePayWebhookUseCase(
             return
         }
 
+        // TODO: 전략패턴으로 리팩토링
         when (payment.targetType) {
             PaymentTargetType.COIN_PACKAGE -> {
                 val coinPackage = coinPackageAdaptor.findById(payment.targetId)

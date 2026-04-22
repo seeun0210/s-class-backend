@@ -108,6 +108,8 @@ class Enrollment private constructor(
 
     fun assignCourse(courseId: Long) {
         requirePurchaseEnrollment()
+        requirePayment()
+        if (status != EnrollmentStatus.PENDING_MATCH) throw EnrollmentInvalidStatusTransitionException()
         if (this.courseId != null) throw EnrollmentInvalidStatusTransitionException()
         validateTransition(EnrollmentStatus.ACTIVE)
         this.courseId = courseId
