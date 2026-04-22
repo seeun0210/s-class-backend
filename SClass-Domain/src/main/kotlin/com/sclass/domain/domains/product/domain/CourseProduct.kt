@@ -18,7 +18,7 @@ class CourseProduct(
     @Column(columnDefinition = "TEXT")
     var curriculum: String? = null,
 
-    @Column(name = "matching_enabled", nullable = true)
+    @Column(name = "requires_matching", nullable = true)
     var requiresMatching: Boolean = false,
 ) : Product(
         name = name,
