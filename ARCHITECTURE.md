@@ -1,145 +1,76 @@
 # S-Class Backend Architecture
 
-## 모듈 구조
+## Runtime Modules
 
-```
-s-class-backend/
-├── SClass-Common          # 공통 코드 (exception, dto, annotation, util)
-├── SClass-Domain          # 도메인 엔티티, 리포지토리, 도메인 서비스
-├── SClass-Infrastructure  # 외부 연동 (Redis, S3, PubSub, Feign 등)
-├── SClass-Api-Lms         # LMS API (수업/탐구/정산)
-├── SClass-Api-Backoffice  # 슈퍼어드민 Backoffice API
-├── SClass-Api-Supporters  # 서포터즈 API (Web)
-└── SClass-Batch           # 배치 처리
-```
+| Module | Entry Point | 로컬 기본 포트 | 현재 자동 배포 |
+| --- | --- | --- | --- |
+| `SClass-Api-Supporters` | `SupportersApplication` | `8081` | 예 |
+| `SClass-Api-Backoffice` | `BackofficeApplication` | `8082` | 예 |
+| `SClass-Batch` | `BatchApplication` | 없음 | 아니오 |
 
-## 의존성 흐름
+현재 저장소에는 `SClass-Api-Lms` 모듈이 없습니다. 예전 문서나 다이어그램에 남아 있었다면 모두 구버전 기준입니다.
 
-```
-Api-Lms ────────┐
-Api-Backoffice ─┤
-Api-Supporters ─┼→ Domain ──→ Common
-Batch ──────────┘  Infrastructure ──→ Common
+## Module Dependencies
+
+```text
+SClass-Api-Supporters  ┐
+SClass-Api-Backoffice  ├─> SClass-Domain ──> SClass-Common
+SClass-Batch           ┘
+                       └─> SClass-Infrastructure ──> SClass-Common
 ```
 
-- **Common**: 어떤 모듈에도 의존하지 않음 (최하위)
-- **Domain**: Common에 의존. JPA 엔티티, 리포지토리, 도메인 서비스 포함
-- **Infrastructure**: Common에 의존. 외부 시스템 연동
-- **Api-*/Batch**: Domain, Infrastructure, Common 모두에 의존 (최상위, bootJar 생성)
+- `SClass-Common`은 최하위 공통 모듈입니다.
+- `SClass-Domain`은 도메인 엔티티, 리포지토리, 어댑터, 도메인 서비스를 가집니다.
+- `SClass-Infrastructure`는 S3, OAuth, NicePay, 알림톡, Quartz 등 외부 연동을 가집니다.
+- 부트 애플리케이션 모듈은 `Domain`, `Infrastructure`, `Common`을 조합합니다.
 
-## 레이어 패턴
+## Layer Rule
 
-```
-[Controller] → [UseCase] → [DomainService] → [Adaptor] → [Repository]
-   Api 모듈      Api 모듈     Domain 모듈     Domain 모듈   Domain 모듈
-```
-
-| 레이어 | 위치 | 역할 | 어노테이션 |
-|--------|------|------|-----------|
-| Controller | Api 모듈 | HTTP 요청/응답 처리 | `@RestController` |
-| UseCase | Api 모듈 | 애플리케이션 서비스, 유즈케이스 오케스트레이션 | `@UseCase` |
-| DomainService | Domain 모듈 | 비즈니스 로직, 트랜잭션 관리 | `@DomainService` |
-| Adaptor | Domain 모듈 | 데이터 접근 래퍼, 예외 변환 | `@Adaptor` |
-| Repository | Domain 모듈 | JPA 리포지토리 인터페이스 | `JpaRepository` |
-
-## 커스텀 어노테이션
-
-| 어노테이션 | 용도 | 모듈 |
-|-----------|------|------|
-| `@UseCase` | 애플리케이션 서비스 (유즈케이스) | Api |
-| `@DomainService` | 도메인 서비스 (비즈니스 로직) | Domain |
-| `@Adaptor` | 인프라 어댑터 (데이터 접근) | Domain, Infrastructure |
-
-모두 `@Component` 메타 어노테이션을 포함하여 Spring 빈으로 자동 등록됨.
-
-## Exception 처리
-
-### 구조
-
-```
-ErrorCode (interface)
-├── GlobalErrorCode (enum)     # 공통 에러 (BAD_REQUEST, NOT_FOUND 등)
-└── *ErrorCode (enum)          # 도메인별 에러 (StudentErrorCode, CourseErrorCode 등)
-
-BusinessException (open class)
-└── 도메인별 Exception          # ex) StudentNotFoundException
+```text
+Controller -> UseCase -> DomainService -> Adaptor -> Repository
 ```
 
-### ErrorCode 인터페이스
+| Layer | 위치 | 역할 |
+| --- | --- | --- |
+| `Controller` | API 모듈 | HTTP 요청/응답 |
+| `UseCase` | API 모듈 | 애플리케이션 유즈케이스 조합 |
+| `DomainService` | Domain 모듈 | 비즈니스 규칙, 상태 변경 |
+| `Adaptor` | Domain 모듈 | Repository 래핑, 조회/저장 책임 |
+| `Repository` | Domain 모듈 | Spring Data JPA 인터페이스 |
 
-```kotlin
-interface ErrorCode {
-    val code: String        // "STUDENT_001"
-    val message: String     // "학생을 찾을 수 없습니다"
-    val httpStatus: Int     // 404
-}
-```
+## Deployment Model
 
-### 도메인별 ErrorCode 정의 예시
+| Environment | 진입점 | 런타임 | 비고 |
+| --- | --- | --- | --- |
+| `dev` | Route 53 wildcard `*.dev.sclass.click` | EC2 + Nginx/Certbot + Docker Compose | GitHub Actions가 SSM으로 원격 배포 |
+| `prod` | Route 53 A Alias -> ALB | ECS Fargate(private subnet) | 서비스별 독립 스케일링 |
 
-```kotlin
-enum class StudentErrorCode(
-    override val code: String,
-    override val message: String,
-    override val httpStatus: Int,
-) : ErrorCode {
-    STUDENT_NOT_FOUND("STUDENT_001", "학생을 찾을 수 없습니다", 404),
-    STUDENT_ALREADY_EXISTS("STUDENT_002", "이미 존재하는 학생입니다", 409),
-}
-```
+공유 리소스는 다음과 같습니다.
 
-### 예외 던지기
+- shared VPC(public/private subnet)
+- NAT instance + S3 Gateway Endpoint
+- 환경별 RDS MySQL
+- prod 전용 ElastiCache Redis
+- 환경별 S3 bucket + CloudFront static CDN
+- ECR, SSM Parameter Store, CloudWatch
 
-```kotlin
-throw BusinessException(StudentErrorCode.STUDENT_NOT_FOUND)
-```
+## Local Development Defaults
 
-## API Response 형식
+| 항목 | 기본값 |
+| --- | --- |
+| Supporters API | `http://localhost:8081` |
+| Backoffice API | `http://localhost:8082` |
+| Dev DB tunnel | `127.0.0.1:13306/sclass_dev` |
+| Redis | `127.0.0.1:6379` |
+| MinIO | `http://127.0.0.1:9000` |
 
-### 성공
+관련 문서:
 
-```json
-{
-  "success": true,
-  "data": { ... }
-}
-```
+- [README.md](README.md)
+- [DEV_DB_ACCESS.md](DEV_DB_ACCESS.md)
 
-### 에러
+## CI/CD Notes
 
-```json
-{
-  "success": false,
-  "error": {
-    "code": "STUDENT_001",
-    "message": "학생을 찾을 수 없습니다",
-    "status": 404
-  }
-}
-```
-
-## 도메인 패키지 구조
-
-Domain 모듈 내 각 도메인은 다음 구조를 따름:
-
-```
-domain/domains/{도메인명}/
-├── domain/        # 엔티티, 값 객체 (JPA Entity)
-├── repository/    # JpaRepository 인터페이스
-├── adaptor/       # 데이터 접근 어댑터 (@Adaptor)
-├── service/       # 도메인 서비스 (@DomainService)
-└── exception/     # 도메인 에러코드, 예외 클래스
-```
-
-## 네이밍 컨벤션
-
-| 항목 | 규칙 | 예시 |
-|------|------|------|
-| 엔티티 | `{Name}` | `Student`, `Course` |
-| 리포지토리 | `{Name}Repository` | `StudentRepository` |
-| 어댑터 | `{Name}Adaptor` | `StudentAdaptor` |
-| 도메인 서비스 | `{Name}DomainService` | `StudentDomainService` |
-| 유즈케이스 | `{동사}{Name}UseCase` | `ReadStudentUseCase`, `CreateCourseUseCase` |
-| 컨트롤러 | `{Name}Controller` | `StudentController` |
-| 에러코드 | `{Name}ErrorCode` | `StudentErrorCode` |
-| ID (ULID) | 26자 String | `01ARZ3NDEKTSV4RRFFQ69G5FAV` |
+- `cd.yml`의 자동 배포 매트릭스는 `supporters-api`, `backoffice-api` 두 서비스만 포함합니다.
+- `SClass-Batch`는 현재 CI에서 빌드/테스트되지만 자동 배포되지는 않습니다.
+- `develop` push는 dev EC2, `main` push는 prod ECS로 배포됩니다.
