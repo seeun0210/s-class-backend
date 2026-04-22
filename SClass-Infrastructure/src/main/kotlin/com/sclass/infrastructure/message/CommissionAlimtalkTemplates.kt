@@ -54,8 +54,8 @@ class CommissionAlimtalkTemplates(
         content =
             "[S클래스] 탐구 주제 추천이 도착했습니다\n\n" +
                 "${studentName}님, 안녕하세요.\n\n" +
-                "앱에서 추천 주제를 확인하고 선택해 주세요.\n\n" +
-                "※ 본 메시지는 발신 전용으로, S클래스에서 자동 발송됩니다.",
+                "회원님이 신청하신 탐구 주제 추천 결과가 도착했습니다.\n" +
+                "앱에서 추천 주제를 확인하고 선택해 주세요.",
         buttons = listOf(studentButton(name = "주제 확인하기", commissionId = commissionId)),
     )
 
