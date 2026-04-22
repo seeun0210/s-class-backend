@@ -122,7 +122,7 @@ class HandleNicePayReturnUseCase(
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                        enrollment.markPaid()
+                        enrollment.markCoursePaid()
                         enrollmentAdaptor.save(enrollment)
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)
@@ -140,7 +140,7 @@ class HandleNicePayReturnUseCase(
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
                         val period = product.resolveActivePeriod(now)
-                        enrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
+                        enrollment.markMembershipPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(enrollment)
 
                         coinDomainService.issue(

@@ -8,6 +8,7 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.exception.EnrollmentAlreadyExistsException
+import com.sclass.domain.domains.enrollment.exception.EnrollmentInvalidPurchaseTargetException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
@@ -87,11 +88,13 @@ class PrepareEnrollmentUseCaseTest {
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(capture(enrollmentSlot)) } answers { enrollmentSlot.captured }
 
-            val result = useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+            val result = useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
 
+            assertThat(result.productId).isEqualTo("product-id-00000000001")
             assertThat(result.courseId).isEqualTo(1L)
             assertThat(result.courseName).isEqualTo("수학 코스")
             assertThat(result.amount).isEqualTo(300000)
+            assertThat(enrollmentSlot.captured.productId).isEqualTo("product-id-00000000001")
             assertThat(enrollmentSlot.captured.status).isEqualTo(EnrollmentStatus.PENDING_PAYMENT)
             assertThat(enrollmentSlot.captured.tuitionAmountWon).isEqualTo(300000)
         }
@@ -107,7 +110,7 @@ class PrepareEnrollmentUseCaseTest {
             every { enrollmentAdaptor.countLiveEnrollments(1L) } returns 0L
 
             assertThatThrownBy {
-                useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+                useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
             }.isInstanceOf(CourseNotEnrollableException::class.java)
         }
 
@@ -118,7 +121,7 @@ class PrepareEnrollmentUseCaseTest {
             every { enrollmentAdaptor.findResumableEnrollment(1L, "student-id-00000000001") } throws EnrollmentAlreadyExistsException()
 
             assertThatThrownBy {
-                useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+                useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
             }.isInstanceOf(EnrollmentAlreadyExistsException::class.java)
         }
 
@@ -126,6 +129,7 @@ class PrepareEnrollmentUseCaseTest {
         fun `PENDING_PAYMENT enrollment이 있으면 기존 결제 정보를 그대로 반환한다`() {
             val existingEnrollment =
                 Enrollment.createForPurchase(
+                    productId = "product-id-00000000001",
                     courseId = 1L,
                     studentUserId = "student-id-00000000001",
                     tuitionAmountWon = 300000,
@@ -136,8 +140,9 @@ class PrepareEnrollmentUseCaseTest {
             every { enrollmentAdaptor.findResumableEnrollment(1L, "student-id-00000000001") } returns existingEnrollment
             every { paymentAdaptor.findById("payment-id-000000000001") } returns pendingPayment()
 
-            val result = useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+            val result = useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
 
+            assertThat(result.productId).isEqualTo("product-id-00000000001")
             assertThat(result.pgOrderId).isEqualTo("order-id-000000000001")
             verify(exactly = 0) { paymentAdaptor.save(any()) }
             verify(exactly = 0) { enrollmentAdaptor.save(any()) }
@@ -151,8 +156,17 @@ class PrepareEnrollmentUseCaseTest {
             every { enrollmentAdaptor.findResumableEnrollment(any(), any()) } returns null
 
             assertThatThrownBy {
-                useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+                useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
             }.isInstanceOf(ProductTypeMismatchException::class.java)
+        }
+
+        @Test
+        fun `courseId와 productId 조합이 다르면 EnrollmentInvalidPurchaseTargetException이 발생한다`() {
+            every { courseAdaptor.findById(1L) } returns listedCourse()
+
+            assertThatThrownBy {
+                useCase.execute("student-id-00000000001", "different-product-id", 1L, PgType.NICEPAY)
+            }.isInstanceOf(EnrollmentInvalidPurchaseTargetException::class.java)
         }
 
         @Test
@@ -164,7 +178,7 @@ class PrepareEnrollmentUseCaseTest {
             every { paymentAdaptor.save(any()) } returns pendingPayment()
             every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
-            useCase.execute("student-id-00000000001", 1L, PgType.NICEPAY)
+            useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
 
             verify(exactly = 1) { paymentAdaptor.save(any()) }
             verify(exactly = 1) { enrollmentAdaptor.save(any()) }

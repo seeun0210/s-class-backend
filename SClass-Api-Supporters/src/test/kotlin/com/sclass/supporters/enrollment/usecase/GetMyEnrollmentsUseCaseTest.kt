@@ -60,6 +60,7 @@ class GetMyEnrollmentsUseCaseTest {
     ): EnrollmentWithCourseDto {
         val enrollment =
             Enrollment.createForPurchase(
+                productId = "product-id-0000000000000001",
                 courseId = 1L,
                 studentUserId = "student-id-0000000000000001",
                 tuitionAmountWon = 300000,

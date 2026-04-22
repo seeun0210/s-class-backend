@@ -32,7 +32,7 @@ class Enrollment private constructor(
     @Column(name = "course_id")
     val courseId: Long? = null,
 
-    // MEMBERSHIP 구매 시 저장
+    // purchase 대상 product 스냅샷
     @Column(name = "product_id", length = 26)
     val productId: String? = null,
 
@@ -77,21 +77,21 @@ class Enrollment private constructor(
     @Column(name = "cancel_reason", length = 500)
     var cancelReason: String? = null,
 ) : BaseTimeEntity() {
-    fun markPaid(
-        startAt: LocalDateTime? = null,
-        endAt: LocalDateTime? = null,
+    fun markCoursePaid() {
+        require(enrollmentType == EnrollmentType.PURCHASE)
+        require(paymentId != null)
+        validateTransition(EnrollmentStatus.ACTIVE)
+        this.status = EnrollmentStatus.ACTIVE
+    }
+
+    fun markMembershipPaid(
+        startAt: LocalDateTime,
+        endAt: LocalDateTime,
     ) {
-        require(enrollmentType == EnrollmentType.PURCHASE) {
-            "markPaid is only valid for PURCHASE enrollments"
-        }
-        require(paymentId != null) { "paymentId must be set before markPaid" }
-        if (productId != null) {
-            require(startAt != null && endAt != null) {
-                "membership enrollment requires startAt/endAt on markPaid"
-            }
-            this.startAt = startAt
-            this.endAt = endAt
-        }
+        require(enrollmentType == EnrollmentType.PURCHASE)
+        require(paymentId != null)
+        this.startAt = startAt
+        this.endAt = endAt
         validateTransition(EnrollmentStatus.ACTIVE)
         this.status = EnrollmentStatus.ACTIVE
     }
@@ -140,16 +140,18 @@ class Enrollment private constructor(
         /**
          * 학생이 PG 결제로 등록.
          * 호출 순서: Payment 먼저 생성 → Enrollment.createForPurchase(..., paymentId = payment.id)
-         *   → PG 콜백 수신 시 payment.markCompleted() → enrollment.markPaid()
+         *   → PG 콜백 수신 시 payment.markCompleted() → enrollment.markCoursePaid()
          */
         fun createForPurchase(
-            courseId: Long,
+            productId: String,
             studentUserId: String,
             tuitionAmountWon: Int,
             paymentId: String,
+            courseId: Long,
         ): Enrollment =
             Enrollment(
                 courseId = courseId,
+                productId = productId,
                 studentUserId = studentUserId,
                 enrollmentType = EnrollmentType.PURCHASE,
                 tuitionAmountWon = tuitionAmountWon,

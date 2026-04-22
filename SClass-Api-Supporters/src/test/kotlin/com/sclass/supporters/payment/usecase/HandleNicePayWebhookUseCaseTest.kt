@@ -179,6 +179,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -223,6 +224,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -262,6 +264,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -300,6 +303,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
