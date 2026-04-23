@@ -32,6 +32,8 @@ class PrepareEnrollmentUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var paymentAdaptor: PaymentAdaptor
+    private lateinit var prepareRegularEnrollmentUseCase: PrepareRegularEnrollmentUseCase
+    private lateinit var prepareMatchingEnrollmentUseCase: PrepareMatchingEnrollmentUseCase
     private lateinit var useCase: PrepareEnrollmentUseCase
 
     @BeforeEach
@@ -40,7 +42,23 @@ class PrepareEnrollmentUseCaseTest {
         productAdaptor = mockk()
         enrollmentAdaptor = mockk()
         paymentAdaptor = mockk()
-        useCase = PrepareEnrollmentUseCase(courseAdaptor, productAdaptor, enrollmentAdaptor, paymentAdaptor)
+        prepareRegularEnrollmentUseCase =
+            PrepareRegularEnrollmentUseCase(
+                courseAdaptor = courseAdaptor,
+                enrollmentAdaptor = enrollmentAdaptor,
+                paymentAdaptor = paymentAdaptor,
+            )
+        prepareMatchingEnrollmentUseCase =
+            PrepareMatchingEnrollmentUseCase(
+                enrollmentAdaptor = enrollmentAdaptor,
+                paymentAdaptor = paymentAdaptor,
+            )
+        useCase =
+            PrepareEnrollmentUseCase(
+                productAdaptor = productAdaptor,
+                prepareRegularEnrollmentUseCase = prepareRegularEnrollmentUseCase,
+                prepareMatchingEnrollmentUseCase = prepareMatchingEnrollmentUseCase,
+            )
     }
 
     private fun listedCourse() =
