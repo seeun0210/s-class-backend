@@ -8,10 +8,12 @@ import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.domain.QCourse.course
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.domain.ProductCatalogSort
 import com.sclass.domain.domains.product.domain.ProductType
+import com.sclass.domain.domains.product.domain.QCourseProduct
 import com.sclass.domain.domains.product.domain.QMembershipProduct
 import com.sclass.domain.domains.product.domain.QProduct
 import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
@@ -83,19 +85,39 @@ class ProductCustomRepositoryImpl(
         pageable: Pageable,
     ): Page<Product> {
         val qProduct = QProduct.product
+        val qCourseProduct = QCourseProduct.courseProduct
         val popularityCount = enrollment.id.countDistinct()
         val earliestDeadline = course.enrollmentDeadLine.min()
         val deadlineNotPassed = course.enrollmentDeadLine.isNull.or(course.enrollmentDeadLine.goe(LocalDateTime.now()))
+        val hasOpenListedCourse =
+            queryFactory
+                .selectOne()
+                .from(course)
+                .where(
+                    course.productId.eq(qProduct.id),
+                    course.status.eq(CourseStatus.LISTED),
+                    deadlineNotPassed,
+                ).exists()
+        val courseCatalogCondition =
+            qProduct
+                .instanceOf(CourseProduct::class.java)
+                .and(
+                    qCourseProduct.requiresMatching.isTrue
+                        .or(hasOpenListedCourse),
+                )
         val where =
             listOfNotNull(
                 qProduct.visible.isTrue,
                 resolveTypeCondition(qProduct, types),
+                qProduct.instanceOf(CourseProduct::class.java).not().or(courseCatalogCondition),
             ).toTypedArray()
 
         val content =
             queryFactory
                 .select(qProduct, popularityCount, earliestDeadline)
                 .from(qProduct)
+                .leftJoin(qCourseProduct)
+                .on(qCourseProduct.id.eq(qProduct.id))
                 .leftJoin(enrollment)
                 .on(
                     enrollment.productId.eq(qProduct.id),
@@ -121,6 +143,8 @@ class ProductCustomRepositoryImpl(
             queryFactory
                 .select(qProduct.count())
                 .from(qProduct)
+                .leftJoin(qCourseProduct)
+                .on(qCourseProduct.id.eq(qProduct.id))
                 .where(*where)
                 .fetchOne() ?: 0L
 
@@ -149,8 +173,8 @@ class ProductCustomRepositoryImpl(
         deadlineOrder: OrderSpecifier<LocalDateTime>,
     ): Array<OrderSpecifier<*>> =
         when (this) {
-            ProductCatalogSort.LATEST -> arrayOf(qProduct.createdAt.desc())
-            ProductCatalogSort.POPULARITY -> arrayOf(popularityOrder, qProduct.createdAt.desc())
-            ProductCatalogSort.DEADLINE_ASC -> arrayOf(deadlineOrder, qProduct.createdAt.desc())
+            ProductCatalogSort.LATEST -> arrayOf(qProduct.createdAt.desc(), qProduct.id.asc())
+            ProductCatalogSort.POPULARITY -> arrayOf(popularityOrder, qProduct.createdAt.desc(), qProduct.id.asc())
+            ProductCatalogSort.DEADLINE_ASC -> arrayOf(deadlineOrder, qProduct.createdAt.desc(), qProduct.id.asc())
         }
 }

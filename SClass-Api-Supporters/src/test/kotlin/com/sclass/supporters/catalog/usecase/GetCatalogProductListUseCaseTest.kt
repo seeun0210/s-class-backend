@@ -134,6 +134,53 @@ class GetCatalogProductListUseCaseTest {
         assertThat(membership.membership?.coinAmount).isEqualTo(100)
     }
 
+    @Test
+    fun `매칭형 course product는 course option이 없어도 products 응답으로 반환한다`() {
+        val pageable = PageRequest.of(0, 20)
+        val matchingCourseProduct =
+            CourseProduct(
+                name = "매칭형 수학 코스",
+                priceWon = 250000,
+                totalLessons = 8,
+                requiresMatching = true,
+            )
+        val page = PageImpl(listOf<Product>(matchingCourseProduct), pageable, 1)
+
+        every {
+            productAdaptor.findVisibleCatalogProducts(
+                types = listOf(ProductType.COURSE),
+                sort = ProductCatalogSort.LATEST,
+                pageable = pageable,
+            )
+        } returns page
+        every { courseAdaptor.findAllCatalogCoursesByProductIds(listOf(matchingCourseProduct.id)) } returns emptyMap()
+        every { enrollmentAdaptor.countLiveMembershipEnrollmentsByProductIds(any()) } returns emptyMap()
+        every { coinPackageAdaptor.findAllByIds(any()) } returns emptyMap()
+
+        val result =
+            useCase.execute(
+                types = listOf(ProductType.COURSE),
+                sort = ProductCatalogSort.LATEST,
+                pageable = pageable,
+            )
+
+        assertThat(result.totalElements).isEqualTo(1)
+        assertThat(result.content).hasSize(1)
+        assertThat(result.content.first().productId).isEqualTo(matchingCourseProduct.id)
+        assertThat(
+            result.content
+                .first()
+                .course
+                ?.requiresMatching,
+        ).isTrue()
+        assertThat(
+            result.content
+                .first()
+                .course
+                ?.courseOptions,
+        ).isEmpty()
+    }
+
     private fun makeCatalogCourseDto(courseProduct: CourseProduct): CatalogCourseDto {
         val teacherUser =
             User(
