@@ -16,4 +16,5 @@ enum class CourseErrorCode(
     COURSE_MAX_ENROLLMENTS_TOO_LOW("COURSE_007", "최대 정원은 현재 등록자 수보다 작을 수 없습니다", 400),
     COURSE_INVALID_SCHEDULE("COURSE_008", "모집 시작 < 모집 마감 ≤ 개강 < 종강 순이어야 합니다", 400),
     COURSE_MATCHING_PRODUCT_NOT_CREATABLE("COURSE_009", "매칭형 코스 상품으로는 일반 코스를 생성할 수 없습니다", 400),
+    COURSE_PRODUCT_ALREADY_IN_USE("COURSE_010", "이미 운영 코스에 연결된 일반 코스 상품입니다", 400),
 }

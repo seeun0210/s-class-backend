@@ -5,6 +5,7 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotCreatableException
+import com.sclass.domain.domains.course.exception.CourseProductAlreadyInUseException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
@@ -63,6 +64,7 @@ class CreateCourseUseCaseTest {
             val product = product()
             val courseSlot = slot<Course>()
             every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             val result = useCase.execute(request().copy(productId = product.id))
@@ -81,6 +83,7 @@ class CreateCourseUseCaseTest {
             val product = product()
             val courseSlot = slot<Course>()
             every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request().copy(productId = product.id, organizationId = "org-id-000000000001"))
@@ -93,11 +96,13 @@ class CreateCourseUseCaseTest {
             val product = product()
             val courseSlot = slot<Course>()
             every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request().copy(productId = product.id))
 
             verify(exactly = 1) { productAdaptor.findCourseProductById(product.id) }
+            verify(exactly = 1) { courseAdaptor.findAllByProductId(product.id) }
             verify(exactly = 1) { courseAdaptor.save(any()) }
             assertThat(courseSlot.captured.productId).isEqualTo(product.id)
         }
@@ -107,6 +112,7 @@ class CreateCourseUseCaseTest {
             val product = product()
             val courseSlot = slot<Course>()
             every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             val enrollStart = LocalDateTime.of(2026, 5, 1, 0, 0)
@@ -138,6 +144,7 @@ class CreateCourseUseCaseTest {
         fun `thumbnailFileId가 null이면 응답의 thumbnailUrl도 null`() {
             val product = product().also { it.thumbnailFileId = null }
             every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
             every { courseAdaptor.save(any()) } answers { firstArg() }
 
             val result = useCase.execute(request().copy(productId = product.id))
@@ -174,6 +181,17 @@ class CreateCourseUseCaseTest {
             assertThatThrownBy {
                 useCase.execute(request().copy(productId = product.id))
             }.isInstanceOf(CourseMatchingProductNotCreatableException::class.java)
+        }
+
+        @Test
+        fun `일반 코스 상품이 이미 다른 코스에 연결되어 있으면 예외가 발생한다`() {
+            val product = product()
+            every { productAdaptor.findCourseProductById(product.id) } returns product
+            every { courseAdaptor.findAllByProductId(product.id) } returns listOf(mockk())
+
+            assertThatThrownBy {
+                useCase.execute(request().copy(productId = product.id))
+            }.isInstanceOf(CourseProductAlreadyInUseException::class.java)
         }
     }
 }

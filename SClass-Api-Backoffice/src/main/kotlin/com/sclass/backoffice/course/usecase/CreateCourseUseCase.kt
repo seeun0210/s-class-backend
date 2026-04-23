@@ -6,6 +6,7 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotCreatableException
+import com.sclass.domain.domains.course.exception.CourseProductAlreadyInUseException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
@@ -20,6 +21,9 @@ class CreateCourseUseCase(
     fun execute(request: CreateCourseRequest): CourseResponse {
         val product = productAdaptor.findCourseProductById(request.productId)
         if (product.requiresMatching) throw CourseMatchingProductNotCreatableException()
+        if (courseAdaptor.findAllByProductId(product.id).isNotEmpty()) {
+            throw CourseProductAlreadyInUseException()
+        }
         val course =
             courseAdaptor.save(
                 Course(
