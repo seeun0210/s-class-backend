@@ -121,11 +121,11 @@ class EnrollmentAdaptor(
             now = java.time.LocalDateTime.now(),
         )
 
-    fun hasPendingMatchEnrollment(productId: String): Boolean =
-        enrollmentRepository.countByProductIdAndStatusIn(
+    fun hasPendingUnassignedMatchingEnrollment(productId: String): Boolean =
+        enrollmentRepository.existsByProductIdAndCourseIdIsNullAndStatusIn(
             productId,
-            setOf(EnrollmentStatus.PENDING_MATCH),
-        ) > 0
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.PENDING_MATCH),
+        )
 
     fun findResumableCourseProductEnrollment(
         productId: String,

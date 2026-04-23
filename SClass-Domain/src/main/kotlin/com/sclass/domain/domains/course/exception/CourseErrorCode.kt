@@ -18,5 +18,5 @@ enum class CourseErrorCode(
     COURSE_MATCHING_PRODUCT_NOT_CREATABLE("COURSE_009", "매칭형 코스 상품으로는 일반 코스를 생성할 수 없습니다", 400),
     COURSE_PRODUCT_ALREADY_IN_USE("COURSE_010", "이미 운영 코스에 연결된 일반 코스 상품입니다", 400),
     COURSE_MATCHING_PRODUCT_NOT_CONVERTIBLE("COURSE_011", "여러 코스에 연결된 매칭형 코스 상품은 일반 코스 상품으로 전환할 수 없습니다", 400),
-    COURSE_MATCHING_PRODUCT_HAS_PENDING_MATCH_ENROLLMENT("COURSE_012", "매칭 대기 중인 수강 등록이 있는 매칭형 코스 상품은 일반 코스 상품으로 전환할 수 없습니다", 400),
+    COURSE_MATCHING_PRODUCT_HAS_PENDING_MATCH_ENROLLMENT("COURSE_012", "코스가 아직 배정되지 않은 수강 등록이 있는 매칭형 코스 상품은 일반 코스 상품으로 전환할 수 없습니다", 400),
 }

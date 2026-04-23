@@ -25,7 +25,7 @@ class UpdateCourseProductUseCase(
     ): CourseProductResponse {
         val product = productAdaptor.findCourseProductById(productId)
         if (product.requiresMatching && request.requiresMatching == false) {
-            if (enrollmentAdaptor.hasPendingMatchEnrollment(product.id)) {
+            if (enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id)) {
                 throw CourseMatchingProductHasPendingMatchEnrollmentException()
             }
             val linkedCourses = courseAdaptor.findAllByProductId(product.id)

@@ -48,7 +48,7 @@ class UpdateCourseProductUseCaseTest {
                 thumbnailFileId = "old-file-id",
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
-        every { enrollmentAdaptor.hasPendingMatchEnrollment(product.id) } returns false
+        every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns false
         every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
 
         val result =
@@ -105,7 +105,7 @@ class UpdateCourseProductUseCaseTest {
                 requiresMatching = true,
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
-        every { enrollmentAdaptor.hasPendingMatchEnrollment(product.id) } returns false
+        every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns false
         every { courseAdaptor.findAllByProductId(product.id) } returns listOf(mockk(), mockk())
 
         assertThatThrownBy {
@@ -118,7 +118,7 @@ class UpdateCourseProductUseCaseTest {
     }
 
     @Test
-    fun `매칭 대기 enrollment가 있으면 매칭형 상품을 일반형으로 전환할 수 없다`() {
+    fun `코스가 아직 배정되지 않은 enrollment가 있으면 매칭형 상품을 일반형으로 전환할 수 없다`() {
         val product =
             CourseProduct(
                 name = "매칭형 코스",
@@ -127,7 +127,7 @@ class UpdateCourseProductUseCaseTest {
                 requiresMatching = true,
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
-        every { enrollmentAdaptor.hasPendingMatchEnrollment(product.id) } returns true
+        every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns true
 
         assertThatThrownBy {
             useCase.execute(
