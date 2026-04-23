@@ -1,7 +1,9 @@
 package com.sclass.domain.domains.product.repository
 
+import com.querydsl.core.types.Order
 import com.querydsl.core.types.OrderSpecifier
 import com.querydsl.core.types.dsl.BooleanExpression
+import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.coin.domain.QCoinPackage
 import com.sclass.domain.domains.course.domain.CourseStatus
@@ -20,6 +22,7 @@ import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import java.time.LocalDateTime
 
 class ProductCustomRepositoryImpl(
@@ -87,7 +90,7 @@ class ProductCustomRepositoryImpl(
                 .selectFrom(qCourseProduct)
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
-                .orderBy(qCourseProduct.createdAt.desc(), qCourseProduct.id.asc())
+                .orderBy(*pageable.sort.toCourseProductOrderSpecifiers())
                 .fetch()
 
         val total =
@@ -97,6 +100,23 @@ class ProductCustomRepositoryImpl(
                 .fetchOne() ?: 0L
 
         return PageImpl(content, pageable, total)
+    }
+
+    private fun Sort.toCourseProductOrderSpecifiers(): Array<OrderSpecifier<*>> {
+        if (isUnsorted) return arrayOf(QCourseProduct.courseProduct.createdAt.desc(), QCourseProduct.courseProduct.id.asc())
+
+        val path = PathBuilder(CourseProduct::class.java, "courseProduct")
+        val orderSpecifiers: MutableList<OrderSpecifier<*>> =
+            map { order ->
+                val direction = if (order.isAscending) Order.ASC else Order.DESC
+                OrderSpecifier(direction, path.get(order.property, Comparable::class.java))
+            }.toMutableList()
+
+        if (none { it.property == "id" }) {
+            orderSpecifiers.add(QCourseProduct.courseProduct.id.asc())
+        }
+
+        return orderSpecifiers.toTypedArray()
     }
 
     override fun findVisibleCatalogProducts(

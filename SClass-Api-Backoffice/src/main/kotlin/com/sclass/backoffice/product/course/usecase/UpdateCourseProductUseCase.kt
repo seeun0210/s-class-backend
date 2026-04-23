@@ -3,6 +3,8 @@ package com.sclass.backoffice.product.course.usecase
 import com.sclass.backoffice.product.course.dto.CourseProductResponse
 import com.sclass.backoffice.product.course.dto.UpdateCourseProductRequest
 import com.sclass.common.annotation.UseCase
+import com.sclass.domain.domains.course.adaptor.CourseAdaptor
+import com.sclass.domain.domains.course.exception.CourseMatchingProductNotConvertibleException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 @UseCase
 class UpdateCourseProductUseCase(
     private val productAdaptor: ProductAdaptor,
+    private val courseAdaptor: CourseAdaptor,
     private val thumbnailUrlResolver: ThumbnailUrlResolver,
 ) {
     @Transactional
@@ -18,6 +21,12 @@ class UpdateCourseProductUseCase(
         request: UpdateCourseProductRequest,
     ): CourseProductResponse {
         val product = productAdaptor.findCourseProductById(productId)
+        if (product.requiresMatching && request.requiresMatching == false) {
+            val linkedCourses = courseAdaptor.findAllByProductId(product.id)
+            if (linkedCourses.size > 1) {
+                throw CourseMatchingProductNotConvertibleException()
+            }
+        }
 
         product.updateCatalog(
             newName = request.name,

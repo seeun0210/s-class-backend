@@ -21,3 +21,5 @@ class CourseInvalidScheduleException : BusinessException(CourseErrorCode.COURSE_
 class CourseMatchingProductNotCreatableException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CREATABLE)
 
 class CourseProductAlreadyInUseException : BusinessException(CourseErrorCode.COURSE_PRODUCT_ALREADY_IN_USE)
+
+class CourseMatchingProductNotConvertibleException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CONVERTIBLE)

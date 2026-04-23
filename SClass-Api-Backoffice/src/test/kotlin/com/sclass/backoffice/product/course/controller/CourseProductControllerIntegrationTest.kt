@@ -156,6 +156,36 @@ class CourseProductControllerIntegrationTest {
     }
 
     @Test
+    fun `요청한 sort 기준으로 course product 목록을 조회한다`() {
+        productRepository.save(
+            CourseProduct(
+                name = "코스 B",
+                priceWon = 100000,
+                totalLessons = 8,
+            ),
+        )
+        productRepository.save(
+            CourseProduct(
+                name = "코스 A",
+                priceWon = 200000,
+                totalLessons = 12,
+            ),
+        )
+
+        mockMvc
+            .perform(
+                get("/api/v1/course-products")
+                    .header("Authorization", adminToken)
+                    .param("page", "0")
+                    .param("size", "20")
+                    .param("sort", "name,asc"),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.content[0].name").value("코스 A"))
+            .andExpect(jsonPath("$.data.content[1].name").value("코스 B"))
+    }
+
+    @Test
     fun `name이 비어 있으면 생성은 400을 반환한다`() {
         val body =
             mapOf(

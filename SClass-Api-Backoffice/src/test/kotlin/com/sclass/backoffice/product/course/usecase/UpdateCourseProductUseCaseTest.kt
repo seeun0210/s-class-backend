@@ -1,6 +1,8 @@
 package com.sclass.backoffice.product.course.usecase
 
 import com.sclass.backoffice.product.course.dto.UpdateCourseProductRequest
+import com.sclass.domain.domains.course.adaptor.CourseAdaptor
+import com.sclass.domain.domains.course.exception.CourseMatchingProductNotConvertibleException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
@@ -15,17 +17,19 @@ import org.junit.jupiter.api.Test
 
 class UpdateCourseProductUseCaseTest {
     private lateinit var productAdaptor: ProductAdaptor
+    private lateinit var courseAdaptor: CourseAdaptor
     private lateinit var thumbnailUrlResolver: ThumbnailUrlResolver
     private lateinit var useCase: UpdateCourseProductUseCase
 
     @BeforeEach
     fun setUp() {
         productAdaptor = mockk()
+        courseAdaptor = mockk()
         thumbnailUrlResolver = mockk()
         every { thumbnailUrlResolver.resolve(any()) } answers {
             firstArg<String?>()?.let { "https://static.test.sclass.click/course_thumbnail/$it" }
         }
-        useCase = UpdateCourseProductUseCase(productAdaptor, thumbnailUrlResolver)
+        useCase = UpdateCourseProductUseCase(productAdaptor, courseAdaptor, thumbnailUrlResolver)
     }
 
     @Test
@@ -40,6 +44,7 @@ class UpdateCourseProductUseCaseTest {
                 thumbnailFileId = "old-file-id",
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
+        every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
 
         val result =
             useCase.execute(
@@ -83,5 +88,26 @@ class UpdateCourseProductUseCaseTest {
         assertThatThrownBy {
             useCase.execute("product-id-00000000001", UpdateCourseProductRequest(name = "변경"))
         }.isInstanceOf(ProductNotFoundException::class.java)
+    }
+
+    @Test
+    fun `여러 코스에 연결된 매칭형 상품은 일반형으로 전환할 수 없다`() {
+        val product =
+            CourseProduct(
+                name = "매칭형 코스",
+                priceWon = 300000,
+                totalLessons = 12,
+                requiresMatching = true,
+            )
+        every { productAdaptor.findCourseProductById(product.id) } returns product
+        every { courseAdaptor.findAllByProductId(product.id) } returns listOf(mockk(), mockk())
+
+        assertThatThrownBy {
+            useCase.execute(
+                product.id,
+                UpdateCourseProductRequest(requiresMatching = false),
+            )
+        }.isInstanceOf(CourseMatchingProductNotConvertibleException::class.java)
+        assertThat(product.requiresMatching).isTrue()
     }
 }
