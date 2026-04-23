@@ -15,8 +15,6 @@ import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.domain.domains.teacher.adaptor.TeacherAdaptor
-import com.sclass.infrastructure.redis.DistributedLock
-import com.sclass.infrastructure.redis.LockKey
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
@@ -28,9 +26,8 @@ class CreateCourseFromEnrollmentUseCase(
     private val lessonDomainService: LessonDomainService,
 ) {
     @Transactional
-    @DistributedLock(prefix = "enrollment")
     fun execute(
-        @LockKey enrollmentId: Long,
+        enrollmentId: Long,
         teacherUserId: String,
     ): EnrollmentResponse {
         val enrollment = enrollmentAdaptor.findById(enrollmentId)

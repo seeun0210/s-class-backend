@@ -30,15 +30,21 @@ class ChangeCourseStatusUseCase(
         when (targetStatus) {
             CourseStatus.LISTED -> {
                 course.list()
-                product.show()
+                if (!product.requiresMatching) {
+                    product.show()
+                }
             }
             CourseStatus.UNLISTED -> {
                 course.unlist()
-                product.hide()
+                if (!product.requiresMatching) {
+                    product.hide()
+                }
             }
             CourseStatus.ARCHIVED -> {
                 course.archive()
-                product.hide()
+                if (!product.requiresMatching) {
+                    product.hide()
+                }
             }
             CourseStatus.DRAFT -> throw CourseInvalidStatusTransitionException()
         }
