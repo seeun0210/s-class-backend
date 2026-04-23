@@ -70,7 +70,7 @@ class CreateCourseFromEnrollmentUseCase(
             enrollment = enrollment,
             teacherUserId = teacherUserId,
             courseName = product.name,
-            totalLessons = course.totalLessons ?: product.totalLessons,
+            totalLessons = product.totalLessons,
         )
 
         return EnrollmentResponse.from(enrollment)
