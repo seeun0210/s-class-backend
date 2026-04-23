@@ -89,27 +89,11 @@ class ProductCustomRepositoryImpl(
         val popularityCount = enrollment.id.countDistinct()
         val earliestDeadline = course.enrollmentDeadLine.min()
         val deadlineNotPassed = course.enrollmentDeadLine.isNull.or(course.enrollmentDeadLine.goe(LocalDateTime.now()))
-        val hasOpenListedCourse =
-            queryFactory
-                .selectOne()
-                .from(course)
-                .where(
-                    course.productId.eq(qProduct.id),
-                    course.status.eq(CourseStatus.LISTED),
-                    deadlineNotPassed,
-                ).exists()
-        val courseCatalogCondition =
-            qProduct
-                .instanceOf(CourseProduct::class.java)
-                .and(
-                    qCourseProduct.requiresMatching.isTrue
-                        .or(hasOpenListedCourse),
-                )
         val where =
             listOfNotNull(
                 qProduct.visible.isTrue,
                 resolveTypeCondition(qProduct, types),
-                qProduct.instanceOf(CourseProduct::class.java).not().or(courseCatalogCondition),
+                resolveCatalogVisibilityCondition(qProduct, qCourseProduct, deadlineNotPassed),
             ).toTypedArray()
 
         val content =
@@ -154,8 +138,42 @@ class ProductCustomRepositoryImpl(
     override fun findVisibleCatalogProductById(productId: String): Product? =
         queryFactory
             .selectFrom(QProduct.product)
-            .where(QProduct.product.id.eq(productId), QProduct.product.visible.isTrue)
-            .fetchOne()
+            .leftJoin(QCourseProduct.courseProduct)
+            .on(QCourseProduct.courseProduct.id.eq(QProduct.product.id))
+            .where(
+                QProduct.product.id.eq(productId),
+                QProduct.product.visible.isTrue,
+                resolveCatalogVisibilityCondition(
+                    qProduct = QProduct.product,
+                    qCourseProduct = QCourseProduct.courseProduct,
+                    deadlineNotPassed = course.enrollmentDeadLine.isNull.or(course.enrollmentDeadLine.goe(LocalDateTime.now())),
+                ),
+            ).fetchOne()
+
+    private fun resolveCatalogVisibilityCondition(
+        qProduct: QProduct,
+        qCourseProduct: QCourseProduct,
+        deadlineNotPassed: BooleanExpression,
+    ): BooleanExpression {
+        val hasOpenListedCourse =
+            queryFactory
+                .selectOne()
+                .from(course)
+                .where(
+                    course.productId.eq(qProduct.id),
+                    course.status.eq(CourseStatus.LISTED),
+                    deadlineNotPassed,
+                ).exists()
+        val courseCatalogCondition =
+            qProduct
+                .instanceOf(CourseProduct::class.java)
+                .and(
+                    qCourseProduct.requiresMatching.isTrue
+                        .or(hasOpenListedCourse),
+                )
+
+        return qProduct.instanceOf(CourseProduct::class.java).not().or(courseCatalogCondition)
+    }
 
     private fun resolveTypeCondition(
         qProduct: QProduct,

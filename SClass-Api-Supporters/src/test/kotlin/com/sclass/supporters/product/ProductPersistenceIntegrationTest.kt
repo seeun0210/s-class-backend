@@ -91,4 +91,47 @@ class ProductPersistenceIntegrationTest {
             .contains(matchingWithoutCourse.id, regularWithListedCourse.id)
             .doesNotContain(regularWithoutCourse.id)
     }
+
+    @Test
+    fun `catalog 상세는 구매 가능한 일반 코스 상품과 매칭형 코스 상품만 노출한다`() {
+        val regularWithoutCourse =
+            productRepository.saveAndFlush(
+                CourseProduct(
+                    name = "일반 코스",
+                    priceWon = 100000,
+                    totalLessons = 8,
+                ).also { it.show() },
+            )
+        val matchingWithoutCourse =
+            productRepository.saveAndFlush(
+                CourseProduct(
+                    name = "매칭형 코스",
+                    priceWon = 120000,
+                    totalLessons = 10,
+                    requiresMatching = true,
+                ).also { it.show() },
+            )
+        val regularWithListedCourse =
+            productRepository.saveAndFlush(
+                CourseProduct(
+                    name = "모집중 코스",
+                    priceWon = 130000,
+                    totalLessons = 12,
+                ).also { it.show() },
+            )
+        courseRepository.saveAndFlush(
+            Course(
+                productId = regularWithListedCourse.id,
+                teacherUserId = "teacher-01",
+                status = CourseStatus.LISTED,
+                maxEnrollments = 5,
+            ),
+        )
+
+        assertThat(productRepository.findVisibleCatalogProductById(regularWithoutCourse.id)).isNull()
+        assertThat(productRepository.findVisibleCatalogProductById(matchingWithoutCourse.id)?.id)
+            .isEqualTo(matchingWithoutCourse.id)
+        assertThat(productRepository.findVisibleCatalogProductById(regularWithListedCourse.id)?.id)
+            .isEqualTo(regularWithListedCourse.id)
+    }
 }

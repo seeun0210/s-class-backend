@@ -26,9 +26,9 @@ class CatalogController(
     @GetMapping("/products")
     fun getProductList(
         @RequestParam(required = false, name = "type") types: List<ProductType>?,
-        @RequestParam(defaultValue = "LATEST") sort: ProductCatalogSort,
+        @RequestParam(defaultValue = "LATEST", name = "catalogSort") catalogSort: ProductCatalogSort,
         @PageableDefault(size = 20) pageable: Pageable,
-    ): ApiResponse<CatalogProductPageResponse> = ApiResponse.success(getCatalogProductListUseCase.execute(types, sort, pageable))
+    ): ApiResponse<CatalogProductPageResponse> = ApiResponse.success(getCatalogProductListUseCase.execute(types, catalogSort, pageable))
 
     @GetMapping("/products/{productId}")
     fun getProductDetail(
