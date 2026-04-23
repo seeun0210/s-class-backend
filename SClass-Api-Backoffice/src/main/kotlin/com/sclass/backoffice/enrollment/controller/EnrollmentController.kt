@@ -1,11 +1,13 @@
 package com.sclass.backoffice.enrollment.controller
 
+import com.sclass.backoffice.enrollment.dto.CreateCourseFromEnrollmentRequest
 import com.sclass.backoffice.enrollment.dto.EnrollmentLessonListResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentPageResponse
 import com.sclass.backoffice.enrollment.dto.EnrollmentResponse
 import com.sclass.backoffice.enrollment.dto.ExtendMembershipExpireRequest
 import com.sclass.backoffice.enrollment.dto.GrantEnrollmentRequest
 import com.sclass.backoffice.enrollment.dto.GrantMembershipEnrollmentRequest
+import com.sclass.backoffice.enrollment.usecase.CreateCourseFromEnrollmentFacade
 import com.sclass.backoffice.enrollment.usecase.ExtendMembershipExpireUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentLessonListUseCase
 import com.sclass.backoffice.enrollment.usecase.GetEnrollmentListUseCase
@@ -35,6 +37,7 @@ class EnrollmentController(
     private val extendMembershipExpireUseCase: ExtendMembershipExpireUseCase,
     private val getEnrollmentListUseCase: GetEnrollmentListUseCase,
     private val getEnrollmentLessonListUseCase: GetEnrollmentLessonListUseCase,
+    private val createCourseFromEnrollmentFacade: CreateCourseFromEnrollmentFacade,
 ) {
     @PostMapping("/membership")
     fun grantMembershipEnrollment(
@@ -69,4 +72,10 @@ class EnrollmentController(
     fun getEnrollmentLessonList(
         @PathVariable enrollmentId: Long,
     ): ApiResponse<EnrollmentLessonListResponse> = ApiResponse.success(getEnrollmentLessonListUseCase.execute(enrollmentId))
+
+    @PostMapping("/{enrollmentId}/course")
+    fun createCourseFromEnrollment(
+        @PathVariable enrollmentId: Long,
+        @RequestBody @Valid request: CreateCourseFromEnrollmentRequest,
+    ): ApiResponse<EnrollmentResponse> = ApiResponse.success(createCourseFromEnrollmentFacade.execute(enrollmentId, request.teacherUserId))
 }
