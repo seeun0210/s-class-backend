@@ -17,3 +17,5 @@ class CourseAlreadyStartedException : BusinessException(CourseErrorCode.COURSE_A
 class CourseMaxEnrollmentsTooLowException : BusinessException(CourseErrorCode.COURSE_MAX_ENROLLMENTS_TOO_LOW)
 
 class CourseInvalidScheduleException : BusinessException(CourseErrorCode.COURSE_INVALID_SCHEDULE)
+
+class CourseMatchingProductNotCreatableException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CREATABLE)

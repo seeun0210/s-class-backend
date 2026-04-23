@@ -61,7 +61,7 @@ class UpdateCourseUseCaseTest {
     @Nested
     inner class Success {
         @Test
-        fun `마케팅 자산은 startAt과 무관하게 변경된다`() {
+        fun `운영 fulfillment 정보는 startAt과 무관하게 변경된다`() {
             val course = listedCourse(startAt = LocalDateTime.now().minusDays(1))
             val product = courseProduct()
             every { courseAdaptor.findById(1L) } returns course
@@ -71,21 +71,18 @@ class UpdateCourseUseCaseTest {
                 useCase.execute(
                     1L,
                     UpdateCourseRequest(
-                        name = "고급 수학 코스",
-                        description = "새 설명",
                         curriculum = "1주차: 미분",
-                        thumbnailFileId = "file-id-000000000001",
-                        priceWon = 400000,
+                        totalLessons = 16,
                     ),
                 )
 
             assertAll(
-                { assertThat(product.name).isEqualTo("고급 수학 코스") },
-                { assertThat(product.description).isEqualTo("새 설명") },
-                { assertThat(product.curriculum).isEqualTo("1주차: 미분") },
-                { assertThat(product.thumbnailFileId).isEqualTo("file-id-000000000001") },
-                { assertThat(product.priceWon).isEqualTo(400000) },
-                { assertThat(result.thumbnailUrl).isEqualTo("https://static.test.sclass.click/course_thumbnail/file-id-000000000001") },
+                { assertThat(course.curriculum).isEqualTo("1주차: 미분") },
+                { assertThat(course.totalLessons).isEqualTo(16) },
+                { assertThat(product.name).isEqualTo("수학 코스") },
+                { assertThat(product.priceWon).isEqualTo(300000) },
+                { assertThat(result.curriculum).isEqualTo("1주차: 미분") },
+                { assertThat(result.totalLessons).isEqualTo(16) },
             )
         }
 

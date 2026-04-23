@@ -79,6 +79,26 @@ class ProductCustomRepositoryImpl(
         return PageImpl(content, pageable, total)
     }
 
+    override fun findCourseProducts(pageable: Pageable): Page<CourseProduct> {
+        val qCourseProduct = QCourseProduct.courseProduct
+
+        val content =
+            queryFactory
+                .selectFrom(qCourseProduct)
+                .offset(pageable.offset)
+                .limit(pageable.pageSize.toLong())
+                .orderBy(qCourseProduct.createdAt.desc())
+                .fetch()
+
+        val total =
+            queryFactory
+                .select(qCourseProduct.count())
+                .from(qCourseProduct)
+                .fetchOne() ?: 0L
+
+        return PageImpl(content, pageable, total)
+    }
+
     override fun findVisibleCatalogProducts(
         types: Collection<ProductType>?,
         sort: ProductCatalogSort,

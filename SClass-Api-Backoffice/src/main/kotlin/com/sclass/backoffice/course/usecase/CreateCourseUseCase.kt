@@ -5,8 +5,10 @@ import com.sclass.backoffice.course.dto.CreateCourseRequest
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
+import com.sclass.domain.domains.course.exception.CourseMatchingProductNotCreatableException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
+import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 
@@ -19,16 +21,9 @@ class CreateCourseUseCase(
     @Transactional
     fun execute(request: CreateCourseRequest): CourseResponse {
         val product =
-            productAdaptor.save(
-                CourseProduct(
-                    name = request.name,
-                    priceWon = request.priceWon,
-                    totalLessons = request.totalLessons,
-                    description = request.description,
-                    curriculum = request.curriculum,
-                    thumbnailFileId = request.thumbnailFileId,
-                ),
-            ) as CourseProduct
+            productAdaptor.findById(request.productId) as? CourseProduct
+                ?: throw ProductTypeMismatchException()
+        if (product.requiresMatching) throw CourseMatchingProductNotCreatableException()
         val course =
             courseAdaptor.save(
                 Course(
@@ -38,6 +33,8 @@ class CreateCourseUseCase(
                     maxEnrollments = request.maxEnrollments,
                     enrollmentStartAt = request.enrollmentStartAt,
                     enrollmentDeadLine = request.enrollmentDeadLine,
+                    totalLessons = product.totalLessons,
+                    curriculum = product.curriculum,
                     startAt = request.startAt,
                     endAt = request.endAt,
                 ),
