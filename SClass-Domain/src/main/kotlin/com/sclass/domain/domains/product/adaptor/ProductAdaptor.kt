@@ -2,6 +2,7 @@ package com.sclass.domain.domains.product.adaptor
 
 import com.sclass.common.annotation.Adaptor
 import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.domain.ProductCatalogSort
 import com.sclass.domain.domains.product.domain.ProductType
 import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
@@ -24,4 +25,12 @@ class ProductAdaptor(
         visibleOnly: Boolean,
         pageable: Pageable,
     ): Page<MembershipProductWithCoinPackageDto> = productRepository.findMembershipsWithCoinPackage(type, visibleOnly, pageable)
+
+    fun findVisibleCatalogProducts(
+        types: Collection<ProductType>?,
+        sort: ProductCatalogSort,
+        pageable: Pageable,
+    ): Page<Product> = productRepository.findVisibleCatalogProducts(types, sort, pageable)
+
+    fun findVisibleCatalogProductById(productId: String): Product? = productRepository.findVisibleCatalogProductById(productId)
 }

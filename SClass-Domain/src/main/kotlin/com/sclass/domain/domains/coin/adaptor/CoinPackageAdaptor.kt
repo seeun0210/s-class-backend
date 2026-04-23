@@ -14,6 +14,13 @@ class CoinPackageAdaptor(
 
     fun findByIdOrNull(id: String): CoinPackage? = coinPackageRepository.findById(id).orElse(null)
 
+    fun findAllByIds(ids: Collection<String>): Map<String, CoinPackage> =
+        if (ids.isEmpty()) {
+            emptyMap()
+        } else {
+            coinPackageRepository.findAllById(ids).associateBy { it.id }
+        }
+
     fun findAllActive(): List<CoinPackage> = coinPackageRepository.findAllByStatus(CoinPackageStatus.ACTIVE)
 
     fun findAll(): List<CoinPackage> = coinPackageRepository.findAll()
