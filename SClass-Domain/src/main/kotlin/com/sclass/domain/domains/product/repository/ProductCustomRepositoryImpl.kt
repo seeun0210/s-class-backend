@@ -87,7 +87,7 @@ class ProductCustomRepositoryImpl(
                 .selectFrom(qCourseProduct)
                 .offset(pageable.offset)
                 .limit(pageable.pageSize.toLong())
-                .orderBy(qCourseProduct.createdAt.desc())
+                .orderBy(qCourseProduct.createdAt.desc(), qCourseProduct.id.asc())
                 .fetch()
 
         val total =

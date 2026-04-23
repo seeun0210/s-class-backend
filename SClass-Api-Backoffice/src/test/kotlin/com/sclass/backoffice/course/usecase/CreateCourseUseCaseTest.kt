@@ -7,7 +7,7 @@ import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotCreatableException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
-import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.exception.ProductNotFoundException
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
@@ -62,7 +62,7 @@ class CreateCourseUseCaseTest {
         fun `기존 코스 상품으로 코스를 생성한다`() {
             val product = product()
             val courseSlot = slot<Course>()
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             val result = useCase.execute(request().copy(productId = product.id))
@@ -80,7 +80,7 @@ class CreateCourseUseCaseTest {
         fun `organizationId가 있으면 코스에 포함된다`() {
             val product = product()
             val courseSlot = slot<Course>()
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request().copy(productId = product.id, organizationId = "org-id-000000000001"))
@@ -92,12 +92,12 @@ class CreateCourseUseCaseTest {
         fun `조회한 상품의 id를 코스의 productId로 연결한다`() {
             val product = product()
             val courseSlot = slot<Course>()
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             useCase.execute(request().copy(productId = product.id))
 
-            verify(exactly = 1) { productAdaptor.findById(product.id) }
+            verify(exactly = 1) { productAdaptor.findCourseProductById(product.id) }
             verify(exactly = 1) { courseAdaptor.save(any()) }
             assertThat(courseSlot.captured.productId).isEqualTo(product.id)
         }
@@ -106,7 +106,7 @@ class CreateCourseUseCaseTest {
         fun `상품 썸네일과 모집 제약 필드가 응답과 코스에 반영된다`() {
             val product = product()
             val courseSlot = slot<Course>()
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
             every { courseAdaptor.save(capture(courseSlot)) } answers { courseSlot.captured }
 
             val enrollStart = LocalDateTime.of(2026, 5, 1, 0, 0)
@@ -137,7 +137,7 @@ class CreateCourseUseCaseTest {
         @Test
         fun `thumbnailFileId가 null이면 응답의 thumbnailUrl도 null`() {
             val product = product().also { it.thumbnailFileId = null }
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
             every { courseAdaptor.save(any()) } answers { firstArg() }
 
             val result = useCase.execute(request().copy(productId = product.id))
@@ -150,7 +150,7 @@ class CreateCourseUseCaseTest {
     inner class Failure {
         @Test
         fun `course product가 아니면 예외가 발생한다`() {
-            every { productAdaptor.findById("product-id-00000000001") } returns mockk<Product>()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } throws ProductTypeMismatchException()
 
             assertThatThrownBy {
                 useCase.execute(request())
@@ -158,9 +158,18 @@ class CreateCourseUseCaseTest {
         }
 
         @Test
+        fun `상품이 존재하지 않으면 not found 예외가 발생한다`() {
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } throws ProductNotFoundException()
+
+            assertThatThrownBy {
+                useCase.execute(request())
+            }.isInstanceOf(ProductNotFoundException::class.java)
+        }
+
+        @Test
         fun `매칭형 코스 상품으로는 일반 코스를 생성할 수 없다`() {
             val product = product(requiresMatching = true)
-            every { productAdaptor.findById(product.id) } returns product
+            every { productAdaptor.findCourseProductById(product.id) } returns product
 
             assertThatThrownBy {
                 useCase.execute(request().copy(productId = product.id))

@@ -7,6 +7,7 @@ import com.sclass.domain.domains.product.domain.ProductCatalogSort
 import com.sclass.domain.domains.product.domain.ProductType
 import com.sclass.domain.domains.product.dto.MembershipProductWithCoinPackageDto
 import com.sclass.domain.domains.product.exception.ProductNotFoundException
+import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.domain.domains.product.repository.ProductRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -16,6 +17,10 @@ class ProductAdaptor(
     private val productRepository: ProductRepository,
 ) {
     fun findById(id: String): Product = productRepository.findById(id).orElseThrow { ProductNotFoundException() }
+
+    fun findCourseProductById(id: String): CourseProduct =
+        findById(id) as? CourseProduct
+            ?: throw ProductTypeMismatchException()
 
     fun findAllActive(type: ProductType? = null): List<Product> = productRepository.findAllActiveByType(type)
 

@@ -7,8 +7,6 @@ import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.Course
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotCreatableException
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
-import com.sclass.domain.domains.product.domain.CourseProduct
-import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,9 +18,7 @@ class CreateCourseUseCase(
 ) {
     @Transactional
     fun execute(request: CreateCourseRequest): CourseResponse {
-        val product =
-            productAdaptor.findById(request.productId) as? CourseProduct
-                ?: throw ProductTypeMismatchException()
+        val product = productAdaptor.findCourseProductById(request.productId)
         if (product.requiresMatching) throw CourseMatchingProductNotCreatableException()
         val course =
             courseAdaptor.save(

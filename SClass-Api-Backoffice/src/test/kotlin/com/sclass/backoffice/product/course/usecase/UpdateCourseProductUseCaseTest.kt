@@ -3,7 +3,7 @@ package com.sclass.backoffice.product.course.usecase
 import com.sclass.backoffice.product.course.dto.UpdateCourseProductRequest
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
-import com.sclass.domain.domains.product.domain.Product
+import com.sclass.domain.domains.product.exception.ProductNotFoundException
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import io.mockk.every
@@ -39,7 +39,7 @@ class UpdateCourseProductUseCaseTest {
                 curriculum = "기존 커리큘럼",
                 thumbnailFileId = "old-file-id",
             )
-        every { productAdaptor.findById(product.id) } returns product
+        every { productAdaptor.findCourseProductById(product.id) } returns product
 
         val result =
             useCase.execute(
@@ -69,10 +69,19 @@ class UpdateCourseProductUseCaseTest {
 
     @Test
     fun `course product가 아니면 예외가 발생한다`() {
-        every { productAdaptor.findById("product-id-00000000001") } returns mockk<Product>()
+        every { productAdaptor.findCourseProductById("product-id-00000000001") } throws ProductTypeMismatchException()
 
         assertThatThrownBy {
             useCase.execute("product-id-00000000001", UpdateCourseProductRequest(name = "변경"))
         }.isInstanceOf(ProductTypeMismatchException::class.java)
+    }
+
+    @Test
+    fun `상품이 존재하지 않으면 not found 예외가 발생한다`() {
+        every { productAdaptor.findCourseProductById("product-id-00000000001") } throws ProductNotFoundException()
+
+        assertThatThrownBy {
+            useCase.execute("product-id-00000000001", UpdateCourseProductRequest(name = "변경"))
+        }.isInstanceOf(ProductNotFoundException::class.java)
     }
 }
