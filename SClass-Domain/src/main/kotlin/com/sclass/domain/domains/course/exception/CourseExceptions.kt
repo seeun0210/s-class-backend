@@ -23,3 +23,6 @@ class CourseMatchingProductNotCreatableException : BusinessException(CourseError
 class CourseProductAlreadyInUseException : BusinessException(CourseErrorCode.COURSE_PRODUCT_ALREADY_IN_USE)
 
 class CourseMatchingProductNotConvertibleException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CONVERTIBLE)
+
+class CourseMatchingProductHasPendingMatchEnrollmentException :
+    BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_HAS_PENDING_MATCH_ENROLLMENT)
