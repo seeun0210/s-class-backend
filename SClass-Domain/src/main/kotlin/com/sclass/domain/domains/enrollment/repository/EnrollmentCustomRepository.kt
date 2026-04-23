@@ -1,5 +1,6 @@
 package com.sclass.domain.domains.enrollment.repository
 
+import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithDetailDto
@@ -27,4 +28,9 @@ interface EnrollmentCustomRepository {
         studentUserId: String,
         now: java.time.LocalDateTime,
     ): Boolean
+
+    fun findResumableCourseProductEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment?
 }

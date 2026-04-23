@@ -6,6 +6,6 @@ import jakarta.validation.constraints.NotNull
 
 data class PrepareEnrollmentRequest(
     @field:NotBlank val productId: String,
-    @field:NotNull val courseId: Long,
     @field:NotNull val pgType: PgType,
+    val courseId: Long?,
 )

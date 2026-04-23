@@ -33,7 +33,7 @@ class Enrollment private constructor(
     val id: Long = 0L,
 
     @Column(name = "course_id")
-    val courseId: Long? = null,
+    var courseId: Long? = null,
 
     // purchase 대상 product 스냅샷
     @Column(name = "product_id", length = 26)
@@ -99,6 +99,23 @@ class Enrollment private constructor(
         this.status = EnrollmentStatus.ACTIVE
     }
 
+    fun markPendingMatch() {
+        requirePurchaseEnrollment()
+        requirePayment()
+        validateTransition(EnrollmentStatus.PENDING_MATCH)
+        status = EnrollmentStatus.PENDING_MATCH
+    }
+
+    fun assignCourse(courseId: Long) {
+        requirePurchaseEnrollment()
+        requirePayment()
+        if (status != EnrollmentStatus.PENDING_MATCH) throw EnrollmentInvalidStatusTransitionException()
+        if (this.courseId != null) throw EnrollmentInvalidStatusTransitionException()
+        validateTransition(EnrollmentStatus.ACTIVE)
+        this.courseId = courseId
+        status = EnrollmentStatus.ACTIVE
+    }
+
     fun complete() {
         validateTransition(EnrollmentStatus.COMPLETED)
         this.status = EnrollmentStatus.COMPLETED
@@ -129,11 +146,25 @@ class Enrollment private constructor(
         val allowed =
             when (target) {
                 EnrollmentStatus.PENDING_PAYMENT -> emptySet()
-                EnrollmentStatus.ACTIVE -> setOf(EnrollmentStatus.PENDING_PAYMENT)
+                EnrollmentStatus.PENDING_MATCH ->
+                    setOf(EnrollmentStatus.PENDING_PAYMENT)
+                EnrollmentStatus.ACTIVE ->
+                    setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.PENDING_MATCH)
                 EnrollmentStatus.COMPLETED -> setOf(EnrollmentStatus.ACTIVE)
-                EnrollmentStatus.CANCELLED -> setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE)
-                EnrollmentStatus.REFUNDED -> setOf(EnrollmentStatus.ACTIVE, EnrollmentStatus.CANCELLED)
+                EnrollmentStatus.CANCELLED ->
+                    setOf(
+                        EnrollmentStatus.PENDING_PAYMENT,
+                        EnrollmentStatus.PENDING_MATCH,
+                        EnrollmentStatus.ACTIVE,
+                    )
+                EnrollmentStatus.REFUNDED ->
+                    setOf(
+                        EnrollmentStatus.PENDING_MATCH,
+                        EnrollmentStatus.ACTIVE,
+                        EnrollmentStatus.CANCELLED,
+                    )
             }
+
         if (status !in allowed) throw EnrollmentInvalidStatusTransitionException()
     }
 
@@ -156,7 +187,7 @@ class Enrollment private constructor(
             studentUserId: String,
             tuitionAmountWon: Int,
             paymentId: String,
-            courseId: Long,
+            courseId: Long? = null,
         ): Enrollment =
             Enrollment(
                 courseId = courseId,

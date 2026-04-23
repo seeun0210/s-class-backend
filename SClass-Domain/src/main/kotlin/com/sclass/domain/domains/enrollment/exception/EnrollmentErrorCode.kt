@@ -18,4 +18,5 @@ enum class EnrollmentErrorCode(
     MEMBERSHIP_CAPACITY_EXCEEDED("ENROLLMENT_009", "멤버십 정원이 초과되었습니다", 409),
     NO_ACTIVE_MEMBERSHIP("ENROLLMENT_010", "활성 멤버십이 없습니다", 403),
     ENROLLMENT_INVALID_PURCHASE_TARGET("ENROLLMENT_011", "courseId와 productId 조합이 올바르지 않습니다", 400),
+    ENROLLMENT_COURSE_REQUIRED("ENROLLMENT_012", "코스형 수강 등록에 courseId가 필요합니다", 400),
 }
