@@ -7,6 +7,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.exception.PaymentUnauthorizedException
+import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import jakarta.transaction.Transactional
@@ -15,6 +16,7 @@ import jakarta.transaction.Transactional
 class AbandonPaymentLockedUseCase(
     private val paymentAdaptor: PaymentAdaptor,
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val pgGateway: PgGateway,
 ) {
     @Transactional
     @DistributedLock(prefix = "payment")
@@ -31,6 +33,10 @@ class AbandonPaymentLockedUseCase(
 
         when (payment.status) {
             PaymentStatus.PENDING -> {
+                val inquiryResult = pgGateway.inquiry(pgOrderId)
+                if (inquiryResult.approved) {
+                    return
+                }
                 payment.markCancelled()
                 paymentAdaptor.save(payment)
                 cancelPendingEnrollment(enrollment)

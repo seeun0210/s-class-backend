@@ -8,6 +8,8 @@ import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
 import com.sclass.domain.domains.payment.exception.PaymentUnauthorizedException
+import com.sclass.infrastructure.nicepay.PgGateway
+import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,13 +21,15 @@ import org.junit.jupiter.api.Test
 class AbandonPaymentLockedUseCaseTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
+    private lateinit var pgGateway: PgGateway
     private lateinit var useCase: AbandonPaymentLockedUseCase
 
     @BeforeEach
     fun setUp() {
         paymentAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        useCase = AbandonPaymentLockedUseCase(paymentAdaptor, enrollmentAdaptor)
+        pgGateway = mockk()
+        useCase = AbandonPaymentLockedUseCase(paymentAdaptor, enrollmentAdaptor, pgGateway)
     }
 
     private fun pendingPayment(userId: String = "user-id-1") =
@@ -52,6 +56,7 @@ class AbandonPaymentLockedUseCaseTest {
 
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = false, tid = null, amount = payment.amount)
         every { paymentAdaptor.save(any()) } answers { firstArg() }
         every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
@@ -62,6 +67,21 @@ class AbandonPaymentLockedUseCaseTest {
         assertThat(enrollment.cancelReason).isEqualTo("사용자 결제 포기")
         verify(exactly = 1) { paymentAdaptor.save(payment) }
         verify(exactly = 1) { enrollmentAdaptor.save(enrollment) }
+    }
+
+    @Test
+    fun `PG 조회 결과 이미 승인된 거래면 abandon 처리하지 않는다`() {
+        val payment = pendingPayment()
+
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-1", amount = payment.amount)
+
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
+
+        assertThat(payment.status).isEqualTo(PaymentStatus.PENDING)
+        verify(exactly = 0) { paymentAdaptor.save(any()) }
+        verify(exactly = 0) { enrollmentAdaptor.save(any()) }
     }
 
     @Test
@@ -115,6 +135,7 @@ class AbandonPaymentLockedUseCaseTest {
 
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = false, tid = null, amount = payment.amount)
         every { paymentAdaptor.save(any()) } answers { firstArg() }
 
         useCase.execute(payment.userId, payment.id, payment.pgOrderId)
