@@ -16,16 +16,16 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class AbandonPaymentUseCaseTest {
+class AbandonPaymentLockedUseCaseTest {
     private lateinit var paymentAdaptor: PaymentAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
-    private lateinit var useCase: AbandonPaymentUseCase
+    private lateinit var useCase: AbandonPaymentLockedUseCase
 
     @BeforeEach
     fun setUp() {
         paymentAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        useCase = AbandonPaymentUseCase(paymentAdaptor, enrollmentAdaptor)
+        useCase = AbandonPaymentLockedUseCase(paymentAdaptor, enrollmentAdaptor)
     }
 
     private fun pendingPayment(userId: String = "user-id-1") =
@@ -55,7 +55,7 @@ class AbandonPaymentUseCaseTest {
         every { paymentAdaptor.save(any()) } answers { firstArg() }
         every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
-        useCase.execute(payment.userId, payment.id)
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         assertThat(payment.status).isEqualTo(PaymentStatus.CANCELLED)
         assertThat(enrollment.status.name).isEqualTo("CANCELLED")
@@ -71,7 +71,7 @@ class AbandonPaymentUseCaseTest {
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
 
-        useCase.execute(payment.userId, payment.id)
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         verify(exactly = 0) { paymentAdaptor.save(any()) }
         verify(exactly = 0) { enrollmentAdaptor.save(any()) }
@@ -84,7 +84,7 @@ class AbandonPaymentUseCaseTest {
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
 
-        useCase.execute(payment.userId, payment.id)
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         verify(exactly = 0) { paymentAdaptor.save(any()) }
         verify(exactly = 0) { enrollmentAdaptor.save(any()) }
@@ -97,7 +97,7 @@ class AbandonPaymentUseCaseTest {
         every { paymentAdaptor.findById(payment.id) } returns payment
 
         assertThatThrownBy {
-            useCase.execute("other-user-id", payment.id)
+            useCase.execute("other-user-id", payment.id, payment.pgOrderId)
         }.isInstanceOf(PaymentUnauthorizedException::class.java)
     }
 
@@ -117,7 +117,7 @@ class AbandonPaymentUseCaseTest {
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
         every { paymentAdaptor.save(any()) } answers { firstArg() }
 
-        useCase.execute(payment.userId, payment.id)
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         assertThat(payment.status).isEqualTo(PaymentStatus.CANCELLED)
         verify(exactly = 1) { paymentAdaptor.save(payment) }
