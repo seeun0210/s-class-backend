@@ -8,6 +8,8 @@ import com.sclass.domain.domains.course.exception.CourseMatchingProductHasPendin
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotConvertibleException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import com.sclass.infrastructure.s3.ThumbnailUrlResolver
 import org.springframework.transaction.annotation.Transactional
 
@@ -19,8 +21,9 @@ class UpdateCourseProductUseCase(
     private val thumbnailUrlResolver: ThumbnailUrlResolver,
 ) {
     @Transactional
+    @DistributedLock(prefix = "course-product")
     fun execute(
-        productId: String,
+        @LockKey productId: String,
         request: UpdateCourseProductRequest,
     ): CourseProductResponse {
         val product = productAdaptor.findCourseProductById(productId)

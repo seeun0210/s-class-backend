@@ -28,7 +28,6 @@ class PrepareEnrollmentUseCase(
             prepareMatchingEnrollmentUseCase.execute(
                 studentUserId = studentUserId,
                 productId = productId,
-                product = product,
                 courseId = courseId,
                 pgType = pgType,
             )
