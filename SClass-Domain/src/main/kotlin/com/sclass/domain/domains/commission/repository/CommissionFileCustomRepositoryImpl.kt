@@ -15,4 +15,12 @@ class CommissionFileCustomRepositoryImpl(
             .fetchJoin()
             .where(commissionFile.commission.id.eq(commissionId))
             .fetch()
+
+    override fun findByIdWithFile(id: Long): CommissionFile? =
+        queryFactory
+            .selectFrom(commissionFile)
+            .join(commissionFile.file, file)
+            .fetchJoin()
+            .where(commissionFile.id.eq(id))
+            .fetchOne()
 }

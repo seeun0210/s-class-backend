@@ -5,7 +5,6 @@ import com.sclass.common.exception.BusinessException
 import com.sclass.domain.domains.commission.domain.CommissionFile
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
 import com.sclass.domain.domains.commission.repository.CommissionFileRepository
-import org.springframework.data.repository.findByIdOrNull
 
 @Adaptor
 class CommissionFileAdaptor(
@@ -14,7 +13,7 @@ class CommissionFileAdaptor(
     fun findByCommissionId(commissionId: Long): List<CommissionFile> = commissionFileRepository.findByCommissionId(commissionId)
 
     fun findById(id: Long): CommissionFile =
-        commissionFileRepository.findByIdOrNull(id)
+        commissionFileRepository.findByIdWithFile(id)
             ?: throw BusinessException(CommissionErrorCode.COMMISSION_FILE_NOT_FOUND)
 
     fun saveAll(files: List<CommissionFile>): List<CommissionFile> = commissionFileRepository.saveAll(files)
