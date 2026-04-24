@@ -117,7 +117,7 @@ class SelectTopicUseCaseTest {
 
         every { commissionAdaptor.findById(1L) } returns commission
         every { commissionTopicAdaptor.findById(10L) } returns topic
-        every { enrollmentAdaptor.findActiveMembershipEnrollment(studentUserId) } returns membershipEnrollment
+        every { enrollmentAdaptor.findActiveMembershipEnrollment(studentUserId, any()) } returns membershipEnrollment
         every { lessonAdaptor.save(capture(lessonSlot)) } returns savedLesson(1L)
 
         val result = useCase.execute(studentUserId, 1L, 10L, SelectTopicRequest(isSelected = true))
@@ -165,7 +165,7 @@ class SelectTopicUseCaseTest {
         assertThrows<BusinessException> {
             useCase.execute(studentUserId, 1L, 10L, SelectTopicRequest(isSelected = true))
         }
-        verify(exactly = 0) { enrollmentAdaptor.findActiveMembershipEnrollment(any()) }
+        verify(exactly = 0) { enrollmentAdaptor.findActiveMembershipEnrollment(any(), any()) }
         verify(exactly = 0) { lessonAdaptor.save(any()) }
     }
 
@@ -189,7 +189,7 @@ class SelectTopicUseCaseTest {
 
         every { commissionAdaptor.findById(1L) } returns commission
         every { commissionTopicAdaptor.findById(10L) } returns topic
-        every { enrollmentAdaptor.findActiveMembershipEnrollment(studentUserId) } returns null
+        every { enrollmentAdaptor.findActiveMembershipEnrollment(studentUserId, any()) } returns null
 
         assertThrows<NoActiveMembershipException> {
             useCase.execute(studentUserId, 1L, 10L, SelectTopicRequest(isSelected = true))

@@ -18,6 +18,8 @@ class ProductAdaptor(
 ) {
     fun findById(id: String): Product = productRepository.findById(id).orElseThrow { ProductNotFoundException() }
 
+    fun findByIdOrNull(id: String): Product? = productRepository.findById(id).orElse(null)
+
     fun findCourseProductById(id: String): CourseProduct =
         findById(id) as? CourseProduct
             ?: throw ProductTypeMismatchException()

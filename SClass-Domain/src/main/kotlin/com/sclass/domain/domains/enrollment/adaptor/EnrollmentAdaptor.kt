@@ -13,13 +13,11 @@ import com.sclass.domain.domains.enrollment.repository.EnrollmentRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
-import java.time.Clock
 import java.time.LocalDateTime
 
 @Adaptor
 class EnrollmentAdaptor(
     private val enrollmentRepository: EnrollmentRepository,
-    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     fun save(enrollment: Enrollment): Enrollment = enrollmentRepository.save(enrollment)
 
@@ -118,16 +116,22 @@ class EnrollmentAdaptor(
     fun findPendingPaymentOlderThan(threshold: java.time.LocalDateTime): List<Enrollment> =
         enrollmentRepository.findAllByStatusAndCreatedAtBefore(EnrollmentStatus.PENDING_PAYMENT, threshold)
 
-    fun hasActiveMembershipEnrollment(studentUserId: String): Boolean =
+    fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Boolean =
         enrollmentRepository.hasActiveMembershipEnrollment(
             studentUserId = studentUserId,
-            now = LocalDateTime.now(clock),
+            now = now,
         )
 
-    fun findActiveMembershipEnrollment(studentUserId: String): Enrollment? =
+    fun findActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Enrollment? =
         enrollmentRepository.findActiveMembershipEnrollment(
             studentUserId = studentUserId,
-            now = LocalDateTime.now(clock),
+            now = now,
         )
 
     fun hasPendingUnassignedMatchingEnrollment(productId: String): Boolean =

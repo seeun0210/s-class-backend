@@ -16,6 +16,8 @@ import com.sclass.supporters.commission.dto.CommissionTopicResponse
 import com.sclass.supporters.commission.dto.SelectTopicRequest
 import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDateTime
 
 @UseCase
 class SelectTopicUseCase(
@@ -24,6 +26,7 @@ class SelectTopicUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val enrollmentAdaptor: EnrollmentAdaptor,
     private val commissionReminderScheduler: CommissionReminderScheduler,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     @Transactional
     fun execute(
@@ -53,7 +56,10 @@ class SelectTopicUseCase(
         }
 
         val membershipEnrollment =
-            enrollmentAdaptor.findActiveMembershipEnrollment(commission.studentUserId)
+            enrollmentAdaptor.findActiveMembershipEnrollment(
+                studentUserId = commission.studentUserId,
+                now = LocalDateTime.now(clock),
+            )
                 ?: throw NoActiveMembershipException()
 
         val lesson =
