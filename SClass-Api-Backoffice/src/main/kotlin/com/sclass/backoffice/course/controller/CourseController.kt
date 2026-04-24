@@ -6,7 +6,7 @@ import com.sclass.backoffice.course.dto.CoursePageResponse
 import com.sclass.backoffice.course.dto.CourseResponse
 import com.sclass.backoffice.course.dto.CreateCourseRequest
 import com.sclass.backoffice.course.dto.UpdateCourseRequest
-import com.sclass.backoffice.course.usecase.ChangeCourseStatusUseCase
+import com.sclass.backoffice.course.usecase.ChangeCourseStatusFacade
 import com.sclass.backoffice.course.usecase.CreateCourseFacade
 import com.sclass.backoffice.course.usecase.GetCourseDetailUseCase
 import com.sclass.backoffice.course.usecase.GetCourseListUseCase
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/courses")
 class CourseController(
     private val createCourseFacade: CreateCourseFacade,
-    private val changeCourseStatusUseCase: ChangeCourseStatusUseCase,
+    private val changeCourseStatusFacade: ChangeCourseStatusFacade,
     private val getCourseListUseCase: GetCourseListUseCase,
     private val getCourseDetailUseCase: GetCourseDetailUseCase,
     private val updateCourseUseCase: UpdateCourseUseCase,
@@ -45,7 +45,7 @@ class CourseController(
     fun changeCourseStatus(
         @PathVariable courseId: Long,
         @RequestBody @Valid request: ChangeCourseStatusRequest,
-    ): ApiResponse<CourseResponse> = ApiResponse.success(changeCourseStatusUseCase.execute(courseId, request.status))
+    ): ApiResponse<CourseResponse> = ApiResponse.success(changeCourseStatusFacade.execute(courseId, request.status))
 
     @GetMapping
     fun getCourseList(
