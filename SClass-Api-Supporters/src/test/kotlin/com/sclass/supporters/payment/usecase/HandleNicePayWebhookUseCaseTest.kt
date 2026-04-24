@@ -13,6 +13,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
@@ -20,6 +21,7 @@ import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
+import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -143,6 +145,81 @@ class HandleNicePayWebhookUseCaseTest {
         useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
 
         verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `사용자 결제 포기로 취소된 결제에 성공 웹훅이 오면 자동 승인취소한다`() {
+        val payment =
+            pendingPayment().apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `PG_CANCEL_FAILED 상태여도 성공 웹훅이 오면 자동 승인취소를 재시도한다`() {
+        val payment =
+            pendingPayment().apply {
+                markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `사용자 결제 포기 보상 취소 시 웹훅 tid가 달라도 조회된 tid로 취소한다`() {
+        val payment =
+            pendingPayment().apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns
+            PgInquiryResult(approved = true, tid = "verified-tid", amount = payment.amount)
+        every { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId).copy(tid = "forged-tid"))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 0) { pgGateway.cancel("forged-tid", any(), any()) }
+        verify(exactly = 1) { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
     }
 
     @Test

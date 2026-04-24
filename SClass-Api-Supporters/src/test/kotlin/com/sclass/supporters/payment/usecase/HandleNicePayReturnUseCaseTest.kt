@@ -9,6 +9,7 @@ import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
@@ -17,6 +18,7 @@ import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.PgApproveResult
+import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import com.sclass.infrastructure.nicepay.exception.NicePayException
 import io.mockk.every
 import io.mockk.mockk
@@ -231,6 +233,103 @@ class HandleNicePayReturnUseCaseTest {
             { assertTrue(result.contains("status=COMPLETED")) },
             { assertTrue(!result.contains("issuedCoinAmount")) },
         )
+    }
+
+    @Test
+    fun `사용자 결제 포기로 취소된 결제에 성공 콜백이 오면 자동 승인취소한다`() {
+        val payment =
+            pendingPayment(amount = 1000).apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 1000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=FAILED")) },
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+    }
+
+    @Test
+    fun `PG_CANCEL_FAILED 상태여도 성공 콜백이 오면 자동 승인취소를 재시도한다`() {
+        val payment =
+            pendingPayment(amount = 1000).apply {
+                markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 1000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=FAILED")) },
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+    }
+
+    @Test
+    fun `사용자 결제 포기 보상 취소 시 리턴 tid가 달라도 조회된 tid로 취소한다`() {
+        val payment =
+            pendingPayment(amount = 1000).apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { pgGateway.inquiry(payment.pgOrderId) } returns
+            PgInquiryResult(approved = true, tid = "verified-tid", amount = payment.amount)
+        every { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "forged-tid",
+                orderId = payment.pgOrderId,
+                amount = 1000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=FAILED")) },
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 0) { pgGateway.cancel("forged-tid", any(), any()) }
+        verify(exactly = 1) { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
     }
 
     @Test

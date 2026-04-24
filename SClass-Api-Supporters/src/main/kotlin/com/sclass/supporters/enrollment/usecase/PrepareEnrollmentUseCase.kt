@@ -16,7 +16,7 @@ class PrepareEnrollmentUseCase(
     private val prepareRegularEnrollmentUseCase: PrepareRegularEnrollmentUseCase,
     private val prepareMatchingEnrollmentUseCase: PrepareMatchingEnrollmentUseCase,
 ) {
-    @DistributedLock(prefix = "course-product")
+    @DistributedLock(prefix = "course-product", waitTime = 30)
     fun execute(
         studentUserId: String,
         @LockKey productId: String,

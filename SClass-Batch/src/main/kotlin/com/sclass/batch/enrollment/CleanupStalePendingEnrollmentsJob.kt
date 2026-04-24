@@ -4,6 +4,7 @@ import com.sclass.common.annotation.BatchJob
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -40,7 +41,7 @@ class CleanupStalePendingEnrollmentsJob(
                     val payment = paymentAdaptor.findById(paymentId)
                     when (payment.status) {
                         PaymentStatus.PENDING -> {
-                            payment.markCancelled()
+                            payment.markCancelled(PaymentCancelSource.PAYMENT_TIMEOUT)
                             paymentAdaptor.save(payment)
                         }
                         PaymentStatus.CANCELLED -> {}
