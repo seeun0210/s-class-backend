@@ -56,4 +56,9 @@ interface EnrollmentRepository :
         productId: String,
         statuses: Collection<EnrollmentStatus>,
     ): Boolean
+
+    fun existsByProductIdAndCourseIdIsNotNullAndStatusIn(
+        productId: String,
+        statuses: Collection<EnrollmentStatus>,
+    ): Boolean
 }

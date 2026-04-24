@@ -26,3 +26,6 @@ class CourseMatchingProductNotConvertibleException : BusinessException(CourseErr
 
 class CourseMatchingProductHasPendingMatchEnrollmentException :
     BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_HAS_PENDING_MATCH_ENROLLMENT)
+
+class CourseProductHasPendingPaymentEnrollmentException :
+    BusinessException(CourseErrorCode.COURSE_PRODUCT_HAS_PENDING_PAYMENT_ENROLLMENT)

@@ -4,6 +4,7 @@ import com.sclass.backoffice.product.course.dto.UpdateCourseProductRequest
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.exception.CourseMatchingProductHasPendingMatchEnrollmentException
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotConvertibleException
+import com.sclass.domain.domains.course.exception.CourseProductHasPendingPaymentEnrollmentException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
@@ -49,6 +50,7 @@ class UpdateCourseProductUseCaseTest {
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
         every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns false
+        every { enrollmentAdaptor.hasPendingAssignedRegularEnrollment(product.id) } returns false
         every { courseAdaptor.findAllByProductId(product.id) } returns emptyList()
 
         val result =
@@ -106,6 +108,7 @@ class UpdateCourseProductUseCaseTest {
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
         every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns false
+        every { enrollmentAdaptor.hasPendingAssignedRegularEnrollment(product.id) } returns false
         every { courseAdaptor.findAllByProductId(product.id) } returns listOf(mockk(), mockk())
 
         assertThatThrownBy {
@@ -128,6 +131,7 @@ class UpdateCourseProductUseCaseTest {
             )
         every { productAdaptor.findCourseProductById(product.id) } returns product
         every { enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id) } returns true
+        every { enrollmentAdaptor.hasPendingAssignedRegularEnrollment(product.id) } returns false
 
         assertThatThrownBy {
             useCase.execute(
@@ -136,5 +140,26 @@ class UpdateCourseProductUseCaseTest {
             )
         }.isInstanceOf(CourseMatchingProductHasPendingMatchEnrollmentException::class.java)
         assertThat(product.requiresMatching).isTrue()
+    }
+
+    @Test
+    fun `결제 대기 중인 일반 enrollment가 있으면 일반형 상품을 매칭형으로 전환할 수 없다`() {
+        val product =
+            CourseProduct(
+                name = "일반 코스",
+                priceWon = 300000,
+                totalLessons = 12,
+                requiresMatching = false,
+            )
+        every { productAdaptor.findCourseProductById(product.id) } returns product
+        every { enrollmentAdaptor.hasPendingAssignedRegularEnrollment(product.id) } returns true
+
+        assertThatThrownBy {
+            useCase.execute(
+                product.id,
+                UpdateCourseProductRequest(requiresMatching = true),
+            )
+        }.isInstanceOf(CourseProductHasPendingPaymentEnrollmentException::class.java)
+        assertThat(product.requiresMatching).isFalse()
     }
 }

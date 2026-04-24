@@ -6,6 +6,7 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.exception.CourseMatchingProductHasPendingMatchEnrollmentException
 import com.sclass.domain.domains.course.exception.CourseMatchingProductNotConvertibleException
+import com.sclass.domain.domains.course.exception.CourseProductHasPendingPaymentEnrollmentException
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.infrastructure.redis.DistributedLock
@@ -27,6 +28,11 @@ class UpdateCourseProductUseCase(
         request: UpdateCourseProductRequest,
     ): CourseProductResponse {
         val product = productAdaptor.findCourseProductById(productId)
+        if (!product.requiresMatching && request.requiresMatching == true) {
+            if (enrollmentAdaptor.hasPendingAssignedRegularEnrollment(product.id)) {
+                throw CourseProductHasPendingPaymentEnrollmentException()
+            }
+        }
         if (product.requiresMatching && request.requiresMatching == false) {
             if (enrollmentAdaptor.hasPendingUnassignedMatchingEnrollment(product.id)) {
                 throw CourseMatchingProductHasPendingMatchEnrollmentException()

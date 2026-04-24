@@ -127,6 +127,12 @@ class EnrollmentAdaptor(
             setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.PENDING_MATCH),
         )
 
+    fun hasPendingAssignedRegularEnrollment(productId: String): Boolean =
+        enrollmentRepository.existsByProductIdAndCourseIdIsNotNullAndStatusIn(
+            productId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT),
+        )
+
     fun findResumableCourseProductEnrollment(
         productId: String,
         studentUserId: String,
