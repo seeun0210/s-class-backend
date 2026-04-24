@@ -76,7 +76,7 @@ class HandleNicePayWebhookUseCase(
 
         val pendingCancelSource = payment.pendingCancelSource()
         if (payment.status in setOf(PaymentStatus.CANCELLED, PaymentStatus.PG_CANCEL_FAILED) && pendingCancelSource != null) {
-            compensateApprovedCancelledPayment(payment, payload.tid, pendingCancelSource)
+            compensateApprovedCancelledPayment(payment, orderId, payload.tid, pendingCancelSource)
             return
         }
 
@@ -239,11 +239,31 @@ class HandleNicePayWebhookUseCase(
 
     private fun compensateApprovedCancelledPayment(
         payment: Payment,
-        tid: String,
+        orderId: String,
+        requestedTid: String,
         cancelSource: PaymentCancelSource,
     ) {
+        val inquiryResult =
+            runCatching { pgGateway.inquiry(orderId) }
+                .onFailure { e -> log.error("웹훅 수신: 자동 승인취소 전 조회 실패 orderId={}", orderId, e) }
+                .getOrNull()
+                ?: return
+
+        val verifiedTid = inquiryResult.tid
+        if (!inquiryResult.approved || verifiedTid == null) {
+            log.warn("웹훅 수신: 자동 승인취소 불가 approved={}, tid={}, orderId={}", inquiryResult.approved, verifiedTid, orderId)
+            return
+        }
+        if (inquiryResult.amount != payment.amount) {
+            log.warn("웹훅 수신: 자동 승인취소 조회 금액 불일치 expected={}, actual={}, orderId={}", payment.amount, inquiryResult.amount, orderId)
+            return
+        }
+        if (verifiedTid != requestedTid) {
+            log.warn("웹훅 tid 불일치 - 조회 결과 tid 사용: requestedTid={}, verifiedTid={}, orderId={}", requestedTid, verifiedTid, orderId)
+        }
+
         val cancelSuccess =
-            runCatching { pgGateway.cancel(tid, payment.amount, cancelSource.compensationReason()) }
+            runCatching { pgGateway.cancel(verifiedTid, payment.amount, cancelSource.compensationReason()) }
                 .onFailure { e -> log.error("웹훅 수신: 자동 승인취소 실패 paymentId={}", payment.id, e) }
                 .isSuccess
 
