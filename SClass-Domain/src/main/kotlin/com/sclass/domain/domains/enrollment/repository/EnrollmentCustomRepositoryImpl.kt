@@ -159,6 +159,22 @@ class EnrollmentCustomRepositoryImpl(
                 enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
             ).fetchFirst() != null
 
+    override fun findActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Enrollment? =
+        queryFactory
+            .selectFrom(enrollment)
+            .leftJoin(membershipProduct)
+            .on(membershipProduct.id.eq(enrollment.productId))
+            .where(
+                enrollment.studentUserId.eq(studentUserId),
+                membershipProduct.id.isNotNull,
+                enrollment.status.eq(EnrollmentStatus.ACTIVE),
+                enrollment.endAt.isNull.or(enrollment.endAt.gt(now)),
+            ).orderBy(enrollment.createdAt.desc())
+            .fetchFirst()
+
     override fun findResumableCourseProductEnrollment(
         productId: String,
         studentUserId: String,

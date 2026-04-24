@@ -29,6 +29,11 @@ interface EnrollmentCustomRepository {
         now: java.time.LocalDateTime,
     ): Boolean
 
+    fun findActiveMembershipEnrollment(
+        studentUserId: String,
+        now: java.time.LocalDateTime,
+    ): Enrollment?
+
     fun findResumableCourseProductEnrollment(
         productId: String,
         studentUserId: String,

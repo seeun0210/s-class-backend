@@ -14,4 +14,5 @@ enum class CommissionErrorCode(
     SUPPORT_TICKET_NOT_FOUND("COMMISSION_005", "지원 티켓을 찾을 수 없습니다", 404),
     COMMISSION_POLICY_NOT_CONFIGURED("COMMISSION_006", "활성화된 의뢰 정책이 없습니다", 500),
     COMMISSION_POLICY_NOT_FOUND("COMMISSION_007", "의뢰 정책을 찾을 수 없습니다", 404),
+    COMMISSION_FILE_NOT_FOUND("COMMISSION_008", "의뢰 파일을 찾을 수 없습니다", 404),
 }

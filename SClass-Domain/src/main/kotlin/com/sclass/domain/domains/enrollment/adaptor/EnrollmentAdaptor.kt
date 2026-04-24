@@ -121,6 +121,12 @@ class EnrollmentAdaptor(
             now = java.time.LocalDateTime.now(),
         )
 
+    fun findActiveMembershipEnrollment(studentUserId: String): Enrollment? =
+        enrollmentRepository.findActiveMembershipEnrollment(
+            studentUserId = studentUserId,
+            now = java.time.LocalDateTime.now(),
+        )
+
     fun hasPendingUnassignedMatchingEnrollment(productId: String): Boolean =
         enrollmentRepository.existsByProductIdAndCourseIdIsNullAndStatusIn(
             productId,
