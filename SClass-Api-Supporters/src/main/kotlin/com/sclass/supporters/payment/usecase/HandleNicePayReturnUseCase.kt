@@ -73,7 +73,7 @@ class HandleNicePayReturnUseCase(
         }
 
         val pendingCancelSource = payment.pendingCancelSource()
-        if (payment.status == PaymentStatus.CANCELLED && pendingCancelSource != null) {
+        if (payment.status in setOf(PaymentStatus.CANCELLED, PaymentStatus.PG_CANCEL_FAILED) && pendingCancelSource != null) {
             compensateApprovedCancelledPayment(payment, tid, pendingCancelSource)
             return failureUrl()
         }

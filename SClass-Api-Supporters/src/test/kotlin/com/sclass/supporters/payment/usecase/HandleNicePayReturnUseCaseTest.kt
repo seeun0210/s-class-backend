@@ -266,6 +266,37 @@ class HandleNicePayReturnUseCaseTest {
     }
 
     @Test
+    fun `PG_CANCEL_FAILED 상태여도 성공 콜백이 오면 자동 승인취소를 재시도한다`() {
+        val payment =
+            pendingPayment(amount = 1000).apply {
+                markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyReturnSignature(any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(payment.pgOrderId) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        val result =
+            useCase.execute(
+                authResultCode = "0000",
+                tid = "tid-001",
+                orderId = payment.pgOrderId,
+                amount = 1000,
+                authToken = "token",
+                signature = "sig",
+            )
+
+        assertAll(
+            { assertTrue(result.contains("status=FAILED")) },
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+    }
+
+    @Test
     fun `필수 파라미터가 null이면 FAILED 콜백 URL을 반환한다`() {
         val result =
             useCase.execute(

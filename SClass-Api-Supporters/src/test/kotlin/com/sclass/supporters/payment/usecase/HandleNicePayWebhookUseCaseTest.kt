@@ -171,6 +171,30 @@ class HandleNicePayWebhookUseCaseTest {
     }
 
     @Test
+    fun `PG_CANCEL_FAILED 상태여도 성공 웹훅이 오면 자동 승인취소를 재시도한다`() {
+        val payment =
+            pendingPayment().apply {
+                markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `존재하지 않는 orderId면 무시한다`() {
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns null
