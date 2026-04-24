@@ -40,6 +40,7 @@ class AbandonPaymentLockedUseCase(
                     if (tid == null) {
                         payment.markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
                         paymentAdaptor.save(payment)
+                        cancelPendingEnrollment(enrollment)
                         return
                     }
 
@@ -60,6 +61,7 @@ class AbandonPaymentLockedUseCase(
                     } else {
                         payment.markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
                         paymentAdaptor.save(payment)
+                        cancelPendingEnrollment(enrollment)
                     }
                     return
                 }

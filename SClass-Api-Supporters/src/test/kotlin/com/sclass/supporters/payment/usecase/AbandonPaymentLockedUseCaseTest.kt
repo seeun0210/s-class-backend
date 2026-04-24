@@ -95,21 +95,60 @@ class AbandonPaymentLockedUseCaseTest {
     @Test
     fun `PG 조회 결과 이미 승인된 거래의 승인취소가 실패하면 PG_CANCEL_FAILED로 마킹한다`() {
         val payment = pendingPayment()
+        val enrollment =
+            Enrollment.createForPurchase(
+                productId = "product-id-1",
+                studentUserId = payment.userId,
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+                courseId = 1L,
+            )
 
         every { paymentAdaptor.findById(payment.id) } returns payment
-        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
         every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-1", amount = payment.amount)
         every {
             pgGateway.cancel("tid-1", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason())
         } throws RuntimeException("PG cancel failed")
         every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
 
         useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         assertThat(payment.status).isEqualTo(PaymentStatus.PG_CANCEL_FAILED)
         assertThat(payment.metadata).isEqualTo(PaymentCancelSource.USER_ABANDONED.pendingMetadata())
+        assertThat(enrollment.status.name).isEqualTo("CANCELLED")
+        assertThat(enrollment.cancelReason).isEqualTo("사용자 결제 포기")
         verify(exactly = 1) { paymentAdaptor.save(payment) }
-        verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+        verify(exactly = 1) { enrollmentAdaptor.save(enrollment) }
+    }
+
+    @Test
+    fun `PG 조회 결과 승인됐지만 tid가 없으면 enrollment를 취소하고 PG_CANCEL_FAILED로 마킹한다`() {
+        val payment = pendingPayment()
+        val enrollment =
+            Enrollment.createForPurchase(
+                productId = "product-id-1",
+                studentUserId = payment.userId,
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+                courseId = 1L,
+            )
+
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = null, amount = payment.amount)
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
+
+        assertThat(payment.status).isEqualTo(PaymentStatus.PG_CANCEL_FAILED)
+        assertThat(payment.metadata).isEqualTo(PaymentCancelSource.USER_ABANDONED.pendingMetadata())
+        assertThat(enrollment.status.name).isEqualTo("CANCELLED")
+        assertThat(enrollment.cancelReason).isEqualTo("사용자 결제 포기")
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 1) { enrollmentAdaptor.save(enrollment) }
     }
 
     @Test
