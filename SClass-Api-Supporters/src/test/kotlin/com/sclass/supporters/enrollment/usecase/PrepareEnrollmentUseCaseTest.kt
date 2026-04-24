@@ -50,6 +50,7 @@ class PrepareEnrollmentUseCaseTest {
             )
         prepareMatchingEnrollmentUseCase =
             PrepareMatchingEnrollmentUseCase(
+                productAdaptor = productAdaptor,
                 enrollmentAdaptor = enrollmentAdaptor,
                 paymentAdaptor = paymentAdaptor,
             )
@@ -129,6 +130,7 @@ class PrepareEnrollmentUseCaseTest {
         fun `매칭형 상품 결제 준비 시 courseId 없이 Payment와 Enrollment가 생성된다`() {
             val enrollmentSlot = slot<Enrollment>()
             every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } returns matchingCourseProduct()
             every {
                 enrollmentAdaptor.findResumableCourseProductEnrollment(
                     "product-id-00000000001",
@@ -159,6 +161,7 @@ class PrepareEnrollmentUseCaseTest {
                     paymentId = "payment-id-000000000001",
                 )
             every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } returns matchingCourseProduct()
             every {
                 enrollmentAdaptor.findResumableCourseProductEnrollment(
                     "product-id-00000000001",
@@ -250,6 +253,7 @@ class PrepareEnrollmentUseCaseTest {
         @Test
         fun `매칭형 상품에 courseId를 보내면 EnrollmentInvalidPurchaseTargetException이 발생한다`() {
             every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } returns matchingCourseProduct()
 
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", "product-id-00000000001", 1L, PgType.NICEPAY)
@@ -259,6 +263,7 @@ class PrepareEnrollmentUseCaseTest {
         @Test
         fun `매칭형 상품에 PENDING_MATCH enrollment이 있으면 EnrollmentAlreadyExistsException이 발생한다`() {
             every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } returns matchingCourseProduct()
             every {
                 enrollmentAdaptor.findResumableCourseProductEnrollment(
                     "product-id-00000000001",
@@ -269,6 +274,16 @@ class PrepareEnrollmentUseCaseTest {
             assertThatThrownBy {
                 useCase.execute("student-id-00000000001", "product-id-00000000001", null, PgType.NICEPAY)
             }.isInstanceOf(EnrollmentAlreadyExistsException::class.java)
+        }
+
+        @Test
+        fun `매칭 분기 진입 후 상품이 일반형으로 바뀌면 EnrollmentInvalidPurchaseTargetException이 발생한다`() {
+            every { productAdaptor.findById("product-id-00000000001") } returns matchingCourseProduct()
+            every { productAdaptor.findCourseProductById("product-id-00000000001") } returns courseProduct()
+
+            assertThatThrownBy {
+                useCase.execute("student-id-00000000001", "product-id-00000000001", null, PgType.NICEPAY)
+            }.isInstanceOf(EnrollmentInvalidPurchaseTargetException::class.java)
         }
 
         @Test

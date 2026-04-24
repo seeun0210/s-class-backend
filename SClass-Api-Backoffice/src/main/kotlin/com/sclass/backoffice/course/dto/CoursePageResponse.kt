@@ -47,7 +47,7 @@ data class CourseListResponse(
             status = dto.course.status,
             enrollmentCount = dto.enrollmentCount,
             maxEnrollments = dto.course.maxEnrollments,
-            totalLessons = dto.courseProduct?.totalLessons ?: 0,
+            totalLessons = dto.course.totalLessons ?: dto.courseProduct?.totalLessons ?: 0,
             priceWon = dto.courseProduct?.priceWon ?: 0,
             enrollmentStartAt = dto.course.enrollmentStartAt,
             enrollmentDeadLine = dto.course.enrollmentDeadLine,

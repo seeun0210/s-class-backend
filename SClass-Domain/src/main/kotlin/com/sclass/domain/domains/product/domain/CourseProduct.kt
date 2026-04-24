@@ -13,7 +13,7 @@ class CourseProduct(
     thumbnailFileId: String? = null,
 
     @Column(name = "total_lessons", nullable = true)
-    val totalLessons: Int,
+    var totalLessons: Int,
 
     @Column(columnDefinition = "TEXT")
     var curriculum: String? = null,
@@ -26,7 +26,13 @@ class CourseProduct(
         description = description,
         thumbnailFileId = thumbnailFileId,
     ) {
-    fun updateCurriculum(newCurriculum: String?) {
+    fun updateFulfillmentInfo(
+        newCurriculum: String?,
+        newTotalLessons: Int?,
+        newRequiresMatching: Boolean?,
+    ) {
         newCurriculum?.let { curriculum = it }
+        newTotalLessons?.let { totalLessons = it }
+        newRequiresMatching?.let { requiresMatching = it }
     }
 }

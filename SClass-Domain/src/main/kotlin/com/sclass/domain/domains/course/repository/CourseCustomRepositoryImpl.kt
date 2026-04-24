@@ -160,7 +160,7 @@ class CourseCustomRepositoryImpl(
         return mapNotNull { order ->
             val direction = if (order.isAscending) Order.ASC else Order.DESC
             when (order.property) {
-                "totalLessons" -> OrderSpecifier(direction, courseProduct.totalLessons)
+                "totalLessons" -> OrderSpecifier(direction, course.totalLessons.coalesce(courseProduct.totalLessons))
                 else -> OrderSpecifier(direction, coursePath.get(order.property, Comparable::class.java))
             }
         }.toTypedArray()

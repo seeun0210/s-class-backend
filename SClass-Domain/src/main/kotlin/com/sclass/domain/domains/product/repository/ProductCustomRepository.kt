@@ -1,5 +1,6 @@
 package com.sclass.domain.domains.product.repository
 
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.Product
 import com.sclass.domain.domains.product.domain.ProductCatalogSort
 import com.sclass.domain.domains.product.domain.ProductType
@@ -15,6 +16,8 @@ interface ProductCustomRepository {
         visibleOnly: Boolean,
         pageable: Pageable,
     ): Page<MembershipProductWithCoinPackageDto>
+
+    fun findCourseProducts(pageable: Pageable): Page<CourseProduct>
 
     fun findVisibleCatalogProducts(
         types: Collection<ProductType>?,
