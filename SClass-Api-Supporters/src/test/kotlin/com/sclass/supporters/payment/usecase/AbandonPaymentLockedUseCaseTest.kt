@@ -4,6 +4,7 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
@@ -63,6 +64,7 @@ class AbandonPaymentLockedUseCaseTest {
         useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
         assertThat(payment.status).isEqualTo(PaymentStatus.CANCELLED)
+        assertThat(payment.metadata).isEqualTo(PaymentCancelSource.USER_ABANDONED.pendingMetadata())
         assertThat(enrollment.status.name).isEqualTo("CANCELLED")
         assertThat(enrollment.cancelReason).isEqualTo("사용자 결제 포기")
         verify(exactly = 1) { paymentAdaptor.save(payment) }

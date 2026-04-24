@@ -22,7 +22,7 @@ class PrepareMatchingEnrollmentUseCase(
     private val paymentAdaptor: PaymentAdaptor,
 ) {
     @Transactional
-    @DistributedLock(prefix = "course-product")
+    @DistributedLock(prefix = "course-product", waitTime = 30)
     fun execute(
         @LockKey productId: String,
         studentUserId: String,

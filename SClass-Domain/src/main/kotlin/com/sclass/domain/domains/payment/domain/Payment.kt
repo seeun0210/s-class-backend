@@ -98,6 +98,17 @@ class Payment(
         this.status = PaymentStatus.CANCELLED
     }
 
+    fun markCancelled(cancelSource: PaymentCancelSource) {
+        markCancelled()
+        this.metadata = cancelSource.pendingMetadata()
+    }
+
+    fun pendingCancelSource(): PaymentCancelSource? = PaymentCancelSource.fromPendingMetadata(metadata)
+
+    fun markCancelCompensated(cancelSource: PaymentCancelSource) {
+        this.metadata = cancelSource.compensatedMetadata()
+    }
+
     fun markPgCancelFailed() {
         this.status = PaymentStatus.PG_CANCEL_FAILED
     }

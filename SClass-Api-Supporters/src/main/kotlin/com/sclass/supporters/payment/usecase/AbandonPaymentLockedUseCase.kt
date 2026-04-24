@@ -5,6 +5,7 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.domain.Enrollment
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.exception.PaymentUnauthorizedException
 import com.sclass.infrastructure.nicepay.PgGateway
@@ -37,7 +38,7 @@ class AbandonPaymentLockedUseCase(
                 if (inquiryResult.approved) {
                     return
                 }
-                payment.markCancelled()
+                payment.markCancelled(PaymentCancelSource.USER_ABANDONED)
                 paymentAdaptor.save(payment)
                 cancelPendingEnrollment(enrollment)
             }

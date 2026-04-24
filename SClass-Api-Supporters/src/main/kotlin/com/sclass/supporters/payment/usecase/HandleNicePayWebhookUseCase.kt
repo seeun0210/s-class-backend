@@ -10,6 +10,8 @@ import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
@@ -69,6 +71,12 @@ class HandleNicePayWebhookUseCase(
                 payload.resultCode,
                 orderId,
             )
+            return
+        }
+
+        val pendingCancelSource = payment.pendingCancelSource()
+        if (payment.status == PaymentStatus.CANCELLED && pendingCancelSource != null) {
+            compensateApprovedCancelledPayment(payment, payload.tid, pendingCancelSource)
             return
         }
 
@@ -226,6 +234,27 @@ class HandleNicePayWebhookUseCase(
                     }
                 }
             }
+        }
+    }
+
+    private fun compensateApprovedCancelledPayment(
+        payment: Payment,
+        tid: String,
+        cancelSource: PaymentCancelSource,
+    ) {
+        val cancelSuccess =
+            runCatching { pgGateway.cancel(tid, payment.amount, cancelSource.compensationReason()) }
+                .onFailure { e -> log.error("웹훅 수신: 자동 승인취소 실패 paymentId={}", payment.id, e) }
+                .isSuccess
+
+        txTemplate.execute {
+            val fresh = paymentAdaptor.findById(payment.id)
+            if (cancelSuccess) {
+                fresh.markCancelCompensated(cancelSource)
+            } else {
+                fresh.markPgCancelFailed()
+            }
+            paymentAdaptor.save(fresh)
         }
     }
 

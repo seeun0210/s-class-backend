@@ -7,6 +7,8 @@ import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
 import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
@@ -67,6 +69,12 @@ class HandleNicePayReturnUseCase(
 
         if (payment.amount != amount) {
             log.warn("결제 금액 불일치: expected={}, actual={}, orderId={}", payment.amount, amount, orderId)
+            return failureUrl()
+        }
+
+        val pendingCancelSource = payment.pendingCancelSource()
+        if (payment.status == PaymentStatus.CANCELLED && pendingCancelSource != null) {
+            compensateApprovedCancelledPayment(payment, tid, pendingCancelSource)
             return failureUrl()
         }
 
@@ -182,6 +190,27 @@ class HandleNicePayReturnUseCase(
     }
 
     private fun baseUrl() = frontendUrl.trimEnd('/')
+
+    private fun compensateApprovedCancelledPayment(
+        payment: Payment,
+        tid: String,
+        cancelSource: PaymentCancelSource,
+    ) {
+        val cancelSuccess =
+            runCatching { pgGateway.cancel(tid, payment.amount, cancelSource.compensationReason()) }
+                .onFailure { e -> log.error("자동 승인취소 실패: orderId={}", payment.pgOrderId, e) }
+                .isSuccess
+
+        txTemplate.execute {
+            val fresh = paymentAdaptor.findById(payment.id)
+            if (cancelSuccess) {
+                fresh.markCancelCompensated(cancelSource)
+            } else {
+                fresh.markPgCancelFailed()
+            }
+            paymentAdaptor.save(fresh)
+        }
+    }
 
     private fun successUrl(issuedCoinAmount: Int?) =
         if (issuedCoinAmount != null) {
