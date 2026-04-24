@@ -113,6 +113,11 @@ class Payment(
         this.status = PaymentStatus.PG_CANCEL_FAILED
     }
 
+    fun markPgCancelFailed(cancelSource: PaymentCancelSource) {
+        markPgCancelFailed()
+        this.metadata = cancelSource.pendingMetadata()
+    }
+
     fun markCoinRefundFailed() {
         this.status = PaymentStatus.COIN_REFUND_FAILED
     }

@@ -206,7 +206,7 @@ class HandleNicePayReturnUseCase(
             if (cancelSuccess) {
                 fresh.markCancelCompensated(cancelSource)
             } else {
-                fresh.markPgCancelFailed()
+                fresh.markPgCancelFailed(cancelSource)
             }
             paymentAdaptor.save(fresh)
         }

@@ -36,6 +36,31 @@ class AbandonPaymentLockedUseCase(
             PaymentStatus.PENDING -> {
                 val inquiryResult = pgGateway.inquiry(pgOrderId)
                 if (inquiryResult.approved) {
+                    val tid = inquiryResult.tid
+                    if (tid == null) {
+                        payment.markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+                        paymentAdaptor.save(payment)
+                        return
+                    }
+
+                    val cancelSuccess =
+                        runCatching {
+                            pgGateway.cancel(
+                                tid,
+                                payment.amount,
+                                PaymentCancelSource.USER_ABANDONED.compensationReason(),
+                            )
+                        }.isSuccess
+
+                    if (cancelSuccess) {
+                        payment.markCancelled(PaymentCancelSource.USER_ABANDONED)
+                        payment.markCancelCompensated(PaymentCancelSource.USER_ABANDONED)
+                        paymentAdaptor.save(payment)
+                        cancelPendingEnrollment(enrollment)
+                    } else {
+                        payment.markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+                        paymentAdaptor.save(payment)
+                    }
                     return
                 }
                 payment.markCancelled(PaymentCancelSource.USER_ABANDONED)

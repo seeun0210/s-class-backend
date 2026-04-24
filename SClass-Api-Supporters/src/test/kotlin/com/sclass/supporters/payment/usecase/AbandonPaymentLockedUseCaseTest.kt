@@ -72,17 +72,43 @@ class AbandonPaymentLockedUseCaseTest {
     }
 
     @Test
-    fun `PG 조회 결과 이미 승인된 거래면 abandon 처리하지 않는다`() {
+    fun `PG 조회 결과 이미 승인된 거래면 즉시 승인취소하고 local 취소 처리한다`() {
         val payment = pendingPayment()
 
         every { paymentAdaptor.findById(payment.id) } returns payment
         every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
         every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-1", amount = payment.amount)
+        every { pgGateway.cancel("tid-1", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
 
         useCase.execute(payment.userId, payment.id, payment.pgOrderId)
 
-        assertThat(payment.status).isEqualTo(PaymentStatus.PENDING)
-        verify(exactly = 0) { paymentAdaptor.save(any()) }
+        assertThat(payment.status).isEqualTo(PaymentStatus.CANCELLED)
+        assertThat(payment.metadata).isEqualTo(PaymentCancelSource.USER_ABANDONED.compensatedMetadata())
+        verify(exactly = 1) {
+            pgGateway.cancel("tid-1", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason())
+        }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { enrollmentAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `PG 조회 결과 이미 승인된 거래의 승인취소가 실패하면 PG_CANCEL_FAILED로 마킹한다`() {
+        val payment = pendingPayment()
+
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns null
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-1", amount = payment.amount)
+        every {
+            pgGateway.cancel("tid-1", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason())
+        } throws RuntimeException("PG cancel failed")
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(payment.userId, payment.id, payment.pgOrderId)
+
+        assertThat(payment.status).isEqualTo(PaymentStatus.PG_CANCEL_FAILED)
+        assertThat(payment.metadata).isEqualTo(PaymentCancelSource.USER_ABANDONED.pendingMetadata())
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
         verify(exactly = 0) { enrollmentAdaptor.save(any()) }
     }
 
