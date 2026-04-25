@@ -1,7 +1,7 @@
 # S-Class Backend
 
-![CI](https://github.com/seeun0210/s-class-backend/actions/workflows/ci.yml/badge.svg)
-![CodeQL](https://github.com/seeun0210/s-class-backend/actions/workflows/codeql.yml/badge.svg)
+![PR CI](https://github.com/seeun0210/s-class-backend/actions/workflows/ci.yml/badge.svg?event=pull_request)
+![CodeQL](https://github.com/seeun0210/s-class-backend/actions/workflows/codeql.yml/badge.svg?branch=develop)
 
 수행평가 매칭과 학원 운영을 지원하는 S-Class 백엔드 monorepo입니다.
 
