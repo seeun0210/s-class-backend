@@ -7,3 +7,5 @@ class LessonNotFoundException : BusinessException(LessonErrorCode.LESSON_NOT_FOU
 class LessonInvalidStatusTransitionException : BusinessException(LessonErrorCode.LESSON_INVALID_STATUS_TRANSITION)
 
 class LessonNotCompletedException : BusinessException(LessonErrorCode.LESSON_NOT_COMPLETED)
+
+class LessonAlreadyCompletedException : BusinessException(LessonErrorCode.LESSON_ALREADY_COMPLETED)

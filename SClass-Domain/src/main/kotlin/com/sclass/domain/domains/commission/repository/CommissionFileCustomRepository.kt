@@ -4,4 +4,6 @@ import com.sclass.domain.domains.commission.domain.CommissionFile
 
 interface CommissionFileCustomRepository {
     fun findByCommissionId(commissionId: Long): List<CommissionFile>
+
+    fun findByIdWithFile(id: Long): CommissionFile?
 }
