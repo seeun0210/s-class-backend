@@ -9,3 +9,7 @@ class LessonInvalidStatusTransitionException : BusinessException(LessonErrorCode
 class LessonNotCompletedException : BusinessException(LessonErrorCode.LESSON_NOT_COMPLETED)
 
 class LessonAlreadyCompletedException : BusinessException(LessonErrorCode.LESSON_ALREADY_COMPLETED)
+
+class LessonInvalidTimeException : BusinessException(LessonErrorCode.LESSON_INVALID_TIME)
+
+class LessonAlreadyStartedException : BusinessException(LessonErrorCode.LESSON_ALREADY_STARTED)

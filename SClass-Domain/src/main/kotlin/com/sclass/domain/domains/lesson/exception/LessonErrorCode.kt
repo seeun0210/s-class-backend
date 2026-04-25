@@ -14,4 +14,6 @@ enum class LessonErrorCode(
     LESSON_SUBSTITUTE_ASSIGN_NOT_ALLOWED("LESSON_005", "예정 상태의 수업만 대타 배정이 가능합니다", 400),
     LESSON_SUBSTITUTE_SAME_AS_ASSIGNED("LESSON_006", "기존 담당 선생님은 대타로 배정할 수 없습니다", 400),
     LESSON_ALREADY_COMPLETED("LESSON_007", "이미 완료 처리된 수업입니다", 400),
+    LESSON_INVALID_TIME("LESSON_008", "유효하지 않은 시간입니다", 400),
+    LESSON_ALREADY_STARTED("LESSON_009", "이미 시작된 수업입니다", 400),
 }
