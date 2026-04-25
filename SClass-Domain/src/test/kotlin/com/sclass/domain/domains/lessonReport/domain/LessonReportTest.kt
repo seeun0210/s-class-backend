@@ -1,6 +1,7 @@
 package com.sclass.domain.domains.lessonReport.domain
 
 import com.sclass.domain.domains.lessonReport.exception.LessonReportInvalidStatusTransitionException
+import com.sclass.domain.domains.lessonReport.exception.LessonReportNotRejectedException
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -14,7 +15,6 @@ class LessonReportTest {
     private fun newReport(status: LessonReportStatus = LessonReportStatus.PENDING_REVIEW) =
         LessonReport(
             lessonId = 1L,
-            version = 1,
             submittedByUserId = submitter,
             content = "content",
             status = status,
@@ -58,6 +58,35 @@ class LessonReportTest {
         val report = newReport(status = LessonReportStatus.REJECTED)
         assertThrows<LessonReportInvalidStatusTransitionException> {
             report.approve(reviewer)
+        }
+    }
+
+    @Test
+    fun `REJECTED 상태에서 resubmit 호출 시 PENDING_REVIEW로 전이되고 검토 정보가 초기화된다`() {
+        val report =
+            newReport(status = LessonReportStatus.REJECTED).apply {
+                reviewedByUserId = reviewer
+                reviewedAt = LocalDateTime.now()
+                rejectReason = "부족함"
+            }
+
+        report.resubmit("updated")
+
+        assertAll(
+            { assertEquals(LessonReportStatus.PENDING_REVIEW, report.status) },
+            { assertEquals("updated", report.content) },
+            { assertEquals(null, report.reviewedByUserId) },
+            { assertEquals(null, report.reviewedAt) },
+            { assertEquals(null, report.rejectReason) },
+        )
+    }
+
+    @Test
+    fun `REJECTED가 아닌 상태에서 resubmit 호출 시 예외`() {
+        val report = newReport()
+
+        assertThrows<LessonReportNotRejectedException> {
+            report.resubmit("updated")
         }
     }
 }

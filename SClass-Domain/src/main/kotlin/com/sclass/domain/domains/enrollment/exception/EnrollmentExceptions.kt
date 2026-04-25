@@ -17,3 +17,7 @@ class EnrollmentNotActiveException : BusinessException(EnrollmentErrorCode.ENROL
 class EnrollmentTypeMismatchException : BusinessException(EnrollmentErrorCode.ENROLLMENT_TYPE_MISMATCH)
 
 class NoActiveMembershipException : BusinessException(EnrollmentErrorCode.NO_ACTIVE_MEMBERSHIP)
+
+class EnrollmentInvalidPurchaseTargetException : BusinessException(EnrollmentErrorCode.ENROLLMENT_INVALID_PURCHASE_TARGET)
+
+class EnrollmentCourseRequiredException : BusinessException(EnrollmentErrorCode.ENROLLMENT_COURSE_REQUIRED)

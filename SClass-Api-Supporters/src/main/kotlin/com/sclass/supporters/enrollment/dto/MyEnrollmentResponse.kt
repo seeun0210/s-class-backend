@@ -5,6 +5,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.EnrollmentType
 import com.sclass.domain.domains.enrollment.dto.EnrollmentWithCourseDto
 import com.sclass.domain.domains.product.domain.CohortMembershipProduct
+import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.domain.ProductType
 import com.sclass.domain.domains.product.domain.RollingMembershipProduct
 import java.time.LocalDateTime
@@ -17,58 +18,52 @@ data class MyEnrollmentResponse(
     val tuitionAmountWon: Int,
     val startAt: LocalDateTime?,
     val endAt: LocalDateTime?,
+    val product: ProductSummary?,
     val course: CourseSummary?,
-    val membership: MembershipSummary?,
 ) {
-    data class CourseSummary(
+    data class ProductSummary(
+        val id: String,
+        val type: ProductType,
         val name: String,
         val description: String?,
         val thumbnailUrl: String?,
-        val teacherName: String?,
-        val courseStatus: CourseStatus,
-        val enrollmentDeadLine: LocalDateTime?,
-        val startAt: LocalDateTime?,
-        val endAt: LocalDateTime?,
     )
 
-    data class MembershipSummary(
-        val productId: String,
-        val productType: ProductType,
-        val productName: String,
-        val thumbnailUrl: String?,
+    data class CourseSummary(
+        val id: Long,
+        val status: CourseStatus,
+        val teacherName: String?,
     )
 
     companion object {
         fun from(
             dto: EnrollmentWithCourseDto,
-            courseThumbnailUrl: String?,
-            membershipThumbnailUrl: String?,
+            productThumbnailUrl: String?,
         ): MyEnrollmentResponse {
+            val product =
+                dto.courseProduct?.let { cp ->
+                    ProductSummary(
+                        id = cp.id,
+                        type = ProductType.COURSE,
+                        name = cp.name,
+                        description = cp.description,
+                        thumbnailUrl = productThumbnailUrl,
+                    )
+                } ?: dto.membershipProduct?.let { mp ->
+                    ProductSummary(
+                        id = mp.id,
+                        type = mp.toProductType(),
+                        name = mp.name,
+                        description = mp.description,
+                        thumbnailUrl = productThumbnailUrl,
+                    )
+                }
             val course =
                 dto.course?.let { c ->
                     CourseSummary(
-                        name = dto.courseProduct?.name ?: "",
-                        description = dto.courseProduct?.description,
-                        thumbnailUrl = courseThumbnailUrl,
+                        id = c.id,
+                        status = c.status,
                         teacherName = dto.teacherName,
-                        courseStatus = c.status,
-                        enrollmentDeadLine = c.enrollmentDeadLine,
-                        startAt = c.startAt,
-                        endAt = c.endAt,
-                    )
-                }
-            val membership =
-                dto.membershipProduct?.let { mp ->
-                    MembershipSummary(
-                        productId = mp.id,
-                        productType =
-                            when (mp) {
-                                is RollingMembershipProduct -> ProductType.ROLLING_MEMBERSHIP
-                                is CohortMembershipProduct -> ProductType.COHORT_MEMBERSHIP
-                                else -> error("Unknown MembershipProduct subtype")
-                            },
-                        productName = mp.name,
-                        thumbnailUrl = membershipThumbnailUrl,
                     )
                 }
             return MyEnrollmentResponse(
@@ -79,9 +74,16 @@ data class MyEnrollmentResponse(
                 tuitionAmountWon = dto.enrollment.tuitionAmountWon,
                 startAt = dto.enrollment.startAt,
                 endAt = dto.enrollment.endAt,
+                product = product,
                 course = course,
-                membership = membership,
             )
         }
+
+        private fun MembershipProduct.toProductType(): ProductType =
+            when (this) {
+                is RollingMembershipProduct -> ProductType.ROLLING_MEMBERSHIP
+                is CohortMembershipProduct -> ProductType.COHORT_MEMBERSHIP
+                else -> error("Unknown MembershipProduct subtype")
+            }
     }
 }

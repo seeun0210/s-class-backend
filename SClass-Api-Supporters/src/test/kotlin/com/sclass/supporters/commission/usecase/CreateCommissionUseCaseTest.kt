@@ -31,6 +31,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.context.ApplicationEventPublisher
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 class CreateCommissionUseCaseTest {
     private lateinit var commissionAdaptor: CommissionAdaptor
@@ -43,6 +46,7 @@ class CreateCommissionUseCaseTest {
     private lateinit var commissionPolicyAdaptor: CommissionPolicyAdaptor
     private lateinit var enrollmentAdaptor: EnrollmentAdaptor
     private lateinit var useCase: CreateCommissionUseCase
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
 
     @BeforeEach
     fun setUp() {
@@ -55,7 +59,7 @@ class CreateCommissionUseCaseTest {
         coinDomainService = mockk(relaxed = true)
         commissionPolicyAdaptor = mockk()
         enrollmentAdaptor = mockk()
-        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any()) } returns true
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any(), any()) } returns true
         useCase =
             CreateCommissionUseCase(
                 commissionAdaptor,
@@ -67,6 +71,7 @@ class CreateCommissionUseCaseTest {
                 coinDomainService,
                 commissionPolicyAdaptor,
                 enrollmentAdaptor,
+                fixedClock,
             )
     }
 
@@ -127,7 +132,7 @@ class CreateCommissionUseCaseTest {
 
     @Test
     fun `활성 멤버십이 없으면 의뢰 생성이 거부된다`() {
-        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any()) } returns false
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(any(), any()) } returns false
 
         assertThrows<NoActiveMembershipException> {
             useCase.execute("student-user-id-0000000001", createRequest())

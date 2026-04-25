@@ -14,9 +14,8 @@ class LessonReportAdaptor(
 
     fun findById(id: Long): LessonReport = lessonReportRepository.findByIdOrNull(id) ?: throw LessonReportNotFoundException()
 
-    fun findAllByLesson(lessonId: Long): List<LessonReport> = lessonReportRepository.findAllByLessonIdOrderByVersionDesc(lessonId)
+    fun findByLesson(lessonId: Long): LessonReport =
+        lessonReportRepository.findByLessonId(lessonId) ?: throw LessonReportNotFoundException()
 
-    fun findLatestByLesson(lessonId: Long): LessonReport? = lessonReportRepository.findTopByLessonIdOrderByVersionDesc(lessonId)
-
-    fun nextVersion(lessonId: Long): Int = (findLatestByLesson(lessonId)?.version ?: 0) + 1
+    fun findByLessonOrNull(lessonId: Long): LessonReport? = lessonReportRepository.findByLessonId(lessonId)
 }

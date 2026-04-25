@@ -2,7 +2,6 @@ package com.sclass.domain.domains.course.repository
 
 import com.querydsl.core.types.Order
 import com.querydsl.core.types.OrderSpecifier
-import com.querydsl.core.types.Projections.tuple
 import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.core.types.dsl.PathBuilder
 import com.querydsl.jpa.impl.JPAQueryFactory
@@ -12,7 +11,6 @@ import com.sclass.domain.domains.course.domain.QCourse.course
 import com.sclass.domain.domains.course.dto.CatalogCourseDto
 import com.sclass.domain.domains.course.dto.CourseWithEnrollmentCountDto
 import com.sclass.domain.domains.course.dto.CourseWithTeacherAndEnrollmentCountDto
-import com.sclass.domain.domains.course.dto.CourseWithTeacherDto
 import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.enrollment.domain.QEnrollment.enrollment
 import com.sclass.domain.domains.product.domain.QCourseProduct.courseProduct
@@ -94,57 +92,6 @@ class CourseCustomRepositoryImpl(
         return PageImpl(content, pageable, total)
     }
 
-    override fun findAllCatalogCourses(pageable: Pageable): Page<CatalogCourseDto> {
-        val now = LocalDateTime.now()
-        val deadlineNotPassed = course.enrollmentDeadLine.isNull.or(course.enrollmentDeadLine.goe(now))
-        val content =
-            queryFactory
-                .select(course, courseProduct, teacher, user, enrollment.count())
-                .from(course)
-                .leftJoin(courseProduct)
-                .on(courseProduct.id.eq(course.productId))
-                .leftJoin(teacher)
-                .on(teacher.user.id.eq(course.teacherUserId))
-                .leftJoin(user)
-                .on(user.id.eq(course.teacherUserId))
-                .leftJoin(enrollment)
-                .on(
-                    enrollment.courseId.eq(course.id),
-                    enrollment.status.`in`(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
-                ).where(
-                    course.status.eq(CourseStatus.LISTED),
-                    courseProduct.visible.isTrue,
-                    deadlineNotPassed,
-                ).groupBy(course, courseProduct, teacher, user)
-                .orderBy(*pageable.sort.toOrderSpecifiers())
-                .offset(pageable.offset)
-                .limit(pageable.pageSize.toLong())
-                .fetch()
-                .map { tuple ->
-                    CatalogCourseDto(
-                        course = tuple[course]!!,
-                        courseProduct = tuple[courseProduct],
-                        teacher = tuple[teacher],
-                        teacherUser = tuple[user],
-                        liveEnrollmentCount = tuple[enrollment.count()] ?: 0L,
-                    )
-                }
-
-        val total =
-            queryFactory
-                .select(course.count())
-                .from(course)
-                .leftJoin(courseProduct)
-                .on(courseProduct.id.eq(course.productId))
-                .where(
-                    course.status.eq(CourseStatus.LISTED),
-                    courseProduct.visible.isTrue,
-                    deadlineNotPassed,
-                ).fetchOne() ?: 0L
-
-        return PageImpl(content, pageable, total)
-    }
-
     override fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto? =
         queryFactory
             .select(course, courseProduct, user.name, enrollment.count())
@@ -167,9 +114,12 @@ class CourseCustomRepositoryImpl(
                 )
             }
 
-    override fun findCatalogCourseById(id: Long): CourseWithTeacherDto? =
-        queryFactory
-            .select(course, courseProduct, teacher, user)
+    override fun findAllCatalogCoursesByProductIds(productIds: Collection<String>): List<CatalogCourseDto> {
+        if (productIds.isEmpty()) return emptyList()
+        val now = LocalDateTime.now()
+        val deadlineNotPassed = course.enrollmentDeadLine.isNull.or(course.enrollmentDeadLine.goe(now))
+        return queryFactory
+            .select(course, courseProduct, teacher, user, enrollment.count())
             .from(course)
             .leftJoin(courseProduct)
             .on(courseProduct.id.eq(course.productId))
@@ -177,19 +127,32 @@ class CourseCustomRepositoryImpl(
             .on(teacher.user.id.eq(course.teacherUserId))
             .leftJoin(user)
             .on(user.id.eq(course.teacherUserId))
-            .where(
-                course.id.eq(id),
+            .leftJoin(enrollment)
+            .on(
+                enrollment.courseId.eq(course.id),
+                enrollment.status.`in`(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE),
+            ).where(
+                course.productId.`in`(productIds),
                 course.status.eq(CourseStatus.LISTED),
                 courseProduct.visible.isTrue,
-            ).fetchOne()
-            ?.let { tuple ->
-                CourseWithTeacherDto(
+                deadlineNotPassed,
+            ).orderBy(
+                course.productId.asc(),
+                course.enrollmentDeadLine.asc().nullsLast(),
+                course.startAt.asc().nullsLast(),
+                course.createdAt.asc(),
+            ).groupBy(course, courseProduct, teacher, user)
+            .fetch()
+            .map { tuple ->
+                CatalogCourseDto(
                     course = tuple[course]!!,
                     courseProduct = tuple[courseProduct],
                     teacher = tuple[teacher],
                     teacherUser = tuple[user],
+                    liveEnrollmentCount = tuple[enrollment.count()] ?: 0L,
                 )
             }
+    }
 
     private fun Sort.toOrderSpecifiers(): Array<OrderSpecifier<*>> {
         if (isUnsorted) return arrayOf(course.createdAt.desc())
@@ -197,7 +160,7 @@ class CourseCustomRepositoryImpl(
         return mapNotNull { order ->
             val direction = if (order.isAscending) Order.ASC else Order.DESC
             when (order.property) {
-                "totalLessons" -> OrderSpecifier(direction, courseProduct.totalLessons)
+                "totalLessons" -> OrderSpecifier(direction, course.totalLessons.coalesce(courseProduct.totalLessons))
                 else -> OrderSpecifier(direction, coursePath.get(order.property, Comparable::class.java))
             }
         }.toTypedArray()

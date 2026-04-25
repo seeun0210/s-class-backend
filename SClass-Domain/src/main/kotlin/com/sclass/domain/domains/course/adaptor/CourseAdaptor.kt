@@ -24,10 +24,6 @@ class CourseAdaptor(
 
     fun findByIdOrNull(id: Long): Course? = courseRepository.findByIdOrNull(id)
 
-    fun findAllCatalogCourses(pageable: Pageable): Page<CatalogCourseDto> = courseRepository.findAllCatalogCourses(pageable)
-
-    fun findCatalogCourseById(id: Long) = courseRepository.findCatalogCourseById(id) ?: throw CourseNotFoundException()
-
     fun findCourseDetailById(id: Long): CourseWithTeacherAndEnrollmentCountDto =
         courseRepository.findCourseDetailById(id) ?: throw CourseNotFoundException()
 
@@ -45,4 +41,12 @@ class CourseAdaptor(
     fun findAllByProductId(productId: String): List<Course> = courseRepository.findAllByProductId(productId)
 
     fun delete(course: Course) = courseRepository.delete(course)
+
+    fun findAllCatalogCoursesByProductIds(productIds: Collection<String>): Map<String, List<CatalogCourseDto>> =
+        courseRepository
+            .findAllCatalogCoursesByProductIds(productIds)
+            .groupBy { it.course.productId }
+
+    fun findAllCatalogCoursesByProductId(productId: String): List<CatalogCourseDto> =
+        findAllCatalogCoursesByProductIds(listOf(productId))[productId].orEmpty()
 }

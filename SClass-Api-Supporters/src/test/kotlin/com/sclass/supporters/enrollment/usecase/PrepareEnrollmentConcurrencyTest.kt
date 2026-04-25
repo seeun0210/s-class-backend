@@ -91,6 +91,7 @@ class PrepareEnrollmentConcurrencyTest {
                     try {
                         prepareEnrollmentUseCase.execute(
                             studentUserId = "student-$i",
+                            productId = product.id,
                             courseId = course.id,
                             pgType = PgType.NICEPAY,
                         )

@@ -2,6 +2,7 @@ package com.sclass.domain.domains.lessonReport.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
 import com.sclass.domain.domains.lessonReport.exception.LessonReportInvalidStatusTransitionException
+import com.sclass.domain.domains.lessonReport.exception.LessonReportNotRejectedException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -22,10 +23,7 @@ import java.time.LocalDateTime
         Index(name = "idx_lesson_reports_status", columnList = "status"),
     ],
     uniqueConstraints = [
-        UniqueConstraint(
-            name = "uk_lesson_reports_lesson_version",
-            columnNames = ["lesson_id", "version"],
-        ),
+        UniqueConstraint(name = "uk_lesson_reports_lesson", columnNames = ["lesson_id"]),
     ],
 )
 class LessonReport(
@@ -34,8 +32,6 @@ class LessonReport(
     val id: Long = 0L,
     @Column(name = "lesson_id", nullable = false)
     val lessonId: Long,
-    @Column(nullable = false)
-    val version: Int,
     @Column(name = "submitted_by_user_id", nullable = false, length = 26)
     val submittedByUserId: String,
     @Column(columnDefinition = "TEXT", nullable = false)
@@ -70,6 +66,15 @@ class LessonReport(
         this.reviewedByUserId = reviewerUserId
         this.reviewedAt = at
         this.rejectReason = reason
+    }
+
+    fun resubmit(content: String) {
+        if (status != LessonReportStatus.REJECTED) throw LessonReportNotRejectedException()
+        this.content = content
+        this.status = LessonReportStatus.PENDING_REVIEW
+        this.reviewedByUserId = null
+        this.reviewedAt = null
+        this.rejectReason = null
     }
 
     private fun validateTransition(target: LessonReportStatus) {

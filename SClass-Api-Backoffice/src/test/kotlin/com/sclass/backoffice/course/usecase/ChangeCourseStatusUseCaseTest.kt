@@ -134,6 +134,47 @@ class ChangeCourseStatusUseCaseTest {
     }
 
     @Test
+    fun `requiresMatching 상품의 코스를 LISTED로 전이해도 product visible은 변경하지 않는다`() {
+        val product =
+            product().apply {
+                requiresMatching = true
+            }
+        val course = courseOf(product.id, CourseStatus.DRAFT)
+        every { courseAdaptor.findById(course.id) } returns course
+        every { productAdaptor.findById(product.id) } returns product
+        every { courseAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(course.id, CourseStatus.LISTED)
+
+        assertAll(
+            { assertEquals(CourseStatus.LISTED, course.status) },
+            { assertFalse(product.visible) },
+        )
+    }
+
+    @Test
+    fun `requiresMatching 상품의 코스를 UNLISTED로 전이해도 product visible은 변경하지 않는다`() {
+        val product =
+            product().apply {
+                requiresMatching = true
+                show()
+            }
+        val course = courseOf(product.id, CourseStatus.LISTED)
+        every { courseAdaptor.findById(course.id) } returns course
+        every { productAdaptor.findById(product.id) } returns product
+        every { courseAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(course.id, CourseStatus.UNLISTED)
+
+        assertAll(
+            { assertEquals(CourseStatus.UNLISTED, course.status) },
+            { assertTrue(product.visible) },
+        )
+    }
+
+    @Test
     fun `코스와 상품을 모두 save 한다`() {
         val product = product()
         val course = courseOf(product.id, CourseStatus.DRAFT)

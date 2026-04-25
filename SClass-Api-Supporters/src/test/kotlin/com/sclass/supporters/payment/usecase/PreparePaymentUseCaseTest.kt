@@ -18,6 +18,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 class PreparePaymentUseCaseTest {
     private lateinit var coinPackageAdaptor: CoinPackageAdaptor
@@ -26,19 +29,20 @@ class PreparePaymentUseCaseTest {
     private lateinit var useCase: PreparePaymentUseCase
 
     private val userId = "user-id-00000000000000000000000001"
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
 
     @BeforeEach
     fun setUp() {
         coinPackageAdaptor = mockk()
         enrollmentAdaptor = mockk()
         paymentAdaptor = mockk()
-        useCase = PreparePaymentUseCase(coinPackageAdaptor, enrollmentAdaptor, paymentAdaptor)
+        useCase = PreparePaymentUseCase(coinPackageAdaptor, enrollmentAdaptor, paymentAdaptor, fixedClock)
     }
 
     @Test
     fun `결제 준비 성공 시 paymentId와 pgOrderId를 반환한다`() {
         val coinPackage = CoinPackage(name = "코인 100", priceWon = 1000, coinAmount = 100)
-        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId) } returns true
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId, any()) } returns true
         every { coinPackageAdaptor.findById(any()) } returns coinPackage
 
         val paymentSlot = slot<Payment>()
@@ -61,7 +65,7 @@ class PreparePaymentUseCaseTest {
 
     @Test
     fun `활성 멤버십이 없으면 NoActiveMembershipException이 발생한다`() {
-        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId) } returns false
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId, any()) } returns false
 
         assertThrows<NoActiveMembershipException> {
             useCase.execute(
@@ -73,7 +77,7 @@ class PreparePaymentUseCaseTest {
 
     @Test
     fun `존재하지 않는 코인 패키지면 예외가 발생한다`() {
-        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId) } returns true
+        every { enrollmentAdaptor.hasActiveMembershipEnrollment(userId, any()) } returns true
         every { coinPackageAdaptor.findById(any()) } throws CoinPackageNotFoundException()
 
         assertThrows<CoinPackageNotFoundException> {

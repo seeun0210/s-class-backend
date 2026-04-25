@@ -19,6 +19,8 @@ import com.sclass.supporters.commission.event.CommissionAssignedEvent
 import com.sclass.supporters.commission.scheduler.CommissionReminderScheduler
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @UseCase
@@ -32,13 +34,16 @@ class CreateCommissionUseCase(
     private val coinDomainService: CoinDomainService,
     private val commissionPolicyAdaptor: CommissionPolicyAdaptor,
     private val enrollmentAdaptor: EnrollmentAdaptor,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     @Transactional
     fun execute(
         studentUserId: String,
         request: CreateCommissionRequest,
     ): CommissionResponse {
-        if (!enrollmentAdaptor.hasActiveMembershipEnrollment(studentUserId)) throw NoActiveMembershipException()
+        if (!enrollmentAdaptor.hasActiveMembershipEnrollment(studentUserId, LocalDateTime.now(clock))) {
+            throw NoActiveMembershipException()
+        }
 
         val assignment =
             teacherAssignmentAdaptor.findActiveByStudentUserIdAndPlatformAndOrganizationId(

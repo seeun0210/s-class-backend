@@ -13,6 +13,7 @@ import com.sclass.domain.domains.enrollment.domain.EnrollmentStatus
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
 import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.payment.domain.PgType
@@ -20,6 +21,7 @@ import com.sclass.domain.domains.product.adaptor.ProductAdaptor
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.infrastructure.nicepay.PgGateway
 import com.sclass.infrastructure.nicepay.dto.NicePayWebhookPayload
+import com.sclass.infrastructure.nicepay.dto.PgInquiryResult
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -146,6 +148,81 @@ class HandleNicePayWebhookUseCaseTest {
     }
 
     @Test
+    fun `사용자 결제 포기로 취소된 결제에 성공 웹훅이 오면 자동 승인취소한다`() {
+        val payment =
+            pendingPayment().apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `PG_CANCEL_FAILED 상태여도 성공 웹훅이 오면 자동 승인취소를 재시도한다`() {
+        val payment =
+            pendingPayment().apply {
+                markPgCancelFailed(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns PgInquiryResult(approved = true, tid = "tid-001", amount = payment.amount)
+        every { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(PaymentStatus.PG_CANCEL_FAILED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 1) { pgGateway.cancel("tid-001", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+        verify(exactly = 1) { paymentAdaptor.save(payment) }
+        verify(exactly = 0) { coinDomainService.issue(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `사용자 결제 포기 보상 취소 시 웹훅 tid가 달라도 조회된 tid로 취소한다`() {
+        val payment =
+            pendingPayment().apply {
+                markCancelled(PaymentCancelSource.USER_ABANDONED)
+            }
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { pgGateway.inquiry(payment.pgOrderId) } returns
+            PgInquiryResult(approved = true, tid = "verified-tid", amount = payment.amount)
+        every { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) } returns mockk()
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId).copy(tid = "forged-tid"))
+
+        assertAll(
+            { assertEquals(PaymentStatus.CANCELLED, payment.status) },
+            { assertEquals(PaymentCancelSource.USER_ABANDONED.compensatedMetadata(), payment.metadata) },
+        )
+        verify(exactly = 0) { pgGateway.cancel("forged-tid", any(), any()) }
+        verify(exactly = 1) { pgGateway.cancel("verified-tid", payment.amount, PaymentCancelSource.USER_ABANDONED.compensationReason()) }
+    }
+
+    @Test
     fun `존재하지 않는 orderId면 무시한다`() {
         every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
         every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns null
@@ -179,6 +256,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -218,11 +296,44 @@ class HandleNicePayWebhookUseCaseTest {
     }
 
     @Test
+    fun `CourseProduct 결제 시 매칭형 상품이면 PENDING_MATCH 처리된다`() {
+        val payment = courseProductPayment()
+        val product = CourseProduct(name = "매칭형 수학 코스", priceWon = 300000, totalLessons = 12, requiresMatching = true)
+        val enrollment =
+            Enrollment.createForPurchase(
+                productId = payment.targetId,
+                courseId = null,
+                studentUserId = "student-id-000000000001",
+                tuitionAmountWon = 300000,
+                paymentId = payment.id,
+            )
+
+        every { pgGateway.verifyWebhookSignature(any(), any(), any(), any()) } returns true
+        every { paymentAdaptor.findByPgOrderIdOrNull(any()) } returns payment
+        every { paymentAdaptor.findById(payment.id) } returns payment
+        every { paymentAdaptor.save(any()) } answers { firstArg() }
+        every { productAdaptor.findById(any()) } returns product
+        every { enrollmentAdaptor.findByPaymentIdOrNull(payment.id) } returns enrollment
+        every { enrollmentAdaptor.findByPaymentId(payment.id) } returns enrollment
+        every { enrollmentAdaptor.save(any()) } answers { firstArg() }
+
+        useCase.execute(payment.pgOrderId, successPayload(payment.pgOrderId))
+
+        assertAll(
+            { assertEquals(EnrollmentStatus.PENDING_MATCH, enrollment.status) },
+            { assertEquals(PaymentStatus.COMPLETED, payment.status) },
+        )
+        verify(exactly = 0) { courseAdaptor.findById(any()) }
+        verify(exactly = 0) { lessonService.createLessonsForEnrollment(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `CourseProduct 결제 시 코스가 UNLISTED이면 자동 환불 처리된다`() {
         val payment = courseProductPayment()
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -262,6 +373,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,
@@ -300,6 +412,7 @@ class HandleNicePayWebhookUseCaseTest {
         val product = CourseProduct(name = "수학 코스", priceWon = 300000, totalLessons = 12)
         val enrollment =
             Enrollment.createForPurchase(
+                productId = payment.targetId,
                 courseId = 1L,
                 studentUserId = "student-id-000000000001",
                 tuitionAmountWon = 300000,

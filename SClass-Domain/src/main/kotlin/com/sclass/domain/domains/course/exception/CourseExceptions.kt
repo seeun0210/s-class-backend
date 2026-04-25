@@ -17,3 +17,15 @@ class CourseAlreadyStartedException : BusinessException(CourseErrorCode.COURSE_A
 class CourseMaxEnrollmentsTooLowException : BusinessException(CourseErrorCode.COURSE_MAX_ENROLLMENTS_TOO_LOW)
 
 class CourseInvalidScheduleException : BusinessException(CourseErrorCode.COURSE_INVALID_SCHEDULE)
+
+class CourseMatchingProductNotCreatableException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CREATABLE)
+
+class CourseProductAlreadyInUseException : BusinessException(CourseErrorCode.COURSE_PRODUCT_ALREADY_IN_USE)
+
+class CourseMatchingProductNotConvertibleException : BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_NOT_CONVERTIBLE)
+
+class CourseMatchingProductHasPendingMatchEnrollmentException :
+    BusinessException(CourseErrorCode.COURSE_MATCHING_PRODUCT_HAS_PENDING_MATCH_ENROLLMENT)
+
+class CourseProductHasPendingPaymentEnrollmentException :
+    BusinessException(CourseErrorCode.COURSE_PRODUCT_HAS_PENDING_PAYMENT_ENROLLMENT)

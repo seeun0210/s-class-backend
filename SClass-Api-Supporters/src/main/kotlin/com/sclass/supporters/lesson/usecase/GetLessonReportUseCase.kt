@@ -9,7 +9,7 @@ import com.sclass.supporters.lesson.dto.LessonReportResponse
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
-class GetLessonReportsUseCase(
+class GetLessonReportUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val lessonReportAdaptor: LessonReportAdaptor,
     private val lessonReportFileAdaptor: LessonReportFileAdaptor,
@@ -18,20 +18,15 @@ class GetLessonReportsUseCase(
     fun execute(
         userId: String,
         lessonId: Long,
-    ): List<LessonReportResponse> {
+    ): LessonReportResponse {
         val lesson = lessonAdaptor.findById(lessonId)
         if (lesson.studentUserId != userId && !lesson.isTeacher(userId)) {
             throw LessonUnauthorizedAccessException()
         }
 
-        val reports = lessonReportAdaptor.findAllByLesson(lessonId)
-        if (reports.isEmpty()) return emptyList()
+        val report = lessonReportAdaptor.findByLesson(lessonId)
+        val fileIds = lessonReportFileAdaptor.findByLessonReportId(report.id).map { it.file.id }
 
-        val filesByReport =
-            lessonReportFileAdaptor
-                .findByLessonReportIds(reports.map { it.id })
-                .groupBy({ it.lessonReport.id }, { it.file.id })
-
-        return reports.map { LessonReportResponse.of(it, filesByReport[it.id] ?: emptyList()) }
+        return LessonReportResponse.of(report, fileIds)
     }
 }

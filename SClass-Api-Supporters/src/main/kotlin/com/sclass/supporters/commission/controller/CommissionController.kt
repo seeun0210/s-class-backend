@@ -10,6 +10,7 @@ import com.sclass.supporters.commission.dto.CommissionTopicListResponse
 import com.sclass.supporters.commission.dto.CommissionTopicResponse
 import com.sclass.supporters.commission.dto.CreateCommissionRequest
 import com.sclass.supporters.commission.dto.CreateSupportTicketRequest
+import com.sclass.supporters.commission.dto.DeliverSubmissionRequest
 import com.sclass.supporters.commission.dto.ProposeTopicsRequest
 import com.sclass.supporters.commission.dto.SelectTopicRequest
 import com.sclass.supporters.commission.dto.SupportTicketListResponse
@@ -17,6 +18,8 @@ import com.sclass.supporters.commission.dto.SupportTicketResponse
 import com.sclass.supporters.commission.dto.TransitionStatusRequest
 import com.sclass.supporters.commission.usecase.CreateCommissionUseCase
 import com.sclass.supporters.commission.usecase.CreateSupportTicketUseCase
+import com.sclass.supporters.commission.usecase.DeleteCommissionFileUseCase
+import com.sclass.supporters.commission.usecase.DeliverSubmissionUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionDetailUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionLessonUseCase
 import com.sclass.supporters.commission.usecase.GetCommissionListUseCase
@@ -27,6 +30,7 @@ import com.sclass.supporters.commission.usecase.SelectTopicUseCase
 import com.sclass.supporters.commission.usecase.TransitionCommissionStatusUseCase
 import com.sclass.supporters.lesson.dto.LessonResponse
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -48,6 +52,8 @@ class CommissionController(
     private val createSupportTicketUseCase: CreateSupportTicketUseCase,
     private val getSupportTicketsUseCase: GetSupportTicketsUseCase,
     private val getCommissionLessonUseCase: GetCommissionLessonUseCase,
+    private val deliverSubmissionUseCase: DeliverSubmissionUseCase,
+    private val deleteCommissionFileUseCase: DeleteCommissionFileUseCase,
 ) {
     @PostMapping
     fun create(
@@ -120,4 +126,25 @@ class CommissionController(
         @CurrentUserId userId: String,
         @PathVariable commissionId: Long,
     ): ApiResponse<LessonResponse> = ApiResponse.success(getCommissionLessonUseCase.execute(userId, commissionId))
+
+    @PostMapping("/{commissionId}/submissions")
+    fun deliverSubmission(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+        @Valid @RequestBody request: DeliverSubmissionRequest,
+    ): ApiResponse<CommissionResponse> = ApiResponse.success(deliverSubmissionUseCase.execute(userId, commissionId, request))
+
+    @DeleteMapping("/{commissionId}/files/{commissionFileId}")
+    fun deleteFile(
+        @CurrentUserId userId: String,
+        @PathVariable commissionId: Long,
+        @PathVariable commissionFileId: Long,
+    ): ApiResponse<CommissionResponse> =
+        ApiResponse.success(
+            deleteCommissionFileUseCase.execute(
+                userId,
+                commissionId,
+                commissionFileId,
+            ),
+        )
 }

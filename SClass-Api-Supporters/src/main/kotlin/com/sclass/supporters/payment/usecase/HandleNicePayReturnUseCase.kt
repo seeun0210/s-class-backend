@@ -5,10 +5,14 @@ import com.sclass.domain.domains.coin.adaptor.CoinPackageAdaptor
 import com.sclass.domain.domains.coin.domain.CoinLotSourceType
 import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
+import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.domain.MembershipProduct
 import com.sclass.domain.domains.product.exception.ProductTypeMismatchException
 import com.sclass.infrastructure.nicepay.PgGateway
@@ -68,6 +72,12 @@ class HandleNicePayReturnUseCase(
             return failureUrl()
         }
 
+        val pendingCancelSource = payment.pendingCancelSource()
+        if (payment.status in setOf(PaymentStatus.CANCELLED, PaymentStatus.PG_CANCEL_FAILED) && pendingCancelSource != null) {
+            compensateApprovedCancelledPayment(payment, orderId, tid, pendingCancelSource)
+            return failureUrl()
+        }
+
         if (payment.status == PaymentStatus.COMPLETED) {
             log.info("이미 완료된 결제: orderId={}", orderId)
             return successUrl(null)
@@ -119,10 +129,18 @@ class HandleNicePayReturnUseCase(
                     successUrl(coinPackage.coinAmount)
                 }
                 PaymentTargetType.COURSE_PRODUCT -> {
+                    val product =
+                        productAdaptor.findById(payment.targetId) as? CourseProduct
+                            ?: throw ProductTypeMismatchException()
                     txTemplate.execute {
                         val fresh = paymentAdaptor.findById(payment.id)
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                        enrollment.markPaid()
+                        if (product.requiresMatching) {
+                            enrollment.markPendingMatch()
+                        } else {
+                            if (enrollment.courseId == null) throw EnrollmentCourseRequiredException()
+                            enrollment.markCoursePaid()
+                        }
                         enrollmentAdaptor.save(enrollment)
                         fresh.markCompleted()
                         paymentAdaptor.save(fresh)
@@ -140,7 +158,7 @@ class HandleNicePayReturnUseCase(
                         val enrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
                         val period = product.resolveActivePeriod(now)
-                        enrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
+                        enrollment.markMembershipPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(enrollment)
 
                         coinDomainService.issue(
@@ -172,6 +190,47 @@ class HandleNicePayReturnUseCase(
     }
 
     private fun baseUrl() = frontendUrl.trimEnd('/')
+
+    private fun compensateApprovedCancelledPayment(
+        payment: Payment,
+        orderId: String,
+        requestedTid: String,
+        cancelSource: PaymentCancelSource,
+    ) {
+        val inquiryResult =
+            runCatching { pgGateway.inquiry(orderId) }
+                .onFailure { e -> log.error("자동 승인취소 전 조회 실패: orderId={}", orderId, e) }
+                .getOrNull()
+                ?: return
+
+        val verifiedTid = inquiryResult.tid
+        if (!inquiryResult.approved || verifiedTid == null) {
+            log.warn("자동 승인취소 불가: approved={}, tid={}, orderId={}", inquiryResult.approved, verifiedTid, orderId)
+            return
+        }
+        if (inquiryResult.amount != payment.amount) {
+            log.warn("자동 승인취소 조회 금액 불일치: expected={}, actual={}, orderId={}", payment.amount, inquiryResult.amount, orderId)
+            return
+        }
+        if (verifiedTid != requestedTid) {
+            log.warn("리턴 tid 불일치 - 조회 결과 tid 사용: requestedTid={}, verifiedTid={}, orderId={}", requestedTid, verifiedTid, orderId)
+        }
+
+        val cancelSuccess =
+            runCatching { pgGateway.cancel(verifiedTid, payment.amount, cancelSource.compensationReason()) }
+                .onFailure { e -> log.error("자동 승인취소 실패: orderId={}", payment.pgOrderId, e) }
+                .isSuccess
+
+        txTemplate.execute {
+            val fresh = paymentAdaptor.findById(payment.id)
+            if (cancelSuccess) {
+                fresh.markCancelCompensated(cancelSource)
+            } else {
+                fresh.markPgCancelFailed(cancelSource)
+            }
+            paymentAdaptor.save(fresh)
+        }
+    }
 
     private fun successUrl(issuedCoinAmount: Int?) =
         if (issuedCoinAmount != null) {

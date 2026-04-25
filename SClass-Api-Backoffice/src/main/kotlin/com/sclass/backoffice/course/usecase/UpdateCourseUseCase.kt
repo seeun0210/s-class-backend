@@ -29,14 +29,10 @@ class UpdateCourseUseCase(
             productAdaptor.findById(course.productId) as? CourseProduct
                 ?: throw ProductTypeMismatchException()
         val now = LocalDateTime.now()
-
-        product.updateCatalog(
-            newName = request.name,
-            newDescription = request.description,
-            newThumbnailFileId = request.thumbnailFileId,
-            newPriceWon = request.priceWon,
+        course.updateFulfillmentInfo(
+            newCurriculum = request.curriculum,
+            newTotalLessons = request.totalLessons,
         )
-        product.updateCurriculum(request.curriculum)
 
         if (request.hasEnrollmentConstraintChange()) {
             val liveCount = enrollmentAdaptor.countLiveEnrollments(courseId).toInt()

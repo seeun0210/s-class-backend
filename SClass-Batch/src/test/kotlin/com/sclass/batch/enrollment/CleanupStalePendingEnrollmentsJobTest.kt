@@ -38,6 +38,7 @@ class CleanupStalePendingEnrollmentsJobTest {
 
     private fun createPendingEnrollment(paymentId: String = "pay0000000000000000001") =
         Enrollment.createForPurchase(
+            productId = "prod000000000000000001",
             courseId = 1L,
             studentUserId = "user000000000000000001",
             tuitionAmountWon = 100_000,

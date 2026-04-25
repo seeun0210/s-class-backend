@@ -13,6 +13,7 @@ import com.sclass.domain.domains.enrollment.repository.EnrollmentRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
+import java.time.LocalDateTime
 
 @Adaptor
 class EnrollmentAdaptor(
@@ -115,9 +116,44 @@ class EnrollmentAdaptor(
     fun findPendingPaymentOlderThan(threshold: java.time.LocalDateTime): List<Enrollment> =
         enrollmentRepository.findAllByStatusAndCreatedAtBefore(EnrollmentStatus.PENDING_PAYMENT, threshold)
 
-    fun hasActiveMembershipEnrollment(studentUserId: String): Boolean =
+    fun hasActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Boolean =
         enrollmentRepository.hasActiveMembershipEnrollment(
             studentUserId = studentUserId,
-            now = java.time.LocalDateTime.now(),
+            now = now,
         )
+
+    fun findActiveMembershipEnrollment(
+        studentUserId: String,
+        now: LocalDateTime,
+    ): Enrollment? =
+        enrollmentRepository.findActiveMembershipEnrollment(
+            studentUserId = studentUserId,
+            now = now,
+        )
+
+    fun hasPendingUnassignedMatchingEnrollment(productId: String): Boolean =
+        enrollmentRepository.existsByProductIdAndCourseIdIsNullAndStatusIn(
+            productId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.PENDING_MATCH),
+        )
+
+    fun hasPendingAssignedRegularEnrollment(productId: String): Boolean =
+        enrollmentRepository.existsByProductIdAndCourseIdIsNotNullAndStatusIn(
+            productId,
+            setOf(EnrollmentStatus.PENDING_PAYMENT),
+        )
+
+    fun findResumableCourseProductEnrollment(
+        productId: String,
+        studentUserId: String,
+    ): Enrollment? {
+        val live = enrollmentRepository.findResumableCourseProductEnrollment(productId, studentUserId) ?: return null
+        if (live.status in setOf(EnrollmentStatus.ACTIVE, EnrollmentStatus.PENDING_MATCH)) {
+            throw EnrollmentAlreadyExistsException()
+        }
+        return live
+    }
 }

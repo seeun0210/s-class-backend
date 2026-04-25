@@ -9,6 +9,7 @@ data class LessonResponse(
     val id: Long,
     val name: String,
     val lessonType: LessonType,
+    val lessonNumber: Int?,
     val enrollmentId: Long?,
     val sourceCommissionId: Long?,
     val studentUserId: String,
@@ -19,6 +20,8 @@ data class LessonResponse(
     val scheduledAt: LocalDateTime?,
     val startedAt: LocalDateTime?,
     val completedAt: LocalDateTime?,
+    val createdAt: LocalDateTime,
+    val updatedAt: LocalDateTime,
 ) {
     companion object {
         fun from(lesson: Lesson) =
@@ -26,6 +29,7 @@ data class LessonResponse(
                 id = lesson.id,
                 name = lesson.name,
                 lessonType = lesson.lessonType,
+                lessonNumber = lesson.lessonNumber,
                 enrollmentId = lesson.enrollmentId,
                 sourceCommissionId = lesson.sourceCommissionId,
                 studentUserId = lesson.studentUserId,
@@ -36,6 +40,8 @@ data class LessonResponse(
                 scheduledAt = lesson.scheduledAt,
                 startedAt = lesson.startedAt,
                 completedAt = lesson.completedAt,
+                createdAt = lesson.createdAt,
+                updatedAt = lesson.updatedAt,
             )
     }
 }

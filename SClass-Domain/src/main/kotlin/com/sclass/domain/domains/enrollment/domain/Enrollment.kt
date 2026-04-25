@@ -1,6 +1,9 @@
 package com.sclass.domain.domains.enrollment.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.enrollment.exception.EnrollmentInvalidStatusTransitionException
+import com.sclass.domain.domains.enrollment.exception.EnrollmentPaymentRequiredException
+import com.sclass.domain.domains.enrollment.exception.EnrollmentTypeMismatchException
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -30,9 +33,9 @@ class Enrollment private constructor(
     val id: Long = 0L,
 
     @Column(name = "course_id")
-    val courseId: Long? = null,
+    var courseId: Long? = null,
 
-    // MEMBERSHIP 구매 시 저장
+    // purchase 대상 product 스냅샷
     @Column(name = "product_id", length = 26)
     val productId: String? = null,
 
@@ -77,23 +80,40 @@ class Enrollment private constructor(
     @Column(name = "cancel_reason", length = 500)
     var cancelReason: String? = null,
 ) : BaseTimeEntity() {
-    fun markPaid(
-        startAt: LocalDateTime? = null,
-        endAt: LocalDateTime? = null,
-    ) {
-        require(enrollmentType == EnrollmentType.PURCHASE) {
-            "markPaid is only valid for PURCHASE enrollments"
-        }
-        require(paymentId != null) { "paymentId must be set before markPaid" }
-        if (productId != null) {
-            require(startAt != null && endAt != null) {
-                "membership enrollment requires startAt/endAt on markPaid"
-            }
-            this.startAt = startAt
-            this.endAt = endAt
-        }
+    fun markCoursePaid() {
+        requirePurchaseEnrollment()
+        requirePayment()
         validateTransition(EnrollmentStatus.ACTIVE)
         this.status = EnrollmentStatus.ACTIVE
+    }
+
+    fun markMembershipPaid(
+        startAt: LocalDateTime,
+        endAt: LocalDateTime,
+    ) {
+        requirePurchaseEnrollment()
+        requirePayment()
+        this.startAt = startAt
+        this.endAt = endAt
+        validateTransition(EnrollmentStatus.ACTIVE)
+        this.status = EnrollmentStatus.ACTIVE
+    }
+
+    fun markPendingMatch() {
+        requirePurchaseEnrollment()
+        requirePayment()
+        validateTransition(EnrollmentStatus.PENDING_MATCH)
+        status = EnrollmentStatus.PENDING_MATCH
+    }
+
+    fun assignCourse(courseId: Long) {
+        requirePurchaseEnrollment()
+        requirePayment()
+        if (status != EnrollmentStatus.PENDING_MATCH) throw EnrollmentInvalidStatusTransitionException()
+        if (this.courseId != null) throw EnrollmentInvalidStatusTransitionException()
+        validateTransition(EnrollmentStatus.ACTIVE)
+        this.courseId = courseId
+        status = EnrollmentStatus.ACTIVE
     }
 
     fun complete() {
@@ -115,9 +135,7 @@ class Enrollment private constructor(
         reason: String,
         refundedAt: LocalDateTime = LocalDateTime.now(),
     ) {
-        require(enrollmentType == EnrollmentType.PURCHASE) {
-            "refund is only valid for PURCHASE enrollments"
-        }
+        requirePurchaseEnrollment()
         validateTransition(EnrollmentStatus.REFUNDED)
         this.status = EnrollmentStatus.REFUNDED
         this.cancelledAt = refundedAt
@@ -128,28 +146,52 @@ class Enrollment private constructor(
         val allowed =
             when (target) {
                 EnrollmentStatus.PENDING_PAYMENT -> emptySet()
-                EnrollmentStatus.ACTIVE -> setOf(EnrollmentStatus.PENDING_PAYMENT)
+                EnrollmentStatus.PENDING_MATCH ->
+                    setOf(EnrollmentStatus.PENDING_PAYMENT)
+                EnrollmentStatus.ACTIVE ->
+                    setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.PENDING_MATCH)
                 EnrollmentStatus.COMPLETED -> setOf(EnrollmentStatus.ACTIVE)
-                EnrollmentStatus.CANCELLED -> setOf(EnrollmentStatus.PENDING_PAYMENT, EnrollmentStatus.ACTIVE)
-                EnrollmentStatus.REFUNDED -> setOf(EnrollmentStatus.ACTIVE, EnrollmentStatus.CANCELLED)
+                EnrollmentStatus.CANCELLED ->
+                    setOf(
+                        EnrollmentStatus.PENDING_PAYMENT,
+                        EnrollmentStatus.PENDING_MATCH,
+                        EnrollmentStatus.ACTIVE,
+                    )
+                EnrollmentStatus.REFUNDED ->
+                    setOf(
+                        EnrollmentStatus.PENDING_MATCH,
+                        EnrollmentStatus.ACTIVE,
+                        EnrollmentStatus.CANCELLED,
+                    )
             }
-        require(status in allowed) { "Cannot transition from $status to $target" }
+
+        if (status !in allowed) throw EnrollmentInvalidStatusTransitionException()
+    }
+
+    private fun requirePurchaseEnrollment() {
+        if (enrollmentType != EnrollmentType.PURCHASE) throw EnrollmentTypeMismatchException()
+    }
+
+    private fun requirePayment() {
+        if (paymentId == null) throw EnrollmentPaymentRequiredException()
     }
 
     companion object {
         /**
          * 학생이 PG 결제로 등록.
          * 호출 순서: Payment 먼저 생성 → Enrollment.createForPurchase(..., paymentId = payment.id)
-         *   → PG 콜백 수신 시 payment.markCompleted() → enrollment.markPaid()
+         *   → PG 콜백 수신 시 payment.markCompleted() → enrollment.markCoursePaid()
          */
         fun createForPurchase(
-            courseId: Long,
+            productId: String,
             studentUserId: String,
             tuitionAmountWon: Int,
             paymentId: String,
+            courseId: Long? = null,
         ): Enrollment =
             Enrollment(
                 courseId = courseId,
+                productId = productId,
                 studentUserId = studentUserId,
                 enrollmentType = EnrollmentType.PURCHASE,
                 tuitionAmountWon = tuitionAmountWon,
@@ -206,9 +248,7 @@ class Enrollment private constructor(
             tuitionAmountWon: Int = 0,
             type: EnrollmentType = EnrollmentType.ADMIN_GRANT,
         ): Enrollment {
-            require(type != EnrollmentType.PURCHASE) {
-                "createByGrant cannot be used for PURCHASE type"
-            }
+            if (type == EnrollmentType.PURCHASE) throw EnrollmentTypeMismatchException()
             return Enrollment(
                 courseId = courseId,
                 studentUserId = studentUserId,

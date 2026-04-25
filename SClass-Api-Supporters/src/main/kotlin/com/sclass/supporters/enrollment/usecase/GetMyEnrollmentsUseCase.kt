@@ -16,8 +16,10 @@ class GetMyEnrollmentsUseCase(
         enrollmentAdaptor.findAllByStudentWithCourse(studentUserId).map {
             MyEnrollmentResponse.from(
                 dto = it,
-                courseThumbnailUrl = thumbnailUrlResolver.resolve(it.courseProduct?.thumbnailFileId),
-                membershipThumbnailUrl = thumbnailUrlResolver.resolve(it.membershipProduct?.thumbnailFileId),
+                productThumbnailUrl =
+                    thumbnailUrlResolver.resolve(
+                        it.courseProduct?.thumbnailFileId ?: it.membershipProduct?.thumbnailFileId,
+                    ),
             )
         }
 }

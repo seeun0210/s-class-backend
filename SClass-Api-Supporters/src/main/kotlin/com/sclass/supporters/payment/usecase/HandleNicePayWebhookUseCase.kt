@@ -7,8 +7,11 @@ import com.sclass.domain.domains.coin.service.CoinDomainService
 import com.sclass.domain.domains.course.adaptor.CourseAdaptor
 import com.sclass.domain.domains.course.domain.CourseStatus
 import com.sclass.domain.domains.enrollment.adaptor.EnrollmentAdaptor
+import com.sclass.domain.domains.enrollment.exception.EnrollmentCourseRequiredException
 import com.sclass.domain.domains.lesson.service.LessonDomainService
 import com.sclass.domain.domains.payment.adaptor.PaymentAdaptor
+import com.sclass.domain.domains.payment.domain.Payment
+import com.sclass.domain.domains.payment.domain.PaymentCancelSource
 import com.sclass.domain.domains.payment.domain.PaymentStatus
 import com.sclass.domain.domains.payment.domain.PaymentTargetType
 import com.sclass.domain.domains.product.adaptor.ProductAdaptor
@@ -71,11 +74,18 @@ class HandleNicePayWebhookUseCase(
             return
         }
 
+        val pendingCancelSource = payment.pendingCancelSource()
+        if (payment.status in setOf(PaymentStatus.CANCELLED, PaymentStatus.PG_CANCEL_FAILED) && pendingCancelSource != null) {
+            compensateApprovedCancelledPayment(payment, orderId, payload.tid, pendingCancelSource)
+            return
+        }
+
         if (payment.status != PaymentStatus.PENDING) {
             log.info("웹훅 수신: 처리 불필요한 결제 상태 status={}, paymentId={}", payment.status, payment.id)
             return
         }
 
+        // TODO: 전략패턴으로 리팩토링
         when (payment.targetType) {
             PaymentTargetType.COIN_PACKAGE -> {
                 val coinPackage = coinPackageAdaptor.findById(payment.targetId)
@@ -114,14 +124,29 @@ class HandleNicePayWebhookUseCase(
                     fresh.markPgApproved(payload.tid)
                     paymentAdaptor.save(fresh)
                 }
+
                 val enrollment = enrollmentAdaptor.findByPaymentIdOrNull(payment.id)
                 if (enrollment == null) {
                     log.warn("웹훅 수신: enrollment 없음 paymentId={}", payment.id)
                     return
                 }
 
-                val courseId =
-                    enrollment.courseId ?: error("COURSE_PRODUCT enrollment must have courseId")
+                if (product.requiresMatching) {
+                    txTemplate.execute {
+                        val fresh = paymentAdaptor.findById(payment.id)
+                        val freshEnrollment =
+                            enrollmentAdaptor.findByPaymentId(fresh.id)
+
+                        freshEnrollment.markPendingMatch()
+                        enrollmentAdaptor.save(freshEnrollment)
+
+                        fresh.markCompleted()
+                        paymentAdaptor.save(fresh)
+                    }
+                    return
+                }
+
+                val courseId = enrollment.courseId ?: throw EnrollmentCourseRequiredException()
                 val course = courseAdaptor.findById(courseId)
 
                 if (course.status == CourseStatus.UNLISTED || course.status == CourseStatus.ARCHIVED) {
@@ -148,8 +173,10 @@ class HandleNicePayWebhookUseCase(
                 txTemplate.execute {
                     val fresh = paymentAdaptor.findById(payment.id)
                     val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
-                    freshEnrollment.markPaid()
+
+                    freshEnrollment.markCoursePaid()
                     enrollmentAdaptor.save(freshEnrollment)
+
                     fresh.markCompleted()
                     paymentAdaptor.save(fresh)
 
@@ -157,7 +184,7 @@ class HandleNicePayWebhookUseCase(
                         freshEnrollment,
                         teacherUserId = course.teacherUserId,
                         courseName = product.name,
-                        totalLessons = product.totalLessons,
+                        totalLessons = course.totalLessons ?: product.totalLessons,
                     )
                 }
             }
@@ -182,7 +209,7 @@ class HandleNicePayWebhookUseCase(
                         val freshEnrollment = enrollmentAdaptor.findByPaymentId(fresh.id)
                         val now = LocalDateTime.now()
                         val period = product.resolveActivePeriod(now)
-                        freshEnrollment.markPaid(startAt = period.startAt, endAt = period.endAt)
+                        freshEnrollment.markMembershipPaid(startAt = period.startAt, endAt = period.endAt)
                         enrollmentAdaptor.save(freshEnrollment)
 
                         coinDomainService.issue(
@@ -207,6 +234,47 @@ class HandleNicePayWebhookUseCase(
                     }
                 }
             }
+        }
+    }
+
+    private fun compensateApprovedCancelledPayment(
+        payment: Payment,
+        orderId: String,
+        requestedTid: String,
+        cancelSource: PaymentCancelSource,
+    ) {
+        val inquiryResult =
+            runCatching { pgGateway.inquiry(orderId) }
+                .onFailure { e -> log.error("웹훅 수신: 자동 승인취소 전 조회 실패 orderId={}", orderId, e) }
+                .getOrNull()
+                ?: return
+
+        val verifiedTid = inquiryResult.tid
+        if (!inquiryResult.approved || verifiedTid == null) {
+            log.warn("웹훅 수신: 자동 승인취소 불가 approved={}, tid={}, orderId={}", inquiryResult.approved, verifiedTid, orderId)
+            return
+        }
+        if (inquiryResult.amount != payment.amount) {
+            log.warn("웹훅 수신: 자동 승인취소 조회 금액 불일치 expected={}, actual={}, orderId={}", payment.amount, inquiryResult.amount, orderId)
+            return
+        }
+        if (verifiedTid != requestedTid) {
+            log.warn("웹훅 tid 불일치 - 조회 결과 tid 사용: requestedTid={}, verifiedTid={}, orderId={}", requestedTid, verifiedTid, orderId)
+        }
+
+        val cancelSuccess =
+            runCatching { pgGateway.cancel(verifiedTid, payment.amount, cancelSource.compensationReason()) }
+                .onFailure { e -> log.error("웹훅 수신: 자동 승인취소 실패 paymentId={}", payment.id, e) }
+                .isSuccess
+
+        txTemplate.execute {
+            val fresh = paymentAdaptor.findById(payment.id)
+            if (cancelSuccess) {
+                fresh.markCancelCompensated(cancelSource)
+            } else {
+                fresh.markPgCancelFailed(cancelSource)
+            }
+            paymentAdaptor.save(fresh)
         }
     }
 
