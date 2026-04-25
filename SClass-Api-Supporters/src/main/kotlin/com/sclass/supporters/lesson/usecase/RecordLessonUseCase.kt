@@ -6,10 +6,12 @@ import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessExcept
 import com.sclass.supporters.lesson.dto.LessonResponse
 import com.sclass.supporters.lesson.dto.RecordLessonRequest
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 
 @UseCase
 class RecordLessonUseCase(
     private val lessonAdaptor: LessonAdaptor,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     @Transactional
     fun execute(
@@ -23,7 +25,9 @@ class RecordLessonUseCase(
             actualTeacherUserId = userId,
             startedAt = request.startedAt,
             completedAt = request.completedAt,
+            clock = clock,
         )
+        lessonAdaptor.save(lesson)
         return LessonResponse.from(lesson)
     }
 }

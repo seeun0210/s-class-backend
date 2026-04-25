@@ -16,6 +16,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Entity
@@ -72,26 +73,32 @@ class Lesson(
 
     fun start(
         actualTeacherUserId: String,
-        at: LocalDateTime = LocalDateTime.now(),
+        at: LocalDateTime? = null,
+        clock: Clock = Clock.systemDefaultZone(),
     ) {
         validateTransition(LessonStatus.IN_PROGRESS)
         if (startedAt != null) throw LessonAlreadyStartedException()
-        if (at.isAfter(LocalDateTime.now())) throw LessonInvalidTimeException()
+        val now = LocalDateTime.now(clock)
+        val effectiveAt = at ?: now
+        if (effectiveAt.isAfter(now)) throw LessonInvalidTimeException()
         this.actualTeacherUserId = actualTeacherUserId
-        this.startedAt = at
+        this.startedAt = effectiveAt
         this.status = LessonStatus.IN_PROGRESS
     }
 
     fun complete(
         actualTeacherUserId: String,
-        at: LocalDateTime = LocalDateTime.now(),
+        at: LocalDateTime? = null,
+        clock: Clock = Clock.systemDefaultZone(),
     ) {
         validateTransition(LessonStatus.COMPLETED)
         if (completedAt != null) throw LessonAlreadyCompletedException()
-        if (at.isAfter(LocalDateTime.now())) throw LessonInvalidTimeException()
-        startedAt?.let { if (at.isBefore(it)) throw LessonInvalidTimeException() }
+        val now = LocalDateTime.now(clock)
+        val effectiveAt = at ?: now
+        if (effectiveAt.isAfter(now)) throw LessonInvalidTimeException()
+        startedAt?.let { if (effectiveAt.isBefore(it)) throw LessonInvalidTimeException() }
         this.actualTeacherUserId = actualTeacherUserId
-        this.completedAt = at
+        this.completedAt = effectiveAt
         this.status = LessonStatus.COMPLETED
     }
 
@@ -99,11 +106,12 @@ class Lesson(
         actualTeacherUserId: String,
         startedAt: LocalDateTime,
         completedAt: LocalDateTime,
+        clock: Clock = Clock.systemDefaultZone(),
     ) {
         validateTransition(LessonStatus.COMPLETED)
         if (this.startedAt != null) throw LessonAlreadyStartedException()
         if (this.completedAt != null) throw LessonAlreadyCompletedException()
-        val now = LocalDateTime.now()
+        val now = LocalDateTime.now(clock)
         if (startedAt.isAfter(now) || completedAt.isAfter(now)) throw LessonInvalidTimeException()
         if (completedAt.isBefore(startedAt)) throw LessonInvalidTimeException()
         this.actualTeacherUserId = actualTeacherUserId

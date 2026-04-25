@@ -15,7 +15,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class RecordLessonUseCaseTest {
     private lateinit var lessonAdaptor: LessonAdaptor
@@ -24,10 +26,18 @@ class RecordLessonUseCaseTest {
     private val student = "student-user-id-0000000001"
     private val assignedTeacher = "assigned-teacher-id-0000001"
 
+    private val fixedNow = LocalDateTime.of(2026, 4, 26, 14, 0)
+    private val clock =
+        Clock.fixed(
+            fixedNow.atZone(ZoneId.systemDefault()).toInstant(),
+            ZoneId.systemDefault(),
+        )
+
     @BeforeEach
     fun setUp() {
         lessonAdaptor = mockk()
-        useCase = RecordLessonUseCase(lessonAdaptor)
+        every { lessonAdaptor.save(any()) } answers { firstArg() }
+        useCase = RecordLessonUseCase(lessonAdaptor, clock)
     }
 
     private fun newLesson(
@@ -48,8 +58,8 @@ class RecordLessonUseCaseTest {
     @Test
     fun `record 호출 시 두 시각이 모두 기록되고 COMPLETED로 전이`() {
         val lesson = newLesson()
-        val started = LocalDateTime.now().minusMinutes(60)
-        val completed = LocalDateTime.now().minusMinutes(10)
+        val started = fixedNow.minusMinutes(60)
+        val completed = fixedNow.minusMinutes(10)
         every { lessonAdaptor.findById(1L) } returns lesson
 
         val response =
@@ -70,7 +80,7 @@ class RecordLessonUseCaseTest {
 
     @Test
     fun `record는 scheduledAt을 변경하지 않는다`() {
-        val scheduled = LocalDateTime.now().minusHours(3)
+        val scheduled = fixedNow.minusHours(3)
         val lesson = newLesson(scheduledAt = scheduled)
         every { lessonAdaptor.findById(1L) } returns lesson
 
@@ -78,8 +88,8 @@ class RecordLessonUseCaseTest {
             assignedTeacher,
             1L,
             RecordLessonRequest(
-                startedAt = LocalDateTime.now().minusMinutes(60),
-                completedAt = LocalDateTime.now().minusMinutes(10),
+                startedAt = fixedNow.minusMinutes(60),
+                completedAt = fixedNow.minusMinutes(10),
             ),
         )
 
@@ -95,8 +105,8 @@ class RecordLessonUseCaseTest {
                 "other-user-id",
                 1L,
                 RecordLessonRequest(
-                    startedAt = LocalDateTime.now().minusMinutes(60),
-                    completedAt = LocalDateTime.now().minusMinutes(10),
+                    startedAt = fixedNow.minusMinutes(60),
+                    completedAt = fixedNow.minusMinutes(10),
                 ),
             )
         }
@@ -107,7 +117,7 @@ class RecordLessonUseCaseTest {
         every { lessonAdaptor.findById(1L) } returns
             newLesson(
                 status = LessonStatus.IN_PROGRESS,
-                startedAt = LocalDateTime.now().minusMinutes(30),
+                startedAt = fixedNow.minusMinutes(30),
             )
 
         assertThrows<LessonAlreadyStartedException> {
@@ -115,8 +125,8 @@ class RecordLessonUseCaseTest {
                 assignedTeacher,
                 1L,
                 RecordLessonRequest(
-                    startedAt = LocalDateTime.now().minusMinutes(60),
-                    completedAt = LocalDateTime.now().minusMinutes(10),
+                    startedAt = fixedNow.minusMinutes(60),
+                    completedAt = fixedNow.minusMinutes(10),
                 ),
             )
         }
@@ -124,14 +134,30 @@ class RecordLessonUseCaseTest {
 
     @Test
     fun `종료 시각이 시작 시각보다 이전이면 예외`() {
-        val started = LocalDateTime.now().minusMinutes(10)
+        val started = fixedNow.minusMinutes(10)
         every { lessonAdaptor.findById(1L) } returns newLesson()
 
         assertThrows<LessonInvalidTimeException> {
             useCase.execute(
                 assignedTeacher,
                 1L,
-                RecordLessonRequest(startedAt = started, completedAt = started.minusMinutes(1)),
+                RecordLessonRequest(startedAt = started, completedAt = started.minusSeconds(1)),
+            )
+        }
+    }
+
+    @Test
+    fun `시작 시각이 미래면 예외 - now+1초도 거절 (boundary)`() {
+        every { lessonAdaptor.findById(1L) } returns newLesson()
+
+        assertThrows<LessonInvalidTimeException> {
+            useCase.execute(
+                assignedTeacher,
+                1L,
+                RecordLessonRequest(
+                    startedAt = fixedNow.plusSeconds(1),
+                    completedAt = fixedNow.plusMinutes(60),
+                ),
             )
         }
     }

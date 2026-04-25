@@ -99,15 +99,16 @@ class LessonController(
     fun start(
         @CurrentUserId userId: String,
         @PathVariable lessonId: Long,
-        @Valid @RequestBody request: StartLessonRequest,
-    ): ApiResponse<LessonResponse> = ApiResponse.success(startLessonUseCase.execute(userId, lessonId, request))
+        @Valid @RequestBody(required = false) request: StartLessonRequest?,
+    ): ApiResponse<LessonResponse> = ApiResponse.success(startLessonUseCase.execute(userId, lessonId, request ?: StartLessonRequest()))
 
     @PostMapping("/{lessonId}/complete")
     fun complete(
         @CurrentUserId userId: String,
         @PathVariable lessonId: Long,
-        @Valid @RequestBody request: CompleteLessonRequest,
-    ): ApiResponse<LessonResponse> = ApiResponse.success(completeLessonUseCase.execute(userId, lessonId, request))
+        @Valid @RequestBody(required = false) request: CompleteLessonRequest?,
+    ): ApiResponse<LessonResponse> =
+        ApiResponse.success(completeLessonUseCase.execute(userId, lessonId, request ?: CompleteLessonRequest()))
 
     @PutMapping("/{lessonId}/record")
     fun record(
