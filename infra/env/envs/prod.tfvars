@@ -25,7 +25,7 @@ cors_allow_origins    = "https://aura.co.kr,https://app.aura.co.kr,https://lms.a
 alimtalk_app_base_url = "https://sclass.aura.co.kr"
 frontend_url          = "https://sclass.aura.co.kr"
 report_service_base_url          = "https://report-service-452628026107.asia-northeast3.run.app"
-report_service_callback_base_url = ""
+report_service_callback_base_url = "https://supporters-api.sclass.click"
 
 # SMTP
 smtp_host = "smtp.gmail.com"
