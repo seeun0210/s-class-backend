@@ -1,6 +1,9 @@
 package com.sclass.domain.domains.lesson.domain
 
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyCompletedException
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyStartedException
 import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
+import com.sclass.domain.domains.lesson.exception.LessonInvalidTimeException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import org.junit.jupiter.api.Assertions.assertAll
@@ -19,6 +22,9 @@ class LessonTest {
     private fun newLesson(
         status: LessonStatus = LessonStatus.SCHEDULED,
         substituteTeacherUserId: String? = null,
+        scheduledAt: LocalDateTime? = null,
+        startedAt: LocalDateTime? = null,
+        completedAt: LocalDateTime? = null,
     ) = Lesson(
         lessonType = LessonType.COURSE,
         studentUserId = student,
@@ -26,6 +32,9 @@ class LessonTest {
         substituteTeacherUserId = substituteTeacherUserId,
         name = "lesson",
         status = status,
+        scheduledAt = scheduledAt,
+        startedAt = startedAt,
+        completedAt = completedAt,
     )
 
     @Test
@@ -103,6 +112,170 @@ class LessonTest {
         val lesson = newLesson(status = LessonStatus.CANCELLED)
         assertThrows<LessonSubstituteAssignNotAllowedException> {
             lesson.assignSubstitute(substitute)
+        }
+    }
+
+    @Test
+    fun `SCHEDULED에서 start 호출 시 IN_PROGRESS로 전이되고 startedAt이 기록된다`() {
+        val lesson = newLesson()
+        val startTime = LocalDateTime.now().minusMinutes(5)
+
+        lesson.start(assignedTeacher, startTime)
+
+        assertAll(
+            { assertEquals(LessonStatus.IN_PROGRESS, lesson.status) },
+            { assertEquals(assignedTeacher, lesson.actualTeacherUserId) },
+            { assertEquals(startTime, lesson.startedAt) },
+        )
+    }
+
+    @Test
+    fun `start는 scheduledAt에 영향을 주지 않는다`() {
+        val scheduled = LocalDateTime.now().minusHours(1)
+        val lesson = newLesson(scheduledAt = scheduled)
+
+        lesson.start(assignedTeacher)
+
+        assertEquals(scheduled, lesson.scheduledAt)
+    }
+
+    @Test
+    fun `미래 시각으로 start 호출 시 예외`() {
+        val lesson = newLesson()
+        assertThrows<LessonInvalidTimeException> {
+            lesson.start(assignedTeacher, LocalDateTime.now().plusMinutes(10))
+        }
+    }
+
+    @Test
+    fun `complete는 scheduledAt에 영향을 주지 않는다`() {
+        val scheduled = LocalDateTime.now().minusHours(2)
+        val lesson = newLesson(scheduledAt = scheduled)
+
+        lesson.complete(assignedTeacher)
+
+        assertEquals(scheduled, lesson.scheduledAt)
+    }
+
+    @Test
+    fun `미래 시각으로 complete 호출 시 예외`() {
+        val lesson = newLesson()
+        assertThrows<LessonInvalidTimeException> {
+            lesson.complete(assignedTeacher, LocalDateTime.now().plusMinutes(10))
+        }
+    }
+
+    @Test
+    fun `completedAt이 startedAt보다 이전이면 예외`() {
+        val started = LocalDateTime.now().minusMinutes(10)
+        val lesson = newLesson(status = LessonStatus.IN_PROGRESS, startedAt = started)
+
+        assertThrows<LessonInvalidTimeException> {
+            lesson.complete(assignedTeacher, started.minusMinutes(1))
+        }
+    }
+
+    @Test
+    fun `IN_PROGRESS에서 complete 호출 시 COMPLETED로 전이되고 completedAt이 기록된다`() {
+        val started = LocalDateTime.now().minusMinutes(30)
+        val lesson = newLesson(status = LessonStatus.IN_PROGRESS, startedAt = started)
+        val completedAt = LocalDateTime.now()
+
+        lesson.complete(assignedTeacher, completedAt)
+
+        assertAll(
+            { assertEquals(LessonStatus.COMPLETED, lesson.status) },
+            { assertEquals(assignedTeacher, lesson.actualTeacherUserId) },
+            { assertEquals(completedAt, lesson.completedAt) },
+            { assertEquals(started, lesson.startedAt) },
+        )
+    }
+
+    @Test
+    fun `startedAt이 이미 있으면 start 호출 시 예외`() {
+        val lesson = newLesson(startedAt = LocalDateTime.now().minusMinutes(10))
+        assertThrows<LessonAlreadyStartedException> {
+            lesson.start(assignedTeacher)
+        }
+    }
+
+    @Test
+    fun `completedAt이 이미 있으면 complete 호출 시 예외`() {
+        val lesson =
+            newLesson(
+                status = LessonStatus.IN_PROGRESS,
+                startedAt = LocalDateTime.now().minusMinutes(30),
+                completedAt = LocalDateTime.now().minusMinutes(5),
+            )
+        assertThrows<LessonAlreadyCompletedException> {
+            lesson.complete(assignedTeacher)
+        }
+    }
+
+    @Test
+    fun `record 호출 시 startedAt과 completedAt이 모두 채워지고 COMPLETED로 전이`() {
+        val lesson = newLesson()
+        val started = LocalDateTime.now().minusMinutes(60)
+        val completed = LocalDateTime.now().minusMinutes(10)
+
+        lesson.record(assignedTeacher, started, completed)
+
+        assertAll(
+            { assertEquals(LessonStatus.COMPLETED, lesson.status) },
+            { assertEquals(assignedTeacher, lesson.actualTeacherUserId) },
+            { assertEquals(started, lesson.startedAt) },
+            { assertEquals(completed, lesson.completedAt) },
+        )
+    }
+
+    @Test
+    fun `record는 scheduledAt에 영향을 주지 않는다`() {
+        val scheduled = LocalDateTime.now().minusHours(3)
+        val lesson = newLesson(scheduledAt = scheduled)
+
+        lesson.record(
+            assignedTeacher,
+            LocalDateTime.now().minusMinutes(60),
+            LocalDateTime.now().minusMinutes(10),
+        )
+
+        assertEquals(scheduled, lesson.scheduledAt)
+    }
+
+    @Test
+    fun `이미 startedAt이 있으면 record 호출 시 예외`() {
+        val lesson =
+            newLesson(
+                status = LessonStatus.IN_PROGRESS,
+                startedAt = LocalDateTime.now().minusMinutes(30),
+            )
+        assertThrows<LessonAlreadyStartedException> {
+            lesson.record(
+                assignedTeacher,
+                LocalDateTime.now().minusMinutes(60),
+                LocalDateTime.now().minusMinutes(10),
+            )
+        }
+    }
+
+    @Test
+    fun `record의 시작 시각이 미래면 예외`() {
+        val lesson = newLesson()
+        assertThrows<LessonInvalidTimeException> {
+            lesson.record(
+                assignedTeacher,
+                LocalDateTime.now().plusMinutes(10),
+                LocalDateTime.now().plusMinutes(70),
+            )
+        }
+    }
+
+    @Test
+    fun `record의 종료 시각이 시작 시각보다 이전이면 예외`() {
+        val lesson = newLesson()
+        val started = LocalDateTime.now().minusMinutes(10)
+        assertThrows<LessonInvalidTimeException> {
+            lesson.record(assignedTeacher, started, started.minusMinutes(1))
         }
     }
 }

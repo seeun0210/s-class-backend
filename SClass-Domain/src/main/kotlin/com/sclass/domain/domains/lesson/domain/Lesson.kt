@@ -1,7 +1,10 @@
 package com.sclass.domain.domains.lesson.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyCompletedException
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyStartedException
 import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
+import com.sclass.domain.domains.lesson.exception.LessonInvalidTimeException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import jakarta.persistence.Column
@@ -72,6 +75,8 @@ class Lesson(
         at: LocalDateTime = LocalDateTime.now(),
     ) {
         validateTransition(LessonStatus.IN_PROGRESS)
+        if (startedAt != null) throw LessonAlreadyStartedException()
+        if (at.isAfter(LocalDateTime.now())) throw LessonInvalidTimeException()
         this.actualTeacherUserId = actualTeacherUserId
         this.startedAt = at
         this.status = LessonStatus.IN_PROGRESS
@@ -82,8 +87,28 @@ class Lesson(
         at: LocalDateTime = LocalDateTime.now(),
     ) {
         validateTransition(LessonStatus.COMPLETED)
+        if (completedAt != null) throw LessonAlreadyCompletedException()
+        if (at.isAfter(LocalDateTime.now())) throw LessonInvalidTimeException()
+        startedAt?.let { if (at.isBefore(it)) throw LessonInvalidTimeException() }
         this.actualTeacherUserId = actualTeacherUserId
         this.completedAt = at
+        this.status = LessonStatus.COMPLETED
+    }
+
+    fun record(
+        actualTeacherUserId: String,
+        startedAt: LocalDateTime,
+        completedAt: LocalDateTime,
+    ) {
+        validateTransition(LessonStatus.COMPLETED)
+        if (this.startedAt != null) throw LessonAlreadyStartedException()
+        if (this.completedAt != null) throw LessonAlreadyCompletedException()
+        val now = LocalDateTime.now()
+        if (startedAt.isAfter(now) || completedAt.isAfter(now)) throw LessonInvalidTimeException()
+        if (completedAt.isBefore(startedAt)) throw LessonInvalidTimeException()
+        this.actualTeacherUserId = actualTeacherUserId
+        this.startedAt = startedAt
+        this.completedAt = completedAt
         this.status = LessonStatus.COMPLETED
     }
 

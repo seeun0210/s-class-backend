@@ -4,17 +4,23 @@ import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.dto.ApiResponse
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.supporters.inquiry.dto.InquiryPlanResponse
+import com.sclass.supporters.lesson.dto.CompleteLessonRequest
 import com.sclass.supporters.lesson.dto.CreateLessonInquiryPlanRequest
 import com.sclass.supporters.lesson.dto.LessonDetailResponse
 import com.sclass.supporters.lesson.dto.LessonReportResponse
 import com.sclass.supporters.lesson.dto.LessonResponse
+import com.sclass.supporters.lesson.dto.RecordLessonRequest
+import com.sclass.supporters.lesson.dto.StartLessonRequest
 import com.sclass.supporters.lesson.dto.SubmitLessonReportRequest
 import com.sclass.supporters.lesson.dto.UpdateLessonReportRequest
 import com.sclass.supporters.lesson.dto.UpdateLessonRequest
+import com.sclass.supporters.lesson.usecase.CompleteLessonUseCase
 import com.sclass.supporters.lesson.usecase.CreateLessonInquiryPlanUseCase
 import com.sclass.supporters.lesson.usecase.GetLessonDetailUseCase
 import com.sclass.supporters.lesson.usecase.GetLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.GetMySubstituteLessonsUseCase
+import com.sclass.supporters.lesson.usecase.RecordLessonUseCase
+import com.sclass.supporters.lesson.usecase.StartLessonUseCase
 import com.sclass.supporters.lesson.usecase.SubmitLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.UpdateLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.UpdateLessonUseCase
@@ -39,6 +45,9 @@ class LessonController(
     private val getLessonReportUseCase: GetLessonReportUseCase,
     private val updateLessonReportUseCase: UpdateLessonReportUseCase,
     private val getMySubstituteLessonsUseCase: GetMySubstituteLessonsUseCase,
+    private val startLessonUseCase: StartLessonUseCase,
+    private val completeLessonUseCase: CompleteLessonUseCase,
+    private val recordLessonUseCase: RecordLessonUseCase,
 ) {
     @GetMapping("/my/substitutes")
     fun mySubstituteLessons(
@@ -85,4 +94,25 @@ class LessonController(
         @PathVariable lessonId: Long,
         @Valid @RequestBody request: UpdateLessonReportRequest,
     ): ApiResponse<LessonReportResponse> = ApiResponse.success(updateLessonReportUseCase.execute(userId, lessonId, request))
+
+    @PostMapping("/{lessonId}/start")
+    fun start(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+        @Valid @RequestBody request: StartLessonRequest,
+    ): ApiResponse<LessonResponse> = ApiResponse.success(startLessonUseCase.execute(userId, lessonId, request))
+
+    @PostMapping("/{lessonId}/complete")
+    fun complete(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+        @Valid @RequestBody request: CompleteLessonRequest,
+    ): ApiResponse<LessonResponse> = ApiResponse.success(completeLessonUseCase.execute(userId, lessonId, request))
+
+    @PutMapping("/{lessonId}/record")
+    fun record(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+        @Valid @RequestBody request: RecordLessonRequest,
+    ): ApiResponse<LessonResponse> = ApiResponse.success(recordLessonUseCase.execute(userId, lessonId, request))
 }
