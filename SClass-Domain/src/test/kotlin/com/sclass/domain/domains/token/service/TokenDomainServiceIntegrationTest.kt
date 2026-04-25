@@ -41,6 +41,12 @@ class TokenDomainServiceIntegrationTest {
         val refreshTokens = refreshTokenRepository.findAllByUserId(userId)
         assertThat(refreshTokens).hasSize(1)
         assertThat(refreshTokens[0].userId).isEqualTo(userId)
+        assertThat(refreshTokens[0].tokenId).isNotBlank()
+
+        val resolvedRefreshToken = tokenDomainService.resolveRefreshToken(result.refreshToken)
+        assertThat(resolvedRefreshToken.userId).isEqualTo(userId)
+        assertThat(resolvedRefreshToken.tokenId).isEqualTo(refreshTokens[0].tokenId)
+        assertThat(resolvedRefreshToken.role).isEqualTo(Role.STUDENT)
     }
 
     @Test

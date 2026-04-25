@@ -11,7 +11,7 @@ class LogoutUseCase(
 ) {
     @Transactional
     fun execute(request: RefreshRequest) {
-        val userId = tokenService.resolveUserId(request.refreshToken)
-        tokenService.revokeAllByUserId(userId)
+        val refreshToken = tokenService.resolveRefreshToken(request.refreshToken)
+        tokenService.revokeAllByUserId(refreshToken.userId)
     }
 }

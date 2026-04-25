@@ -33,12 +33,14 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    fun `refresh token 생성 후 파싱하면 userId가 복원된다`() {
-        val token = provider.generateRefreshToken("user-456")
+    fun `refresh token 생성 후 파싱하면 userId와 tokenId와 role이 복원된다`() {
+        val token = provider.generateRefreshToken("user-456", "STUDENT")
 
-        val userId = provider.parseRefreshToken(token)
+        val info = provider.parseRefreshToken(token.token)
 
-        assertEquals("user-456", userId)
+        assertEquals("user-456", info.userId)
+        assertEquals(token.tokenId, info.tokenId)
+        assertEquals("STUDENT", info.role)
     }
 
     @Test
@@ -85,10 +87,10 @@ class JwtTokenProviderTest {
 
     @Test
     fun `refresh token으로 access token 파싱을 시도하면 InvalidTokenException이 발생한다`() {
-        val refreshToken = provider.generateRefreshToken("user-id")
+        val refreshToken = provider.generateRefreshToken("user-id", "STUDENT")
 
         assertThrows<InvalidTokenException> {
-            provider.parseAccessToken(refreshToken)
+            provider.parseAccessToken(refreshToken.token)
         }
     }
 
