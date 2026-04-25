@@ -23,19 +23,24 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class TokenDomainServiceTest {
     private lateinit var jwtTokenProvider: JwtTokenProvider
     private lateinit var aesTokenEncryptor: AesTokenEncryptor
     private lateinit var refreshTokenAdaptor: RefreshTokenAdaptor
     private lateinit var tokenDomainService: TokenDomainService
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
 
     @BeforeEach
     fun setUp() {
         jwtTokenProvider = mockk()
         aesTokenEncryptor = mockk()
         refreshTokenAdaptor = mockk()
-        tokenDomainService = TokenDomainService(jwtTokenProvider, aesTokenEncryptor, refreshTokenAdaptor)
+        tokenDomainService = TokenDomainService(jwtTokenProvider, aesTokenEncryptor, refreshTokenAdaptor, fixedClock)
     }
 
     @Nested
@@ -70,6 +75,7 @@ class TokenDomainServiceTest {
 
             assertEquals("user-id", refreshTokenSlot.captured.userId)
             assertEquals("refresh-token-id", refreshTokenSlot.captured.tokenId)
+            assertEquals(LocalDateTime.of(2026, 1, 8, 0, 0), refreshTokenSlot.captured.expiresAt)
         }
     }
 
@@ -141,6 +147,21 @@ class TokenDomainServiceTest {
             assertThrows<RefreshTokenRevokedException> {
                 tokenDomainService.consumeRefreshToken("encrypted-refresh")
             }
+        }
+    }
+
+    @Nested
+    inner class RevokeRefreshToken {
+        @Test
+        fun `유효한 refresh token이면 해당 jti를 삭제한다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns 1L
+
+            tokenDomainService.revokeRefreshToken("encrypted-refresh")
+
+            verify { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") }
         }
     }
 

@@ -354,4 +354,30 @@ class UserDomainServiceTest {
             verify(exactly = 1) { userRoleAdaptor.save(any()) }
         }
     }
+
+    @Nested
+    inner class ValidateUserHasRole {
+        @Test
+        fun `유저에게 해당 role이 있으면 정상 종료한다`() {
+            val user = mockk<User> { every { id } returns "user-id" }
+            every { userAdaptor.findById("user-id") } returns user
+            every { userRoleAdaptor.findAllByUserIdAndRole("user-id", Role.STUDENT) } returns listOf(mockk())
+
+            userDomainService.validateUserHasRole("user-id", Role.STUDENT)
+
+            verify { userAdaptor.findById("user-id") }
+            verify { userRoleAdaptor.findAllByUserIdAndRole("user-id", Role.STUDENT) }
+        }
+
+        @Test
+        fun `유저에게 해당 role이 없으면 RoleNotFoundException이 발생한다`() {
+            val user = mockk<User> { every { id } returns "user-id" }
+            every { userAdaptor.findById("user-id") } returns user
+            every { userRoleAdaptor.findAllByUserIdAndRole("user-id", Role.ADMIN) } returns emptyList()
+
+            assertThrows<RoleNotFoundException> {
+                userDomainService.validateUserHasRole("user-id", Role.ADMIN)
+            }
+        }
+    }
 }

@@ -16,6 +16,7 @@ import com.sclass.domain.domains.user.domain.Platform
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.domain.domains.verification.domain.VerificationChannel
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.LocalDateTime
 
 @DomainService
@@ -23,6 +24,7 @@ class TokenDomainService(
     private val jwtTokenProvider: JwtTokenProvider,
     private val aesTokenEncryptor: AesTokenEncryptor,
     private val refreshTokenAdaptor: RefreshTokenAdaptor,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
     @Transactional
     fun issueTokens(
@@ -36,7 +38,7 @@ class TokenDomainService(
             RefreshToken(
                 userId = userId,
                 tokenId = refreshJwt.tokenId,
-                expiresAt = LocalDateTime.now().plusSeconds(jwtTokenProvider.getRefreshTokenTtlSecond()),
+                expiresAt = LocalDateTime.now(clock).plusSeconds(jwtTokenProvider.getRefreshTokenTtlSecond()),
             ),
         )
 
@@ -52,7 +54,14 @@ class TokenDomainService(
     }
 
     @Transactional
-    fun consumeRefreshToken(encryptedRefreshToken: String): ResolvedRefreshToken {
+    fun consumeRefreshToken(encryptedRefreshToken: String): ResolvedRefreshToken = deleteValidRefreshToken(encryptedRefreshToken)
+
+    @Transactional
+    fun revokeRefreshToken(encryptedRefreshToken: String) {
+        deleteValidRefreshToken(encryptedRefreshToken)
+    }
+
+    private fun deleteValidRefreshToken(encryptedRefreshToken: String): ResolvedRefreshToken {
         val refreshToken = parseEncryptedRefreshToken(encryptedRefreshToken)
         val deletedCount =
             refreshTokenAdaptor.deleteValidByTokenIdAndUserId(

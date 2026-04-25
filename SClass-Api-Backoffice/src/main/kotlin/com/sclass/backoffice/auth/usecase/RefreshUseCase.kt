@@ -4,18 +4,18 @@ import com.sclass.backoffice.auth.dto.RefreshRequest
 import com.sclass.backoffice.auth.dto.TokenResponse
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.token.service.TokenDomainService
-import com.sclass.domain.domains.user.adaptor.UserAdaptor
+import com.sclass.domain.domains.user.service.UserDomainService
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class RefreshUseCase(
-    private val userAdaptor: UserAdaptor,
+    private val userDomainService: UserDomainService,
     private val tokenDomainService: TokenDomainService,
 ) {
     @Transactional
     fun execute(request: RefreshRequest): TokenResponse {
         val refreshToken = tokenDomainService.consumeRefreshToken(request.refreshToken)
-        userAdaptor.findById(refreshToken.userId)
+        userDomainService.validateUserHasRole(refreshToken.userId, refreshToken.role)
         val tokens = tokenDomainService.issueTokens(refreshToken.userId, refreshToken.role)
         return TokenResponse(
             accessToken = tokens.accessToken,
