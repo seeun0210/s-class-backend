@@ -16,6 +16,7 @@ import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.LessonType
+import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportAdaptor
 import com.sclass.domain.domains.lessonReport.adaptor.LessonReportFileAdaptor
 import com.sclass.domain.domains.lessonReport.domain.LessonReport
@@ -48,6 +49,7 @@ class DeliverSubmissionUseCaseTest {
     private val lessonId = 100L
     private val studentUserId = "student-user-id-0000000001"
     private val teacherUserId = "teacher-user-id-00000000001"
+    private val substituteTeacherUserId = "teacher-user-id-00000000002"
 
     @BeforeEach
     fun setUp() {
@@ -90,17 +92,20 @@ class DeliverSubmissionUseCaseTest {
             acceptedLessonId = lessonId,
         )
 
-    private fun lesson(status: LessonStatus = LessonStatus.SCHEDULED) =
-        Lesson(
-            id = lessonId,
-            lessonType = LessonType.COMMISSION,
-            enrollmentId = 20L,
-            sourceCommissionId = commissionId,
-            studentUserId = studentUserId,
-            assignedTeacherUserId = teacherUserId,
-            name = "미시경제학",
-            status = status,
-        )
+    private fun lesson(
+        status: LessonStatus = LessonStatus.SCHEDULED,
+        substituteTeacherUserId: String? = null,
+    ) = Lesson(
+        id = lessonId,
+        lessonType = LessonType.COMMISSION,
+        enrollmentId = 20L,
+        sourceCommissionId = commissionId,
+        studentUserId = studentUserId,
+        assignedTeacherUserId = teacherUserId,
+        substituteTeacherUserId = substituteTeacherUserId,
+        name = "미시경제학",
+        status = status,
+    )
 
     private fun file(
         id: String,
@@ -211,6 +216,54 @@ class DeliverSubmissionUseCaseTest {
             { assertEquals(listOf(submissionFile.id), result.commissionFiles.map { it.fileMeta.id }) },
         )
         verify(exactly = 0) { lessonAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `대체 선생님이 배정된 수업이면 대체 선생님이 최종 전달 파일을 제출할 수 있다`() {
+        val commission = commission()
+        val lesson = lesson(substituteTeacherUserId = substituteTeacherUserId)
+        val submissionFile = file("new-submit-file-000000001", uploadedBy = substituteTeacherUserId)
+        val savedReport = slot<LessonReport>()
+
+        every { commissionAdaptor.findById(commissionId) } returns commission
+        every { lessonAdaptor.findById(lessonId) } returns lesson
+        every { fileAdaptor.findAllByIds(listOf(submissionFile.id)) } returns listOf(submissionFile)
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { lessonReportAdaptor.findByLessonOrNull(lessonId) } returns null
+        every { lessonReportAdaptor.save(capture(savedReport)) } answers { savedReport.captured }
+        every { commissionFileAdaptor.findByCommissionId(commissionId) } returns emptyList()
+        every { commissionFileAdaptor.saveAll(any()) } answers { firstArg() }
+
+        val result =
+            useCase.execute(
+                substituteTeacherUserId,
+                commissionId,
+                DeliverSubmissionRequest(fileIds = listOf(submissionFile.id)),
+            )
+
+        assertAll(
+            { assertEquals(LessonStatus.COMPLETED, lesson.status) },
+            { assertEquals(substituteTeacherUserId, lesson.actualTeacherUserId) },
+            { assertEquals(substituteTeacherUserId, savedReport.captured.submittedByUserId) },
+            { assertEquals(listOf(submissionFile.id), result.commissionFiles.map { it.fileMeta.id }) },
+        )
+    }
+
+    @Test
+    fun `대체 선생님이 배정된 수업이면 원래 선생님은 최종 전달 파일을 제출할 수 없다`() {
+        val commission = commission()
+        val lesson = lesson(substituteTeacherUserId = substituteTeacherUserId)
+        val submissionFile = file("new-submit-file-000000001")
+
+        every { commissionAdaptor.findById(commissionId) } returns commission
+        every { lessonAdaptor.findById(lessonId) } returns lesson
+        every { fileAdaptor.findAllByIds(listOf(submissionFile.id)) } returns listOf(submissionFile)
+
+        assertThrows<LessonUnauthorizedAccessException> {
+            useCase.execute(teacherUserId, commissionId, DeliverSubmissionRequest(fileIds = listOf(submissionFile.id)))
+        }
+        verify(exactly = 0) { lessonAdaptor.save(any()) }
+        verify(exactly = 0) { lessonReportAdaptor.save(any()) }
     }
 
     @Test

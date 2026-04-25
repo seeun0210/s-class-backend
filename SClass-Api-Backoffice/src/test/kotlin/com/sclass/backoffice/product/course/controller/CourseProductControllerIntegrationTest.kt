@@ -7,6 +7,7 @@ import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.common.jwt.JwtTokenProvider
 import com.sclass.domain.domains.product.domain.CourseProduct
 import com.sclass.domain.domains.product.repository.ProductRepository
+import com.sclass.domain.domains.teacher.repository.TeacherRepository
 import com.sclass.domain.domains.user.domain.AuthProvider
 import com.sclass.domain.domains.user.domain.User
 import com.sclass.domain.domains.user.repository.UserRepository
@@ -38,6 +39,9 @@ class CourseProductControllerIntegrationTest {
     private lateinit var userRoleRepository: UserRoleRepository
 
     @Autowired
+    private lateinit var teacherRepository: TeacherRepository
+
+    @Autowired
     private lateinit var jwtTokenProvider: JwtTokenProvider
 
     @Autowired
@@ -49,6 +53,7 @@ class CourseProductControllerIntegrationTest {
     @BeforeEach
     fun setUp() {
         productRepository.deleteAll()
+        teacherRepository.deleteAll()
         userRoleRepository.deleteAll()
         userRepository.deleteAll()
 

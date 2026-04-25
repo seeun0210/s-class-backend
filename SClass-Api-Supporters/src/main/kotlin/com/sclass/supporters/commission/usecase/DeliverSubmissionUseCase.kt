@@ -44,9 +44,6 @@ class DeliverSubmissionUseCase(
         request: DeliverSubmissionRequest,
     ): CommissionResponse {
         val commission = commissionAdaptor.findById(commissionId)
-        if (commission.teacherUserId != teacherUserId) {
-            throw BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
-        }
         val lesson = resolveDeliverableLesson(teacherUserId, commission.acceptedLessonId)
         val files = findDeliverableFiles(teacherUserId, request.fileIds)
 
