@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys
 import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 import java.util.Date
+import java.util.UUID
 import javax.crypto.SecretKey
 
 @Component
@@ -80,18 +81,26 @@ class JwtTokenProvider(
             .compact()
     }
 
-    fun generateRefreshToken(userId: String): String {
+    fun generateRefreshToken(
+        userId: String,
+        role: String,
+    ): GeneratedRefreshToken {
         val issuedAt = Date()
         val expiration = Date(issuedAt.time + jwtProperties.refreshExp * MILLI_TO_SECOND)
-        return Jwts
-            .builder()
-            .issuer(TOKEN_ISSUER)
-            .issuedAt(issuedAt)
-            .subject(userId)
-            .claim(TOKEN_TYPE, REFRESH_TOKEN)
-            .expiration(expiration)
-            .signWith(secretKey)
-            .compact()
+        val tokenId = UUID.randomUUID().toString()
+        val token =
+            Jwts
+                .builder()
+                .issuer(TOKEN_ISSUER)
+                .issuedAt(issuedAt)
+                .subject(userId)
+                .id(tokenId)
+                .claim(TOKEN_TYPE, REFRESH_TOKEN)
+                .claim(ROLE, role)
+                .expiration(expiration)
+                .signWith(secretKey)
+                .compact()
+        return GeneratedRefreshToken(token = token, tokenId = tokenId)
     }
 
     fun parseAccessToken(token: String): AccessTokenInfo {
@@ -106,7 +115,7 @@ class JwtTokenProvider(
         )
     }
 
-    fun parseRefreshToken(token: String): String {
+    fun parseRefreshToken(token: String): RefreshTokenInfo {
         val claims =
             try {
                 getJws(token).payload
@@ -116,7 +125,17 @@ class JwtTokenProvider(
         if (claims.get(TOKEN_TYPE) != REFRESH_TOKEN) {
             throw InvalidTokenException()
         }
-        return claims.subject
+        val userId = claims.subject
+        val tokenId = claims.id
+        val role = claims.get(ROLE, String::class.java)
+        if (userId.isNullOrBlank() || tokenId.isNullOrBlank() || role.isNullOrBlank()) {
+            throw InvalidTokenException()
+        }
+        return RefreshTokenInfo(
+            userId = userId,
+            tokenId = tokenId,
+            role = role,
+        )
     }
 
     fun getRefreshTokenTtlSecond(): Long = jwtProperties.refreshExp

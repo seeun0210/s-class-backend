@@ -41,6 +41,12 @@ class TokenDomainServiceIntegrationTest {
         val refreshTokens = refreshTokenRepository.findAllByUserId(userId)
         assertThat(refreshTokens).hasSize(1)
         assertThat(refreshTokens[0].userId).isEqualTo(userId)
+        assertThat(refreshTokens[0].tokenId).isNotBlank()
+
+        val resolvedRefreshToken = tokenDomainService.resolveRefreshToken(result.refreshToken)
+        assertThat(resolvedRefreshToken.userId).isEqualTo(userId)
+        assertThat(resolvedRefreshToken.tokenId).isEqualTo(refreshTokens[0].tokenId)
+        assertThat(resolvedRefreshToken.role).isEqualTo(Role.STUDENT)
     }
 
     @Test
@@ -81,5 +87,20 @@ class TokenDomainServiceIntegrationTest {
 
         // then
         assertThat(refreshTokenRepository.findAllByUserId(userId)).isEmpty()
+    }
+
+    @Test
+    fun `revokeRefreshToken은 요청한 RefreshToken만 삭제한다`() {
+        // given
+        val userId = "test-user-id-0000000000003"
+        val firstTokens = tokenDomainService.issueTokens(userId, Role.STUDENT)
+        tokenDomainService.issueTokens(userId, Role.STUDENT)
+        assertThat(refreshTokenRepository.findAllByUserId(userId)).hasSize(2)
+
+        // when
+        tokenDomainService.revokeRefreshToken(firstTokens.refreshToken)
+
+        // then
+        assertThat(refreshTokenRepository.findAllByUserId(userId)).hasSize(1)
     }
 }
