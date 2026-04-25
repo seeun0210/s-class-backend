@@ -103,9 +103,10 @@ docker compose -f infra/docker-compose.dev.yml up -d redis
 아래 목록은 블로그 글 제목 자동 동기화 영역이며, 현재 운영 환경 설명은 이 README의 Deployment 섹션과 아키텍처 다이어그램 기준입니다.
 
 <!-- BLOG_POSTS_START -->
+- [수업을 '시작'하는 API는 POST일까 PATCH일까](https://seeun0210.github.io/s-class-backend/lesson-lifecycle-http-method-2026-04-26.html) — `아키텍처 결정` · 2026-04-26
 - [App Runner에서 외부 API 호출이 10초 만에 죽는다](https://seeun0210.github.io/s-class-backend/troubleshooting-nat-forward-2026-04-05.html) — `트러블슈팅` · `DevOps` · 2026-04-05
-- [@Scheduled 대신 Quartz — 동적 스케줄과 취소](https://seeun0210.github.io/s-class-backend/quartz-dynamic-scheduler-2026-04-02.html) — `아키텍처` · `DevOps` · 2026-04-02
 - [알림톡, 트랜잭션이 끝난 뒤에 보내야 한다](https://seeun0210.github.io/s-class-backend/adr-async-alimtalk-2026-04-02.html) — `아키텍처 결정` · 2026-04-02
+- [@Scheduled 대신 Quartz — 동적 스케줄과 취소](https://seeun0210.github.io/s-class-backend/quartz-dynamic-scheduler-2026-04-02.html) — `아키텍처` · `DevOps` · 2026-04-02
 - [App Runner에서 앱이 뜨질 않는다](https://seeun0210.github.io/s-class-backend/troubleshooting-2026-03-25.html) — `트러블슈팅` · `DevOps` · 2026-03-25
 - [MSA로 시작했다가 Modular Monolith로 바꾼 이야기](https://seeun0210.github.io/s-class-backend/architecture-monorepo-2026-03-08.html) — `아키텍처` · `Kotlin · Spring` · 2026-03-08
 <!-- BLOG_POSTS_END -->
