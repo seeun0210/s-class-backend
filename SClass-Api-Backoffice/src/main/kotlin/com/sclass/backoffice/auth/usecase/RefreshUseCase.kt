@@ -1,10 +1,10 @@
-package com.sclass.supporters.auth.usecase
+package com.sclass.backoffice.auth.usecase
 
+import com.sclass.backoffice.auth.dto.RefreshRequest
+import com.sclass.backoffice.auth.dto.TokenResponse
 import com.sclass.common.annotation.UseCase
 import com.sclass.domain.domains.token.service.TokenDomainService
 import com.sclass.domain.domains.user.service.UserDomainService
-import com.sclass.supporters.auth.dto.RefreshRequest
-import com.sclass.supporters.auth.dto.TokenResponse
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase

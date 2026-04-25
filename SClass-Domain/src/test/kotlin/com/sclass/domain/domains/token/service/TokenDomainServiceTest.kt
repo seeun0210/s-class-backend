@@ -1,7 +1,9 @@
 package com.sclass.domain.domains.token.service
 
 import com.sclass.common.jwt.AesTokenEncryptor
+import com.sclass.common.jwt.GeneratedRefreshToken
 import com.sclass.common.jwt.JwtTokenProvider
+import com.sclass.common.jwt.RefreshTokenInfo
 import com.sclass.common.jwt.VerificationTokenInfo
 import com.sclass.common.jwt.exception.RefreshTokenRevokedException
 import com.sclass.domain.domains.token.adaptor.RefreshTokenAdaptor
@@ -21,19 +23,24 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class TokenDomainServiceTest {
     private lateinit var jwtTokenProvider: JwtTokenProvider
     private lateinit var aesTokenEncryptor: AesTokenEncryptor
     private lateinit var refreshTokenAdaptor: RefreshTokenAdaptor
     private lateinit var tokenDomainService: TokenDomainService
+    private val fixedClock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneId.of("UTC"))
 
     @BeforeEach
     fun setUp() {
         jwtTokenProvider = mockk()
         aesTokenEncryptor = mockk()
         refreshTokenAdaptor = mockk()
-        tokenDomainService = TokenDomainService(jwtTokenProvider, aesTokenEncryptor, refreshTokenAdaptor)
+        tokenDomainService = TokenDomainService(jwtTokenProvider, aesTokenEncryptor, refreshTokenAdaptor, fixedClock)
     }
 
     @Nested
@@ -41,7 +48,8 @@ class TokenDomainServiceTest {
         @Test
         fun `암호화된 access token과 refresh token을 반환한다`() {
             every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT") } returns "raw-access"
-            every { jwtTokenProvider.generateRefreshToken("user-id") } returns "raw-refresh"
+            every { jwtTokenProvider.generateRefreshToken("user-id", "STUDENT") } returns
+                GeneratedRefreshToken(token = "raw-refresh", tokenId = "refresh-token-id")
             every { jwtTokenProvider.getRefreshTokenTtlSecond() } returns 604800L
             every { aesTokenEncryptor.encrypt("raw-access") } returns "encrypted-access"
             every { aesTokenEncryptor.encrypt("raw-refresh") } returns "encrypted-refresh"
@@ -57,7 +65,8 @@ class TokenDomainServiceTest {
         fun `RefreshToken이 저장된다`() {
             val refreshTokenSlot = slot<RefreshToken>()
             every { jwtTokenProvider.generateAccessToken("user-id", "STUDENT") } returns "raw-access"
-            every { jwtTokenProvider.generateRefreshToken("user-id") } returns "raw-refresh"
+            every { jwtTokenProvider.generateRefreshToken("user-id", "STUDENT") } returns
+                GeneratedRefreshToken(token = "raw-refresh", tokenId = "refresh-token-id")
             every { jwtTokenProvider.getRefreshTokenTtlSecond() } returns 604800L
             every { aesTokenEncryptor.encrypt(any()) } returns "encrypted"
             every { refreshTokenAdaptor.save(capture(refreshTokenSlot)) } returns mockk()
@@ -65,30 +74,36 @@ class TokenDomainServiceTest {
             tokenDomainService.issueTokens("user-id", Role.STUDENT)
 
             assertEquals("user-id", refreshTokenSlot.captured.userId)
+            assertEquals("refresh-token-id", refreshTokenSlot.captured.tokenId)
+            assertEquals(LocalDateTime.of(2026, 1, 8, 0, 0), refreshTokenSlot.captured.expiresAt)
         }
     }
 
     @Nested
-    inner class ResolveUserId {
+    inner class ResolveRefreshToken {
         @Test
-        fun `유효한 refresh token이 DB에 존재하면 userId를 반환한다`() {
+        fun `유효한 refresh token이 DB에 존재하면 토큰 정보를 반환한다`() {
             every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
-            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns "user-id"
-            every { refreshTokenAdaptor.existsValidByUserId("user-id") } returns true
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.existsValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns true
 
-            val result = tokenDomainService.resolveUserId("encrypted-refresh")
+            val result = tokenDomainService.resolveRefreshToken("encrypted-refresh")
 
-            assertEquals("user-id", result)
+            assertEquals("user-id", result.userId)
+            assertEquals("refresh-token-id", result.tokenId)
+            assertEquals(Role.STUDENT, result.role)
         }
 
         @Test
         fun `DB에 유효한 refresh token이 없으면 RefreshTokenRevokedException을 던진다`() {
             every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
-            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns "user-id"
-            every { refreshTokenAdaptor.existsValidByUserId("user-id") } returns false
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.existsValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns false
 
             assertThrows<RefreshTokenRevokedException> {
-                tokenDomainService.resolveUserId("encrypted-refresh")
+                tokenDomainService.resolveRefreshToken("encrypted-refresh")
             }
         }
     }
@@ -102,6 +117,51 @@ class TokenDomainServiceTest {
             tokenDomainService.revokeAllByUserId("user-id")
 
             verify { refreshTokenAdaptor.deleteAllByUserId("user-id") }
+        }
+    }
+
+    @Nested
+    inner class ConsumeRefreshToken {
+        @Test
+        fun `유효한 refresh token이면 해당 jti를 삭제하고 토큰 정보를 반환한다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns 1L
+
+            val result = tokenDomainService.consumeRefreshToken("encrypted-refresh")
+
+            assertEquals("user-id", result.userId)
+            assertEquals("refresh-token-id", result.tokenId)
+            assertEquals(Role.STUDENT, result.role)
+            verify { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") }
+        }
+
+        @Test
+        fun `삭제된 refresh token이면 RefreshTokenRevokedException을 던진다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns 0L
+
+            assertThrows<RefreshTokenRevokedException> {
+                tokenDomainService.consumeRefreshToken("encrypted-refresh")
+            }
+        }
+    }
+
+    @Nested
+    inner class RevokeRefreshToken {
+        @Test
+        fun `유효한 refresh token이면 해당 jti를 삭제한다`() {
+            every { aesTokenEncryptor.decrypt("encrypted-refresh") } returns "raw-refresh"
+            every { jwtTokenProvider.parseRefreshToken("raw-refresh") } returns
+                RefreshTokenInfo(userId = "user-id", tokenId = "refresh-token-id", role = "STUDENT")
+            every { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") } returns 1L
+
+            tokenDomainService.revokeRefreshToken("encrypted-refresh")
+
+            verify { refreshTokenAdaptor.deleteValidByTokenIdAndUserId("refresh-token-id", "user-id") }
         }
     }
 

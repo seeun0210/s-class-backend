@@ -15,6 +15,7 @@ import java.time.LocalDateTime
     name = "refresh_tokens",
     indexes = [
         Index(name = "idx_refresh_token_user_id", columnList = "userId"),
+        Index(name = "idx_refresh_token_token_id", columnList = "tokenId", unique = true),
     ],
 )
 class RefreshToken(
@@ -24,6 +25,9 @@ class RefreshToken(
 
     @Column(nullable = false, length = 26)
     val userId: String,
+
+    @Column(nullable = false, unique = true, length = 36)
+    val tokenId: String,
 
     @Column(nullable = false)
     val expiresAt: LocalDateTime,

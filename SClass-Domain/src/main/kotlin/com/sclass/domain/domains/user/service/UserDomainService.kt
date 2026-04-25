@@ -146,6 +146,17 @@ class UserDomainService(
         }
     }
 
+    @Transactional(readOnly = true)
+    fun validateUserHasRole(
+        userId: String,
+        role: Role,
+    ) {
+        userAdaptor.findById(userId)
+        if (userRoleAdaptor.findAllByUserIdAndRole(userId, role).isEmpty()) {
+            throw RoleNotFoundException()
+        }
+    }
+
     fun addUserRole(
         userId: String,
         platform: Platform,
