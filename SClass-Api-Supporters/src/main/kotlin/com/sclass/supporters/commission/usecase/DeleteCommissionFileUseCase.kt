@@ -6,6 +6,7 @@ import com.sclass.common.exception.GlobalErrorCode
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.adaptor.CommissionFileAdaptor
 import com.sclass.domain.domains.commission.exception.CommissionErrorCode
+import com.sclass.domain.domains.commission.exception.CommissionUnauthorizedAccessException
 import com.sclass.domain.domains.file.domain.FileType
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.LessonStatus
@@ -26,14 +27,7 @@ class DeleteCommissionFileUseCase(
         commissionFileId: Long,
     ): CommissionResponse {
         val commission = commissionAdaptor.findById(commissionId)
-        if (commission.teacherUserId != teacherUserId) {
-            throw BusinessException(CommissionErrorCode.UNAUTHORIZED_ACCESS)
-        }
-
-        commission.acceptedLessonId?.let { lessonId ->
-            val lesson = lessonAdaptor.findById(lessonId)
-            if (lesson.status == LessonStatus.COMPLETED) throw LessonAlreadyCompletedException()
-        }
+        authorizeTeacher(teacherUserId, commission)
 
         val commissionFile = commissionFileAdaptor.findById(commissionFileId)
         if (commissionFile.commission.id != commissionId) {
@@ -47,5 +41,24 @@ class DeleteCommissionFileUseCase(
 
         val commissionFiles = commissionFileAdaptor.findByCommissionId(commissionId)
         return CommissionResponse.from(commission, commissionFiles)
+    }
+
+    private fun authorizeTeacher(
+        teacherUserId: String,
+        commission: com.sclass.domain.domains.commission.domain.Commission,
+    ) {
+        val lessonId = commission.acceptedLessonId
+        if (lessonId == null) {
+            if (commission.teacherUserId != teacherUserId) {
+                throw CommissionUnauthorizedAccessException()
+            }
+            return
+        }
+
+        val lesson = lessonAdaptor.findById(lessonId)
+        if (!lesson.isTeacher(teacherUserId)) {
+            throw CommissionUnauthorizedAccessException()
+        }
+        if (lesson.status == LessonStatus.COMPLETED) throw LessonAlreadyCompletedException()
     }
 }
