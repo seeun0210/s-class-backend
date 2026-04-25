@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수업을 '시작'하는 API는 POST일까 PATCH일까 — S-Class Dev Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d1117; --surface: #161b22;
+    --border: #21262d; --border2: #30363d;
+    --text: #c9d1d9; --muted: #8b949e; --bright: #f0f6fc;
+    --blue: #58a6ff; --purple: #d2a8ff; --green: #3fb950;
+    --red: #f85149; --yellow: #e3b341; --orange: #ffa657;
+  }
+  body { font-family: 'Noto Sans KR', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.8; }
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(13,17,23,.9); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+  .nav-wrap { max-width: 780px; margin: 0 auto; padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 14px; font-weight: 700; color: var(--bright); text-decoration: none; }
+  .nav-logo em { font-style: normal; color: var(--blue); }
+  .nav-back { font-size: 13px; color: var(--muted); text-decoration: none; transition: color .15s; }
+  .nav-back:hover { color: var(--bright); }
+  .post { max-width: 720px; margin: 0 auto; padding: 56px 24px 100px; }
+  .post-header { margin-bottom: 48px; }
+  .post-badges { display: flex; gap: 8px; margin-bottom: 20px; }
+  .badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; letter-spacing: .5px; text-transform: uppercase; }
+  .badge-adr { background: rgba(210,168,255,.12); color: var(--purple); border: 1px solid rgba(210,168,255,.2); }
+  .post-header h1 { font-size: 32px; font-weight: 700; color: var(--bright); line-height: 1.3; letter-spacing: -.5px; margin-bottom: 16px; }
+  .post-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--muted); padding-top: 16px; border-top: 1px solid var(--border); }
+  .post-meta a { color: var(--blue); text-decoration: none; }
+  .post-body { font-size: 15px; }
+  .post-body p { margin-bottom: 18px; }
+  .post-body h2 { font-size: 22px; font-weight: 700; color: var(--bright); margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); letter-spacing: -.3px; }
+  .post-body h3 { font-size: 17px; font-weight: 700; color: var(--purple); margin: 28px 0 12px; }
+  .post-body ul, .post-body ol { margin: 12px 0 18px 24px; }
+  .post-body li { margin-bottom: 8px; }
+  .post-body strong { color: var(--bright); font-weight: 600; }
+  code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; background: var(--surface); color: var(--orange); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--border); }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; overflow-x: auto; margin: 20px 0; }
+  pre code { background: none; border: none; padding: 0; color: var(--text); font-size: 13px; line-height: 1.7; }
+  .callout { border-radius: 10px; padding: 18px 20px; margin: 24px 0; display: flex; gap: 12px; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { font-size: 14px; line-height: 1.7; }
+  .callout-body strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .callout.why { background: rgba(88,166,255,.07); border: 1px solid rgba(88,166,255,.2); }
+  .callout.why .callout-body strong { color: var(--blue); }
+  .callout.warn { background: rgba(210,168,255,.07); border: 1px solid rgba(210,168,255,.2); }
+  .callout.warn .callout-body strong { color: var(--purple); }
+  .callout.good { background: rgba(63,185,80,.07); border: 1px solid rgba(63,185,80,.2); }
+  .callout.good .callout-body strong { color: var(--green); }
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  th, td { padding: 10px 14px; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--surface); color: var(--bright); font-weight: 600; font-size: 13px; }
+  .post-footer-nav { margin-top: 60px; padding-top: 32px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .post-footer-nav a { font-size: 13px; color: var(--blue); text-decoration: none; }
+  footer { border-top: 1px solid var(--border); padding: 28px 24px; text-align: center; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-wrap">
+    <a class="nav-logo" href="index.html">S-Class <em>Dev Log</em></a>
+    <a class="nav-back" href="index.html">← 목록으로</a>
+  </div>
+</nav>
+
+<article class="post">
+  <div class="post-header">
+    <div class="post-badges">
+      <span class="badge badge-adr">아키텍처 결정</span>
+    </div>
+    <h1>수업을 '시작'하는 API는 POST일까 PATCH일까</h1>
+    <div class="post-meta">
+      <span>2026. 04. 26</span>
+      <span>·</span>
+      <span>약 6분</span>
+      <span>·</span>
+      <a href="https://github.com/seeun0210/s-class-backend/pull/289" target="_blank">PR #289</a>
+    </div>
+  </div>
+
+  <div class="post-body">
+
+    <p>처음 컨트롤러를 만들려고 앉았을 때 한참을 멍하니 있었다. <code>start</code>, <code>complete</code>, <code>record</code> — 수업의 라이프사이클을 다루는 세 API가 필요했는데, <strong>어떤 HTTP 메서드를 쓸 건지가 안 정해졌다.</strong></p>
+
+    <p>"RFC를 보면 답이 있겠지"라고 시작했는데, 읽을수록 깔끔한 답이 없었다. 결국 세 API의 메서드를 다르게 줬다. 그 결정 과정을 정리한다.</p>
+
+    <h2>요구사항</h2>
+
+    <pre><code>POST /api/v1/lessons/{id}/start    — 수업 시작 (SCHEDULED → IN_PROGRESS)
+POST /api/v1/lessons/{id}/complete — 수업 종료 (→ COMPLETED)
+PUT  /api/v1/lessons/{id}/record   — 시작/종료 시각을 사후에 한 번에 기록</code></pre>
+
+    <p>같은 도메인의 세 API인데 메서드가 둘로 갈렸다. 처음엔 "통일하는 게 깔끔하지 않나"라고 생각했고, 그래서 가장 먼저 떠오른 후보가 <strong>PATCH로 통일</strong>이었다.</p>
+
+    <h2>첫 번째 후보: 셋 다 PATCH</h2>
+
+    <p>가장 자연스럽게 떠오른 안이었다. 셋 다 <em>기존 lesson의 일부 필드를 수정</em>하는 동작처럼 보였으니까.</p>
+
+    <ul>
+      <li><code>PATCH /lessons/{id}</code> with <code>{"action": "start"}</code></li>
+      <li>또는 <code>PATCH /lessons/{id}/status</code> 같은 sub-resource</li>
+    </ul>
+
+    <p>그런데 두 가지가 걸렸다.</p>
+
+    <h3>1. URL이 동사로 끝나는 게 어색했다</h3>
+
+    <p><code>PATCH /lessons/{id}/start</code>. 이게 의미상 깔끔한가? PATCH는 <em>리소스의 부분 수정</em>인데, "start"는 리소스가 아니라 <em>행위</em>다. 명사 자리에 동사가 들어가는 셈이라 어딘가 어색했다.</p>
+
+    <h3>2. 멱등성 의미가 충돌하는 줄 알았다 (← 잘못 알고 있었다)</h3>
+
+    <p>처음엔 이렇게 생각했다. "두 번째 호출이 거절돼야 하는 비멱등 동작이니 PUT/PATCH랑 안 맞는다." 그래서 "POST를 써야 한다"고 결론냈다.</p>
+
+    <p>근데 RFC 9110을 다시 읽으면서 깨달았다. <strong>PUT의 멱등성은 "같은 요청을 반복해도 <em>서버 상태가 같게 유지된다</em>"는 것</strong>이지, 두 번째 호출이 거절되면 안 된다는 게 아니다. PUT으로 리소스 만들고 두 번째에 409 Conflict 반환하는 건 멱등성 위반이 아니다 — 거절돼서 <em>상태가 변하지 않은 것</em>이니까.</p>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>잘못 알고 있던 것</strong>
+        ❌ "PUT/PATCH는 두 번 호출해도 둘 다 성공해야 한다"<br><br>
+        ✅ "PUT/PATCH는 두 번 호출 <em>후의 서버 상태</em>가 한 번 호출 후와 같아야 한다." 두 번째가 거절돼서 상태가 변하지 않으면 멱등성은 그대로 만족된다.
+      </div>
+    </div>
+
+    <p>이걸 알고 나니 "POST를 써야 한다"는 강제 논리가 약해졌다. 더 본질적인 기준이 필요했다.</p>
+
+    <h2>본질로 돌아가서 — 결정 기준 3개</h2>
+
+    <p>RFC와 사례들을 다시 정리하면서 세 가지 질문을 stack으로 만들었다.</p>
+
+    <pre><code>1. URL path가 명사인가, 동사인가?
+   → 동사: POST + verb path (RPC-style action)
+   → 명사: 다음 질문
+
+2. 같은 body로 두 번 호출 시 최종 상태가 같은가?
+   → 같음: PUT (전체 대체) 또는 PATCH (부분 수정)
+   → 다름: POST
+
+3. 단순 데이터 수정인가, 부수효과가 있는가?
+   → 부수효과(상태 전이/외부 호출/이벤트 발행): POST가 의미 명확
+   → 순수 데이터 수정: PUT / PATCH</code></pre>
+
+    <p>이 stack으로 세 API를 다시 봤다.</p>
+
+    <h2>각 API의 결정 — start / complete → POST</h2>
+
+    <ul>
+      <li>URL이 명백히 동사 (<code>/start</code>, <code>/complete</code>)</li>
+      <li>의미상 명확히 <em>행위</em>임 — "수업을 시작한다", "수업을 종료한다"</li>
+      <li>부수효과가 큼: status 전이 + timestamp 자동 기록 + (앞으로) Meet 링크 생성/알림 트리거 가능</li>
+    </ul>
+
+    <div class="callout why">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>POST를 고른 진짜 이유</strong>
+        멱등성이 아니라 <em>시맨틱</em>이다. RPC-style 액션은 RFC 9110의 RESTful method 의미와 정확히 매핑되지 않는다. 행위는 POST + verb path가 가장 의도 전달이 명확하다 — Stripe(<code>POST /v1/charges/{id}/capture</code>), GitHub(<code>POST /repos/.../merge</code>), Google AIP-136(<code>:cancel</code>, <code>:archive</code> custom verb) 모두 같은 선택이다.
+      </div>
+    </div>
+
+    <h2>각 API의 결정 — record → PUT</h2>
+
+    <p>이건 좀 다르다.</p>
+
+    <ul>
+      <li>URL이 명사 (<code>/record</code> — "이 수업의 기록")</li>
+      <li>같은 body로 두 번 호출 → 둘 다 같은 결과 (이미 기록돼 있으면 거절, 그 외엔 동일한 시각으로 채워짐)</li>
+      <li>행위라기보다 <em>데이터 채우기</em> — 오프라인 사후 기록 use case</li>
+    </ul>
+
+    <p>PATCH도 후보였는데, PATCH는 "부분 수정"이고, record는 <code>startedAt</code> + <code>completedAt</code>을 <em>한 번에 다 채우는</em> 것이라 <strong>전체 대체</strong> 시맨틱의 PUT이 더 맞았다.</p>
+
+    <h3>잠깐, PUT과 PATCH는 정확히 뭐가 다른가</h3>
+
+    <p>이 결정을 하면서 PUT과 PATCH의 차이를 다시 정리했다. 막연히 "PUT은 전체, PATCH는 부분"으로 알고 있었는데, 멱등성까지 같이 보면 더 명확하다.</p>
+
+    <table>
+      <tr><th></th><th>PUT</th><th>PATCH</th></tr>
+      <tr><td>시맨틱</td><td>전체 대체 (replace)</td><td>부분 수정 (partial update)</td></tr>
+      <tr><td>body 의미</td><td>리소스의 <em>완전한</em> 새 표현</td><td>변경할 <em>일부</em> 또는 변경 명령</td></tr>
+      <tr><td>멱등성</td><td>멱등 보장 (RFC 9110)</td><td>구현에 따름 — 보장 안 됨</td></tr>
+      <tr><td>예시</td><td><code>PUT /users/1</code> 로 전체 user 객체 교체</td><td><code>PATCH /users/1</code> 로 <code>{"email": "new"}</code>만 수정</td></tr>
+    </table>
+
+    <p>이 기준으로 보면 record는 명확히 PUT이다 — 시작/종료 시각을 <em>둘 다 한꺼번에</em> 채우니까 "기록(record)이라는 sub-resource의 완전한 새 표현"이다. 만약 startedAt만 따로 수정하는 API였다면 PATCH가 더 맞았을 거다.</p>
+
+    <div class="callout good">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>record가 PUT인 이유</strong>
+        sub-resource(시간 기록)를 <em>전체적으로 채우는</em> 동작. 멱등성 충족(RFC 9110 § 9.2.2), URL은 명사, 부수효과 적음. GitHub의 <code>PUT /repos/.../issues/{n}/lock</code>이 가장 가까운 사례다 — "lock"이라는 동사를 PUT으로 쓰지만, 두 번 lock 해도 결과 같음(이미 locked → 그대로). 멱등성이 만족되니 PUT으로도 정당.
+      </div>
+    </div>
+
+    <h2>비교: 다른 회사들은 어떻게 했나</h2>
+
+    <p>조사하면서 흥미로웠던 사례들이다.</p>
+
+    <table>
+      <tr><th>회사</th><th>패턴</th><th>예시</th></tr>
+      <tr><td>Stripe</td><td>행위는 POST + verb</td><td><code>POST /charges/{id}/capture</code></td></tr>
+      <tr><td>GitHub</td><td>멱등 행위는 PUT</td><td><code>PUT /issues/{n}/lock</code></td></tr>
+      <tr><td>Google AIP-136</td><td>RPC 액션은 POST + custom verb</td><td><code>:cancel</code>, <code>:archive</code></td></tr>
+    </table>
+
+    <p>일관된 정답은 없다. 회사마다 자기 도메인에 맞춰 결정한다. 우리도 그래야 했다.</p>
+
+    <h2>트레이드오프 — 일관성을 포기한 대가</h2>
+
+    <p>한 PR 안에서 POST와 PUT을 섞은 건 비용이 있다.</p>
+
+    <table>
+      <tr><th>단점</th><th>받아들인 이유</th></tr>
+      <tr><td>일관성 깨짐 — 셋 다 POST면 더 단순</td><td>시맨틱 명확성이 일관성보다 우선이라 판단</td></tr>
+      <tr><td>FE 개발자 학습 부담</td><td>API 문서에 메서드 선택 근거 명시로 보완</td></tr>
+      <tr><td>팀 컨벤션 만들기 어려움</td><td>결정 stack을 컨벤션으로 문서화 (이 글이 그 시작)</td></tr>
+    </table>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>일관성 vs 명확성</strong>
+        둘 다 좋은 가치인데 충돌할 때가 있다. 이번엔 명확성을 골랐다. 다른 팀은 다르게 고를 수 있고, 그게 틀린 게 아니다 — 트레이드오프를 의식하고 골랐는지가 중요하다.
+      </div>
+    </div>
+
+    <h2>다시 처음으로 — 깨달은 것</h2>
+
+    <p>처음엔 "RFC가 결정해주겠지"라고 시작했는데, <strong>RFC는 결정해주지 않는다</strong>. 그건 <em>최소한의 시맨틱</em>만 정의하고, 그 위에 어떻게 매핑할지는 <em>팀의 컨벤션 + 도메인 의미</em> 영역이다.</p>
+
+    <div class="callout why">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>이번에 배운 것</strong>
+        1. PUT의 멱등성은 "결과 상태 동일"이지 "두 번 다 성공"이 아니다.<br><br>
+        2. RPC-style 행위는 RESTful method와 깔끔하게 매핑되지 않는다 — POST + verb path가 가장 의도 전달이 명확.<br><br>
+        3. 일관성과 의미 명확성 사이에서 후자를 골랐다. 트레이드오프를 의식하고 골랐다는 게 핵심이다.
+      </div>
+    </div>
+
+    <h2>결정 stack을 컨벤션으로</h2>
+
+    <p>다음 endpoint를 만들 때는 이 stack대로 묻는다.</p>
+
+    <pre><code>URL path가 동사?           → POST + verb path
+URL path가 명사 + 부수효과 큼  → POST
+URL path가 명사 + 멱등          → PUT (전체) / PATCH (부분)
+순수 데이터 수정              → PUT / PATCH</code></pre>
+
+    <p>이 글이 우리 팀의 <em>최소 컨벤션</em>의 시작이 되길 바라며, 이번 PR이 첫 적용 사례다.</p>
+
+    <div class="callout good">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>한 줄 요약</strong>
+        같은 도메인 안의 세 API에 POST와 PUT을 섞었다. 일관성보다 시맨틱 명확성을 우선했고, 그 결정 근거를 글로 남겨 다음 사람이 같은 고민을 반복하지 않게 했다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="post-footer-nav">
+    <a href="index.html">← 목록으로</a>
+    <a href="adr-async-alimtalk-2026-04-02.html">알림톡, 트랜잭션이 끝난 뒤에 보내야 한다 →</a>
+  </div>
+</article>
+
+<footer>
+  S-Class Backend · <a href="https://github.com/seeun0210/s-class-backend" target="_blank">github.com/seeun0210/s-class-backend</a>
+</footer>
+
+</body>
+</html>
