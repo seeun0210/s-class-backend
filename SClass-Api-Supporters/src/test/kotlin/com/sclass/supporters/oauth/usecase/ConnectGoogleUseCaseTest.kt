@@ -1,9 +1,11 @@
 package com.sclass.supporters.oauth.usecase
 
+import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import com.sclass.infrastructure.oauth.dto.GoogleTokenExchangeResponse
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
@@ -71,7 +73,12 @@ class ConnectGoogleUseCaseTest {
         every { googleClient.fetchUserInfo("access-token-abc") } returns userInfo()
         every { accountAdaptor.findByUserIdOrNull(userId) } returns null
 
-        val response = useCase.execute(userId, ConnectGoogleRequest(code = "code-1", redirectUri = redirectUri))
+        val response =
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-1", redirectUri = redirectUri),
+            )
 
         assertAll(
             { assertTrue(response.connected) },
@@ -108,7 +115,11 @@ class ConnectGoogleUseCaseTest {
         every { googleClient.fetchUserInfo("access-token-abc") } returns userInfo()
         every { accountAdaptor.findByUserIdOrNull(userId) } returns existing
 
-        useCase.execute(userId, ConnectGoogleRequest(code = "code-2", redirectUri = redirectUri))
+        useCase.execute(
+            userId,
+            Role.TEACHER,
+            ConnectGoogleRequest(code = "code-2", redirectUri = redirectUri),
+        )
 
         assertAll(
             { assertEquals("teacher@gmail.com", existing.googleEmail) },
@@ -126,8 +137,26 @@ class ConnectGoogleUseCaseTest {
         } returns tokenResponse(refreshToken = null)
 
         assertThrows<GoogleRefreshTokenMissingException> {
-            useCase.execute(userId, ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri))
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri),
+            )
         }
+        verify(exactly = 0) { accountAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `선생님 권한이 아니면 Google 계정을 연결할 수 없다`() {
+        assertThrows<ForbiddenException> {
+            useCase.execute(
+                userId,
+                Role.STUDENT,
+                ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri),
+            )
+        }
+
+        verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
         verify(exactly = 0) { accountAdaptor.save(any()) }
     }
 
@@ -137,7 +166,11 @@ class ConnectGoogleUseCaseTest {
         every { googleClient.fetchUserInfo(any()) } returns userInfo()
         every { accountAdaptor.findByUserIdOrNull(userId) } returns null
 
-        useCase.execute(userId, ConnectGoogleRequest(code = "code-4", redirectUri = redirectUri))
+        useCase.execute(
+            userId,
+            Role.TEACHER,
+            ConnectGoogleRequest(code = "code-4", redirectUri = redirectUri),
+        )
 
         verify { encryptor.encrypt("raw-token") }
         verify {

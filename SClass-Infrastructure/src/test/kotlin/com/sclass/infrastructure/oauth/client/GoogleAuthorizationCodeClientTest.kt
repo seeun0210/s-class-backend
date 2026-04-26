@@ -8,6 +8,7 @@ import com.sclass.infrastructure.oauth.dto.GoogleTokenExchangeResponse
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.client.WebClient
@@ -189,6 +191,62 @@ class GoogleAuthorizationCodeClientTest {
 
             assertEquals("teacher@gmail.com", result.email)
             assertEquals(true, result.verifiedEmail)
+        }
+
+        @Test
+        fun `Google 4xx 응답 시 GoogleTokenExchangeFailedException`() {
+            mockGet()
+            every {
+                responseSpec.bodyToMono(GoogleUserInfoResponse::class.java)
+            } returns
+                Mono.error(
+                    WebClientResponseException.create(
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Unauthorized",
+                        HttpHeaders.EMPTY,
+                        """{"error":"invalid_token"}""".toByteArray(),
+                        null,
+                    ),
+                )
+
+            assertThrows<GoogleTokenExchangeFailedException> {
+                client.fetchUserInfo("invalid-access-token")
+            }
+        }
+
+        @Test
+        fun `응답 바디가 없으면 GoogleTokenExchangeFailedException`() {
+            mockGet()
+            every {
+                responseSpec.bodyToMono(GoogleUserInfoResponse::class.java)
+            } returns Mono.empty()
+
+            assertThrows<GoogleTokenExchangeFailedException> {
+                client.fetchUserInfo("access-token-abc")
+            }
+        }
+    }
+
+    @Nested
+    inner class RevokeRefreshToken {
+        @Test
+        fun `refresh token은 form body로 revoke 요청한다`() {
+            mockPostFormData()
+            every { responseSpec.toBodilessEntity() } returns Mono.empty()
+
+            client.revokeRefreshToken("refresh-token-with-special?chars&")
+
+            verify { requestBodyUriSpec.uri("https://oauth2.googleapis.com/revoke") }
+            verify { requestBodySpec.contentType(MediaType.APPLICATION_FORM_URLENCODED) }
+            verify { requestBodySpec.body(any<BodyInserter<*, ClientHttpRequest>>()) }
+        }
+
+        @Test
+        fun `revoke 실패는 전파하지 않는다`() {
+            mockPostFormData()
+            every { responseSpec.toBodilessEntity() } throws RuntimeException("network down")
+
+            client.revokeRefreshToken("refresh-token-xyz")
         }
     }
 }

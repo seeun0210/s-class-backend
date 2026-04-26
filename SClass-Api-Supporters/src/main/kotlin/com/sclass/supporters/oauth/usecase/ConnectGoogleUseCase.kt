@@ -1,10 +1,12 @@
 package com.sclass.supporters.oauth.usecase
 
 import com.sclass.common.annotation.UseCase
+import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
@@ -22,8 +24,11 @@ class ConnectGoogleUseCase(
     @Transactional
     fun execute(
         userId: String,
+        role: Role,
         request: ConnectGoogleRequest,
     ): GoogleConnectionStatusResponse {
+        if (role != Role.TEACHER) throw ForbiddenException()
+
         val tokens = googleClient.exchangeCodeForTokens(request.code, request.redirectUri)
         val refreshToken = tokens.refreshToken ?: throw GoogleRefreshTokenMissingException()
 

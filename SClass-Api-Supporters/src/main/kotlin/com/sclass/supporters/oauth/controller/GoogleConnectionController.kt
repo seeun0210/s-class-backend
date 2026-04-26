@@ -1,7 +1,9 @@
 package com.sclass.supporters.oauth.controller
 
 import com.sclass.common.annotation.CurrentUserId
+import com.sclass.common.annotation.CurrentUserRole
 import com.sclass.common.dto.ApiResponse
+import com.sclass.domain.domains.user.domain.Role
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
 import com.sclass.supporters.oauth.usecase.ConnectGoogleUseCase
@@ -25,8 +27,12 @@ class GoogleConnectionController(
     @PostMapping("/connect")
     fun connect(
         @CurrentUserId userId: String,
+        @CurrentUserRole role: String,
         @Valid @RequestBody request: ConnectGoogleRequest,
-    ): ApiResponse<GoogleConnectionStatusResponse> = ApiResponse.success(connectGoogleUseCase.execute(userId, request))
+    ): ApiResponse<GoogleConnectionStatusResponse> =
+        ApiResponse.success(
+            connectGoogleUseCase.execute(userId, Role.valueOf(role), request),
+        )
 
     @DeleteMapping
     fun disconnect(

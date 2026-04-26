@@ -91,10 +91,17 @@ class GoogleAuthorizationCodeClient(
     }
 
     fun revokeRefreshToken(refreshToken: String) {
+        val params =
+            LinkedMultiValueMap<String, String>().apply {
+                add("token", refreshToken)
+            }
+
         try {
             webClient
                 .post()
-                .uri("https://oauth2.googleapis.com/revoke?token=$refreshToken")
+                .uri("https://oauth2.googleapis.com/revoke")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(params))
                 .retrieve()
                 .toBodilessEntity()
                 .block()
@@ -103,12 +110,24 @@ class GoogleAuthorizationCodeClient(
         }
     }
 
-    fun fetchUserInfo(accessToken: String): GoogleUserInfoResponse =
-        webClient
-            .get()
-            .uri("https://www.googleapis.com/oauth2/v2/userinfo")
-            .header("Authorization", "Bearer $accessToken")
-            .retrieve()
-            .bodyToMono(GoogleUserInfoResponse::class.java)
-            .block()!!
+    fun fetchUserInfo(accessToken: String): GoogleUserInfoResponse {
+        val userInfo =
+            try {
+                webClient
+                    .get()
+                    .uri("https://www.googleapis.com/oauth2/v2/userinfo")
+                    .header("Authorization", "Bearer $accessToken")
+                    .retrieve()
+                    .bodyToMono(GoogleUserInfoResponse::class.java)
+                    .block()
+            } catch (e: WebClientResponseException) {
+                log.warn("Google fetch user info failed: ${e.responseBodyAsString}", e)
+                throw GoogleTokenExchangeFailedException()
+            } catch (e: Exception) {
+                log.warn("Google fetch user info failed", e)
+                throw GoogleTokenExchangeFailedException()
+            }
+
+        return userInfo ?: throw GoogleTokenExchangeFailedException()
+    }
 }
