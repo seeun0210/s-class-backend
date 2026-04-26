@@ -1,0 +1,8 @@
+package com.sclass.infrastructure.calendar
+
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Configuration
+
+@Configuration
+@EnableConfigurationProperties(GoogleCentralCalendarProperties::class)
+class GoogleCalendarConfig

@@ -8,7 +8,7 @@ db_name = "sclass_dev"
 # EC2 (dev: docker-compose + certbot SSL)
 dev_ec2_instance_type = "t4g.small"
 dev_ec2_domain        = "dev.sclass.click"
-dev_certbot_email     = ""  # TODO: Let's Encrypt 등록 이메일 설정
+dev_certbot_email     = "" # TODO: Let's Encrypt 등록 이메일 설정
 
 services = {
   supporters-api = {
@@ -23,11 +23,11 @@ services = {
   }
 }
 
-cors_allow_origins      = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr,https://s-class-backoffice.pages.dev,https://report-service-452628026107.asia-northeast3.run.app"
-report_service_base_url = "https://report-service-452628026107.asia-northeast3.run.app"
+cors_allow_origins               = "http://localhost:3000,http://localhost:3100,http://localhost:3200,https://s-class.dev.aura.co.kr,https://s-class-backoffice.pages.dev,https://report-service-452628026107.asia-northeast3.run.app"
+report_service_base_url          = "https://report-service-452628026107.asia-northeast3.run.app"
 report_service_callback_base_url = ""
-alimtalk_app_base_url = "https://sclass.aura.co.kr"
-frontend_url          = "https://sclass.aura.co.kr"
+alimtalk_app_base_url            = "https://sclass.aura.co.kr"
+frontend_url                     = "https://sclass.aura.co.kr"
 
 # SMTP
 smtp_host = "smtp.gmail.com"
@@ -36,3 +36,8 @@ smtp_port = "587"
 # JWT Expiry
 jwt_access_exp  = "3600"
 jwt_refresh_exp = "604800"
+
+# Google Calendar central account
+google_calendar_central_enabled       = "false"
+google_calendar_central_calendar_id   = "primary"
+google_calendar_central_allowed_email = ""

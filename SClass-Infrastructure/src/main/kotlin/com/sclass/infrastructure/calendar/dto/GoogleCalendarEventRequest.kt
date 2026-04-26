@@ -5,6 +5,7 @@ data class GoogleCalendarEventRequest(
     val start: GoogleCalendarEventDateTime,
     val end: GoogleCalendarEventDateTime,
     val conferenceData: GoogleCalendarConferenceData,
+    val attendees: List<GoogleCalendarAttendee> = emptyList(),
 )
 
 data class GoogleCalendarEventDateTime(
@@ -24,4 +25,8 @@ data class GoogleCalendarConferenceCreateRequest(
 
 data class GoogleCalendarConferenceSolutionKey(
     val type: String,
+)
+
+data class GoogleCalendarAttendee(
+    val email: String,
 )

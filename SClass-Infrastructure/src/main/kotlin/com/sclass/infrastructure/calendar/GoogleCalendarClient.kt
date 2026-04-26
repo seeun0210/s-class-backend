@@ -5,8 +5,10 @@ import com.sclass.common.exception.GoogleCalendarRequestFailedException
 import com.sclass.common.exception.GoogleCalendarUnauthorizedException
 import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
 import com.sclass.infrastructure.calendar.dto.CreateGoogleCalendarEventCommand
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarAttendee
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarConferenceCreateRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarConferenceData
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventDateTime
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
@@ -17,6 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 @Component
@@ -29,7 +33,7 @@ class GoogleCalendarClient(
 
     fun createMeetEvent(command: CreateGoogleCalendarEventCommand): GoogleCalendarEventResult =
         try {
-            createMeetEvent(command, command.accessToken)
+            createMeetEventWithAccessToken(command.toEventCreateCommand(), command.accessToken)
         } catch (e: WebClientResponseException) {
             if (!e.isAuthorizationFailure()) throw e
 
@@ -42,23 +46,24 @@ class GoogleCalendarClient(
                 }
 
             try {
-                createMeetEvent(command, refreshedAccessToken)
+                createMeetEventWithAccessToken(command.toEventCreateCommand(), refreshedAccessToken)
             } catch (retryException: WebClientResponseException) {
                 if (retryException.isAuthorizationFailure()) throw GoogleCalendarUnauthorizedException()
                 throw retryException
             }
         }
 
-    private fun createMeetEvent(
-        command: CreateGoogleCalendarEventCommand,
+    fun createMeetEventWithAccessToken(
+        command: GoogleCalendarEventCreateCommand,
         accessToken: String,
+        calendarId: String = PRIMARY_CALENDAR_ID,
     ): GoogleCalendarEventResult {
         val request = command.toRequest()
         val response =
             try {
                 webClient
                     .post()
-                    .uri(CALENDAR_EVENTS_URI)
+                    .uri(calendarEventsUri(calendarId, sendUpdates = command.attendeeEmails.isNotEmpty()))
                     .header("Authorization", "Bearer $accessToken")
                     .bodyValue(request)
                     .retrieve()
@@ -79,7 +84,7 @@ class GoogleCalendarClient(
         return response.toResult()
     }
 
-    private fun CreateGoogleCalendarEventCommand.toRequest(): GoogleCalendarEventRequest =
+    private fun GoogleCalendarEventCreateCommand.toRequest(): GoogleCalendarEventRequest =
         GoogleCalendarEventRequest(
             summary = summary,
             start =
@@ -99,6 +104,7 @@ class GoogleCalendarClient(
                             requestId = UUID.randomUUID().toString(),
                         ),
                 ),
+            attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
         )
 
     private fun GoogleCalendarEventResponse?.toResult(): GoogleCalendarEventResult {
@@ -120,6 +126,15 @@ class GoogleCalendarClient(
 
     private fun WebClientResponseException.isAuthorizationFailure(): Boolean =
         statusCode.value() == UNAUTHORIZED_STATUS || statusCode.value() == FORBIDDEN_STATUS
+
+    private fun calendarEventsUri(
+        calendarId: String,
+        sendUpdates: Boolean,
+    ): String {
+        val sendUpdatesQuery = if (sendUpdates) "&sendUpdates=all" else ""
+        val encodedCalendarId = URLEncoder.encode(calendarId, StandardCharsets.UTF_8)
+        return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events?conferenceDataVersion=1$sendUpdatesQuery"
+    }
 
     private fun WebClientResponseException.isRetryableProviderFailure(): Boolean =
         statusCode.is5xxServerError ||
@@ -143,8 +158,7 @@ class GoogleCalendarClient(
     }
 
     private companion object {
-        const val CALENDAR_EVENTS_URI =
-            "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+        const val PRIMARY_CALENDAR_ID = "primary"
         const val UNAUTHORIZED_STATUS = 401
         const val FORBIDDEN_STATUS = 403
         const val TOO_MANY_REQUESTS_STATUS = 429

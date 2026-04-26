@@ -50,7 +50,7 @@ class GoogleAuthorizationCodeClientTest {
         requestHeadersSpec = mockk()
         requestHeadersUriSpec = mockk()
         responseSpec = mockk()
-        client = GoogleAuthorizationCodeClient(properties, webClient)
+        client = GoogleAuthorizationCodeClient(properties, GoogleOAuthTokenClient(webClient))
     }
 
     private fun mockPostFormData() {

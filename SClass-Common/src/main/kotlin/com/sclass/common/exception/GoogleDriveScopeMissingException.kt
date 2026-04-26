@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleDriveScopeMissingException : BusinessException(OAuthTokenErrorCode.GOOGLE_DRIVE_SCOPE_MISSING)

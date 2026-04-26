@@ -6,6 +6,7 @@ import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
 import com.sclass.infrastructure.calendar.dto.CreateGoogleCalendarEventCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarConferenceResponse
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEntryPoint
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
@@ -54,9 +55,12 @@ class GoogleCalendarClientTest {
         client = GoogleCalendarClient(webClient, authorizationCodeClient)
     }
 
-    private fun mockCreateEventCall(requestSlot: MutableList<GoogleCalendarEventRequest> = mutableListOf()) {
+    private fun mockCreateEventCall(
+        requestSlot: MutableList<GoogleCalendarEventRequest> = mutableListOf(),
+        uri: String = CALENDAR_EVENTS_URI,
+    ) {
         every { webClient.post() } returns requestBodyUriSpec
-        every { requestBodyUriSpec.uri(CALENDAR_EVENTS_URI) } returns requestBodySpec
+        every { requestBodyUriSpec.uri(uri) } returns requestBodySpec
         every { requestBodySpec.header(HttpHeaders.AUTHORIZATION, any()) } returns requestBodySpec
         every { requestBodySpec.bodyValue(capture(requestSlot)) } returns requestHeadersSpec
         every { requestHeadersSpec.retrieve() } returns responseSpec
@@ -100,6 +104,44 @@ class GoogleCalendarClientTest {
         val result = client.createMeetEvent(command)
 
         assertEquals("https://meet.google.com/hangout-link", result.meetJoinUrl)
+    }
+
+    @Test
+    fun `attendee가 있으면 이벤트 요청에 참석자를 포함하고 업데이트를 전송한다`() {
+        val requestSlot = mutableListOf<GoogleCalendarEventRequest>()
+        mockCreateEventCall(requestSlot, CALENDAR_EVENTS_WITH_SEND_UPDATES_URI)
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = "https://meet.google.com/abc-defg-hij"))
+        val commandWithAttendees =
+            command.copy(
+                attendeeEmails = listOf("teacher@example.com", "student@example.com"),
+            )
+
+        val result = client.createMeetEvent(commandWithAttendees)
+
+        assertEquals("https://meet.google.com/abc-defg-hij", result.meetJoinUrl)
+        assertEquals(listOf("teacher@example.com", "student@example.com"), requestSlot.single().attendees.map { it.email })
+    }
+
+    @Test
+    fun `calendarId가 이메일 형식이면 URL path에 안전하게 인코딩한다`() {
+        mockCreateEventCall(uri = CALENDAR_EVENTS_WITH_ENCODED_CALENDAR_ID_URI)
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = "https://meet.google.com/abc-defg-hij"))
+
+        val result =
+            client.createMeetEventWithAccessToken(
+                command =
+                    GoogleCalendarEventCreateCommand(
+                        summary = command.summary,
+                        startAt = command.startAt,
+                        endAt = command.endAt,
+                    ),
+                accessToken = "central-access-token",
+                calendarId = "central@example.com",
+            )
+
+        assertEquals("https://meet.google.com/abc-defg-hij", result.meetJoinUrl)
     }
 
     @Test
@@ -270,5 +312,9 @@ class GoogleCalendarClientTest {
     private companion object {
         const val CALENDAR_EVENTS_URI =
             "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+        const val CALENDAR_EVENTS_WITH_SEND_UPDATES_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all"
+        const val CALENDAR_EVENTS_WITH_ENCODED_CALENDAR_ID_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events?conferenceDataVersion=1"
     }
 }
