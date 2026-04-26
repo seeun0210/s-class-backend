@@ -32,7 +32,7 @@ class ConnectGoogleUseCase(
 
         val tokens = googleClient.exchangeCodeForTokens(request.code, request.redirectUri)
         val refreshToken = tokens.refreshToken ?: throw GoogleRefreshTokenMissingException()
-        if (!tokens.scope.hasGoogleIdentityScope()) throw GoogleIdentityScopeMissingException()
+        if (!tokens.scope.hasGoogleEmailScope()) throw GoogleIdentityScopeMissingException()
 
         val userInfo = googleClient.fetchUserInfo(tokens.accessToken)
         val encryptedRefreshToken = encryptor.encrypt(refreshToken)
@@ -57,14 +57,13 @@ class ConnectGoogleUseCase(
         return GoogleConnectionStatusResponse.connected(account)
     }
 
-    private fun String.hasGoogleIdentityScope(): Boolean =
+    private fun String.hasGoogleEmailScope(): Boolean =
         split(" ")
-            .any { it in GOOGLE_IDENTITY_SCOPES }
+            .any { it in GOOGLE_EMAIL_SCOPES }
 
     companion object {
-        private val GOOGLE_IDENTITY_SCOPES =
+        private val GOOGLE_EMAIL_SCOPES =
             setOf(
-                "openid",
                 "email",
                 "https://www.googleapis.com/auth/userinfo.email",
             )

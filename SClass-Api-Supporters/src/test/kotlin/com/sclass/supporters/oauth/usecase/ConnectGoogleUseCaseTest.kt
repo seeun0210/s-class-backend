@@ -170,7 +170,7 @@ class ConnectGoogleUseCaseTest {
     }
 
     @Test
-    fun `Google identity scope가 없으면 userinfo 호출 전에 실패한다`() {
+    fun `Google email scope가 없으면 userinfo 호출 전에 실패한다`() {
         every {
             googleClient.exchangeCodeForTokens("code-5", redirectUri)
         } returns tokenResponse(scope = "https://www.googleapis.com/auth/calendar.events")
@@ -180,6 +180,24 @@ class ConnectGoogleUseCaseTest {
                 userId,
                 Role.TEACHER,
                 ConnectGoogleRequest(code = "code-5", redirectUri = redirectUri),
+            )
+        }
+
+        verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
+        verify(exactly = 0) { accountAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `openid만 있고 email scope가 없으면 userinfo 호출 전에 실패한다`() {
+        every {
+            googleClient.exchangeCodeForTokens("code-6", redirectUri)
+        } returns tokenResponse(scope = "openid profile https://www.googleapis.com/auth/calendar.events")
+
+        assertThrows<GoogleIdentityScopeMissingException> {
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-6", redirectUri = redirectUri),
             )
         }
 
