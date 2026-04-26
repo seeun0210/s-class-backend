@@ -18,7 +18,9 @@ import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
 import com.sclass.supporters.lesson.dto.ScheduleLessonRequest
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -204,6 +206,123 @@ class UpdateLessonScheduleUseCaseTest {
             { assertEquals(originalScheduledAt, lesson.scheduledAt) },
         )
         verify(exactly = 0) { calendarClientProvider.getIfAvailable() }
+    }
+
+    @Test
+    fun `Calendar event 수정 후 저장 직전 충돌이 감지되면 기존 이벤트 일정으로 되돌린다`() {
+        val originalScheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
+        val newScheduledAt = LocalDateTime.of(2026, 5, 2, 21, 0)
+        val lesson =
+            lesson(
+                scheduledAt = originalScheduledAt,
+                googleMeet = LessonGoogleMeet("old-event-id", "https://meet.google.com/old-code", "old-code"),
+            )
+        val account = centralGoogleAccount()
+        val commandSlots = mutableListOf<GoogleCalendarEventCreateCommand>()
+
+        every { lessonAdaptor.findById(1L) } returns lesson
+        every {
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
+                scheduledAt = newScheduledAt,
+                requestedDurationMinutes = 60L,
+                excludeLessonId = 1L,
+            )
+        } returnsMany listOf(false, true)
+        every { calendarClientProvider.getIfAvailable() } returns calendarClient
+        every { centralGoogleAccountAdaptor.findGoogle() } returns account
+        every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
+        every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every {
+            calendarClient.updateMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "old-event-id",
+                command = capture(commandSlots),
+            )
+        } returnsMany
+            listOf(
+                GoogleCalendarEventResult("old-event-id", "https://meet.google.com/new-code", "new-code"),
+                GoogleCalendarEventResult("old-event-id", "https://meet.google.com/old-code", "old-code"),
+            )
+
+        assertThrows<LessonScheduleConflictException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = ScheduleLessonRequest(name = "수학 보강", scheduledAt = newScheduledAt),
+            )
+        }
+
+        assertAll(
+            { assertEquals("수학 1회차", lesson.name) },
+            { assertEquals(originalScheduledAt, lesson.scheduledAt) },
+            { assertEquals(newScheduledAt.atZone(zoneId), commandSlots[0].startAt) },
+            { assertEquals(originalScheduledAt.atZone(zoneId), commandSlots[1].startAt) },
+        )
+        verify(exactly = 2) {
+            calendarClient.updateMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "old-event-id",
+                command = any(),
+            )
+        }
+    }
+
+    @Test
+    fun `Google Meet이 없어 create로 보정한 후 저장 직전 충돌이 감지되면 생성한 이벤트를 삭제한다`() {
+        val originalScheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
+        val newScheduledAt = LocalDateTime.of(2026, 5, 2, 21, 0)
+        val lesson = lesson(scheduledAt = originalScheduledAt)
+        val account = centralGoogleAccount()
+
+        every { lessonAdaptor.findById(1L) } returns lesson
+        every {
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
+                scheduledAt = newScheduledAt,
+                requestedDurationMinutes = 60L,
+                excludeLessonId = 1L,
+            )
+        } returnsMany listOf(false, true)
+        every { calendarClientProvider.getIfAvailable() } returns calendarClient
+        every { centralGoogleAccountAdaptor.findGoogle() } returns account
+        every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
+        every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every {
+            calendarClient.createMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                command = any(),
+            )
+        } returns GoogleCalendarEventResult("new-event-id", "https://meet.google.com/new-code", "new-code")
+        every {
+            calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "new-event-id",
+            )
+        } just Runs
+
+        assertThrows<LessonScheduleConflictException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = ScheduleLessonRequest(scheduledAt = newScheduledAt),
+            )
+        }
+
+        assertAll(
+            { assertEquals(originalScheduledAt, lesson.scheduledAt) },
+            { assertEquals(null, lesson.googleMeet) },
+        )
+        verify {
+            calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "new-event-id",
+            )
+        }
     }
 
     @Test

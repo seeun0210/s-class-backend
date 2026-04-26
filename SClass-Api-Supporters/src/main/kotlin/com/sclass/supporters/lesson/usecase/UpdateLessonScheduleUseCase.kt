@@ -15,6 +15,7 @@ import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
 import com.sclass.supporters.lesson.dto.LessonResponse
 import com.sclass.supporters.lesson.dto.ScheduleLessonRequest
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.Clock
@@ -31,6 +32,8 @@ class UpdateLessonScheduleUseCase(
     private val txTemplate: TransactionTemplate,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
+    private val log = LoggerFactory.getLogger(UpdateLessonScheduleUseCase::class.java)
+
     fun execute(
         userId: String,
         lessonId: Long,
@@ -51,7 +54,12 @@ class UpdateLessonScheduleUseCase(
                 )
             }
 
-        return saveSchedule(lessonId, request, prepared.scheduledAt, result)
+        return try {
+            saveSchedule(userId, lessonId, request, prepared.scheduledAt, result)
+        } catch (e: RuntimeException) {
+            rollbackCalendarEvent(prepared, result)
+            throw e
+        }
     }
 
     private fun prepareSchedule(
@@ -66,7 +74,7 @@ class UpdateLessonScheduleUseCase(
                 throw LessonUnauthorizedAccessException()
             }
 
-            if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
+            val currentScheduledAt = lesson.scheduledAt ?: throw LessonScheduleNotFoundException()
 
             validateNoScheduleConflict(lesson, scheduledAt)
 
@@ -79,6 +87,7 @@ class UpdateLessonScheduleUseCase(
             PreparedUpdateSchedule(
                 scheduledAt = scheduledAt,
                 command = lesson.toGoogleCalendarCommand(request.name, scheduledAt),
+                previousCommand = lesson.toGoogleCalendarCommand(lesson.name, currentScheduledAt),
                 calendarClient = calendarClient,
                 refreshToken = refreshToken,
                 eventId = lesson.googleMeet?.calendarEventId,
@@ -103,6 +112,7 @@ class UpdateLessonScheduleUseCase(
     }
 
     private fun saveSchedule(
+        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
         scheduledAt: LocalDateTime,
@@ -110,6 +120,10 @@ class UpdateLessonScheduleUseCase(
     ): LessonResponse =
         txTemplate.execute {
             val lesson = lessonAdaptor.findById(lessonId)
+            if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
+            if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
+            validateNoScheduleConflict(lesson, scheduledAt)
+
             lesson.updateSchedule(request.name, scheduledAt)
             lesson.attachGoogleMeet(
                 eventId = result.eventId,
@@ -121,6 +135,47 @@ class UpdateLessonScheduleUseCase(
             centralAccount.markUsed(LocalDateTime.now(clock))
             LessonResponse.from(lesson)
         }!!
+
+    private fun rollbackCalendarEvent(
+        prepared: PreparedUpdateSchedule,
+        result: GoogleCalendarEventResult,
+    ) {
+        if (prepared.eventId.isNullOrBlank()) {
+            deleteCreatedCalendarEvent(prepared, result.eventId)
+        } else {
+            restoreUpdatedCalendarEvent(prepared)
+        }
+    }
+
+    private fun deleteCreatedCalendarEvent(
+        prepared: PreparedUpdateSchedule,
+        eventId: String,
+    ) {
+        runCatching {
+            prepared.calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = prepared.refreshToken,
+                eventId = eventId,
+            )
+        }.onFailure {
+            log.warn("Failed to delete Google Calendar event after lesson schedule save failed: eventId={}", eventId, it)
+        }
+    }
+
+    private fun restoreUpdatedCalendarEvent(prepared: PreparedUpdateSchedule) {
+        runCatching {
+            prepared.calendarClient.updateMeetEventWithRefreshToken(
+                refreshToken = prepared.refreshToken,
+                eventId = prepared.eventId!!,
+                command = prepared.previousCommand,
+            )
+        }.onFailure {
+            log.warn(
+                "Failed to restore Google Calendar event after lesson schedule save failed: eventId={}",
+                prepared.eventId,
+                it,
+            )
+        }
+    }
 
     private fun Lesson.toGoogleCalendarCommand(
         name: String?,
@@ -145,6 +200,7 @@ class UpdateLessonScheduleUseCase(
     private data class PreparedUpdateSchedule(
         val scheduledAt: LocalDateTime,
         val command: GoogleCalendarEventCreateCommand,
+        val previousCommand: GoogleCalendarEventCreateCommand,
         val calendarClient: CentralGoogleCalendarClient,
         val refreshToken: String,
         val eventId: String?,

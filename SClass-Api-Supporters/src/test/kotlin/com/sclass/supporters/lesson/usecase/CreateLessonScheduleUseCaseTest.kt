@@ -18,7 +18,9 @@ import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
 import com.sclass.supporters.lesson.dto.ScheduleLessonRequest
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -169,6 +171,60 @@ class CreateLessonScheduleUseCaseTest {
 
         assertNull(lesson.scheduledAt)
         verify(exactly = 0) { calendarClientProvider.getIfAvailable() }
+    }
+
+    @Test
+    fun `Calendar event 생성 후 저장 직전 충돌이 감지되면 생성한 이벤트를 삭제한다`() {
+        val lesson = lesson()
+        val account = centralGoogleAccount()
+        val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
+
+        every { lessonAdaptor.findById(1L) } returns lesson
+        every {
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
+                scheduledAt = scheduledAt,
+                requestedDurationMinutes = 60L,
+                excludeLessonId = 1L,
+            )
+        } returnsMany listOf(false, true)
+        every { calendarClientProvider.getIfAvailable() } returns calendarClient
+        every { centralGoogleAccountAdaptor.findGoogle() } returns account
+        every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
+        every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every {
+            calendarClient.createMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                command = any(),
+            )
+        } returns GoogleCalendarEventResult("event-id", "https://meet.google.com/abc-defg-hij", "abc-defg-hij")
+        every {
+            calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "event-id",
+            )
+        } just Runs
+
+        assertThrows<LessonScheduleConflictException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = ScheduleLessonRequest(scheduledAt = scheduledAt),
+            )
+        }
+
+        assertAll(
+            { assertNull(lesson.scheduledAt) },
+            { assertNull(lesson.googleMeet) },
+        )
+        verify {
+            calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "event-id",
+            )
+        }
     }
 
     @Test

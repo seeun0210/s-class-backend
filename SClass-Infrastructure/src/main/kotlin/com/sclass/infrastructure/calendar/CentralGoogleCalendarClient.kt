@@ -51,6 +51,23 @@ class CentralGoogleCalendarClient(
         }
     }
 
+    fun deleteMeetEventWithRefreshToken(
+        refreshToken: String,
+        eventId: String,
+    ) {
+        val accessToken = authorizationCodeClient.refreshAccessToken(refreshToken)
+        try {
+            googleCalendarClient.deleteMeetEventWithAccessToken(
+                eventId = eventId,
+                accessToken = accessToken,
+                calendarId = properties.calendarId,
+            )
+        } catch (e: WebClientResponseException) {
+            if (e.isAuthorizationFailure()) throw GoogleCalendarUnauthorizedException()
+            throw e
+        }
+    }
+
     private fun WebClientResponseException.isAuthorizationFailure(): Boolean =
         statusCode.value() == UNAUTHORIZED_STATUS || statusCode.value() == FORBIDDEN_STATUS
 

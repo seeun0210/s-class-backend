@@ -117,6 +117,32 @@ class GoogleCalendarClient(
         return response.toResult()
     }
 
+    fun deleteMeetEventWithAccessToken(
+        eventId: String,
+        accessToken: String,
+        calendarId: String = PRIMARY_CALENDAR_ID,
+    ) {
+        try {
+            webClient
+                .delete()
+                .uri(calendarEventUri(calendarId, eventId, sendUpdates = false))
+                .header("Authorization", "Bearer $accessToken")
+                .retrieve()
+                .toBodilessEntity()
+                .block()
+        } catch (e: WebClientResponseException) {
+            log.warn("Google Calendar event delete failed: ${e.responseBodyAsString}", e)
+            if (e.isRetryableProviderFailure()) {
+                throw GoogleOAuthProviderUnavailableException()
+            }
+            if (e.isAuthorizationFailure()) throw e
+            throw GoogleCalendarRequestFailedException()
+        } catch (e: Exception) {
+            log.warn("Google Calendar event delete failed", e)
+            throw GoogleOAuthProviderUnavailableException()
+        }
+    }
+
     private fun GoogleCalendarEventCreateCommand.toCreateRequest(): GoogleCalendarEventRequest =
         GoogleCalendarEventRequest(
             summary = summary,

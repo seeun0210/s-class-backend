@@ -151,6 +151,58 @@ class CentralGoogleCalendarClientTest {
         }
     }
 
+    @Test
+    fun `central refresh token으로 access token을 갱신해 중앙 캘린더 Meet 이벤트를 삭제한다`() {
+        every { authorizationCodeClient.refreshAccessToken("central-refresh-token") } returns "central-access-token"
+        every {
+            googleCalendarClient.deleteMeetEventWithAccessToken(
+                eventId = "event-id",
+                accessToken = "central-access-token",
+                calendarId = "primary",
+            )
+        } returns Unit
+
+        client.deleteMeetEventWithRefreshToken(
+            refreshToken = "central-refresh-token",
+            eventId = "event-id",
+        )
+
+        verify { authorizationCodeClient.refreshAccessToken("central-refresh-token") }
+        verify {
+            googleCalendarClient.deleteMeetEventWithAccessToken(
+                eventId = "event-id",
+                accessToken = "central-access-token",
+                calendarId = "primary",
+            )
+        }
+    }
+
+    @Test
+    fun `중앙 캘린더 이벤트 삭제에서 Google 인증 실패가 발생하면 도메인 예외로 변환한다`() {
+        every { authorizationCodeClient.refreshAccessToken("central-refresh-token") } returns "central-access-token"
+        every {
+            googleCalendarClient.deleteMeetEventWithAccessToken(
+                eventId = "event-id",
+                accessToken = "central-access-token",
+                calendarId = "primary",
+            )
+        } throws
+            WebClientResponseException.create(
+                HttpStatus.FORBIDDEN.value(),
+                "Forbidden",
+                HttpHeaders.EMPTY,
+                ByteArray(0),
+                null,
+            )
+
+        assertThrows<GoogleCalendarUnauthorizedException> {
+            client.deleteMeetEventWithRefreshToken(
+                refreshToken = "central-refresh-token",
+                eventId = "event-id",
+            )
+        }
+    }
+
     private fun command() =
         GoogleCalendarEventCreateCommand(
             summary = "수학 1회차",

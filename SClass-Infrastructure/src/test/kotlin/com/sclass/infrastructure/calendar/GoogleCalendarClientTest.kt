@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
@@ -34,6 +35,8 @@ class GoogleCalendarClientTest {
     private lateinit var requestBodyUriSpec: WebClient.RequestBodyUriSpec
     private lateinit var requestBodySpec: WebClient.RequestBodySpec
     private lateinit var requestHeadersSpec: WebClient.RequestHeadersSpec<*>
+    private lateinit var requestHeadersUriSpec: WebClient.RequestHeadersUriSpec<*>
+    private lateinit var deleteRequestHeadersSpec: WebClient.RequestHeadersSpec<*>
     private lateinit var responseSpec: WebClient.ResponseSpec
     private lateinit var authorizationCodeClient: GoogleAuthorizationCodeClient
     private lateinit var client: GoogleCalendarClient
@@ -53,6 +56,8 @@ class GoogleCalendarClientTest {
         requestBodyUriSpec = mockk()
         requestBodySpec = mockk()
         requestHeadersSpec = mockk()
+        requestHeadersUriSpec = mockk()
+        deleteRequestHeadersSpec = mockk()
         responseSpec = mockk()
         authorizationCodeClient = mockk()
         client = GoogleCalendarClient(webClient, authorizationCodeClient)
@@ -67,6 +72,13 @@ class GoogleCalendarClientTest {
         every { requestBodySpec.header(HttpHeaders.AUTHORIZATION, any()) } returns requestBodySpec
         every { requestBodySpec.bodyValue(capture(requestSlot)) } returns requestHeadersSpec
         every { requestHeadersSpec.retrieve() } returns responseSpec
+    }
+
+    private fun mockDeleteEventCall(uri: String = CALENDAR_EVENT_URI) {
+        every { webClient.delete() } returns requestHeadersUriSpec
+        every { requestHeadersUriSpec.uri(uri) } returns deleteRequestHeadersSpec
+        every { deleteRequestHeadersSpec.header(HttpHeaders.AUTHORIZATION, any()) } returns deleteRequestHeadersSpec
+        every { deleteRequestHeadersSpec.retrieve() } returns responseSpec
     }
 
     private fun mockUpdateEventCall(
@@ -221,6 +233,34 @@ class GoogleCalendarClientTest {
         )
 
         verify { requestBodyUriSpec.uri(CALENDAR_EVENT_WITH_ENCODED_IDS_URI) }
+    }
+
+    @Test
+    fun `Calendar event 삭제는 event delete endpoint를 호출한다`() {
+        mockDeleteEventCall()
+        every { responseSpec.toBodilessEntity() } returns Mono.just(ResponseEntity.noContent().build())
+
+        client.deleteMeetEventWithAccessToken(
+            eventId = "event-id-1",
+            accessToken = "access-token",
+        )
+
+        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_URI) }
+        verify { deleteRequestHeadersSpec.header(HttpHeaders.AUTHORIZATION, "Bearer access-token") }
+    }
+
+    @Test
+    fun `event id와 calendar id는 delete URL path에 안전하게 인코딩한다`() {
+        mockDeleteEventCall(uri = CALENDAR_EVENT_WITH_ENCODED_IDS_URI)
+        every { responseSpec.toBodilessEntity() } returns Mono.just(ResponseEntity.noContent().build())
+
+        client.deleteMeetEventWithAccessToken(
+            eventId = "event/id with space",
+            accessToken = "access-token",
+            calendarId = "central@example.com",
+        )
+
+        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_WITH_ENCODED_IDS_URI) }
     }
 
     @Test
