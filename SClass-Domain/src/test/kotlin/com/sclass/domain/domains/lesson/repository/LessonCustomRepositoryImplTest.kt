@@ -43,7 +43,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = "other-teacher-id",
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 30),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )
@@ -52,7 +52,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = "other-student-id",
                 teacherUserId = TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 30),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )
@@ -78,7 +78,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )
@@ -100,7 +100,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = lesson.id,
             ),
         )
@@ -122,7 +122,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 30),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )
@@ -131,7 +131,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = SUBSTITUTE_TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 30),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )
@@ -159,7 +159,7 @@ class LessonCustomRepositoryImplTest {
                 studentUserId = STUDENT_USER_ID,
                 teacherUserId = TEACHER_USER_ID,
                 scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0),
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 0L,
             ),
         )

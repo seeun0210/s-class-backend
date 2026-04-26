@@ -11,6 +11,13 @@ data class GoogleCalendarEventRequest(
     val attendees: List<GoogleCalendarAttendee> = emptyList(),
 )
 
+data class GoogleCalendarEventUpdateRequest(
+    val summary: String,
+    val start: GoogleCalendarEventDateTime,
+    val end: GoogleCalendarEventDateTime,
+    val attendees: List<GoogleCalendarAttendee> = emptyList(),
+)
+
 data class GoogleCalendarEventDateTime(
     val dateTime: String,
     val timeZone: String,

@@ -88,7 +88,7 @@ class CreateLessonScheduleUseCaseTest {
                 studentUserId = studentUserId,
                 teacherUserId = teacherUserId,
                 scheduledAt = scheduledAt,
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 1L,
             )
         } returns false
@@ -154,7 +154,7 @@ class CreateLessonScheduleUseCaseTest {
                 studentUserId = studentUserId,
                 teacherUserId = teacherUserId,
                 scheduledAt = scheduledAt,
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 1L,
             )
         } returns true
@@ -196,7 +196,7 @@ class CreateLessonScheduleUseCaseTest {
                 studentUserId = studentUserId,
                 teacherUserId = teacherUserId,
                 scheduledAt = scheduledAt,
-                durationMinutes = 60L,
+                requestedDurationMinutes = 60L,
                 excludeLessonId = 1L,
             )
         } returns false

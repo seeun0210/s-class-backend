@@ -10,7 +10,7 @@ interface LessonCustomRepository {
         studentUserId: String,
         teacherUserId: String,
         scheduledAt: LocalDateTime,
-        durationMinutes: Long,
+        requestedDurationMinutes: Long,
         excludeLessonId: Long,
     ): Boolean
 }

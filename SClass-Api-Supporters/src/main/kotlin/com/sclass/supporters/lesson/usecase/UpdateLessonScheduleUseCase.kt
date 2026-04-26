@@ -94,7 +94,7 @@ class UpdateLessonScheduleUseCase(
                 studentUserId = lesson.studentUserId,
                 teacherUserId = lesson.effectiveTeacherUserId,
                 scheduledAt = scheduledAt,
-                durationMinutes = Lesson.DEFAULT_DURATION_MINUTES,
+                requestedDurationMinutes = Lesson.DEFAULT_DURATION_MINUTES,
                 excludeLessonId = lesson.id,
             )
         ) {

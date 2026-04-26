@@ -13,6 +13,7 @@ import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventDateTime
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventUpdateRequest
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -139,8 +140,8 @@ class GoogleCalendarClient(
             attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
         )
 
-    private fun GoogleCalendarEventCreateCommand.toUpdateRequest(): GoogleCalendarEventRequest =
-        GoogleCalendarEventRequest(
+    private fun GoogleCalendarEventCreateCommand.toUpdateRequest(): GoogleCalendarEventUpdateRequest =
+        GoogleCalendarEventUpdateRequest(
             summary = summary,
             start =
                 GoogleCalendarEventDateTime(

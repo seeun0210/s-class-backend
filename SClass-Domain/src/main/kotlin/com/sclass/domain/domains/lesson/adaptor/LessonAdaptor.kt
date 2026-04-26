@@ -40,14 +40,14 @@ class LessonAdaptor(
         studentUserId: String,
         teacherUserId: String,
         scheduledAt: LocalDateTime,
-        durationMinutes: Long,
+        requestedDurationMinutes: Long,
         excludeLessonId: Long,
     ): Boolean =
         lessonRepository.existsScheduleConflict(
             studentUserId = studentUserId,
             teacherUserId = teacherUserId,
             scheduledAt = scheduledAt,
-            durationMinutes = durationMinutes,
+            requestedDurationMinutes = requestedDurationMinutes,
             excludeLessonId = excludeLessonId,
         )
 }

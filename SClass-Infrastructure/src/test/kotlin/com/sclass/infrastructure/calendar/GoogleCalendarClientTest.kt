@@ -10,6 +10,7 @@ import com.sclass.infrastructure.calendar.dto.GoogleCalendarEntryPoint
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventUpdateRequest
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import io.mockk.every
 import io.mockk.mockk
@@ -69,7 +70,7 @@ class GoogleCalendarClientTest {
     }
 
     private fun mockUpdateEventCall(
-        requestSlot: MutableList<GoogleCalendarEventRequest> = mutableListOf(),
+        requestSlot: MutableList<GoogleCalendarEventUpdateRequest> = mutableListOf(),
         uri: String = CALENDAR_EVENT_URI,
     ) {
         every { webClient.patch() } returns requestBodyUriSpec
@@ -169,7 +170,7 @@ class GoogleCalendarClientTest {
 
     @Test
     fun `Calendar event 수정은 기존 Meet 생성을 요청하지 않고 일정과 참석자만 전송한다`() {
-        val requestSlot = mutableListOf<GoogleCalendarEventRequest>()
+        val requestSlot = mutableListOf<GoogleCalendarEventUpdateRequest>()
         mockUpdateEventCall(requestSlot, CALENDAR_EVENT_WITH_SEND_UPDATES_URI)
         every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
             Mono.just(calendarResponse(meetUri = "https://meet.google.com/updated-code", conferenceId = "updated-code"))
@@ -195,7 +196,6 @@ class GoogleCalendarClientTest {
             { assertEquals("변경된 수학 1회차", requestSlot.single().summary) },
             { assertEquals("2026-04-27T14:00+09:00", requestSlot.single().start.dateTime) },
             { assertEquals("Asia/Seoul", requestSlot.single().start.timeZone) },
-            { assertEquals(null, requestSlot.single().conferenceData) },
             { assertEquals(listOf("teacher@example.com"), requestSlot.single().attendees.map { it.email }) },
         )
         assertFalse(ObjectMapper().writeValueAsString(requestSlot.single()).contains("conferenceData"))

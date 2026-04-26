@@ -29,12 +29,13 @@ class LessonCustomRepositoryImpl(
         studentUserId: String,
         teacherUserId: String,
         scheduledAt: LocalDateTime,
-        durationMinutes: Long,
+        requestedDurationMinutes: Long,
         excludeLessonId: Long,
     ): Boolean {
         val lesson = QLesson.lesson
-        val conflictStartAt = scheduledAt.minusMinutes(durationMinutes)
-        val conflictEndAt = scheduledAt.plusMinutes(durationMinutes)
+        val existingLessonDurationMinutes = Lesson.DEFAULT_DURATION_MINUTES
+        val conflictStartAt = scheduledAt.minusMinutes(existingLessonDurationMinutes)
+        val conflictEndAt = scheduledAt.plusMinutes(requestedDurationMinutes)
 
         return queryFactory
             .selectOne()
