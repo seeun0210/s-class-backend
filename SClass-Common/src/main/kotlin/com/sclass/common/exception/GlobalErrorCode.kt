@@ -10,5 +10,6 @@ enum class GlobalErrorCode(
     FORBIDDEN("GLOBAL_003", "권한이 없습니다", 403),
     NOT_FOUND("GLOBAL_004", "리소스를 찾을 수 없습니다", 404),
     CONFLICT("GLOBAL_005", "충돌이 발생했습니다", 409),
+    LOCK_CONFLICT("GLOBAL_006", "요청이 이미 처리 중입니다. 잠시 후 다시 시도해주세요", 409),
     INTERNAL_ERROR("GLOBAL_500", "서버 내부 오류가 발생했습니다", 500),
 }
