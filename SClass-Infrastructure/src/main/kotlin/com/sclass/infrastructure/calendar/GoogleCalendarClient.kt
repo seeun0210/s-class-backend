@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.calendar
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.sclass.common.exception.GoogleCalendarRequestFailedException
 import com.sclass.common.exception.GoogleCalendarUnauthorizedException
 import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
@@ -24,6 +25,7 @@ class GoogleCalendarClient(
     private val authorizationCodeClient: GoogleAuthorizationCodeClient,
 ) {
     private val log = LoggerFactory.getLogger(GoogleCalendarClient::class.java)
+    private val objectMapper = ObjectMapper()
 
     fun createMeetEvent(command: CreateGoogleCalendarEventCommand): GoogleCalendarEventResult =
         try {
@@ -64,10 +66,10 @@ class GoogleCalendarClient(
                     .block()
             } catch (e: WebClientResponseException) {
                 log.warn("Google Calendar event create failed: ${e.responseBodyAsString}", e)
-                if (e.isAuthorizationFailure()) throw e
-                if (e.statusCode.is5xxServerError || e.statusCode.value() == TOO_MANY_REQUESTS_STATUS) {
+                if (e.isRetryableProviderFailure()) {
                     throw GoogleOAuthProviderUnavailableException()
                 }
+                if (e.isAuthorizationFailure()) throw e
                 throw GoogleCalendarRequestFailedException()
             } catch (e: Exception) {
                 log.warn("Google Calendar event create failed", e)
@@ -119,11 +121,40 @@ class GoogleCalendarClient(
     private fun WebClientResponseException.isAuthorizationFailure(): Boolean =
         statusCode.value() == UNAUTHORIZED_STATUS || statusCode.value() == FORBIDDEN_STATUS
 
+    private fun WebClientResponseException.isRetryableProviderFailure(): Boolean =
+        statusCode.is5xxServerError ||
+            statusCode.value() == TOO_MANY_REQUESTS_STATUS ||
+            isForbiddenRateLimitFailure()
+
+    private fun WebClientResponseException.isForbiddenRateLimitFailure(): Boolean {
+        if (statusCode.value() != FORBIDDEN_STATUS) return false
+
+        return runCatching {
+            val error = objectMapper.readTree(responseBodyAsString).path("error")
+            val status = error.path("status").asText()
+            val reasons =
+                error
+                    .path("errors")
+                    .mapNotNull { it.path("reason").asText(null) }
+
+            status == GOOGLE_RESOURCE_EXHAUSTED_STATUS ||
+                reasons.any { it in GOOGLE_CALENDAR_RETRYABLE_FORBIDDEN_REASONS }
+        }.getOrDefault(false)
+    }
+
     private companion object {
         const val CALENDAR_EVENTS_URI =
             "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
         const val UNAUTHORIZED_STATUS = 401
         const val FORBIDDEN_STATUS = 403
         const val TOO_MANY_REQUESTS_STATUS = 429
+        const val GOOGLE_RESOURCE_EXHAUSTED_STATUS = "RESOURCE_EXHAUSTED"
+        val GOOGLE_CALENDAR_RETRYABLE_FORBIDDEN_REASONS =
+            setOf(
+                "dailyLimitExceeded",
+                "quotaExceeded",
+                "rateLimitExceeded",
+                "userRateLimitExceeded",
+            )
     }
 }

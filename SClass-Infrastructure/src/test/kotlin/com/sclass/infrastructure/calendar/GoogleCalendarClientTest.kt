@@ -182,6 +182,36 @@ class GoogleCalendarClientTest {
     }
 
     @Test
+    fun `Google Calendar 403 rate limit 응답은 GoogleOAuthProviderUnavailableException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.error(
+                webClientException(
+                    status = HttpStatus.FORBIDDEN,
+                    responseBody =
+                        """
+                        {
+                          "error": {
+                            "code": 403,
+                            "status": "RESOURCE_EXHAUSTED",
+                            "errors": [
+                              {
+                                "reason": "rateLimitExceeded"
+                              }
+                            ]
+                          }
+                        }
+                        """.trimIndent(),
+                ),
+            )
+
+        assertThrows<GoogleOAuthProviderUnavailableException> {
+            client.createMeetEvent(command)
+        }
+        verify(exactly = 0) { authorizationCodeClient.refreshAccessToken(any()) }
+    }
+
+    @Test
     fun `응답에 event id가 없으면 GoogleCalendarRequestFailedException`() {
         mockCreateEventCall()
         every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
@@ -225,13 +255,16 @@ class GoogleCalendarClientTest {
                 ),
         )
 
-    private fun webClientException(status: HttpStatus): WebClientResponseException =
+    private fun webClientException(
+        status: HttpStatus,
+        responseBody: String = "",
+    ): WebClientResponseException =
         WebClientResponseException.create(
             status.value(),
             status.reasonPhrase,
             HttpHeaders.EMPTY,
-            ByteArray(0),
-            null,
+            responseBody.toByteArray(),
+            Charsets.UTF_8,
         )
 
     private companion object {
