@@ -89,6 +89,7 @@ class LessonScheduleUseCaseTest {
             DeleteLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
                 centralGoogleAccountAdaptor = centralGoogleAccountAdaptor,
+                userAdaptor = userAdaptor,
                 aesTokenEncryptor = aesTokenEncryptor,
                 centralGoogleCalendarClientProvider = calendarClientProvider,
                 txTemplate = txTemplate,
@@ -226,6 +227,15 @@ class LessonScheduleUseCaseTest {
         every { centralGoogleAccountAdaptor.findGoogle() } returns account
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { lessonAdaptor.save(lesson) } returns lesson
+        every {
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
+                scheduledAt = scheduledAt,
+                requestedDurationMinutes = 60L,
+                excludeLessonId = 1L,
+            )
+        } returns false
         every {
             calendarClient.deleteMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",

@@ -5,9 +5,12 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.GoogleCalendarCentralDisabledException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
+import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonGoogleMeet
+import com.sclass.domain.domains.lesson.exception.LessonScheduleConflictException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleNotFoundException
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
+import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
@@ -19,6 +22,7 @@ import java.time.LocalDateTime
 class DeleteLessonScheduleUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor,
+    private val userAdaptor: UserAdaptor,
     private val aesTokenEncryptor: AesTokenEncryptor,
     private val centralGoogleCalendarClientProvider: ObjectProvider<CentralGoogleCalendarClient>,
     private val txTemplate: TransactionTemplate,
@@ -102,6 +106,9 @@ class DeleteLessonScheduleUseCase(
             txTemplate.execute {
                 val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
                 if (lesson.scheduledAt == null && lesson.googleMeet == null) {
+                    lockScheduleParticipants(lesson)
+                    validateNoScheduleConflict(lesson, calendarEvent.scheduledAt)
+
                     lesson.updateSchedule(null, calendarEvent.scheduledAt)
                     lesson.attachGoogleMeet(
                         eventId = calendarEvent.googleMeet.calendarEventId,
@@ -113,6 +120,32 @@ class DeleteLessonScheduleUseCase(
             }
         }.onFailure {
             log.warn("Failed to restore lesson schedule after Google Calendar event delete failed: lessonId={}", lessonId, it)
+        }
+    }
+
+    private fun lockScheduleParticipants(lesson: Lesson) {
+        userAdaptor.lockByIdsForUpdate(
+            listOf(
+                lesson.studentUserId,
+                lesson.effectiveTeacherUserId,
+            ),
+        )
+    }
+
+    private fun validateNoScheduleConflict(
+        lesson: Lesson,
+        scheduledAt: LocalDateTime,
+    ) {
+        if (
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = lesson.studentUserId,
+                teacherUserId = lesson.effectiveTeacherUserId,
+                scheduledAt = scheduledAt,
+                requestedDurationMinutes = Lesson.DEFAULT_DURATION_MINUTES,
+                excludeLessonId = lesson.id,
+            )
+        ) {
+            throw LessonScheduleConflictException()
         }
     }
 

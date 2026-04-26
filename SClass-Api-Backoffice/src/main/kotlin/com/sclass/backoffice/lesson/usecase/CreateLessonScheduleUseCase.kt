@@ -45,7 +45,7 @@ class CreateLessonScheduleUseCase(
             )
 
         return try {
-            saveSchedule(lessonId, request, prepared.scheduledAt, result)
+            saveSchedule(lessonId, request, prepared, result)
         } catch (e: RuntimeException) {
             deleteCreatedCalendarEvent(prepared, result.eventId)
             throw e
@@ -75,6 +75,8 @@ class CreateLessonScheduleUseCase(
                 command = lesson.toGoogleCalendarCommand(request.name, scheduledAt),
                 calendarClient = calendarClient,
                 refreshToken = refreshToken,
+                studentUserId = lesson.studentUserId,
+                teacherUserId = lesson.effectiveTeacherUserId,
             )
         }!!
 
@@ -107,17 +109,18 @@ class CreateLessonScheduleUseCase(
     private fun saveSchedule(
         lessonId: Long,
         request: ScheduleLessonRequest,
-        scheduledAt: LocalDateTime,
+        prepared: PreparedCreateSchedule,
         result: GoogleCalendarEventResult,
     ): LessonResponse =
         txTemplate.execute {
             val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
             lesson.validateScheduleUpdatable()
+            lesson.validateParticipantSnapshot(prepared.studentUserId, prepared.teacherUserId)
             lockScheduleParticipants(lesson)
-            validateNoScheduleConflict(lesson, scheduledAt)
+            validateNoScheduleConflict(lesson, prepared.scheduledAt)
 
-            lesson.updateSchedule(request.name, scheduledAt)
+            lesson.updateSchedule(request.name, prepared.scheduledAt)
             lesson.attachGoogleMeet(
                 eventId = result.eventId,
                 meetJoinUrl = result.meetJoinUrl,
@@ -130,6 +133,15 @@ class CreateLessonScheduleUseCase(
             centralGoogleAccountAdaptor.save(centralAccount)
             LessonResponse.from(lesson)
         }!!
+
+    private fun Lesson.validateParticipantSnapshot(
+        studentUserId: String,
+        teacherUserId: String,
+    ) {
+        if (this.studentUserId != studentUserId || effectiveTeacherUserId != teacherUserId) {
+            throw LessonScheduleConflictException()
+        }
+    }
 
     private fun deleteCreatedCalendarEvent(
         prepared: PreparedCreateSchedule,
@@ -165,6 +177,8 @@ class CreateLessonScheduleUseCase(
         val command: GoogleCalendarEventCreateCommand,
         val calendarClient: CentralGoogleCalendarClient,
         val refreshToken: String,
+        val studentUserId: String,
+        val teacherUserId: String,
     )
 
     private companion object {

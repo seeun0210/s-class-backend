@@ -12,6 +12,7 @@ import com.sclass.domain.domains.lesson.exception.LessonScheduleNotFoundExceptio
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.CentralGoogleAccount
+import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import io.mockk.Runs
 import io.mockk.every
@@ -34,6 +35,7 @@ import java.time.ZoneId
 class DeleteLessonScheduleUseCaseTest {
     private lateinit var lessonAdaptor: LessonAdaptor
     private lateinit var centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor
+    private lateinit var userAdaptor: UserAdaptor
     private lateinit var aesTokenEncryptor: AesTokenEncryptor
     private lateinit var calendarClientProvider: ObjectProvider<CentralGoogleCalendarClient>
     private lateinit var calendarClient: CentralGoogleCalendarClient
@@ -50,6 +52,7 @@ class DeleteLessonScheduleUseCaseTest {
     fun setUp() {
         lessonAdaptor = mockk()
         centralGoogleAccountAdaptor = mockk()
+        userAdaptor = mockk()
         aesTokenEncryptor = mockk()
         calendarClientProvider = mockk()
         calendarClient = mockk()
@@ -57,10 +60,12 @@ class DeleteLessonScheduleUseCaseTest {
         every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
             firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
         }
+        every { userAdaptor.lockByIdsForUpdate(any()) } just Runs
         useCase =
             DeleteLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
                 centralGoogleAccountAdaptor = centralGoogleAccountAdaptor,
+                userAdaptor = userAdaptor,
                 aesTokenEncryptor = aesTokenEncryptor,
                 centralGoogleCalendarClientProvider = calendarClientProvider,
                 txTemplate = txTemplate,
@@ -135,6 +140,15 @@ class DeleteLessonScheduleUseCaseTest {
         every { centralGoogleAccountAdaptor.findGoogle() } returns account
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { lessonAdaptor.save(lesson) } returns lesson
+        every {
+            lessonAdaptor.existsScheduleConflict(
+                studentUserId = studentUserId,
+                teacherUserId = teacherUserId,
+                scheduledAt = scheduledAt,
+                requestedDurationMinutes = 60L,
+                excludeLessonId = 1L,
+            )
+        } returns false
         every {
             calendarClient.deleteMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
