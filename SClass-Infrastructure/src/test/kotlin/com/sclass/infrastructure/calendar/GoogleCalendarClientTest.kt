@@ -133,6 +133,18 @@ class GoogleCalendarClientTest {
     }
 
     @Test
+    fun `refresh token 갱신 중 Google 서버 장애는 provider unavailable 예외를 유지한다`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.error(webClientException(HttpStatus.UNAUTHORIZED))
+        every { authorizationCodeClient.refreshAccessToken("refresh-token") } throws GoogleOAuthProviderUnavailableException()
+
+        assertThrows<GoogleOAuthProviderUnavailableException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
     fun `refresh 후 재시도도 인증 실패하면 GoogleCalendarUnauthorizedException`() {
         mockCreateEventCall()
         every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returnsMany

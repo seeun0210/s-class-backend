@@ -34,7 +34,10 @@ class GoogleCalendarClient(
             val refreshedAccessToken =
                 runCatching {
                     authorizationCodeClient.refreshAccessToken(command.refreshToken)
-                }.getOrElse { throw GoogleCalendarUnauthorizedException() }
+                }.getOrElse {
+                    if (it is GoogleOAuthProviderUnavailableException) throw it
+                    throw GoogleCalendarUnauthorizedException()
+                }
 
             try {
                 createMeetEvent(command, refreshedAccessToken)
@@ -48,13 +51,14 @@ class GoogleCalendarClient(
         command: CreateGoogleCalendarEventCommand,
         accessToken: String,
     ): GoogleCalendarEventResult {
+        val request = command.toRequest()
         val response =
             try {
                 webClient
                     .post()
                     .uri(CALENDAR_EVENTS_URI)
                     .header("Authorization", "Bearer $accessToken")
-                    .bodyValue(command.toRequest())
+                    .bodyValue(request)
                     .retrieve()
                     .bodyToMono(GoogleCalendarEventResponse::class.java)
                     .block()
