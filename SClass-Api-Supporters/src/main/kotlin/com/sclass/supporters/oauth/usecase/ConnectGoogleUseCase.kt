@@ -5,24 +5,17 @@ import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
-import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
-import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
-import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.LocalDateTime
 
 @UseCase
 class ConnectGoogleUseCase(
     private val googleClient: GoogleAuthorizationCodeClient,
-    private val accountAdaptor: TeacherGoogleAccountAdaptor,
+    private val connectGoogleAccountLockedUseCase: ConnectGoogleAccountLockedUseCase,
     private val encryptor: AesTokenEncryptor,
-    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    @Transactional
     fun execute(
         userId: String,
         role: Role,
@@ -37,22 +30,13 @@ class ConnectGoogleUseCase(
         val userInfo = googleClient.fetchUserInfo(tokens.accessToken)
         val encryptedRefreshToken = encryptor.encrypt(refreshToken)
 
-        val existing = accountAdaptor.findByUserIdOrNull(userId)
         val account =
-            if (existing != null) {
-                existing.reconnect(userInfo.email, encryptedRefreshToken, tokens.scope)
-                accountAdaptor.save(existing)
-            } else {
-                accountAdaptor.save(
-                    TeacherGoogleAccount(
-                        userId = userId,
-                        googleEmail = userInfo.email,
-                        encryptedRefreshToken = encryptedRefreshToken,
-                        scope = tokens.scope,
-                        connectedAt = LocalDateTime.now(clock),
-                    ),
-                )
-            }
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = userInfo.email,
+                encryptedRefreshToken = encryptedRefreshToken,
+                scope = tokens.scope,
+            )
 
         return GoogleConnectionStatusResponse.connected(account)
     }

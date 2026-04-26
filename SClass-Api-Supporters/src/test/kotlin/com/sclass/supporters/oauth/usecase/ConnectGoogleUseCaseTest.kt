@@ -4,7 +4,6 @@ import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
-import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
@@ -20,13 +19,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.time.Clock
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ConnectGoogleUseCaseTest {
     private lateinit var googleClient: GoogleAuthorizationCodeClient
-    private lateinit var accountAdaptor: TeacherGoogleAccountAdaptor
+    private lateinit var connectGoogleAccountLockedUseCase: ConnectGoogleAccountLockedUseCase
     private lateinit var encryptor: AesTokenEncryptor
     private lateinit var useCase: ConnectGoogleUseCase
 
@@ -40,21 +37,15 @@ class ConnectGoogleUseCaseTest {
         ).joinToString(" ")
 
     private val fixedNow = LocalDateTime.of(2026, 4, 26, 14, 0)
-    private val clock =
-        Clock.fixed(
-            fixedNow.atZone(ZoneId.systemDefault()).toInstant(),
-            ZoneId.systemDefault(),
-        )
 
     @BeforeEach
     fun setUp() {
         googleClient = mockk()
-        accountAdaptor = mockk()
+        connectGoogleAccountLockedUseCase = mockk()
         encryptor = mockk()
-        useCase = ConnectGoogleUseCase(googleClient, accountAdaptor, encryptor, clock)
+        useCase = ConnectGoogleUseCase(googleClient, connectGoogleAccountLockedUseCase, encryptor)
 
         every { encryptor.encrypt(any()) } answers { "encrypted-${firstArg<String>()}" }
-        every { accountAdaptor.save(any()) } answers { firstArg() }
     }
 
     private fun tokenResponse(
@@ -76,11 +67,31 @@ class ConnectGoogleUseCaseTest {
             name = "Teacher",
         )
 
+    private fun connectedAccount(
+        googleEmail: String = "teacher@gmail.com",
+        encryptedRefreshToken: String = "encrypted-refresh-token-xyz",
+        scope: String = grantedScope,
+        connectedAt: LocalDateTime = fixedNow,
+    ) = TeacherGoogleAccount(
+        userId = userId,
+        googleEmail = googleEmail,
+        encryptedRefreshToken = encryptedRefreshToken,
+        scope = scope,
+        connectedAt = connectedAt,
+    )
+
     @Test
     fun `신규 연결 시 새 TeacherGoogleAccount가 저장된다`() {
         every { googleClient.exchangeCodeForTokens("code-1", redirectUri) } returns tokenResponse()
         every { googleClient.fetchUserInfo("access-token-abc") } returns userInfo()
-        every { accountAdaptor.findByUserIdOrNull(userId) } returns null
+        every {
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-refresh-token-xyz",
+                scope = grantedScope,
+            )
+        } returns connectedAccount()
 
         val response =
             useCase.execute(
@@ -97,46 +108,48 @@ class ConnectGoogleUseCaseTest {
         )
         verify { encryptor.encrypt("refresh-token-xyz") }
         verify {
-            accountAdaptor.save(
-                match<TeacherGoogleAccount> {
-                    it.userId == userId &&
-                        it.googleEmail == "teacher@gmail.com" &&
-                        it.encryptedRefreshToken == "encrypted-refresh-token-xyz" &&
-                        it.connectedAt == fixedNow
-                },
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-refresh-token-xyz",
+                scope = grantedScope,
             )
         }
     }
 
     @Test
-    fun `기존 연결이 있으면 reconnect로 토큰과 이메일이 갱신된다`() {
-        val existing =
-            TeacherGoogleAccount(
-                userId = userId,
-                googleEmail = "old@gmail.com",
-                encryptedRefreshToken = "encrypted-old-token",
-                scope = "old-scope",
-                connectedAt = fixedNow.minusDays(30),
-            )
+    fun `locked use case가 반환한 계정으로 연결 응답을 만든다`() {
         every {
             googleClient.exchangeCodeForTokens("code-2", redirectUri)
         } returns tokenResponse(refreshToken = "new-refresh-token")
         every { googleClient.fetchUserInfo("access-token-abc") } returns userInfo()
-        every { accountAdaptor.findByUserIdOrNull(userId) } returns existing
+        every {
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-new-refresh-token",
+                scope = grantedScope,
+            )
+        } returns
+            connectedAccount(
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-new-refresh-token",
+                connectedAt = fixedNow.minusDays(30),
+            )
 
-        useCase.execute(
-            userId,
-            Role.TEACHER,
-            ConnectGoogleRequest(code = "code-2", redirectUri = redirectUri),
-        )
+        val response =
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-2", redirectUri = redirectUri),
+            )
 
         assertAll(
-            { assertEquals("teacher@gmail.com", existing.googleEmail) },
-            { assertEquals("encrypted-new-refresh-token", existing.encryptedRefreshToken) },
-            { assertEquals(grantedScope, existing.scope) },
-            { assertEquals(fixedNow.minusDays(30), existing.connectedAt) },
+            { assertTrue(response.connected) },
+            { assertEquals("teacher@gmail.com", response.googleEmail) },
+            { assertEquals(grantedScope, response.scope) },
+            { assertEquals(fixedNow.minusDays(30), response.connectedAt) },
         )
-        verify { accountAdaptor.save(existing) }
     }
 
     @Test
@@ -152,7 +165,7 @@ class ConnectGoogleUseCaseTest {
                 ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri),
             )
         }
-        verify(exactly = 0) { accountAdaptor.save(any()) }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
 
     @Test
@@ -166,7 +179,7 @@ class ConnectGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
-        verify(exactly = 0) { accountAdaptor.save(any()) }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
 
     @Test
@@ -184,7 +197,7 @@ class ConnectGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
-        verify(exactly = 0) { accountAdaptor.save(any()) }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
 
     @Test
@@ -202,14 +215,21 @@ class ConnectGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
-        verify(exactly = 0) { accountAdaptor.save(any()) }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
 
     @Test
     fun `refresh token은 항상 암호화되어 저장된다`() {
         every { googleClient.exchangeCodeForTokens(any(), any()) } returns tokenResponse(refreshToken = "raw-token")
         every { googleClient.fetchUserInfo(any()) } returns userInfo()
-        every { accountAdaptor.findByUserIdOrNull(userId) } returns null
+        every {
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-raw-token",
+                scope = grantedScope,
+            )
+        } returns connectedAccount(encryptedRefreshToken = "encrypted-raw-token")
 
         useCase.execute(
             userId,
@@ -219,11 +239,11 @@ class ConnectGoogleUseCaseTest {
 
         verify { encryptor.encrypt("raw-token") }
         verify {
-            accountAdaptor.save(
-                match<TeacherGoogleAccount> {
-                    it.encryptedRefreshToken == "encrypted-raw-token" &&
-                        it.encryptedRefreshToken != "raw-token"
-                },
+            connectGoogleAccountLockedUseCase.execute(
+                userId = userId,
+                googleEmail = "teacher@gmail.com",
+                encryptedRefreshToken = "encrypted-raw-token",
+                scope = grantedScope,
             )
         }
     }
