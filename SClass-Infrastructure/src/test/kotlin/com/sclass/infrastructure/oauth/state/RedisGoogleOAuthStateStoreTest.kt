@@ -11,7 +11,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.redisson.api.RBucket
 import org.redisson.api.RedissonClient
+import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.Base64
 
 class RedisGoogleOAuthStateStoreTest {
     private lateinit var redissonClient: RedissonClient
@@ -34,7 +36,7 @@ class RedisGoogleOAuthStateStoreTest {
 
         assertAll(
             { assertTrue(state.isNotBlank()) },
-            { assertTrue(keySlot.captured.startsWith("oauth:google:state:teacher-user-id:")) },
+            { assertTrue(keySlot.captured.startsWith("oauth:google:state:${encoded("teacher-user-id")}:")) },
             { assertTrue(keySlot.captured.endsWith(state)) },
         )
         verify { bucket.set("1", Duration.ofMinutes(5)) }
@@ -42,7 +44,7 @@ class RedisGoogleOAuthStateStoreTest {
 
     @Test
     fun `저장된 state를 원자적으로 consume하면 true를 반환한다`() {
-        every { redissonClient.getBucket<String>("oauth:google:state:user-1:state-1") } returns bucket
+        every { redissonClient.getBucket<String>("oauth:google:state:${encoded("user-1")}:state-1") } returns bucket
         every { bucket.getAndDelete() } returns "1"
 
         val consumed = store.consume("user-1", "state-1")
@@ -52,11 +54,27 @@ class RedisGoogleOAuthStateStoreTest {
 
     @Test
     fun `저장된 state가 없으면 consume은 false를 반환한다`() {
-        every { redissonClient.getBucket<String>("oauth:google:state:user-1:missing-state") } returns bucket
+        every { redissonClient.getBucket<String>("oauth:google:state:${encoded("user-1")}:missing-state") } returns bucket
         every { bucket.getAndDelete() } returns null
 
         val consumed = store.consume("user-1", "missing-state")
 
         assertFalse(consumed)
     }
+
+    @Test
+    fun `userId에 구분자가 포함되어도 인코딩된 Redis key를 사용한다`() {
+        every { redissonClient.getBucket<String>("oauth:google:state:${encoded("user:1")}:state-1") } returns bucket
+        every { bucket.getAndDelete() } returns "1"
+
+        val consumed = store.consume("user:1", "state-1")
+
+        assertTrue(consumed)
+    }
+
+    private fun encoded(value: String): String =
+        Base64
+            .getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(value.toByteArray(StandardCharsets.UTF_8))
 }
