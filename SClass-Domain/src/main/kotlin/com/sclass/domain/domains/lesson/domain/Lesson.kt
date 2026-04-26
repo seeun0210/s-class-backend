@@ -151,6 +151,12 @@ class Lesson(
         scheduledAt?.let { this.scheduledAt = it }
     }
 
+    fun deleteSchedule() {
+        validateScheduleUpdatable()
+        this.scheduledAt = null
+        this.googleMeet = null
+    }
+
     fun hasGoogleCalendarEvent(): Boolean = googleMeet?.calendarEventId?.isNotBlank() == true
 
     fun validateScheduleUpdatable() {
