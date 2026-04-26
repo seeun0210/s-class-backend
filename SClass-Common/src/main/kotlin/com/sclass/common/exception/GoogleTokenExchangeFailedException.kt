@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleTokenExchangeFailedException : BusinessException(OAuthTokenErrorCode.GOOGLE_TOKEN_EXCHANGE_FAILED)

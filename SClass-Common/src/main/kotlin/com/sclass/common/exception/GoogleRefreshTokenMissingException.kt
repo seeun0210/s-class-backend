@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleRefreshTokenMissingException : BusinessException(OAuthTokenErrorCode.GOOGLE_REFRESH_TOKEN_MISSING)

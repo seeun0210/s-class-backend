@@ -325,6 +325,7 @@ locals {
       { name = "JWT_SECRET_KEY", valueFrom = aws_ssm_parameter.jwt_secret_key.arn },
       { name = "TOKEN_ENCRYPTION_KEY", valueFrom = aws_ssm_parameter.token_encryption_key.arn },
       { name = "GOOGLE_CLIENT_ID", valueFrom = aws_ssm_parameter.google_client_id.arn },
+      { name = "GOOGLE_CLIENT_SECRET", valueFrom = aws_ssm_parameter.google_client_secret.arn },
       { name = "KAKAO_CLIENT_ID", valueFrom = aws_ssm_parameter.kakao_client_id.arn },
       { name = "KAKAO_APP_ID", valueFrom = aws_ssm_parameter.kakao_app_id.arn },
       { name = "SMTP_USERNAME", valueFrom = aws_ssm_parameter.smtp_username.arn },
@@ -337,7 +338,7 @@ locals {
       { name = "NICE_PAY_CLIENT_KEY", valueFrom = aws_ssm_parameter.nicepay_client_key.arn },
       { name = "NICE_PAY_SECRET_KEY", valueFrom = aws_ssm_parameter.nicepay_secret_key.arn },
       { name = "REPORT_SERVICE_CALLBACK_SECRET", valueFrom = aws_ssm_parameter.report_service_callback_secret.arn },
-    ], local.is_prod ? [] : [
+      ], local.is_prod ? [] : [
       { name = "REDIS_PASSWORD", valueFrom = aws_ssm_parameter.redis_password.arn },
     ])
   }
