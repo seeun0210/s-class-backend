@@ -173,10 +173,12 @@ class LessonScheduleUseCaseTest {
             )
         val account = centralGoogleAccount()
 
-        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every { calendarClientProvider.getIfAvailable() } returns calendarClient
         every { centralGoogleAccountAdaptor.findGoogle() } returns account
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
         every {
             calendarClient.deleteMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
@@ -201,6 +203,8 @@ class LessonScheduleUseCaseTest {
                 sendUpdates = true,
             )
         }
+        verify(exactly = 1) { lessonAdaptor.save(lesson) }
+        verify(exactly = 1) { centralGoogleAccountAdaptor.save(account) }
     }
 
     private fun mockSchedulePreparation(
@@ -223,6 +227,8 @@ class LessonScheduleUseCaseTest {
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
         every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
     }
 
     private fun lesson(

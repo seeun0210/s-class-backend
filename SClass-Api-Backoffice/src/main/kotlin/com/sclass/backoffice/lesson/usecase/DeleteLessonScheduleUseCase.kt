@@ -22,66 +22,37 @@ class DeleteLessonScheduleUseCase(
     private val txTemplate: TransactionTemplate,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    fun execute(lessonId: Long): LessonResponse {
-        val prepared = prepareScheduleDelete(lessonId)
-
-        prepared.calendarEvent?.let {
-            it.calendarClient.deleteMeetEventWithRefreshToken(
-                refreshToken = it.refreshToken,
-                eventId = it.eventId,
-                sendUpdates = true,
-            )
-        }
-
-        return deleteSchedule(lessonId, prepared.calendarEvent != null)
-    }
-
-    private fun prepareScheduleDelete(lessonId: Long): PreparedDeleteSchedule =
+    fun execute(lessonId: Long): LessonResponse =
         txTemplate.execute {
-            val lesson = lessonAdaptor.findById(lessonId)
+            val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
             if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
 
             val eventId = lesson.googleMeet?.calendarEventId?.takeIf { it.isNotBlank() }
-            if (eventId == null) {
-                PreparedDeleteSchedule()
-            } else {
-                val calendarClient =
-                    centralGoogleCalendarClientProvider.getIfAvailable()
-                        ?: throw GoogleCalendarCentralDisabledException()
-                val centralAccount = centralGoogleAccountAdaptor.findGoogle()
-                val refreshToken = aesTokenEncryptor.decrypt(centralAccount.encryptedRefreshToken)
+            val centralAccount =
+                eventId?.let {
+                    val calendarClient =
+                        centralGoogleCalendarClientProvider.getIfAvailable()
+                            ?: throw GoogleCalendarCentralDisabledException()
+                    val account = centralGoogleAccountAdaptor.findGoogle()
+                    val refreshToken = aesTokenEncryptor.decrypt(account.encryptedRefreshToken)
 
-                PreparedDeleteSchedule(CalendarEventDelete(eventId, calendarClient, refreshToken))
-            }
-        }!!
-
-    private fun deleteSchedule(
-        lessonId: Long,
-        calendarEventDeleted: Boolean,
-    ): LessonResponse =
-        txTemplate.execute {
-            val lesson = lessonAdaptor.findById(lessonId)
-            if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
-            lesson.validateScheduleUpdatable()
+                    calendarClient.deleteMeetEventWithRefreshToken(
+                        refreshToken = refreshToken,
+                        eventId = it,
+                        sendUpdates = true,
+                    )
+                    account
+                }
 
             lesson.deleteSchedule()
+            lessonAdaptor.save(lesson)
 
-            if (calendarEventDeleted) {
-                val centralAccount = centralGoogleAccountAdaptor.findGoogle()
-                centralAccount.markUsed(LocalDateTime.now(clock))
+            centralAccount?.let {
+                it.markUsed(LocalDateTime.now(clock))
+                centralGoogleAccountAdaptor.save(it)
             }
 
             LessonResponse.from(lesson)
         }!!
-
-    private data class PreparedDeleteSchedule(
-        val calendarEvent: CalendarEventDelete? = null,
-    )
-
-    private data class CalendarEventDelete(
-        val eventId: String,
-        val calendarClient: CentralGoogleCalendarClient,
-        val refreshToken: String,
-    )
 }

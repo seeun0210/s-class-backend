@@ -123,9 +123,11 @@ class UpdateLessonScheduleUseCase(
                 meetJoinUrl = result.meetJoinUrl,
                 meetCode = result.meetCode,
             )
+            lessonAdaptor.save(lesson)
 
             val centralAccount = centralGoogleAccountAdaptor.findGoogle()
             centralAccount.markUsed(LocalDateTime.now(clock))
+            centralGoogleAccountAdaptor.save(centralAccount)
             LessonResponse.from(lesson)
         }!!
 

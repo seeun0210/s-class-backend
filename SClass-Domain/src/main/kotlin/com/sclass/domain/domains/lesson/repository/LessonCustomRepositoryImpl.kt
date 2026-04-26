@@ -5,11 +5,19 @@ import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.QLesson
+import jakarta.persistence.LockModeType
 import java.time.LocalDateTime
 
 class LessonCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
 ) : LessonCustomRepository {
+    override fun findByIdForUpdate(id: Long): Lesson? =
+        queryFactory
+            .selectFrom(QLesson.lesson)
+            .where(QLesson.lesson.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne()
+
     override fun findAllByEffectiveTeacher(teacherUserId: String): List<Lesson> =
         queryFactory
             .selectFrom(QLesson.lesson)

@@ -78,10 +78,12 @@ class DeleteLessonScheduleUseCaseTest {
             )
         val account = centralGoogleAccount()
 
-        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every { calendarClientProvider.getIfAvailable() } returns calendarClient
         every { centralGoogleAccountAdaptor.findGoogle() } returns account
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
         every {
             calendarClient.deleteMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
@@ -111,14 +113,17 @@ class DeleteLessonScheduleUseCaseTest {
                 sendUpdates = true,
             )
         }
-        verify(exactly = 2) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
+        verify(exactly = 1) { lessonAdaptor.save(lesson) }
+        verify(exactly = 1) { centralGoogleAccountAdaptor.save(account) }
+        verify(exactly = 1) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
     }
 
     @Test
     fun `기존 일정은 있지만 Google Meet이 없으면 Calendar 호출 없이 lesson 일정만 제거한다`() {
         val lesson = lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0))
 
-        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
+        every { lessonAdaptor.save(lesson) } returns lesson
 
         val response =
             useCase.execute(
@@ -132,11 +137,12 @@ class DeleteLessonScheduleUseCaseTest {
             { assertNull(response.scheduledAt) },
         )
         verify(exactly = 0) { calendarClientProvider.getIfAvailable() }
+        verify(exactly = 1) { lessonAdaptor.save(lesson) }
     }
 
     @Test
     fun `일정이 없는 수업은 스케줄 삭제 불가`() {
-        every { lessonAdaptor.findById(1L) } returns lesson(scheduledAt = null)
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson(scheduledAt = null)
 
         assertThrows<LessonScheduleNotFoundException> {
             useCase.execute(
@@ -151,7 +157,7 @@ class DeleteLessonScheduleUseCaseTest {
     @Test
     fun `예정 상태가 아닌 수업은 Calendar 호출 전에 스케줄 삭제 불가`() {
         every {
-            lessonAdaptor.findById(1L)
+            lessonAdaptor.findByIdForUpdate(1L)
         } returns lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0), status = LessonStatus.IN_PROGRESS)
 
         assertThrows<LessonInvalidStatusTransitionException> {
@@ -166,7 +172,7 @@ class DeleteLessonScheduleUseCaseTest {
 
     @Test
     fun `담당 선생님이 아니면 스케줄 삭제 불가`() {
-        every { lessonAdaptor.findById(1L) } returns lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0))
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0))
 
         assertThrows<LessonUnauthorizedAccessException> {
             useCase.execute(
@@ -186,7 +192,7 @@ class DeleteLessonScheduleUseCaseTest {
                 googleMeet = LessonGoogleMeet("event-id", "https://meet.google.com/abc-defg-hij", "abc-defg-hij"),
             )
 
-        every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every { calendarClientProvider.getIfAvailable() } returns null
 
         assertThrows<GoogleCalendarCentralDisabledException> {
