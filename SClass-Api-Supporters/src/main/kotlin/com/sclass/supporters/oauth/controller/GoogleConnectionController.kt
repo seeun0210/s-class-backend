@@ -3,6 +3,7 @@ package com.sclass.supporters.oauth.controller
 import com.sclass.common.annotation.CurrentUserId
 import com.sclass.common.annotation.CurrentUserRole
 import com.sclass.common.dto.ApiResponse
+import com.sclass.common.exception.ForbiddenException
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
@@ -31,13 +32,15 @@ class GoogleConnectionController(
         @Valid @RequestBody request: ConnectGoogleRequest,
     ): ApiResponse<GoogleConnectionStatusResponse> =
         ApiResponse.success(
-            connectGoogleUseCase.execute(userId, Role.valueOf(role), request),
+            connectGoogleUseCase.execute(userId, requireTeacherRole(role), request),
         )
 
     @DeleteMapping
     fun disconnect(
         @CurrentUserId userId: String,
+        @CurrentUserRole role: String,
     ): ApiResponse<Unit> {
+        requireTeacherRole(role)
         disconnectGoogleUseCase.execute(userId)
         return ApiResponse.success(Unit)
     }
@@ -45,5 +48,17 @@ class GoogleConnectionController(
     @GetMapping
     fun status(
         @CurrentUserId userId: String,
-    ): ApiResponse<GoogleConnectionStatusResponse> = ApiResponse.success(getStatusUseCase.execute(userId))
+        @CurrentUserRole role: String,
+    ): ApiResponse<GoogleConnectionStatusResponse> {
+        requireTeacherRole(role)
+        return ApiResponse.success(getStatusUseCase.execute(userId))
+    }
+
+    private fun requireTeacherRole(role: String): Role {
+        val currentRole =
+            runCatching { Role.valueOf(role) }
+                .getOrElse { throw ForbiddenException() }
+        if (currentRole != Role.TEACHER) throw ForbiddenException()
+        return currentRole
+    }
 }

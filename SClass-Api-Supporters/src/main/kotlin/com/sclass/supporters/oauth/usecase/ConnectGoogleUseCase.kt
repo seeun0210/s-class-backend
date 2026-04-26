@@ -2,6 +2,7 @@ package com.sclass.supporters.oauth.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.ForbiddenException
+import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
@@ -31,6 +32,7 @@ class ConnectGoogleUseCase(
 
         val tokens = googleClient.exchangeCodeForTokens(request.code, request.redirectUri)
         val refreshToken = tokens.refreshToken ?: throw GoogleRefreshTokenMissingException()
+        if (!tokens.scope.hasGoogleIdentityScope()) throw GoogleIdentityScopeMissingException()
 
         val userInfo = googleClient.fetchUserInfo(tokens.accessToken)
         val encryptedRefreshToken = encryptor.encrypt(refreshToken)
@@ -53,5 +55,18 @@ class ConnectGoogleUseCase(
             }
 
         return GoogleConnectionStatusResponse.connected(account)
+    }
+
+    private fun String.hasGoogleIdentityScope(): Boolean =
+        split(" ")
+            .any { it in GOOGLE_IDENTITY_SCOPES }
+
+    companion object {
+        private val GOOGLE_IDENTITY_SCOPES =
+            setOf(
+                "openid",
+                "email",
+                "https://www.googleapis.com/auth/userinfo.email",
+            )
     }
 }

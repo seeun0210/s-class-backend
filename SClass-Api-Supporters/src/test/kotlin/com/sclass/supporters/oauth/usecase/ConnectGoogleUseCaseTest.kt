@@ -1,6 +1,7 @@
 package com.sclass.supporters.oauth.usecase
 
 import com.sclass.common.exception.ForbiddenException
+import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
@@ -31,6 +32,12 @@ class ConnectGoogleUseCaseTest {
 
     private val userId = "user-id-00000000000000001"
     private val redirectUri = "http://localhost:3000/oauth/google/callback"
+    private val grantedScope =
+        listOf(
+            "openid",
+            "https://www.googleapis.com/auth/userinfo.email",
+            "https://www.googleapis.com/auth/calendar.events",
+        ).joinToString(" ")
 
     private val fixedNow = LocalDateTime.of(2026, 4, 26, 14, 0)
     private val clock =
@@ -50,14 +57,16 @@ class ConnectGoogleUseCaseTest {
         every { accountAdaptor.save(any()) } answers { firstArg() }
     }
 
-    private fun tokenResponse(refreshToken: String? = "refresh-token-xyz") =
-        GoogleTokenExchangeResponse(
-            accessToken = "access-token-abc",
-            expiresIn = 3600,
-            refreshToken = refreshToken,
-            scope = "https://www.googleapis.com/auth/calendar.events",
-            tokenType = "Bearer",
-        )
+    private fun tokenResponse(
+        refreshToken: String? = "refresh-token-xyz",
+        scope: String = grantedScope,
+    ) = GoogleTokenExchangeResponse(
+        accessToken = "access-token-abc",
+        expiresIn = 3600,
+        refreshToken = refreshToken,
+        scope = scope,
+        tokenType = "Bearer",
+    )
 
     private fun userInfo() =
         GoogleUserInfoResponse(
@@ -84,7 +93,7 @@ class ConnectGoogleUseCaseTest {
             { assertTrue(response.connected) },
             { assertEquals("teacher@gmail.com", response.googleEmail) },
             { assertEquals(fixedNow, response.connectedAt) },
-            { assertEquals("https://www.googleapis.com/auth/calendar.events", response.scope) },
+            { assertEquals(grantedScope, response.scope) },
         )
         verify { encryptor.encrypt("refresh-token-xyz") }
         verify {
@@ -124,7 +133,7 @@ class ConnectGoogleUseCaseTest {
         assertAll(
             { assertEquals("teacher@gmail.com", existing.googleEmail) },
             { assertEquals("encrypted-new-refresh-token", existing.encryptedRefreshToken) },
-            { assertEquals("https://www.googleapis.com/auth/calendar.events", existing.scope) },
+            { assertEquals(grantedScope, existing.scope) },
             { assertEquals(fixedNow.minusDays(30), existing.connectedAt) },
         )
         verify { accountAdaptor.save(existing) }
@@ -157,6 +166,24 @@ class ConnectGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
+        verify(exactly = 0) { accountAdaptor.save(any()) }
+    }
+
+    @Test
+    fun `Google identity scope가 없으면 userinfo 호출 전에 실패한다`() {
+        every {
+            googleClient.exchangeCodeForTokens("code-5", redirectUri)
+        } returns tokenResponse(scope = "https://www.googleapis.com/auth/calendar.events")
+
+        assertThrows<GoogleIdentityScopeMissingException> {
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-5", redirectUri = redirectUri),
+            )
+        }
+
+        verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
         verify(exactly = 0) { accountAdaptor.save(any()) }
     }
 

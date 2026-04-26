@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleIdentityScopeMissingException : BusinessException(OAuthTokenErrorCode.GOOGLE_IDENTITY_SCOPE_MISSING)
