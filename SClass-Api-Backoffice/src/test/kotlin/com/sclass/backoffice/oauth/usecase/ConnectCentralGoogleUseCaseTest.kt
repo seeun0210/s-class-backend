@@ -1,10 +1,10 @@
 package com.sclass.backoffice.oauth.usecase
 
 import com.sclass.backoffice.oauth.dto.ConnectCentralGoogleRequest
+import com.sclass.common.exception.GoogleCalendarCentralDisabledException
 import com.sclass.common.exception.GoogleDriveScopeMissingException
 import com.sclass.common.exception.GoogleOAuthStateInvalidException
 import com.sclass.common.jwt.AesTokenEncryptor
-import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.CentralGoogleAccount
 import com.sclass.domain.domains.oauth.exception.CentralGoogleAccountEmailNotAllowedException
 import com.sclass.infrastructure.calendar.GoogleCentralCalendarProperties
@@ -19,40 +19,41 @@ import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.time.Clock
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ConnectCentralGoogleUseCaseTest {
     private val grantedScope = CentralGoogleOAuthScopes.authorizationScopes.joinToString(" ")
 
     private val googleClient: CentralGoogleAuthorizationCodeClient = mockk()
-    private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor = mockk()
+    private val connectCentralGoogleAccountLockedUseCase: ConnectCentralGoogleAccountLockedUseCase = mockk()
     private val encryptor: AesTokenEncryptor = mockk()
     private val stateStore: GoogleOAuthStateStore = mockk()
     private val fixedNow = LocalDateTime.of(2026, 4, 26, 14, 0)
-    private val clock =
-        Clock.fixed(
-            fixedNow.atZone(ZoneId.systemDefault()).toInstant(),
-            ZoneId.systemDefault(),
-        )
     private val properties =
         GoogleCentralCalendarProperties().apply {
+            enabled = true
             allowedEmail = "central-google@example.com"
         }
     private val useCase =
         ConnectCentralGoogleUseCase(
             googleClient = googleClient,
-            centralGoogleAccountAdaptor = centralGoogleAccountAdaptor,
+            connectCentralGoogleAccountLockedUseCase = connectCentralGoogleAccountLockedUseCase,
             encryptor = encryptor,
             stateStore = stateStore,
             properties = properties,
-            clock = clock,
         )
 
     @Test
-    fun `허용된 중앙 Google 계정이면 refresh token을 암호화 저장한다`() {
+    fun `허용된 중앙 Google 계정이면 refresh token을 암호화하고 locked usecase에 저장을 위임한다`() {
         val request = ConnectCentralGoogleRequest(code = "auth-code", redirectUri = "https://backoffice/callback", state = "state")
+        val account =
+            CentralGoogleAccount(
+                googleEmail = "central-google@example.com",
+                encryptedRefreshToken = "encrypted-refresh-token",
+                scope = grantedScope,
+                connectedByAdminUserId = "admin-user-id-0000000001",
+                connectedAt = fixedNow,
+            )
         every { stateStore.consume("admin-user-id-0000000001", "state") } returns true
         every { googleClient.exchangeCodeForTokens("auth-code", "https://backoffice/callback") } returns
             GoogleTokenExchangeResponse(
@@ -66,8 +67,15 @@ class ConnectCentralGoogleUseCaseTest {
                 email = "central-google@example.com",
             )
         every { encryptor.encrypt("refresh-token") } returns "encrypted-refresh-token"
-        every { centralGoogleAccountAdaptor.findGoogleOrNull() } returns null
-        every { centralGoogleAccountAdaptor.save(any()) } answers { firstArg() }
+        every {
+            connectCentralGoogleAccountLockedUseCase.execute(
+                provider = CentralGoogleAccount.PROVIDER_GOOGLE,
+                googleEmail = "central-google@example.com",
+                encryptedRefreshToken = "encrypted-refresh-token",
+                scope = grantedScope,
+                adminUserId = "admin-user-id-0000000001",
+            )
+        } returns account
 
         val response = useCase.execute("admin-user-id-0000000001", request)
 
@@ -80,15 +88,34 @@ class ConnectCentralGoogleUseCaseTest {
             { assertEquals(grantedScope, response.scope) },
         )
         verify {
-            centralGoogleAccountAdaptor.save(
-                match<CentralGoogleAccount> {
-                    it.googleEmail == "central-google@example.com" &&
-                        it.encryptedRefreshToken == "encrypted-refresh-token" &&
-                        it.connectedByAdminUserId == "admin-user-id-0000000001" &&
-                        it.connectedAt == fixedNow
-                },
+            connectCentralGoogleAccountLockedUseCase.execute(
+                provider = CentralGoogleAccount.PROVIDER_GOOGLE,
+                googleEmail = "central-google@example.com",
+                encryptedRefreshToken = "encrypted-refresh-token",
+                scope = grantedScope,
+                adminUserId = "admin-user-id-0000000001",
             )
         }
+    }
+
+    @Test
+    fun `중앙 Google Calendar 연동이 비활성화되어 있으면 state를 소비하지 않는다`() {
+        val disabledUseCase =
+            ConnectCentralGoogleUseCase(
+                googleClient = googleClient,
+                connectCentralGoogleAccountLockedUseCase = connectCentralGoogleAccountLockedUseCase,
+                encryptor = encryptor,
+                stateStore = stateStore,
+                properties = GoogleCentralCalendarProperties(),
+            )
+        val request = ConnectCentralGoogleRequest(code = "auth-code", redirectUri = "https://backoffice/callback", state = "state")
+
+        assertThrows<GoogleCalendarCentralDisabledException> {
+            disabledUseCase.execute("admin-user-id-0000000001", request)
+        }
+
+        verify(exactly = 0) { stateStore.consume(any(), any()) }
+        verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
     }
 
     @Test
@@ -112,7 +139,7 @@ class ConnectCentralGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { encryptor.encrypt(any()) }
-        verify(exactly = 0) { centralGoogleAccountAdaptor.save(any()) }
+        verify(exactly = 0) { connectCentralGoogleAccountLockedUseCase.execute(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -125,43 +152,6 @@ class ConnectCentralGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
-    }
-
-    @Test
-    fun `기존 중앙 계정이 있으면 재연결 정보로 갱신한다`() {
-        val existing =
-            CentralGoogleAccount(
-                googleEmail = "central-google@example.com",
-                encryptedRefreshToken = "old-token",
-                scope = "old-scope",
-                connectedByAdminUserId = "old-admin-user-id-00001",
-                connectedAt = fixedNow.minusDays(1),
-            )
-        val request = ConnectCentralGoogleRequest(code = "auth-code", redirectUri = "https://backoffice/callback", state = "state")
-        every { stateStore.consume("admin-user-id-0000000001", "state") } returns true
-        every { googleClient.exchangeCodeForTokens("auth-code", "https://backoffice/callback") } returns
-            GoogleTokenExchangeResponse(
-                accessToken = "access-token",
-                refreshToken = "refresh-token",
-                scope = grantedScope,
-            )
-        every { googleClient.fetchUserInfo("access-token") } returns
-            GoogleUserInfoResponse(
-                id = "google-user-id",
-                email = "central-google@example.com",
-            )
-        every { encryptor.encrypt("refresh-token") } returns "new-encrypted-refresh-token"
-        every { centralGoogleAccountAdaptor.findGoogleOrNull() } returns existing
-        every { centralGoogleAccountAdaptor.save(existing) } returns existing
-
-        useCase.execute("admin-user-id-0000000001", request)
-
-        assertAll(
-            { assertEquals("new-encrypted-refresh-token", existing.encryptedRefreshToken) },
-            { assertEquals("admin-user-id-0000000001", existing.connectedByAdminUserId) },
-            { assertEquals(fixedNow, existing.connectedAt) },
-            { assertEquals(grantedScope, existing.scope) },
-        )
     }
 
     @Test
@@ -180,6 +170,6 @@ class ConnectCentralGoogleUseCaseTest {
         }
 
         verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
-        verify(exactly = 0) { centralGoogleAccountAdaptor.save(any()) }
+        verify(exactly = 0) { connectCentralGoogleAccountLockedUseCase.execute(any(), any(), any(), any(), any()) }
     }
 }

@@ -3,36 +3,32 @@ package com.sclass.backoffice.oauth.usecase
 import com.sclass.backoffice.oauth.dto.CentralGoogleConnectionStatusResponse
 import com.sclass.backoffice.oauth.dto.ConnectCentralGoogleRequest
 import com.sclass.common.annotation.UseCase
+import com.sclass.common.exception.GoogleCalendarCentralDisabledException
 import com.sclass.common.exception.GoogleCalendarScopeMissingException
 import com.sclass.common.exception.GoogleDriveScopeMissingException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleOAuthStateInvalidException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
-import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.CentralGoogleAccount
 import com.sclass.domain.domains.oauth.exception.CentralGoogleAccountEmailNotAllowedException
 import com.sclass.infrastructure.calendar.GoogleCentralCalendarProperties
 import com.sclass.infrastructure.oauth.client.CentralGoogleAuthorizationCodeClient
 import com.sclass.infrastructure.oauth.state.GoogleOAuthStateStore
-import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.LocalDateTime
 
 @UseCase
 class ConnectCentralGoogleUseCase(
     private val googleClient: CentralGoogleAuthorizationCodeClient,
-    private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor,
+    private val connectCentralGoogleAccountLockedUseCase: ConnectCentralGoogleAccountLockedUseCase,
     private val encryptor: AesTokenEncryptor,
     private val stateStore: GoogleOAuthStateStore,
     private val properties: GoogleCentralCalendarProperties,
-    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    @Transactional
     fun execute(
         adminUserId: String,
         request: ConnectCentralGoogleRequest,
     ): CentralGoogleConnectionStatusResponse {
+        if (!properties.enabled) throw GoogleCalendarCentralDisabledException()
         if (!stateStore.consume(adminUserId, request.state)) throw GoogleOAuthStateInvalidException()
 
         val allowedEmail = properties.requireAllowedEmail()
@@ -48,30 +44,18 @@ class ConnectCentralGoogleUseCase(
             throw CentralGoogleAccountEmailNotAllowedException()
         }
 
-        val now = LocalDateTime.now(clock)
         val encryptedRefreshToken = encryptor.encrypt(refreshToken)
         val account =
-            centralGoogleAccountAdaptor
-                .findGoogleOrNull()
-                ?.apply {
-                    reconnect(
-                        newGoogleEmail = userInfo.email,
-                        newEncryptedRefreshToken = encryptedRefreshToken,
-                        newScope = tokens.scope,
-                        adminUserId = adminUserId,
-                        at = now,
-                    )
-                }
-                ?: CentralGoogleAccount(
-                    googleEmail = userInfo.email,
-                    encryptedRefreshToken = encryptedRefreshToken,
-                    scope = tokens.scope,
-                    connectedByAdminUserId = adminUserId,
-                    connectedAt = now,
-                )
+            connectCentralGoogleAccountLockedUseCase.execute(
+                provider = CentralGoogleAccount.PROVIDER_GOOGLE,
+                googleEmail = userInfo.email,
+                encryptedRefreshToken = encryptedRefreshToken,
+                scope = tokens.scope,
+                adminUserId = adminUserId,
+            )
 
         return CentralGoogleConnectionStatusResponse.connected(
-            account = centralGoogleAccountAdaptor.save(account),
+            account = account,
             allowedEmail = allowedEmail,
         )
     }

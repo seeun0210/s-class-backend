@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleCalendarCentralDisabledException : BusinessException(OAuthTokenErrorCode.GOOGLE_CALENDAR_CENTRAL_DISABLED)
