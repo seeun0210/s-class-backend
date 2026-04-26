@@ -11,4 +11,5 @@ enum class OAuthTokenErrorCode(
     GOOGLE_TOKEN_REFRESH_FAILED("OAUTH_013", "Google 토큰 갱신에 실패했습니다", 401),
     GOOGLE_REFRESH_TOKEN_MISSING("OAUTH_014", "Google에서 refresh token이 발급되지 않았습니다", 400),
     GOOGLE_IDENTITY_SCOPE_MISSING("OAUTH_016", "Google 계정 이메일 조회를 위한 email scope가 필요합니다", 400),
+    GOOGLE_CALENDAR_SCOPE_MISSING("OAUTH_017", "Google Calendar 연동을 위한 calendar.events scope가 필요합니다", 400),
 }

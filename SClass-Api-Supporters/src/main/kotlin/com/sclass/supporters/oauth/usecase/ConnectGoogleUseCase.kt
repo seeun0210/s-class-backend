@@ -2,6 +2,7 @@ package com.sclass.supporters.oauth.usecase
 
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.ForbiddenException
+import com.sclass.common.exception.GoogleCalendarScopeMissingException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
@@ -25,7 +26,9 @@ class ConnectGoogleUseCase(
 
         val tokens = googleClient.exchangeCodeForTokens(request.code, request.redirectUri)
         val refreshToken = tokens.refreshToken ?: throw GoogleRefreshTokenMissingException()
-        if (!tokens.scope.hasGoogleEmailScope()) throw GoogleIdentityScopeMissingException()
+        val grantedScopes = tokens.scope.toScopeSet()
+        if (!grantedScopes.hasGoogleEmailScope()) throw GoogleIdentityScopeMissingException()
+        if (GOOGLE_CALENDAR_EVENTS_SCOPE !in grantedScopes) throw GoogleCalendarScopeMissingException()
 
         val userInfo = googleClient.fetchUserInfo(tokens.accessToken)
         val encryptedRefreshToken = encryptor.encrypt(refreshToken)
@@ -41,11 +44,15 @@ class ConnectGoogleUseCase(
         return GoogleConnectionStatusResponse.connected(account)
     }
 
-    private fun String.hasGoogleEmailScope(): Boolean =
+    private fun String.toScopeSet(): Set<String> =
         split(" ")
-            .any { it in GOOGLE_EMAIL_SCOPES }
+            .filter { it.isNotBlank() }
+            .toSet()
+
+    private fun Set<String>.hasGoogleEmailScope(): Boolean = any { it in GOOGLE_EMAIL_SCOPES }
 
     companion object {
+        private const val GOOGLE_CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events"
         private val GOOGLE_EMAIL_SCOPES =
             setOf(
                 "email",

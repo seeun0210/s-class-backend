@@ -1,6 +1,7 @@
 package com.sclass.supporters.oauth.usecase
 
 import com.sclass.common.exception.ForbiddenException
+import com.sclass.common.exception.GoogleCalendarScopeMissingException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
@@ -211,6 +212,24 @@ class ConnectGoogleUseCaseTest {
                 userId,
                 Role.TEACHER,
                 ConnectGoogleRequest(code = "code-6", redirectUri = redirectUri),
+            )
+        }
+
+        verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `calendar scope가 없으면 userinfo 호출 전에 실패한다`() {
+        every {
+            googleClient.exchangeCodeForTokens("code-7", redirectUri)
+        } returns tokenResponse(scope = "openid email https://www.googleapis.com/auth/userinfo.email")
+
+        assertThrows<GoogleCalendarScopeMissingException> {
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                ConnectGoogleRequest(code = "code-7", redirectUri = redirectUri),
             )
         }
 
