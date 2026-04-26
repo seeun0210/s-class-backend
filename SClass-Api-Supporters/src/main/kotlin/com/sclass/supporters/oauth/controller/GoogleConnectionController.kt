@@ -10,7 +10,9 @@ import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
 import com.sclass.supporters.oauth.usecase.ConnectGoogleUseCase
 import com.sclass.supporters.oauth.usecase.DisconnectGoogleUseCase
 import com.sclass.supporters.oauth.usecase.GetGoogleConnectionStatusUseCase
+import com.sclass.supporters.oauth.usecase.IssueGoogleOAuthStateUseCase
 import jakarta.validation.Valid
+import org.springframework.http.CacheControl
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,6 +26,7 @@ class GoogleConnectionController(
     private val connectGoogleUseCase: ConnectGoogleUseCase,
     private val disconnectGoogleUseCase: DisconnectGoogleUseCase,
     private val getStatusUseCase: GetGoogleConnectionStatusUseCase,
+    private val issueStateUseCase: IssueGoogleOAuthStateUseCase,
 ) {
     @PostMapping("/connect")
     fun connect(
@@ -53,6 +56,19 @@ class GoogleConnectionController(
         requireTeacherRole(role)
         return ApiResponse.success(getStatusUseCase.execute(userId))
     }
+
+    @PostMapping("/state")
+    fun issueState(
+        @CurrentUserId userId: String,
+        @CurrentUserRole role: String,
+    ) = ApiResponse.success(
+        data =
+            issueStateUseCase.execute(
+                userId,
+                requireTeacherRole(role),
+            ),
+        cacheControl = CacheControl.noStore(),
+    )
 
     private fun requireTeacherRole(role: String): Role {
         val currentRole =

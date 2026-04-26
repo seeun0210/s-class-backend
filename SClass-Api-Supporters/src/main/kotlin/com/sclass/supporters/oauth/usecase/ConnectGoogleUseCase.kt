@@ -4,10 +4,12 @@ import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleCalendarScopeMissingException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
+import com.sclass.common.exception.GoogleOAuthStateInvalidException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.oauth.state.GoogleOAuthStateStore
 import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
@@ -18,6 +20,7 @@ class ConnectGoogleUseCase(
     private val googleClient: GoogleAuthorizationCodeClient,
     private val connectGoogleAccountLockedUseCase: ConnectGoogleAccountLockedUseCase,
     private val encryptor: AesTokenEncryptor,
+    private val stateStore: GoogleOAuthStateStore,
 ) {
     @DistributedLock(prefix = "teacher-google-account", waitTime = 30)
     fun execute(
@@ -26,6 +29,7 @@ class ConnectGoogleUseCase(
         request: ConnectGoogleRequest,
     ): GoogleConnectionStatusResponse {
         if (role != Role.TEACHER) throw ForbiddenException()
+        if (!stateStore.consume(userId, request.state)) throw GoogleOAuthStateInvalidException()
 
         val tokens = googleClient.exchangeCodeForTokens(request.code, request.redirectUri)
         val refreshToken = tokens.refreshToken ?: throw GoogleRefreshTokenMissingException()

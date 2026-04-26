@@ -3,6 +3,7 @@ package com.sclass.supporters.oauth.usecase
 import com.sclass.common.exception.ForbiddenException
 import com.sclass.common.exception.GoogleCalendarScopeMissingException
 import com.sclass.common.exception.GoogleIdentityScopeMissingException
+import com.sclass.common.exception.GoogleOAuthStateInvalidException
 import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
@@ -10,6 +11,7 @@ import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import com.sclass.infrastructure.oauth.dto.GoogleTokenExchangeResponse
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
+import com.sclass.infrastructure.oauth.state.GoogleOAuthStateStore
 import com.sclass.infrastructure.redis.DistributedLock
 import com.sclass.infrastructure.redis.LockKey
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
@@ -29,10 +31,12 @@ class ConnectGoogleUseCaseTest {
     private lateinit var googleClient: GoogleAuthorizationCodeClient
     private lateinit var connectGoogleAccountLockedUseCase: ConnectGoogleAccountLockedUseCase
     private lateinit var encryptor: AesTokenEncryptor
+    private lateinit var stateStore: GoogleOAuthStateStore
     private lateinit var useCase: ConnectGoogleUseCase
 
     private val userId = "user-id-00000000000000001"
     private val redirectUri = "http://localhost:3000/oauth/google/callback"
+    private val oauthState = "google-oauth-state"
     private val grantedScope =
         listOf(
             "openid",
@@ -47,9 +51,11 @@ class ConnectGoogleUseCaseTest {
         googleClient = mockk()
         connectGoogleAccountLockedUseCase = mockk()
         encryptor = mockk()
-        useCase = ConnectGoogleUseCase(googleClient, connectGoogleAccountLockedUseCase, encryptor)
+        stateStore = mockk()
+        useCase = ConnectGoogleUseCase(googleClient, connectGoogleAccountLockedUseCase, encryptor, stateStore)
 
         every { encryptor.encrypt(any()) } answers { "encrypted-${firstArg<String>()}" }
+        every { stateStore.consume(userId, any()) } returns true
     }
 
     private fun tokenResponse(
@@ -84,6 +90,15 @@ class ConnectGoogleUseCaseTest {
         connectedAt = connectedAt,
     )
 
+    private fun connectRequest(
+        code: String,
+        state: String = oauthState,
+    ) = ConnectGoogleRequest(
+        code = code,
+        redirectUri = redirectUri,
+        state = state,
+    )
+
     @Test
     fun `신규 연결 시 새 TeacherGoogleAccount가 저장된다`() {
         every { googleClient.exchangeCodeForTokens("code-1", redirectUri) } returns tokenResponse()
@@ -101,7 +116,7 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-1", redirectUri = redirectUri),
+                connectRequest("code-1"),
             )
 
         assertAll(
@@ -110,6 +125,7 @@ class ConnectGoogleUseCaseTest {
             { assertEquals(fixedNow, response.connectedAt) },
             { assertEquals(grantedScope, response.scope) },
         )
+        verify { stateStore.consume(userId, oauthState) }
         verify { encryptor.encrypt("refresh-token-xyz") }
         verify {
             connectGoogleAccountLockedUseCase.execute(
@@ -145,7 +161,7 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-2", redirectUri = redirectUri),
+                connectRequest("code-2"),
             )
 
         assertAll(
@@ -166,9 +182,26 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri),
+                connectRequest("code-3"),
             )
         }
+        verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `OAuth state가 유효하지 않으면 token exchange 전에 실패한다`() {
+        every { stateStore.consume(userId, "invalid-state") } returns false
+
+        assertThrows<GoogleOAuthStateInvalidException> {
+            useCase.execute(
+                userId,
+                Role.TEACHER,
+                connectRequest(code = "code-invalid-state", state = "invalid-state"),
+            )
+        }
+
+        verify { stateStore.consume(userId, "invalid-state") }
+        verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
         verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
 
@@ -178,10 +211,11 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.STUDENT,
-                ConnectGoogleRequest(code = "code-3", redirectUri = redirectUri),
+                connectRequest("code-3"),
             )
         }
 
+        verify(exactly = 0) { stateStore.consume(any(), any()) }
         verify(exactly = 0) { googleClient.exchangeCodeForTokens(any(), any()) }
         verify(exactly = 0) { connectGoogleAccountLockedUseCase.execute(any(), any(), any(), any()) }
     }
@@ -196,7 +230,7 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-5", redirectUri = redirectUri),
+                connectRequest("code-5"),
             )
         }
 
@@ -214,7 +248,7 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-6", redirectUri = redirectUri),
+                connectRequest("code-6"),
             )
         }
 
@@ -232,7 +266,7 @@ class ConnectGoogleUseCaseTest {
             useCase.execute(
                 userId,
                 Role.TEACHER,
-                ConnectGoogleRequest(code = "code-7", redirectUri = redirectUri),
+                connectRequest("code-7"),
             )
         }
 
@@ -256,7 +290,7 @@ class ConnectGoogleUseCaseTest {
         useCase.execute(
             userId,
             Role.TEACHER,
-            ConnectGoogleRequest(code = "code-4", redirectUri = redirectUri),
+            connectRequest("code-4"),
         )
 
         verify { encryptor.encrypt("raw-token") }
