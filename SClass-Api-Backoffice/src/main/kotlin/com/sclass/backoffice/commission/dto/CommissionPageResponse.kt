@@ -24,7 +24,7 @@ data class CommissionListResponse(
     val commissionPolicyId: String,
     val outputFormat: OutputFormat,
     val activityType: ActivityType,
-    val status: CommissionStatus,
+    val status: CommissionListStatus,
     val guideSubject: String,
     val createdAt: LocalDateTime,
     val lesson: LessonSummary?,
@@ -61,10 +61,38 @@ data class CommissionListResponse(
                 commissionPolicyId = dto.commission.commissionPolicyId,
                 outputFormat = dto.commission.outputFormat,
                 activityType = dto.commission.activityType,
-                status = dto.commission.status,
+                status = CommissionListStatus.from(dto),
                 guideSubject = dto.commission.guideInfo.subject,
                 createdAt = dto.commission.createdAt,
                 lesson = dto.lesson?.let { LessonSummary.from(it) },
             )
+    }
+}
+
+enum class CommissionListStatus {
+    REQUESTED,
+    TOPIC_PROPOSED,
+    ACCEPTED,
+    IN_PROGRESS,
+    REJECTED,
+    CANCELLED,
+    COMPLETED,
+    ;
+
+    companion object {
+        fun from(dto: CommissionWithDetailDto): CommissionListStatus {
+            when (dto.lesson?.status) {
+                LessonStatus.IN_PROGRESS -> return IN_PROGRESS
+                LessonStatus.COMPLETED -> return COMPLETED
+                else -> Unit
+            }
+            return when (dto.commission.status) {
+                CommissionStatus.REQUESTED -> REQUESTED
+                CommissionStatus.TOPIC_PROPOSED -> TOPIC_PROPOSED
+                CommissionStatus.ACCEPTED -> ACCEPTED
+                CommissionStatus.REJECTED -> REJECTED
+                CommissionStatus.CANCELLED -> CANCELLED
+            }
+        }
     }
 }

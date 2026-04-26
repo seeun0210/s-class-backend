@@ -1,5 +1,6 @@
 package com.sclass.backoffice.commission.usecase
 
+import com.sclass.backoffice.commission.dto.CommissionListStatus
 import com.sclass.domain.domains.commission.adaptor.CommissionAdaptor
 import com.sclass.domain.domains.commission.domain.ActivityType
 import com.sclass.domain.domains.commission.domain.Commission
@@ -46,7 +47,7 @@ class GetCommissionListUseCaseTest {
             ),
     )
 
-    private fun createLesson() =
+    private fun createLesson(status: LessonStatus = LessonStatus.SCHEDULED) =
         Lesson(
             id = 1L,
             lessonType = LessonType.COMMISSION,
@@ -54,7 +55,7 @@ class GetCommissionListUseCaseTest {
             studentUserId = "student01",
             assignedTeacherUserId = "teacher01",
             name = "탐구 수업 1회차",
-            status = LessonStatus.SCHEDULED,
+            status = status,
         )
 
     private fun createDto(
@@ -135,7 +136,7 @@ class GetCommissionListUseCaseTest {
 
         assertAll(
             { assertEquals(1, result.totalElements) },
-            { assertEquals(CommissionStatus.ACCEPTED, result.content[0].status) },
+            { assertEquals(CommissionListStatus.ACCEPTED, result.content[0].status) },
         )
     }
 
@@ -154,6 +155,30 @@ class GetCommissionListUseCaseTest {
             { assertEquals("탐구 수업 1회차", result.content[0].lesson!!.name) },
             { assertEquals(LessonStatus.SCHEDULED, result.content[0].lesson!!.status) },
         )
+    }
+
+    @Test
+    fun `lesson이 진행 상태이면 목록 status를 IN_PROGRESS로 반환한다`() {
+        val lesson = createLesson(status = LessonStatus.IN_PROGRESS)
+        val dto = createDto(status = CommissionStatus.ACCEPTED, lesson = lesson)
+        val pageable = PageRequest.of(0, 20)
+        every { commissionAdaptor.searchCommissions(null, null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, null, pageable)
+
+        assertEquals(CommissionListStatus.IN_PROGRESS, result.content[0].status)
+    }
+
+    @Test
+    fun `lesson이 완료 상태이면 목록 status를 COMPLETED로 반환한다`() {
+        val lesson = createLesson(status = LessonStatus.COMPLETED)
+        val dto = createDto(status = CommissionStatus.ACCEPTED, lesson = lesson)
+        val pageable = PageRequest.of(0, 20)
+        every { commissionAdaptor.searchCommissions(null, null, null, pageable) } returns PageImpl(listOf(dto), pageable, 1)
+
+        val result = useCase.execute(null, null, null, pageable)
+
+        assertEquals(CommissionListStatus.COMPLETED, result.content[0].status)
     }
 
     @Test

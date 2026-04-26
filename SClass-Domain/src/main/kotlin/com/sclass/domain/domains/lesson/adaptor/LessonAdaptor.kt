@@ -19,6 +19,8 @@ class LessonAdaptor(
 
     fun findByIdOrNull(id: Long): Lesson? = lessonRepository.findByIdOrNull(id)
 
+    fun findAllByIds(ids: Collection<Long>): List<Lesson> = lessonRepository.findAllById(ids)
+
     fun findAllByEnrollment(enrollmentId: Long): List<Lesson> =
         lessonRepository.findAllByEnrollmentIdOrderByLessonNumberAscCreatedAtAsc(enrollmentId)
 
