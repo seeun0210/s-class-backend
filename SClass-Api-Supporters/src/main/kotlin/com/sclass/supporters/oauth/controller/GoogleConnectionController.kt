@@ -7,9 +7,11 @@ import com.sclass.common.exception.ForbiddenException
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
+import com.sclass.supporters.oauth.dto.GoogleOAuthStateResponse
 import com.sclass.supporters.oauth.usecase.ConnectGoogleUseCase
 import com.sclass.supporters.oauth.usecase.DisconnectGoogleUseCase
 import com.sclass.supporters.oauth.usecase.GetGoogleConnectionStatusUseCase
+import com.sclass.supporters.oauth.usecase.IssueGoogleOAuthStateUseCase
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,6 +26,7 @@ class GoogleConnectionController(
     private val connectGoogleUseCase: ConnectGoogleUseCase,
     private val disconnectGoogleUseCase: DisconnectGoogleUseCase,
     private val getStatusUseCase: GetGoogleConnectionStatusUseCase,
+    private val issueStateUseCase: IssueGoogleOAuthStateUseCase,
 ) {
     @PostMapping("/connect")
     fun connect(
@@ -53,6 +56,15 @@ class GoogleConnectionController(
         requireTeacherRole(role)
         return ApiResponse.success(getStatusUseCase.execute(userId))
     }
+
+    @GetMapping("/state")
+    fun issue(
+        @CurrentUserId userId: String,
+        @CurrentUserRole role: String,
+    ): ApiResponse<GoogleOAuthStateResponse> =
+        ApiResponse.success(
+            issueStateUseCase.execute(userId, requireTeacherRole(role)),
+        )
 
     private fun requireTeacherRole(role: String): Role {
         val currentRole =

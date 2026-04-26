@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleOAuthStateInvalidException : BusinessException(OAuthTokenErrorCode.GOOGLE_OAUTH_STATE_INVALID)
