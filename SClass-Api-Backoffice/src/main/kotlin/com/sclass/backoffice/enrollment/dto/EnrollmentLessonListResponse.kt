@@ -19,6 +19,8 @@ data class EnrollmentLessonResponse(
     val startedAt: LocalDateTime?,
     val completedAt: LocalDateTime?,
     val createdAt: LocalDateTime,
+    val googleMeetJoinUrl: String?,
+    val googleMeetCode: String?,
 ) {
     companion object {
         fun from(lesson: Lesson) =
@@ -32,6 +34,8 @@ data class EnrollmentLessonResponse(
                 startedAt = lesson.startedAt,
                 completedAt = lesson.completedAt,
                 createdAt = lesson.createdAt,
+                googleMeetJoinUrl = lesson.googleMeet?.joinUrl,
+                googleMeetCode = lesson.googleMeet?.code,
             )
     }
 }

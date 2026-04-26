@@ -24,6 +24,8 @@ data class LessonDetailResponse(
     val completedAt: LocalDateTime?,
     val inquiryPlans: List<InquiryPlanResponse>,
     val createdAt: LocalDateTime,
+    val googleMeetJoinUrl: String?,
+    val googleMeetCode: String?,
 ) {
     companion object {
         fun from(
@@ -47,6 +49,8 @@ data class LessonDetailResponse(
             completedAt = lesson.completedAt,
             inquiryPlans = inquiryPlans,
             createdAt = lesson.createdAt,
+            googleMeetJoinUrl = lesson.googleMeet?.joinUrl,
+            googleMeetCode = lesson.googleMeet?.code,
         )
     }
 }

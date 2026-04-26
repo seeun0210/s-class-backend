@@ -1,5 +1,8 @@
 package com.sclass.infrastructure.redis.exception
 
+import com.sclass.common.exception.BusinessException
+import com.sclass.common.exception.GlobalErrorCode
+
 class DistributedLockAcquisitionException(
-    key: String,
-) : RuntimeException("분산 락 획득에 실패했습니다: key=$key")
+    val key: String,
+) : BusinessException(GlobalErrorCode.LOCK_CONFLICT)

@@ -1,0 +1,7 @@
+package com.sclass.domain.domains.oauth.exception
+
+import com.sclass.common.exception.BusinessException
+
+class CentralGoogleAccountNotFoundException : BusinessException(OAuthErrorCode.CENTRAL_GOOGLE_ACCOUNT_NOT_FOUND)
+
+class CentralGoogleAccountEmailNotAllowedException : BusinessException(OAuthErrorCode.CENTRAL_GOOGLE_ACCOUNT_EMAIL_NOT_ALLOWED)

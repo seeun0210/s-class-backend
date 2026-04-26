@@ -124,6 +124,38 @@ variable "google_client_id" {
   default = ""
 }
 
+variable "google_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+variable "google_central_client_id" {
+  type    = string
+  default = ""
+}
+
+variable "google_central_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
+variable "google_calendar_central_enabled" {
+  type    = string
+  default = "false"
+}
+
+variable "google_calendar_central_calendar_id" {
+  type    = string
+  default = "primary"
+}
+
+variable "google_calendar_central_allowed_email" {
+  type    = string
+  default = ""
+}
+
 variable "kakao_client_id" {
   type    = string
   default = ""

@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleCalendarUnauthorizedException : BusinessException(OAuthTokenErrorCode.GOOGLE_CALENDAR_UNAUTHORIZED)

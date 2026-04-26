@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleCalendarScopeMissingException : BusinessException(OAuthTokenErrorCode.GOOGLE_CALENDAR_SCOPE_MISSING)

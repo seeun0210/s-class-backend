@@ -1,10 +1,14 @@
 package com.sclass.domain.domains.lesson.domain
 
 import com.sclass.domain.common.model.BaseTimeEntity
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyCompletedException
+import com.sclass.domain.domains.lesson.exception.LessonAlreadyStartedException
 import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
+import com.sclass.domain.domains.lesson.exception.LessonInvalidTimeException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -13,6 +17,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Entity
@@ -61,6 +66,8 @@ class Lesson(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: LessonStatus = LessonStatus.SCHEDULED,
+    @Embedded
+    var googleMeet: LessonGoogleMeet? = null,
 ) : BaseTimeEntity() {
     val effectiveTeacherUserId: String
         get() = substituteTeacherUserId ?: assignedTeacherUserId
@@ -69,21 +76,50 @@ class Lesson(
 
     fun start(
         actualTeacherUserId: String,
-        at: LocalDateTime = LocalDateTime.now(),
+        at: LocalDateTime? = null,
+        clock: Clock = Clock.systemDefaultZone(),
     ) {
         validateTransition(LessonStatus.IN_PROGRESS)
+        if (startedAt != null) throw LessonAlreadyStartedException()
+        val now = LocalDateTime.now(clock)
+        val effectiveAt = at ?: now
+        if (effectiveAt.isAfter(now)) throw LessonInvalidTimeException()
         this.actualTeacherUserId = actualTeacherUserId
-        this.startedAt = at
+        this.startedAt = effectiveAt
         this.status = LessonStatus.IN_PROGRESS
     }
 
     fun complete(
         actualTeacherUserId: String,
-        at: LocalDateTime = LocalDateTime.now(),
+        at: LocalDateTime? = null,
+        clock: Clock = Clock.systemDefaultZone(),
     ) {
         validateTransition(LessonStatus.COMPLETED)
+        if (completedAt != null) throw LessonAlreadyCompletedException()
+        val now = LocalDateTime.now(clock)
+        val effectiveAt = at ?: now
+        if (effectiveAt.isAfter(now)) throw LessonInvalidTimeException()
+        startedAt?.let { if (effectiveAt.isBefore(it)) throw LessonInvalidTimeException() }
         this.actualTeacherUserId = actualTeacherUserId
-        this.completedAt = at
+        this.completedAt = effectiveAt
+        this.status = LessonStatus.COMPLETED
+    }
+
+    fun record(
+        actualTeacherUserId: String,
+        startedAt: LocalDateTime,
+        completedAt: LocalDateTime,
+        clock: Clock = Clock.systemDefaultZone(),
+    ) {
+        validateTransition(LessonStatus.COMPLETED)
+        if (this.startedAt != null) throw LessonAlreadyStartedException()
+        if (this.completedAt != null) throw LessonAlreadyCompletedException()
+        val now = LocalDateTime.now(clock)
+        if (startedAt.isAfter(now) || completedAt.isAfter(now)) throw LessonInvalidTimeException()
+        if (completedAt.isBefore(startedAt)) throw LessonInvalidTimeException()
+        this.actualTeacherUserId = actualTeacherUserId
+        this.startedAt = startedAt
+        this.completedAt = completedAt
         this.status = LessonStatus.COMPLETED
     }
 
@@ -110,11 +146,31 @@ class Lesson(
         name: String?,
         scheduledAt: LocalDateTime?,
     ) {
+        validateScheduleUpdatable()
+        name?.let { this.name = it }
+        scheduledAt?.let { this.scheduledAt = it }
+    }
+
+    fun deleteSchedule() {
+        validateScheduleUpdatable()
+        this.scheduledAt = null
+        this.googleMeet = null
+    }
+
+    fun hasGoogleCalendarEvent(): Boolean = googleMeet?.calendarEventId?.isNotBlank() == true
+
+    fun validateScheduleUpdatable() {
         if (status != LessonStatus.SCHEDULED) {
             throw LessonInvalidStatusTransitionException()
         }
-        name?.let { this.name = it }
-        scheduledAt?.let { this.scheduledAt = it }
+    }
+
+    fun attachGoogleMeet(
+        eventId: String,
+        meetJoinUrl: String,
+        meetCode: String?,
+    ) {
+        this.googleMeet = LessonGoogleMeet(eventId, meetJoinUrl, meetCode)
     }
 
     private fun validateTransition(target: LessonStatus) {
@@ -126,5 +182,9 @@ class Lesson(
                 LessonStatus.CANCELLED -> setOf(LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS)
             }
         if (status !in allowed) throw LessonInvalidStatusTransitionException()
+    }
+
+    companion object {
+        const val DEFAULT_DURATION_MINUTES = 60L
     }
 }
