@@ -102,7 +102,7 @@ class CreateLessonScheduleUseCase(
         result: GoogleCalendarEventResult,
     ): LessonResponse =
         txTemplate.execute {
-            val lesson = lessonAdaptor.findById(lessonId)
+            val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
             lesson.validateScheduleUpdatable()
             validateNoScheduleConflict(lesson, scheduledAt)

@@ -115,7 +115,51 @@ class DeleteLessonScheduleUseCaseTest {
         }
         verify(exactly = 1) { lessonAdaptor.save(lesson) }
         verify(exactly = 1) { centralGoogleAccountAdaptor.save(account) }
-        verify(exactly = 1) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
+        verify(exactly = 2) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
+    }
+
+    @Test
+    fun `Google Meet 일정 취소에 실패하면 삭제한 lesson 일정을 복구한다`() {
+        val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
+        val googleMeet = LessonGoogleMeet("event-id", "https://meet.google.com/abc-defg-hij", "abc-defg-hij")
+        val lesson =
+            lesson(
+                scheduledAt = scheduledAt,
+                googleMeet = googleMeet,
+            )
+        val account = centralGoogleAccount()
+        val calendarException = RuntimeException("calendar delete failed")
+
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
+        every { calendarClientProvider.getIfAvailable() } returns calendarClient
+        every { centralGoogleAccountAdaptor.findGoogle() } returns account
+        every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every {
+            calendarClient.deleteMeetEventWithRefreshToken(
+                refreshToken = "refresh-token",
+                eventId = "event-id",
+                sendUpdates = true,
+            )
+        } throws calendarException
+
+        val thrown =
+            assertThrows<RuntimeException> {
+                useCase.execute(
+                    userId = teacherUserId,
+                    lessonId = 1L,
+                )
+            }
+
+        assertAll(
+            { assertEquals(calendarException, thrown) },
+            { assertEquals(scheduledAt, lesson.scheduledAt) },
+            { assertEquals("event-id", lesson.googleMeet?.calendarEventId) },
+            { assertEquals("https://meet.google.com/abc-defg-hij", lesson.googleMeet?.joinUrl) },
+            { assertEquals("abc-defg-hij", lesson.googleMeet?.code) },
+        )
+        verify(exactly = 2) { lessonAdaptor.save(lesson) }
+        verify(exactly = 0) { centralGoogleAccountAdaptor.save(account) }
     }
 
     @Test
