@@ -1,0 +1,229 @@
+package com.sclass.infrastructure.calendar
+
+import com.sclass.common.exception.GoogleCalendarRequestFailedException
+import com.sclass.common.exception.GoogleCalendarUnauthorizedException
+import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
+import com.sclass.infrastructure.calendar.dto.CreateGoogleCalendarEventCommand
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarConferenceResponse
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEntryPoint
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
+import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
+class GoogleCalendarClientTest {
+    private lateinit var webClient: WebClient
+    private lateinit var requestBodyUriSpec: WebClient.RequestBodyUriSpec
+    private lateinit var requestBodySpec: WebClient.RequestBodySpec
+    private lateinit var requestHeadersSpec: WebClient.RequestHeadersSpec<*>
+    private lateinit var responseSpec: WebClient.ResponseSpec
+    private lateinit var authorizationCodeClient: GoogleAuthorizationCodeClient
+    private lateinit var client: GoogleCalendarClient
+
+    private val command =
+        CreateGoogleCalendarEventCommand(
+            accessToken = "expired-access-token",
+            refreshToken = "refresh-token",
+            summary = "수학 1회차",
+            startAt = ZonedDateTime.of(2026, 4, 26, 14, 0, 0, 0, ZoneId.of("Asia/Seoul")),
+            endAt = ZonedDateTime.of(2026, 4, 26, 15, 0, 0, 0, ZoneId.of("Asia/Seoul")),
+        )
+
+    @BeforeEach
+    fun setUp() {
+        webClient = mockk()
+        requestBodyUriSpec = mockk()
+        requestBodySpec = mockk()
+        requestHeadersSpec = mockk()
+        responseSpec = mockk()
+        authorizationCodeClient = mockk()
+        client = GoogleCalendarClient(webClient, authorizationCodeClient)
+    }
+
+    private fun mockCreateEventCall(requestSlot: MutableList<GoogleCalendarEventRequest> = mutableListOf()) {
+        every { webClient.post() } returns requestBodyUriSpec
+        every { requestBodyUriSpec.uri(CALENDAR_EVENTS_URI) } returns requestBodySpec
+        every { requestBodySpec.header(HttpHeaders.AUTHORIZATION, any()) } returns requestBodySpec
+        every { requestBodySpec.bodyValue(capture(requestSlot)) } returns requestHeadersSpec
+        every { requestHeadersSpec.retrieve() } returns responseSpec
+    }
+
+    @Test
+    fun `Calendar event 생성 응답에서 video entryPoint를 Meet 링크로 반환한다`() {
+        val requestSlot = mutableListOf<GoogleCalendarEventRequest>()
+        mockCreateEventCall(requestSlot)
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = "https://meet.google.com/abc-defg-hij"))
+
+        val result = client.createMeetEvent(command)
+
+        assertAll(
+            { assertEquals("event-id-1", result.eventId) },
+            { assertEquals("https://meet.google.com/abc-defg-hij", result.meetJoinUrl) },
+            { assertEquals("수학 1회차", requestSlot.single().summary) },
+            { assertEquals("2026-04-26T14:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("Asia/Seoul", requestSlot.single().start.timeZone) },
+            {
+                assertEquals(
+                    "hangoutsMeet",
+                    requestSlot
+                        .single()
+                        .conferenceData
+                        .createRequest
+                        .conferenceSolutionKey
+                        .type,
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `video entryPoint가 없으면 hangoutLink를 Meet 링크로 반환한다`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = null, hangoutLink = "https://meet.google.com/hangout-link"))
+
+        val result = client.createMeetEvent(command)
+
+        assertEquals("https://meet.google.com/hangout-link", result.meetJoinUrl)
+    }
+
+    @Test
+    fun `access token 인증 실패 시 refresh token으로 갱신 후 한 번 재시도한다`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returnsMany
+            listOf(
+                Mono.error(webClientException(HttpStatus.UNAUTHORIZED)),
+                Mono.just(calendarResponse(meetUri = "https://meet.google.com/refreshed")),
+            )
+        every { authorizationCodeClient.refreshAccessToken("refresh-token") } returns "refreshed-access-token"
+
+        val result = client.createMeetEvent(command)
+
+        assertEquals("https://meet.google.com/refreshed", result.meetJoinUrl)
+        verify { requestBodySpec.header(HttpHeaders.AUTHORIZATION, "Bearer expired-access-token") }
+        verify { requestBodySpec.header(HttpHeaders.AUTHORIZATION, "Bearer refreshed-access-token") }
+        verify { authorizationCodeClient.refreshAccessToken("refresh-token") }
+    }
+
+    @Test
+    fun `refresh token 갱신에 실패하면 GoogleCalendarUnauthorizedException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.error(webClientException(HttpStatus.UNAUTHORIZED))
+        every { authorizationCodeClient.refreshAccessToken("refresh-token") } throws RuntimeException("revoked")
+
+        assertThrows<GoogleCalendarUnauthorizedException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
+    fun `refresh 후 재시도도 인증 실패하면 GoogleCalendarUnauthorizedException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returnsMany
+            listOf(
+                Mono.error(webClientException(HttpStatus.UNAUTHORIZED)),
+                Mono.error(webClientException(HttpStatus.FORBIDDEN)),
+            )
+        every { authorizationCodeClient.refreshAccessToken("refresh-token") } returns "refreshed-access-token"
+
+        assertThrows<GoogleCalendarUnauthorizedException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
+    fun `Google Calendar 4xx 응답은 GoogleCalendarRequestFailedException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.error(webClientException(HttpStatus.BAD_REQUEST))
+
+        assertThrows<GoogleCalendarRequestFailedException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
+    fun `Google Calendar 5xx 응답은 GoogleOAuthProviderUnavailableException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.error(webClientException(HttpStatus.SERVICE_UNAVAILABLE))
+
+        assertThrows<GoogleOAuthProviderUnavailableException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
+    fun `응답에 event id가 없으면 GoogleCalendarRequestFailedException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(id = null, meetUri = "https://meet.google.com/abc-defg-hij"))
+
+        assertThrows<GoogleCalendarRequestFailedException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    @Test
+    fun `응답에 Meet 링크가 없으면 GoogleCalendarRequestFailedException`() {
+        mockCreateEventCall()
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = null, hangoutLink = null))
+
+        assertThrows<GoogleCalendarRequestFailedException> {
+            client.createMeetEvent(command)
+        }
+    }
+
+    private fun calendarResponse(
+        id: String? = "event-id-1",
+        meetUri: String?,
+        hangoutLink: String? = null,
+    ): GoogleCalendarEventResponse =
+        GoogleCalendarEventResponse(
+            id = id,
+            hangoutLink = hangoutLink,
+            conferenceData =
+                GoogleCalendarConferenceResponse(
+                    entryPoints =
+                        listOfNotNull(
+                            meetUri?.let {
+                                GoogleCalendarEntryPoint(
+                                    entryPointType = "video",
+                                    uri = it,
+                                )
+                            },
+                        ),
+                ),
+        )
+
+    private fun webClientException(status: HttpStatus): WebClientResponseException =
+        WebClientResponseException.create(
+            status.value(),
+            status.reasonPhrase,
+            HttpHeaders.EMPTY,
+            ByteArray(0),
+            null,
+        )
+
+    private companion object {
+        const val CALENDAR_EVENTS_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+    }
+}
