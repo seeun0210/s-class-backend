@@ -130,6 +130,17 @@ variable "google_client_secret" {
   sensitive = true
 }
 
+variable "google_central_client_id" {
+  type    = string
+  default = ""
+}
+
+variable "google_central_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
 variable "google_calendar_central_enabled" {
   type    = string
   default = "false"

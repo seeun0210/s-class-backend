@@ -16,4 +16,5 @@ enum class OAuthTokenErrorCode(
     GOOGLE_OAUTH_STATE_INVALID("OAUTH_019", "Google OAuth state가 유효하지 않습니다", 400),
     GOOGLE_CALENDAR_REQUEST_FAILED("OAUTH_020", "Google Calendar 요청에 실패했습니다", 400),
     GOOGLE_CALENDAR_UNAUTHORIZED("OAUTH_021", "Google Calendar 인증에 실패했습니다", 401),
+    GOOGLE_DRIVE_SCOPE_MISSING("OAUTH_022", "Google Meet 녹화 파일 조회를 위한 drive.meet.readonly scope가 필요합니다", 400),
 }

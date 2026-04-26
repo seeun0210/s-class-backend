@@ -2,7 +2,7 @@ package com.sclass.infrastructure.calendar
 
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
-import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.oauth.client.CentralGoogleAuthorizationCodeClient
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -12,7 +12,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class CentralGoogleCalendarClientTest {
-    private val authorizationCodeClient: GoogleAuthorizationCodeClient = mockk()
+    private val authorizationCodeClient: CentralGoogleAuthorizationCodeClient = mockk()
     private val googleCalendarClient: GoogleCalendarClient = mockk()
     private val properties =
         GoogleCentralCalendarProperties().apply {

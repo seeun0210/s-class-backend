@@ -3,14 +3,14 @@ package com.sclass.backoffice.oauth.usecase
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
-import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.oauth.client.CentralGoogleAuthorizationCodeClient
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.annotation.Transactional
 
 @UseCase
 class DisconnectCentralGoogleUseCase(
     private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor,
-    private val googleClient: GoogleAuthorizationCodeClient,
+    private val googleClient: CentralGoogleAuthorizationCodeClient,
     private val encryptor: AesTokenEncryptor,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)

@@ -29,7 +29,7 @@ class GetCentralGoogleConnectionStatusUseCaseTest {
             CentralGoogleAccount(
                 googleEmail = "central-google@example.com",
                 encryptedRefreshToken = "encrypted-token",
-                scope = "email https://www.googleapis.com/auth/calendar.events",
+                scope = CentralGoogleOAuthScopes.authorizationScopes.joinToString(" "),
                 connectedByAdminUserId = "admin-user-id-0000000001",
                 connectedAt = connectedAt,
             )

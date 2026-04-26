@@ -1,13 +1,14 @@
 package com.sclass.backoffice.oauth.usecase
 
 import com.sclass.backoffice.oauth.dto.ConnectCentralGoogleRequest
+import com.sclass.common.exception.GoogleDriveScopeMissingException
 import com.sclass.common.exception.GoogleOAuthStateInvalidException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.CentralGoogleAccount
 import com.sclass.domain.domains.oauth.exception.CentralGoogleAccountEmailNotAllowedException
 import com.sclass.infrastructure.calendar.GoogleCentralCalendarProperties
-import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.oauth.client.CentralGoogleAuthorizationCodeClient
 import com.sclass.infrastructure.oauth.dto.GoogleTokenExchangeResponse
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
 import com.sclass.infrastructure.oauth.state.GoogleOAuthStateStore
@@ -23,7 +24,9 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 class ConnectCentralGoogleUseCaseTest {
-    private val googleClient: GoogleAuthorizationCodeClient = mockk()
+    private val grantedScope = CentralGoogleOAuthScopes.authorizationScopes.joinToString(" ")
+
+    private val googleClient: CentralGoogleAuthorizationCodeClient = mockk()
     private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor = mockk()
     private val encryptor: AesTokenEncryptor = mockk()
     private val stateStore: GoogleOAuthStateStore = mockk()
@@ -55,7 +58,7 @@ class ConnectCentralGoogleUseCaseTest {
             GoogleTokenExchangeResponse(
                 accessToken = "access-token",
                 refreshToken = "refresh-token",
-                scope = "email https://www.googleapis.com/auth/calendar.events",
+                scope = grantedScope,
             )
         every { googleClient.fetchUserInfo("access-token") } returns
             GoogleUserInfoResponse(
@@ -74,7 +77,7 @@ class ConnectCentralGoogleUseCaseTest {
             { assertEquals("central-google@example.com", response.allowedEmail) },
             { assertEquals("admin-user-id-0000000001", response.connectedByAdminUserId) },
             { assertEquals(fixedNow, response.connectedAt) },
-            { assertEquals("email https://www.googleapis.com/auth/calendar.events", response.scope) },
+            { assertEquals(grantedScope, response.scope) },
         )
         verify {
             centralGoogleAccountAdaptor.save(
@@ -96,7 +99,7 @@ class ConnectCentralGoogleUseCaseTest {
             GoogleTokenExchangeResponse(
                 accessToken = "access-token",
                 refreshToken = "refresh-token",
-                scope = "email https://www.googleapis.com/auth/calendar.events",
+                scope = grantedScope,
             )
         every { googleClient.fetchUserInfo("access-token") } returns
             GoogleUserInfoResponse(
@@ -140,7 +143,7 @@ class ConnectCentralGoogleUseCaseTest {
             GoogleTokenExchangeResponse(
                 accessToken = "access-token",
                 refreshToken = "refresh-token",
-                scope = "email https://www.googleapis.com/auth/calendar.events",
+                scope = grantedScope,
             )
         every { googleClient.fetchUserInfo("access-token") } returns
             GoogleUserInfoResponse(
@@ -157,7 +160,26 @@ class ConnectCentralGoogleUseCaseTest {
             { assertEquals("new-encrypted-refresh-token", existing.encryptedRefreshToken) },
             { assertEquals("admin-user-id-0000000001", existing.connectedByAdminUserId) },
             { assertEquals(fixedNow, existing.connectedAt) },
-            { assertEquals("email https://www.googleapis.com/auth/calendar.events", existing.scope) },
+            { assertEquals(grantedScope, existing.scope) },
         )
+    }
+
+    @Test
+    fun `Google Meet 녹화 파일 조회 scope가 없으면 실패한다`() {
+        val request = ConnectCentralGoogleRequest(code = "auth-code", redirectUri = "https://backoffice/callback", state = "state")
+        every { stateStore.consume("admin-user-id-0000000001", "state") } returns true
+        every { googleClient.exchangeCodeForTokens("auth-code", "https://backoffice/callback") } returns
+            GoogleTokenExchangeResponse(
+                accessToken = "access-token",
+                refreshToken = "refresh-token",
+                scope = "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/calendar.events",
+            )
+
+        assertThrows<GoogleDriveScopeMissingException> {
+            useCase.execute("admin-user-id-0000000001", request)
+        }
+
+        verify(exactly = 0) { googleClient.fetchUserInfo(any()) }
+        verify(exactly = 0) { centralGoogleAccountAdaptor.save(any()) }
     }
 }

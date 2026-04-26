@@ -21,4 +21,28 @@ class GoogleCentralCalendarPropertiesTest {
             GoogleCentralCalendarProperties().requireAllowedEmail()
         }
     }
+
+    @Test
+    fun `central client id와 secret이 있으면 반환한다`() {
+        val properties =
+            GoogleCentralCalendarProperties().apply {
+                clientId = "central-client-id"
+                clientSecret = "central-client-secret"
+            }
+
+        assertEquals("central-client-id", properties.requireClientId())
+        assertEquals("central-client-secret", properties.requireClientSecret())
+    }
+
+    @Test
+    fun `central client id와 secret이 없으면 예외`() {
+        val properties = GoogleCentralCalendarProperties()
+
+        assertThrows<IllegalStateException> {
+            properties.requireClientId()
+        }
+        assertThrows<IllegalStateException> {
+            properties.requireClientSecret()
+        }
+    }
 }
