@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleCalendarRequestFailedException : BusinessException(OAuthTokenErrorCode.GOOGLE_CALENDAR_REQUEST_FAILED)

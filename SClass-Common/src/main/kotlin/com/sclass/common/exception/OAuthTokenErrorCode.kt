@@ -14,4 +14,6 @@ enum class OAuthTokenErrorCode(
     GOOGLE_CALENDAR_SCOPE_MISSING("OAUTH_017", "Google Calendar 연동을 위한 calendar.events scope가 필요합니다", 400),
     GOOGLE_OAUTH_PROVIDER_UNAVAILABLE("OAUTH_018", "Google OAuth 서버가 일시적으로 응답하지 않습니다", 503),
     GOOGLE_OAUTH_STATE_INVALID("OAUTH_019", "Google OAuth state가 유효하지 않습니다", 400),
+    GOOGLE_CALENDAR_REQUEST_FAILED("OAUTH_020", "Google Calendar 요청에 실패했습니다", 400),
+    GOOGLE_CALENDAR_UNAUTHORIZED("OAUTH_021", "Google Calendar 인증에 실패했습니다", 401),
 }
