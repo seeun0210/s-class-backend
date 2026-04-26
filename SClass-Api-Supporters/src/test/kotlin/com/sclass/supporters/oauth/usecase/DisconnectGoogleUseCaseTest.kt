@@ -4,11 +4,17 @@ import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.oauth.adaptor.TeacherGoogleAccountAdaptor
 import com.sclass.domain.domains.oauth.domain.TeacherGoogleAccount
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertAll
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -83,5 +89,18 @@ class DisconnectGoogleUseCaseTest {
         useCase.execute(userId)
 
         verify { accountAdaptor.deleteByUserId(userId) }
+    }
+
+    @Test
+    fun `connect와 disconnect 경합을 막기 위해 userId 기반 분산 락이 적용된다`() {
+        val method = DisconnectGoogleUseCase::class.java.getDeclaredMethod("execute", String::class.java)
+        val lock = method.getAnnotation(DistributedLock::class.java)
+
+        assertAll(
+            { assertNotNull(lock) },
+            { assertEquals("teacher-google-account", lock.prefix) },
+            { assertEquals(30L, lock.waitTime) },
+            { assertTrue(method.parameters[0].isAnnotationPresent(LockKey::class.java)) },
+        )
     }
 }
