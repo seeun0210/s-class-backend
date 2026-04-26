@@ -64,6 +64,7 @@ class LessonScheduleUseCaseTest {
         every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
             firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
         }
+        every { userAdaptor.lockByIdsForUpdate(any()) } just Runs
         createUseCase =
             CreateLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,

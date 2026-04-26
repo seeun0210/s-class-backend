@@ -105,6 +105,15 @@ class UpdateLessonScheduleUseCase(
         }
     }
 
+    private fun lockScheduleParticipants(lesson: Lesson) {
+        userAdaptor.lockByIdsForUpdate(
+            listOf(
+                lesson.studentUserId,
+                lesson.effectiveTeacherUserId,
+            ),
+        )
+    }
+
     private fun saveSchedule(
         lessonId: Long,
         request: ScheduleLessonRequest,
@@ -115,6 +124,7 @@ class UpdateLessonScheduleUseCase(
             val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
             if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
+            lockScheduleParticipants(lesson)
             validateNoScheduleConflict(lesson, scheduledAt)
 
             lesson.updateSchedule(request.name, scheduledAt)

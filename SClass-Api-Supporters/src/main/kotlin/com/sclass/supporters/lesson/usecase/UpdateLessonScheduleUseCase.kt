@@ -112,6 +112,15 @@ class UpdateLessonScheduleUseCase(
         }
     }
 
+    private fun lockScheduleParticipants(lesson: Lesson) {
+        userAdaptor.lockByIdsForUpdate(
+            listOf(
+                lesson.studentUserId,
+                lesson.effectiveTeacherUserId,
+            ),
+        )
+    }
+
     private fun saveSchedule(
         userId: String,
         lessonId: Long,
@@ -124,6 +133,7 @@ class UpdateLessonScheduleUseCase(
             if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
+            lockScheduleParticipants(lesson)
             validateNoScheduleConflict(lesson, scheduledAt)
 
             lesson.updateSchedule(request.name, scheduledAt)
