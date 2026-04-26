@@ -105,7 +105,8 @@ class GoogleCalendarClientTest {
             { assertEquals("event-id-1", result.eventId) },
             { assertEquals("https://meet.google.com/abc-defg-hij", result.meetJoinUrl) },
             { assertEquals("수학 1회차", requestSlot.single().summary) },
-            { assertEquals("2026-04-26T14:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("2026-04-26T14:00:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("2026-04-26T15:00:00+09:00", requestSlot.single().end.dateTime) },
             { assertEquals("Asia/Seoul", requestSlot.single().start.timeZone) },
             {
                 assertEquals(
@@ -206,7 +207,8 @@ class GoogleCalendarClientTest {
             { assertEquals("https://meet.google.com/updated-code", result.meetJoinUrl) },
             { assertEquals("updated-code", result.meetCode) },
             { assertEquals("변경된 수학 1회차", requestSlot.single().summary) },
-            { assertEquals("2026-04-27T14:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("2026-04-27T14:00:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("2026-04-27T15:00:00+09:00", requestSlot.single().end.dateTime) },
             { assertEquals("Asia/Seoul", requestSlot.single().start.timeZone) },
             { assertEquals(listOf("teacher@example.com"), requestSlot.single().attendees.map { it.email }) },
         )

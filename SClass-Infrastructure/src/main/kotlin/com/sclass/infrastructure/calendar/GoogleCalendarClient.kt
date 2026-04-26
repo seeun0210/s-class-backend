@@ -22,6 +22,8 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
@@ -148,12 +150,12 @@ class GoogleCalendarClient(
             summary = summary,
             start =
                 GoogleCalendarEventDateTime(
-                    dateTime = startAt.toOffsetDateTime().toString(),
+                    dateTime = startAt.toGoogleCalendarDateTime(),
                     timeZone = startAt.zone.id,
                 ),
             end =
                 GoogleCalendarEventDateTime(
-                    dateTime = endAt.toOffsetDateTime().toString(),
+                    dateTime = endAt.toGoogleCalendarDateTime(),
                     timeZone = endAt.zone.id,
                 ),
             conferenceData =
@@ -171,12 +173,12 @@ class GoogleCalendarClient(
             summary = summary,
             start =
                 GoogleCalendarEventDateTime(
-                    dateTime = startAt.toOffsetDateTime().toString(),
+                    dateTime = startAt.toGoogleCalendarDateTime(),
                     timeZone = startAt.zone.id,
                 ),
             end =
                 GoogleCalendarEventDateTime(
-                    dateTime = endAt.toOffsetDateTime().toString(),
+                    dateTime = endAt.toGoogleCalendarDateTime(),
                     timeZone = endAt.zone.id,
                 ),
             attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
@@ -260,12 +262,15 @@ class GoogleCalendarClient(
             .substringBefore("?")
             .takeIf { it.isNotBlank() }
 
+    private fun ZonedDateTime.toGoogleCalendarDateTime(): String = toOffsetDateTime().format(GOOGLE_CALENDAR_DATE_TIME_FORMATTER)
+
     private companion object {
         const val PRIMARY_CALENDAR_ID = "primary"
         const val UNAUTHORIZED_STATUS = 401
         const val FORBIDDEN_STATUS = 403
         const val TOO_MANY_REQUESTS_STATUS = 429
         const val GOOGLE_RESOURCE_EXHAUSTED_STATUS = "RESOURCE_EXHAUSTED"
+        val GOOGLE_CALENDAR_DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
         val GOOGLE_CALENDAR_RETRYABLE_FORBIDDEN_REASONS =
             setOf(
                 "dailyLimitExceeded",
