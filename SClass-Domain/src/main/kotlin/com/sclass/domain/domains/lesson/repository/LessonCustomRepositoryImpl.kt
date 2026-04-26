@@ -1,8 +1,11 @@
 package com.sclass.domain.domains.lesson.repository
 
+import com.querydsl.core.types.dsl.BooleanExpression
 import com.querydsl.jpa.impl.JPAQueryFactory
 import com.sclass.domain.domains.lesson.domain.Lesson
+import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.QLesson
+import java.time.LocalDateTime
 
 class LessonCustomRepositoryImpl(
     private val queryFactory: JPAQueryFactory,
@@ -21,4 +24,42 @@ class LessonCustomRepositoryImpl(
                         ),
                     ),
             ).fetch()
+
+    override fun existsScheduleConflict(
+        studentUserId: String,
+        teacherUserId: String,
+        scheduledAt: LocalDateTime,
+        durationMinutes: Long,
+        excludeLessonId: Long,
+    ): Boolean {
+        val lesson = QLesson.lesson
+        val conflictStartAt = scheduledAt.minusMinutes(durationMinutes)
+        val conflictEndAt = scheduledAt.plusMinutes(durationMinutes)
+
+        return queryFactory
+            .selectOne()
+            .from(lesson)
+            .where(
+                lesson.id.ne(excludeLessonId),
+                lesson.status.`in`(SCHEDULE_CONFLICT_TARGET_STATUSES),
+                lesson.scheduledAt.gt(conflictStartAt),
+                lesson.scheduledAt.lt(conflictEndAt),
+                lesson.studentUserId
+                    .eq(studentUserId)
+                    .or(lesson.effectiveTeacherEq(teacherUserId)),
+            ).fetchFirst() != null
+    }
+
+    private fun QLesson.effectiveTeacherEq(teacherUserId: String): BooleanExpression =
+        substituteTeacherUserId
+            .eq(teacherUserId)
+            .or(
+                substituteTeacherUserId.isNull.and(
+                    assignedTeacherUserId.eq(teacherUserId),
+                ),
+            )
+
+    private companion object {
+        val SCHEDULE_CONFLICT_TARGET_STATUSES = listOf(LessonStatus.SCHEDULED, LessonStatus.IN_PROGRESS)
+    }
 }

@@ -7,6 +7,7 @@ data class GoogleCalendarEventResponse(
 )
 
 data class GoogleCalendarConferenceResponse(
+    val conferenceId: String? = null,
     val entryPoints: List<GoogleCalendarEntryPoint> = emptyList(),
 )
 

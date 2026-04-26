@@ -8,6 +8,7 @@ import com.sclass.domain.domains.lesson.exception.LessonInvalidTimeException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteAssignNotAllowedException
 import com.sclass.domain.domains.lesson.exception.LessonSubstituteSameAsAssignedException
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -65,6 +66,8 @@ class Lesson(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: LessonStatus = LessonStatus.SCHEDULED,
+    @Embedded
+    var googleMeet: LessonGoogleMeet? = null,
 ) : BaseTimeEntity() {
     val effectiveTeacherUserId: String
         get() = substituteTeacherUserId ?: assignedTeacherUserId
@@ -148,6 +151,16 @@ class Lesson(
         }
         name?.let { this.name = it }
         scheduledAt?.let { this.scheduledAt = it }
+    }
+
+    fun hasGoogleCalendarEvent(): Boolean = googleMeet?.calendarEventId?.isNotBlank() == true
+
+    fun attachGoogleMeet(
+        eventId: String,
+        meetJoinUrl: String,
+        meetCode: String?,
+    ) {
+        this.googleMeet = LessonGoogleMeet(eventId, meetJoinUrl, meetCode)
     }
 
     private fun validateTransition(target: LessonStatus) {

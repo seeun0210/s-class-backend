@@ -58,7 +58,7 @@ class GoogleCalendarClient(
         accessToken: String,
         calendarId: String = PRIMARY_CALENDAR_ID,
     ): GoogleCalendarEventResult {
-        val request = command.toRequest()
+        val request = command.toCreateRequest()
         val response =
             try {
                 webClient
@@ -84,7 +84,39 @@ class GoogleCalendarClient(
         return response.toResult()
     }
 
-    private fun GoogleCalendarEventCreateCommand.toRequest(): GoogleCalendarEventRequest =
+    fun updateMeetEventWithAccessToken(
+        eventId: String,
+        command: GoogleCalendarEventCreateCommand,
+        accessToken: String,
+        calendarId: String = PRIMARY_CALENDAR_ID,
+    ): GoogleCalendarEventResult {
+        val request = command.toUpdateRequest()
+        val response =
+            try {
+                webClient
+                    .patch()
+                    .uri(calendarEventUri(calendarId, eventId, sendUpdates = command.attendeeEmails.isNotEmpty()))
+                    .header("Authorization", "Bearer $accessToken")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(GoogleCalendarEventResponse::class.java)
+                    .block()
+            } catch (e: WebClientResponseException) {
+                log.warn("Google Calendar event update failed:${e.responseBodyAsString}", e)
+                if (e.isRetryableProviderFailure()) {
+                    throw GoogleOAuthProviderUnavailableException()
+                }
+                if (e.isAuthorizationFailure()) throw e
+                throw GoogleCalendarRequestFailedException()
+            } catch (e: Exception) {
+                log.warn("Google Calendar event update failed", e)
+                throw GoogleOAuthProviderUnavailableException()
+            }
+
+        return response.toResult()
+    }
+
+    private fun GoogleCalendarEventCreateCommand.toCreateRequest(): GoogleCalendarEventRequest =
         GoogleCalendarEventRequest(
             summary = summary,
             start =
@@ -107,6 +139,22 @@ class GoogleCalendarClient(
             attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
         )
 
+    private fun GoogleCalendarEventCreateCommand.toUpdateRequest(): GoogleCalendarEventRequest =
+        GoogleCalendarEventRequest(
+            summary = summary,
+            start =
+                GoogleCalendarEventDateTime(
+                    dateTime = startAt.toOffsetDateTime().toString(),
+                    timeZone = startAt.zone.id,
+                ),
+            end =
+                GoogleCalendarEventDateTime(
+                    dateTime = endAt.toOffsetDateTime().toString(),
+                    timeZone = endAt.zone.id,
+                ),
+            attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
+        )
+
     private fun GoogleCalendarEventResponse?.toResult(): GoogleCalendarEventResult {
         val eventId = this?.id ?: throw GoogleCalendarRequestFailedException()
         val meetJoinUrl =
@@ -121,6 +169,9 @@ class GoogleCalendarClient(
         return GoogleCalendarEventResult(
             eventId = eventId,
             meetJoinUrl = meetJoinUrl,
+            meetCode =
+                conferenceData?.conferenceId
+                    ?: meetJoinUrl.extractMeetCode(),
         )
     }
 
@@ -156,6 +207,31 @@ class GoogleCalendarClient(
                 reasons.any { it in GOOGLE_CALENDAR_RETRYABLE_FORBIDDEN_REASONS }
         }.getOrDefault(false)
     }
+
+    private fun calendarEventUri(
+        calendarId: String,
+        eventId: String,
+        sendUpdates: Boolean,
+    ): String {
+        val sendUpdatesQuery = if (sendUpdates) "&sendUpdates=all" else ""
+        val encodedCalendarId =
+            URLEncoder.encode(
+                calendarId,
+                StandardCharsets.UTF_8,
+            )
+        val encodedEventId =
+            URLEncoder.encode(
+                eventId,
+                StandardCharsets.UTF_8,
+            )
+        return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events/$encodedEventId" +
+            "?conferenceDataVersion=1$sendUpdatesQuery"
+    }
+
+    private fun String.extractMeetCode(): String? =
+        substringAfterLast("/")
+            .substringBefore("?")
+            .takeIf { it.isNotBlank() }
 
     private companion object {
         const val PRIMARY_CALENDAR_ID = "primary"

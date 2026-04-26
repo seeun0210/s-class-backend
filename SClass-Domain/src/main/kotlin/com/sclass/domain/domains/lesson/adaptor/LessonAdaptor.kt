@@ -6,6 +6,7 @@ import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.exception.LessonNotFoundException
 import com.sclass.domain.domains.lesson.repository.LessonRepository
 import org.springframework.data.repository.findByIdOrNull
+import java.time.LocalDateTime
 
 @Adaptor
 class LessonAdaptor(
@@ -34,4 +35,19 @@ class LessonAdaptor(
 
     fun findCompletedByActualTeacher(teacherUserId: String): List<Lesson> =
         lessonRepository.findAllByActualTeacherUserIdAndStatus(teacherUserId, LessonStatus.COMPLETED)
+
+    fun existsScheduleConflict(
+        studentUserId: String,
+        teacherUserId: String,
+        scheduledAt: LocalDateTime,
+        durationMinutes: Long,
+        excludeLessonId: Long,
+    ): Boolean =
+        lessonRepository.existsScheduleConflict(
+            studentUserId = studentUserId,
+            teacherUserId = teacherUserId,
+            scheduledAt = scheduledAt,
+            durationMinutes = durationMinutes,
+            excludeLessonId = excludeLessonId,
+        )
 }

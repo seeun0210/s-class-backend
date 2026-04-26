@@ -66,6 +66,17 @@ class GoogleCalendarClientTest {
         every { requestHeadersSpec.retrieve() } returns responseSpec
     }
 
+    private fun mockUpdateEventCall(
+        requestSlot: MutableList<GoogleCalendarEventRequest> = mutableListOf(),
+        uri: String = CALENDAR_EVENT_URI,
+    ) {
+        every { webClient.patch() } returns requestBodyUriSpec
+        every { requestBodyUriSpec.uri(uri) } returns requestBodySpec
+        every { requestBodySpec.header(HttpHeaders.AUTHORIZATION, any()) } returns requestBodySpec
+        every { requestBodySpec.bodyValue(capture(requestSlot)) } returns requestHeadersSpec
+        every { requestHeadersSpec.retrieve() } returns responseSpec
+    }
+
     @Test
     fun `Calendar event 생성 응답에서 video entryPoint를 Meet 링크로 반환한다`() {
         val requestSlot = mutableListOf<GoogleCalendarEventRequest>()
@@ -86,12 +97,13 @@ class GoogleCalendarClientTest {
                     "hangoutsMeet",
                     requestSlot
                         .single()
-                        .conferenceData
+                        .conferenceData!!
                         .createRequest
                         .conferenceSolutionKey
                         .type,
                 )
             },
+            { assertEquals("abc-defg-hij", result.meetCode) },
         )
     }
 
@@ -99,11 +111,20 @@ class GoogleCalendarClientTest {
     fun `video entryPoint가 없으면 hangoutLink를 Meet 링크로 반환한다`() {
         mockCreateEventCall()
         every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
-            Mono.just(calendarResponse(meetUri = null, hangoutLink = "https://meet.google.com/hangout-link"))
+            Mono.just(
+                calendarResponse(
+                    meetUri = null,
+                    hangoutLink = "https://meet.google.com/hangout-link",
+                    conferenceId = null,
+                ),
+            )
 
         val result = client.createMeetEvent(command)
 
-        assertEquals("https://meet.google.com/hangout-link", result.meetJoinUrl)
+        assertAll(
+            { assertEquals("https://meet.google.com/hangout-link", result.meetJoinUrl) },
+            { assertEquals("hangout-link", result.meetCode) },
+        )
     }
 
     @Test
@@ -142,6 +163,61 @@ class GoogleCalendarClientTest {
             )
 
         assertEquals("https://meet.google.com/abc-defg-hij", result.meetJoinUrl)
+    }
+
+    @Test
+    fun `Calendar event 수정은 기존 Meet 생성을 요청하지 않고 일정과 참석자만 전송한다`() {
+        val requestSlot = mutableListOf<GoogleCalendarEventRequest>()
+        mockUpdateEventCall(requestSlot, CALENDAR_EVENT_WITH_SEND_UPDATES_URI)
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = "https://meet.google.com/updated-code", conferenceId = "updated-code"))
+        val updateCommand =
+            GoogleCalendarEventCreateCommand(
+                summary = "변경된 수학 1회차",
+                startAt = command.startAt.plusDays(1),
+                endAt = command.endAt.plusDays(1),
+                attendeeEmails = listOf("teacher@example.com"),
+            )
+
+        val result =
+            client.updateMeetEventWithAccessToken(
+                eventId = "event-id-1",
+                command = updateCommand,
+                accessToken = "access-token",
+            )
+
+        assertAll(
+            { assertEquals("event-id-1", result.eventId) },
+            { assertEquals("https://meet.google.com/updated-code", result.meetJoinUrl) },
+            { assertEquals("updated-code", result.meetCode) },
+            { assertEquals("변경된 수학 1회차", requestSlot.single().summary) },
+            { assertEquals("2026-04-27T14:00+09:00", requestSlot.single().start.dateTime) },
+            { assertEquals("Asia/Seoul", requestSlot.single().start.timeZone) },
+            { assertEquals(null, requestSlot.single().conferenceData) },
+            { assertEquals(listOf("teacher@example.com"), requestSlot.single().attendees.map { it.email }) },
+        )
+        verify { requestBodySpec.header(HttpHeaders.AUTHORIZATION, "Bearer access-token") }
+    }
+
+    @Test
+    fun `event id와 calendar id는 update URL path에 안전하게 인코딩한다`() {
+        mockUpdateEventCall(uri = CALENDAR_EVENT_WITH_ENCODED_IDS_URI)
+        every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
+            Mono.just(calendarResponse(meetUri = "https://meet.google.com/updated-code"))
+
+        client.updateMeetEventWithAccessToken(
+            eventId = "event/id with space",
+            command =
+                GoogleCalendarEventCreateCommand(
+                    summary = command.summary,
+                    startAt = command.startAt,
+                    endAt = command.endAt,
+                ),
+            accessToken = "access-token",
+            calendarId = "central@example.com",
+        )
+
+        verify { requestBodyUriSpec.uri(CALENDAR_EVENT_WITH_ENCODED_IDS_URI) }
     }
 
     @Test
@@ -279,12 +355,14 @@ class GoogleCalendarClientTest {
         id: String? = "event-id-1",
         meetUri: String?,
         hangoutLink: String? = null,
+        conferenceId: String? = "abc-defg-hij",
     ): GoogleCalendarEventResponse =
         GoogleCalendarEventResponse(
             id = id,
             hangoutLink = hangoutLink,
             conferenceData =
                 GoogleCalendarConferenceResponse(
+                    conferenceId = conferenceId,
                     entryPoints =
                         listOfNotNull(
                             meetUri?.let {
@@ -316,5 +394,11 @@ class GoogleCalendarClientTest {
             "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all"
         const val CALENDAR_EVENTS_WITH_ENCODED_CALENDAR_ID_URI =
             "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events?conferenceDataVersion=1"
+        const val CALENDAR_EVENT_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1?conferenceDataVersion=1"
+        const val CALENDAR_EVENT_WITH_SEND_UPDATES_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1?conferenceDataVersion=1&sendUpdates=all"
+        const val CALENDAR_EVENT_WITH_ENCODED_IDS_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events/event%2Fid+with+space?conferenceDataVersion=1"
     }
 }

@@ -4,7 +4,7 @@ data class GoogleCalendarEventRequest(
     val summary: String,
     val start: GoogleCalendarEventDateTime,
     val end: GoogleCalendarEventDateTime,
-    val conferenceData: GoogleCalendarConferenceData,
+    val conferenceData: GoogleCalendarConferenceData? = null,
     val attendees: List<GoogleCalendarAttendee> = emptyList(),
 )
 

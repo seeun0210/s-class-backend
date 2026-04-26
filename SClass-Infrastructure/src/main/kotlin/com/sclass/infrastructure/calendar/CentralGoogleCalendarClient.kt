@@ -32,6 +32,25 @@ class CentralGoogleCalendarClient(
         }
     }
 
+    fun updateMeetEventWithRefreshToken(
+        refreshToken: String,
+        eventId: String,
+        command: GoogleCalendarEventCreateCommand,
+    ): GoogleCalendarEventResult {
+        val accessToken = authorizationCodeClient.refreshAccessToken(refreshToken)
+        return try {
+            googleCalendarClient.updateMeetEventWithAccessToken(
+                eventId = eventId,
+                command = command,
+                accessToken = accessToken,
+                calendarId = properties.calendarId,
+            )
+        } catch (e: WebClientResponseException) {
+            if (e.isAuthorizationFailure()) throw GoogleCalendarUnauthorizedException()
+            throw e
+        }
+    }
+
     private fun WebClientResponseException.isAuthorizationFailure(): Boolean =
         statusCode.value() == UNAUTHORIZED_STATUS || statusCode.value() == FORBIDDEN_STATUS
 

@@ -299,4 +299,22 @@ class LessonTest {
             lesson.record(assignedTeacher, started, started.minusSeconds(1), clock)
         }
     }
+
+    @Test
+    fun `Google Meet 정보를 lesson에 연결한다`() {
+        val lesson = newLesson()
+
+        lesson.attachGoogleMeet(
+            eventId = "event-id",
+            meetJoinUrl = "https://meet.google.com/abc-defg-hij",
+            meetCode = "abc-defg-hij",
+        )
+
+        assertAll(
+            { assertTrue(lesson.hasGoogleCalendarEvent()) },
+            { assertEquals("event-id", lesson.googleMeet?.calendarEventId) },
+            { assertEquals("https://meet.google.com/abc-defg-hij", lesson.googleMeet?.joinUrl) },
+            { assertEquals("abc-defg-hij", lesson.googleMeet?.code) },
+        )
+    }
 }
