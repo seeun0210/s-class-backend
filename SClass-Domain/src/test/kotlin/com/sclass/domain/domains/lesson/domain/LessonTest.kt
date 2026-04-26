@@ -317,4 +317,20 @@ class LessonTest {
             { assertEquals("abc-defg-hij", lesson.googleMeet?.code) },
         )
     }
+
+    @Test
+    fun `SCHEDULED 상태의 lesson은 일정 변경 가능 검증을 통과한다`() {
+        val lesson = newLesson(status = LessonStatus.SCHEDULED)
+
+        lesson.validateScheduleUpdatable()
+    }
+
+    @Test
+    fun `SCHEDULED가 아니면 일정 변경 가능 검증 시 예외`() {
+        val lesson = newLesson(status = LessonStatus.IN_PROGRESS)
+
+        assertThrows<LessonInvalidStatusTransitionException> {
+            lesson.validateScheduleUpdatable()
+        }
+    }
 }

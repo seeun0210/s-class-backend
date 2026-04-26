@@ -75,6 +75,7 @@ class UpdateLessonScheduleUseCase(
             }
 
             val currentScheduledAt = lesson.scheduledAt ?: throw LessonScheduleNotFoundException()
+            lesson.validateScheduleUpdatable()
 
             validateNoScheduleConflict(lesson, scheduledAt)
 
@@ -122,6 +123,7 @@ class UpdateLessonScheduleUseCase(
             val lesson = lessonAdaptor.findById(lessonId)
             if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
+            lesson.validateScheduleUpdatable()
             validateNoScheduleConflict(lesson, scheduledAt)
 
             lesson.updateSchedule(request.name, scheduledAt)

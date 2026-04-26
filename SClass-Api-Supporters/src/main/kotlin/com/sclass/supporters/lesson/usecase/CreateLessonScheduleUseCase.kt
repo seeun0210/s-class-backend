@@ -64,6 +64,7 @@ class CreateLessonScheduleUseCase(
             val lesson = lessonAdaptor.findById(lessonId)
             if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
+            lesson.validateScheduleUpdatable()
 
             validateNoScheduleConflict(lesson, scheduledAt)
 
@@ -109,6 +110,7 @@ class CreateLessonScheduleUseCase(
             val lesson = lessonAdaptor.findById(lessonId)
             if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
+            lesson.validateScheduleUpdatable()
             validateNoScheduleConflict(lesson, scheduledAt)
 
             lesson.updateSchedule(request.name, scheduledAt)

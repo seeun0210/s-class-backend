@@ -19,4 +19,5 @@ enum class LessonErrorCode(
     LESSON_SCHEDULE_ALREADY_EXISTS("LESSON_010", "이미 수업 일정이 등록되어 있습니다", 409),
     LESSON_SCHEDULE_NOT_FOUND("LESSON_011", "수업 일정이 등록되어 있지 않습니다", 404),
     LESSON_SCHEDULE_CONFLICT("LESSON_012", "해당 시간에 이미 예정된 수업이 있습니다", 409),
+    LESSON_SCHEDULE_SYNC_REQUIRED("LESSON_013", "수업 일정은 schedule API로 변경해야 합니다", 400),
 }

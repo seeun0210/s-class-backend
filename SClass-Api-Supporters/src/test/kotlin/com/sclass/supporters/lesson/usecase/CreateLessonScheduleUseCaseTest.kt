@@ -6,6 +6,7 @@ import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.LessonType
+import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleAlreadyExistsException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleConflictException
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
@@ -243,6 +244,21 @@ class CreateLessonScheduleUseCaseTest {
     }
 
     @Test
+    fun `예정 상태가 아닌 수업은 Calendar 호출 전에 스케줄 생성 불가`() {
+        every { lessonAdaptor.findById(1L) } returns lesson(status = LessonStatus.IN_PROGRESS)
+
+        assertThrows<LessonInvalidStatusTransitionException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = ScheduleLessonRequest(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)),
+            )
+        }
+
+        verify(exactly = 0) { calendarClientProvider.getIfAvailable() }
+    }
+
+    @Test
     fun `중앙 Google Calendar client가 없으면 예외`() {
         val lesson = lesson()
         val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
@@ -269,18 +285,20 @@ class CreateLessonScheduleUseCaseTest {
         assertNull(lesson.googleMeet)
     }
 
-    private fun lesson(scheduledAt: LocalDateTime? = null) =
-        Lesson(
-            id = 1L,
-            lessonType = LessonType.COURSE,
-            enrollmentId = 1L,
-            studentUserId = studentUserId,
-            assignedTeacherUserId = teacherUserId,
-            lessonNumber = 1,
-            name = "수학 1회차",
-            scheduledAt = scheduledAt,
-            status = LessonStatus.SCHEDULED,
-        )
+    private fun lesson(
+        scheduledAt: LocalDateTime? = null,
+        status: LessonStatus = LessonStatus.SCHEDULED,
+    ) = Lesson(
+        id = 1L,
+        lessonType = LessonType.COURSE,
+        enrollmentId = 1L,
+        studentUserId = studentUserId,
+        assignedTeacherUserId = teacherUserId,
+        lessonNumber = 1,
+        name = "수학 1회차",
+        scheduledAt = scheduledAt,
+        status = status,
+    )
 
     private fun user(
         id: String,

@@ -19,3 +19,5 @@ class LessonScheduleAlreadyExistsException : BusinessException(LessonErrorCode.L
 class LessonScheduleNotFoundException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_NOT_FOUND)
 
 class LessonScheduleConflictException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_CONFLICT)
+
+class LessonScheduleSyncRequiredException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_SYNC_REQUIRED)

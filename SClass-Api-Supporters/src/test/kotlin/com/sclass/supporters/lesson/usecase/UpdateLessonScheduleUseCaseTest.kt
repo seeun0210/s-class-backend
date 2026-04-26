@@ -6,6 +6,7 @@ import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.domain.LessonGoogleMeet
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.LessonType
+import com.sclass.domain.domains.lesson.exception.LessonInvalidStatusTransitionException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleConflictException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleNotFoundException
 import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
@@ -341,6 +342,23 @@ class UpdateLessonScheduleUseCaseTest {
     }
 
     @Test
+    fun `예정 상태가 아닌 수업은 Calendar 호출 전에 스케줄 수정 불가`() {
+        every {
+            lessonAdaptor.findById(1L)
+        } returns lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0), status = LessonStatus.IN_PROGRESS)
+
+        assertThrows<LessonInvalidStatusTransitionException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = ScheduleLessonRequest(scheduledAt = LocalDateTime.of(2026, 5, 2, 21, 0)),
+            )
+        }
+
+        verify(exactly = 0) { calendarClientProvider.getIfAvailable() }
+    }
+
+    @Test
     fun `담당 선생님이 아니면 스케줄 수정 불가`() {
         every { lessonAdaptor.findById(1L) } returns lesson(scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0))
 
@@ -358,6 +376,7 @@ class UpdateLessonScheduleUseCaseTest {
     private fun lesson(
         scheduledAt: LocalDateTime?,
         googleMeet: LessonGoogleMeet? = null,
+        status: LessonStatus = LessonStatus.SCHEDULED,
     ) = Lesson(
         id = 1L,
         lessonType = LessonType.COURSE,
@@ -367,7 +386,7 @@ class UpdateLessonScheduleUseCaseTest {
         lessonNumber = 1,
         name = "수학 1회차",
         scheduledAt = scheduledAt,
-        status = LessonStatus.SCHEDULED,
+        status = status,
         googleMeet = googleMeet,
     )
 

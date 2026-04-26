@@ -146,14 +146,18 @@ class Lesson(
         name: String?,
         scheduledAt: LocalDateTime?,
     ) {
-        if (status != LessonStatus.SCHEDULED) {
-            throw LessonInvalidStatusTransitionException()
-        }
+        validateScheduleUpdatable()
         name?.let { this.name = it }
         scheduledAt?.let { this.scheduledAt = it }
     }
 
     fun hasGoogleCalendarEvent(): Boolean = googleMeet?.calendarEventId?.isNotBlank() == true
+
+    fun validateScheduleUpdatable() {
+        if (status != LessonStatus.SCHEDULED) {
+            throw LessonInvalidStatusTransitionException()
+        }
+    }
 
     fun attachGoogleMeet(
         eventId: String,
