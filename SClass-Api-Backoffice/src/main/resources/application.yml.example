@@ -62,6 +62,13 @@ oauth2:
     kakao:
       client-id: ${KAKAO_CLIENT_ID:}
 
+google:
+  calendar:
+    central:
+      enabled: ${GOOGLE_CALENDAR_CENTRAL_ENABLED:false}
+      calendar-id: ${GOOGLE_CALENDAR_CENTRAL_CALENDAR_ID:primary}
+      allowed-email: ${GOOGLE_CALENDAR_CENTRAL_ALLOWED_EMAIL:}
+
 alimtalk:
   enabled: ${ALIMTALK_ENABLED:false}
   service-id: ${ALIMTALK_SERVICE_ID:}

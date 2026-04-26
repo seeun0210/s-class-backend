@@ -8,4 +8,13 @@ data class CreateGoogleCalendarEventCommand(
     val summary: String,
     val startAt: ZonedDateTime,
     val endAt: ZonedDateTime,
-)
+    val attendeeEmails: List<String> = emptyList(),
+) {
+    fun toEventCreateCommand(): GoogleCalendarEventCreateCommand =
+        GoogleCalendarEventCreateCommand(
+            summary = summary,
+            startAt = startAt,
+            endAt = endAt,
+            attendeeEmails = attendeeEmails,
+        )
+}

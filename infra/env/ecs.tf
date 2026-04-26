@@ -315,6 +315,8 @@ locals {
       { name = "REPORT_SERVICE_ENABLED", value = contains(["backoffice-api", "supporters-api"], key) ? "true" : "false" },
       { name = "REPORT_SERVICE_BASE_URL", value = contains(["backoffice-api", "supporters-api"], key) ? var.report_service_base_url : "" },
       { name = "REPORT_SERVICE_CALLBACK_BASE_URL", value = key == "supporters-api" ? var.report_service_callback_base_url : "" },
+      { name = "GOOGLE_CALENDAR_CENTRAL_ENABLED", value = var.google_calendar_central_enabled },
+      { name = "GOOGLE_CALENDAR_CENTRAL_CALENDAR_ID", value = var.google_calendar_central_calendar_id },
     ]
   }
 
@@ -326,6 +328,7 @@ locals {
       { name = "TOKEN_ENCRYPTION_KEY", valueFrom = aws_ssm_parameter.token_encryption_key.arn },
       { name = "GOOGLE_CLIENT_ID", valueFrom = aws_ssm_parameter.google_client_id.arn },
       { name = "GOOGLE_CLIENT_SECRET", valueFrom = aws_ssm_parameter.google_client_secret.arn },
+      { name = "GOOGLE_CALENDAR_CENTRAL_ALLOWED_EMAIL", valueFrom = aws_ssm_parameter.google_calendar_central_allowed_email.arn },
       { name = "KAKAO_CLIENT_ID", valueFrom = aws_ssm_parameter.kakao_client_id.arn },
       { name = "KAKAO_APP_ID", valueFrom = aws_ssm_parameter.kakao_app_id.arn },
       { name = "SMTP_USERNAME", valueFrom = aws_ssm_parameter.smtp_username.arn },

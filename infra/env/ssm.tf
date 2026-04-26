@@ -49,6 +49,14 @@ resource "aws_ssm_parameter" "google_client_secret" {
   tags      = { Name = "${local.name_prefix}-ssm-google-client-secret" }
 }
 
+resource "aws_ssm_parameter" "google_calendar_central_allowed_email" {
+  name      = "/sclass/${var.environment}/GOOGLE_CALENDAR_CENTRAL_ALLOWED_EMAIL"
+  type      = "String"
+  value     = var.google_calendar_central_allowed_email
+  overwrite = true
+  tags      = { Name = "${local.name_prefix}-ssm-google-calendar-central-allowed-email" }
+}
+
 resource "aws_ssm_parameter" "kakao_client_id" {
   name      = "/sclass/${var.environment}/KAKAO_CLIENT_ID"
   type      = "SecureString"
