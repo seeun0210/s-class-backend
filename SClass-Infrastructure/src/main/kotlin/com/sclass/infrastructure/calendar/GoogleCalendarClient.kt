@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 @Component
@@ -130,7 +132,8 @@ class GoogleCalendarClient(
         sendUpdates: Boolean,
     ): String {
         val sendUpdatesQuery = if (sendUpdates) "&sendUpdates=all" else ""
-        return "https://www.googleapis.com/calendar/v3/calendars/$calendarId/events?conferenceDataVersion=1$sendUpdatesQuery"
+        val encodedCalendarId = URLEncoder.encode(calendarId, StandardCharsets.UTF_8)
+        return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events?conferenceDataVersion=1$sendUpdatesQuery"
     }
 
     private fun WebClientResponseException.isRetryableProviderFailure(): Boolean =
