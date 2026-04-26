@@ -25,6 +25,9 @@ class UpdateLessonUseCase(
         if (request.scheduledAt != null) {
             throw LessonScheduleSyncRequiredException()
         }
+        if (request.name != null && lesson.hasGoogleCalendarEvent()) {
+            throw LessonScheduleSyncRequiredException()
+        }
         lesson.updateSchedule(request.name, null)
         return LessonResponse.from(lesson)
     }

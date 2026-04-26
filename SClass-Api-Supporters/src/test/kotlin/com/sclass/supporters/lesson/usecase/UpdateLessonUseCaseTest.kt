@@ -2,6 +2,7 @@ package com.sclass.supporters.lesson.usecase
 
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
+import com.sclass.domain.domains.lesson.domain.LessonGoogleMeet
 import com.sclass.domain.domains.lesson.domain.LessonStatus
 import com.sclass.domain.domains.lesson.domain.LessonType
 import com.sclass.domain.domains.lesson.exception.LessonScheduleSyncRequiredException
@@ -65,6 +66,26 @@ class UpdateLessonUseCaseTest {
     }
 
     @Test
+    fun `Google Meet이 연결된 수업은 deprecated PATCH로 이름을 직접 수정할 수 없다`() {
+        val lesson =
+            lesson(
+                name = "수학 1회차",
+                googleMeet = LessonGoogleMeet("event-id", "https://meet.google.com/abc-defg-hij", "abc-defg-hij"),
+            )
+        every { lessonAdaptor.findById(1L) } returns lesson
+
+        assertThrows<LessonScheduleSyncRequiredException> {
+            useCase.execute(
+                userId = teacherUserId,
+                lessonId = 1L,
+                request = UpdateLessonRequest(name = "수학 보강"),
+            )
+        }
+
+        assertEquals("수학 1회차", lesson.name)
+    }
+
+    @Test
     fun `담당 선생님이 아니면 deprecated PATCH 수정 불가`() {
         every { lessonAdaptor.findById(1L) } returns lesson()
 
@@ -80,6 +101,7 @@ class UpdateLessonUseCaseTest {
     private fun lesson(
         name: String = "수학 1회차",
         scheduledAt: LocalDateTime? = null,
+        googleMeet: LessonGoogleMeet? = null,
     ) = Lesson(
         id = 1L,
         lessonType = LessonType.COURSE,
@@ -90,5 +112,6 @@ class UpdateLessonUseCaseTest {
         name = name,
         scheduledAt = scheduledAt,
         status = LessonStatus.SCHEDULED,
+        googleMeet = googleMeet,
     )
 }
