@@ -13,6 +13,7 @@ import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventDateTime
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventRequest
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResponse
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
+import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventUpdateRequest
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -21,6 +22,8 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @Component
@@ -58,7 +61,7 @@ class GoogleCalendarClient(
         accessToken: String,
         calendarId: String = PRIMARY_CALENDAR_ID,
     ): GoogleCalendarEventResult {
-        val request = command.toRequest()
+        val request = command.toCreateRequest()
         val response =
             try {
                 webClient
@@ -84,17 +87,75 @@ class GoogleCalendarClient(
         return response.toResult()
     }
 
-    private fun GoogleCalendarEventCreateCommand.toRequest(): GoogleCalendarEventRequest =
+    fun updateMeetEventWithAccessToken(
+        eventId: String,
+        command: GoogleCalendarEventCreateCommand,
+        accessToken: String,
+        calendarId: String = PRIMARY_CALENDAR_ID,
+    ): GoogleCalendarEventResult {
+        val request = command.toUpdateRequest()
+        val response =
+            try {
+                webClient
+                    .patch()
+                    .uri(calendarEventUri(calendarId, eventId, sendUpdates = command.attendeeEmails.isNotEmpty()))
+                    .header("Authorization", "Bearer $accessToken")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(GoogleCalendarEventResponse::class.java)
+                    .block()
+            } catch (e: WebClientResponseException) {
+                log.warn("Google Calendar event update failed:${e.responseBodyAsString}", e)
+                if (e.isRetryableProviderFailure()) {
+                    throw GoogleOAuthProviderUnavailableException()
+                }
+                if (e.isAuthorizationFailure()) throw e
+                throw GoogleCalendarRequestFailedException()
+            } catch (e: Exception) {
+                log.warn("Google Calendar event update failed", e)
+                throw GoogleOAuthProviderUnavailableException()
+            }
+
+        return response.toResult()
+    }
+
+    fun deleteMeetEventWithAccessToken(
+        eventId: String,
+        accessToken: String,
+        calendarId: String = PRIMARY_CALENDAR_ID,
+    ) {
+        try {
+            webClient
+                .delete()
+                .uri(calendarEventUri(calendarId, eventId, sendUpdates = false))
+                .header("Authorization", "Bearer $accessToken")
+                .retrieve()
+                .toBodilessEntity()
+                .block()
+        } catch (e: WebClientResponseException) {
+            log.warn("Google Calendar event delete failed: ${e.responseBodyAsString}", e)
+            if (e.isRetryableProviderFailure()) {
+                throw GoogleOAuthProviderUnavailableException()
+            }
+            if (e.isAuthorizationFailure()) throw e
+            throw GoogleCalendarRequestFailedException()
+        } catch (e: Exception) {
+            log.warn("Google Calendar event delete failed", e)
+            throw GoogleOAuthProviderUnavailableException()
+        }
+    }
+
+    private fun GoogleCalendarEventCreateCommand.toCreateRequest(): GoogleCalendarEventRequest =
         GoogleCalendarEventRequest(
             summary = summary,
             start =
                 GoogleCalendarEventDateTime(
-                    dateTime = startAt.toOffsetDateTime().toString(),
+                    dateTime = startAt.toGoogleCalendarDateTime(),
                     timeZone = startAt.zone.id,
                 ),
             end =
                 GoogleCalendarEventDateTime(
-                    dateTime = endAt.toOffsetDateTime().toString(),
+                    dateTime = endAt.toGoogleCalendarDateTime(),
                     timeZone = endAt.zone.id,
                 ),
             conferenceData =
@@ -103,6 +164,22 @@ class GoogleCalendarClient(
                         GoogleCalendarConferenceCreateRequest(
                             requestId = UUID.randomUUID().toString(),
                         ),
+                ),
+            attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
+        )
+
+    private fun GoogleCalendarEventCreateCommand.toUpdateRequest(): GoogleCalendarEventUpdateRequest =
+        GoogleCalendarEventUpdateRequest(
+            summary = summary,
+            start =
+                GoogleCalendarEventDateTime(
+                    dateTime = startAt.toGoogleCalendarDateTime(),
+                    timeZone = startAt.zone.id,
+                ),
+            end =
+                GoogleCalendarEventDateTime(
+                    dateTime = endAt.toGoogleCalendarDateTime(),
+                    timeZone = endAt.zone.id,
                 ),
             attendees = attendeeEmails.map { GoogleCalendarAttendee(email = it) },
         )
@@ -121,6 +198,9 @@ class GoogleCalendarClient(
         return GoogleCalendarEventResult(
             eventId = eventId,
             meetJoinUrl = meetJoinUrl,
+            meetCode =
+                conferenceData?.conferenceId
+                    ?: meetJoinUrl.extractMeetCode(),
         )
     }
 
@@ -157,12 +237,40 @@ class GoogleCalendarClient(
         }.getOrDefault(false)
     }
 
+    private fun calendarEventUri(
+        calendarId: String,
+        eventId: String,
+        sendUpdates: Boolean,
+    ): String {
+        val sendUpdatesQuery = if (sendUpdates) "&sendUpdates=all" else ""
+        val encodedCalendarId =
+            URLEncoder.encode(
+                calendarId,
+                StandardCharsets.UTF_8,
+            )
+        val encodedEventId =
+            URLEncoder.encode(
+                eventId,
+                StandardCharsets.UTF_8,
+            )
+        return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events/$encodedEventId" +
+            "?conferenceDataVersion=1$sendUpdatesQuery"
+    }
+
+    private fun String.extractMeetCode(): String? =
+        substringAfterLast("/")
+            .substringBefore("?")
+            .takeIf { it.isNotBlank() }
+
+    private fun ZonedDateTime.toGoogleCalendarDateTime(): String = toOffsetDateTime().format(GOOGLE_CALENDAR_DATE_TIME_FORMATTER)
+
     private companion object {
         const val PRIMARY_CALENDAR_ID = "primary"
         const val UNAUTHORIZED_STATUS = 401
         const val FORBIDDEN_STATUS = 403
         const val TOO_MANY_REQUESTS_STATUS = 429
         const val GOOGLE_RESOURCE_EXHAUSTED_STATUS = "RESOURCE_EXHAUSTED"
+        val GOOGLE_CALENDAR_DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
         val GOOGLE_CALENDAR_RETRYABLE_FORBIDDEN_REASONS =
             setOf(
                 "dailyLimitExceeded",

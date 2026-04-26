@@ -299,4 +299,38 @@ class LessonTest {
             lesson.record(assignedTeacher, started, started.minusSeconds(1), clock)
         }
     }
+
+    @Test
+    fun `Google Meet 정보를 lesson에 연결한다`() {
+        val lesson = newLesson()
+
+        lesson.attachGoogleMeet(
+            eventId = "event-id",
+            meetJoinUrl = "https://meet.google.com/abc-defg-hij",
+            meetCode = "abc-defg-hij",
+        )
+
+        assertAll(
+            { assertTrue(lesson.hasGoogleCalendarEvent()) },
+            { assertEquals("event-id", lesson.googleMeet?.calendarEventId) },
+            { assertEquals("https://meet.google.com/abc-defg-hij", lesson.googleMeet?.joinUrl) },
+            { assertEquals("abc-defg-hij", lesson.googleMeet?.code) },
+        )
+    }
+
+    @Test
+    fun `SCHEDULED 상태의 lesson은 일정 변경 가능 검증을 통과한다`() {
+        val lesson = newLesson(status = LessonStatus.SCHEDULED)
+
+        lesson.validateScheduleUpdatable()
+    }
+
+    @Test
+    fun `SCHEDULED가 아니면 일정 변경 가능 검증 시 예외`() {
+        val lesson = newLesson(status = LessonStatus.IN_PROGRESS)
+
+        assertThrows<LessonInvalidStatusTransitionException> {
+            lesson.validateScheduleUpdatable()
+        }
+    }
 }

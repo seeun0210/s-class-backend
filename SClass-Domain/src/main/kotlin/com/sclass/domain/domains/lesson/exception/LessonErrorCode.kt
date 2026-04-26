@@ -16,4 +16,8 @@ enum class LessonErrorCode(
     LESSON_ALREADY_COMPLETED("LESSON_007", "이미 완료 처리된 수업입니다", 400),
     LESSON_INVALID_TIME("LESSON_008", "유효하지 않은 시간입니다", 400),
     LESSON_ALREADY_STARTED("LESSON_009", "이미 시작된 수업입니다", 400),
+    LESSON_SCHEDULE_ALREADY_EXISTS("LESSON_010", "이미 수업 일정이 등록되어 있습니다", 409),
+    LESSON_SCHEDULE_NOT_FOUND("LESSON_011", "수업 일정이 등록되어 있지 않습니다", 404),
+    LESSON_SCHEDULE_CONFLICT("LESSON_012", "해당 시간에 이미 예정된 수업이 있습니다", 409),
+    LESSON_SCHEDULE_SYNC_REQUIRED("LESSON_013", "수업 일정은 schedule API로 변경해야 합니다", 400),
 }

@@ -13,3 +13,11 @@ class LessonAlreadyCompletedException : BusinessException(LessonErrorCode.LESSON
 class LessonInvalidTimeException : BusinessException(LessonErrorCode.LESSON_INVALID_TIME)
 
 class LessonAlreadyStartedException : BusinessException(LessonErrorCode.LESSON_ALREADY_STARTED)
+
+class LessonScheduleAlreadyExistsException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_ALREADY_EXISTS)
+
+class LessonScheduleNotFoundException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_NOT_FOUND)
+
+class LessonScheduleConflictException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_CONFLICT)
+
+class LessonScheduleSyncRequiredException : BusinessException(LessonErrorCode.LESSON_SCHEDULE_SYNC_REQUIRED)
