@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.oauth.client
 
+import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
 import com.sclass.common.exception.GoogleTokenExchangeFailedException
 import com.sclass.common.exception.GoogleTokenRefreshFailedException
 import com.sclass.infrastructure.oauth.config.OAuthProperties
@@ -113,13 +114,34 @@ class GoogleAuthorizationCodeClientTest {
         }
 
         @Test
-        fun `네트워크 예외 시 GoogleTokenExchangeFailedException`() {
+        fun `Google 5xx 응답 시 GoogleOAuthProviderUnavailableException`() {
+            mockPostFormData()
+            every {
+                responseSpec.bodyToMono(GoogleTokenExchangeResponse::class.java)
+            } returns
+                Mono.error(
+                    WebClientResponseException.create(
+                        HttpStatus.SERVICE_UNAVAILABLE.value(),
+                        "Service Unavailable",
+                        HttpHeaders.EMPTY,
+                        """{"error":"temporarily_unavailable"}""".toByteArray(),
+                        null,
+                    ),
+                )
+
+            assertThrows<GoogleOAuthProviderUnavailableException> {
+                client.exchangeCodeForTokens("code-1", "http://localhost:3000/callback")
+            }
+        }
+
+        @Test
+        fun `네트워크 예외 시 GoogleOAuthProviderUnavailableException`() {
             mockPostFormData()
             every {
                 responseSpec.bodyToMono(GoogleTokenExchangeResponse::class.java)
             } returns Mono.error(RuntimeException("network down"))
 
-            assertThrows<GoogleTokenExchangeFailedException> {
+            assertThrows<GoogleOAuthProviderUnavailableException> {
                 client.exchangeCodeForTokens("code-1", "http://localhost:3000/callback")
             }
         }
@@ -166,6 +188,39 @@ class GoogleAuthorizationCodeClientTest {
 
             assertThrows<GoogleTokenRefreshFailedException> {
                 client.refreshAccessToken("expired-or-revoked-refresh-token")
+            }
+        }
+
+        @Test
+        fun `Google 5xx 응답 시 GoogleOAuthProviderUnavailableException`() {
+            mockPostFormData()
+            every {
+                responseSpec.bodyToMono(GoogleTokenExchangeResponse::class.java)
+            } returns
+                Mono.error(
+                    WebClientResponseException.create(
+                        HttpStatus.BAD_GATEWAY.value(),
+                        "Bad Gateway",
+                        HttpHeaders.EMPTY,
+                        """{"error":"bad_gateway"}""".toByteArray(),
+                        null,
+                    ),
+                )
+
+            assertThrows<GoogleOAuthProviderUnavailableException> {
+                client.refreshAccessToken("refresh-token-xyz")
+            }
+        }
+
+        @Test
+        fun `네트워크 예외 시 GoogleOAuthProviderUnavailableException`() {
+            mockPostFormData()
+            every {
+                responseSpec.bodyToMono(GoogleTokenExchangeResponse::class.java)
+            } returns Mono.error(RuntimeException("network down"))
+
+            assertThrows<GoogleOAuthProviderUnavailableException> {
+                client.refreshAccessToken("refresh-token-xyz")
             }
         }
     }
@@ -215,13 +270,13 @@ class GoogleAuthorizationCodeClientTest {
         }
 
         @Test
-        fun `응답 바디가 없으면 GoogleTokenExchangeFailedException`() {
+        fun `응답 바디가 없으면 GoogleOAuthProviderUnavailableException`() {
             mockGet()
             every {
                 responseSpec.bodyToMono(GoogleUserInfoResponse::class.java)
             } returns Mono.empty()
 
-            assertThrows<GoogleTokenExchangeFailedException> {
+            assertThrows<GoogleOAuthProviderUnavailableException> {
                 client.fetchUserInfo("access-token-abc")
             }
         }

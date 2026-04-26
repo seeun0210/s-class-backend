@@ -1,0 +1,3 @@
+package com.sclass.common.exception
+
+class GoogleOAuthProviderUnavailableException : BusinessException(OAuthTokenErrorCode.GOOGLE_OAUTH_PROVIDER_UNAVAILABLE)

@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.oauth.client
 
+import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
 import com.sclass.common.exception.GoogleTokenExchangeFailedException
 import com.sclass.common.exception.GoogleTokenRefreshFailedException
 import com.sclass.infrastructure.oauth.config.OAuthProperties
@@ -44,22 +45,28 @@ class GoogleAuthorizationCodeClient(
                 add("grant_type", "authorization_code")
             }
 
-        return try {
-            webClient
-                .post()
-                .uri("https://oauth2.googleapis.com/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(params))
-                .retrieve()
-                .bodyToMono(GoogleTokenExchangeResponse::class.java)
-                .block()!!
-        } catch (e: WebClientResponseException) {
-            log.warn("Google token exchange failed: ${e.responseBodyAsString}", e)
-            throw GoogleTokenExchangeFailedException()
-        } catch (e: Exception) {
-            log.warn("Google token exchange failed", e)
-            throw GoogleTokenExchangeFailedException()
-        }
+        val response =
+            try {
+                webClient
+                    .post()
+                    .uri("https://oauth2.googleapis.com/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(params))
+                    .retrieve()
+                    .bodyToMono(GoogleTokenExchangeResponse::class.java)
+                    .block()
+            } catch (e: WebClientResponseException) {
+                log.warn("Google token exchange failed: ${e.responseBodyAsString}", e)
+                if (e.isRetryableUpstreamFailure()) {
+                    throw GoogleOAuthProviderUnavailableException()
+                }
+                throw GoogleTokenExchangeFailedException()
+            } catch (e: Exception) {
+                log.warn("Google token exchange failed", e)
+                throw GoogleOAuthProviderUnavailableException()
+            }
+
+        return response ?: throw GoogleOAuthProviderUnavailableException()
     }
 
     fun refreshAccessToken(refreshToken: String): String {
@@ -71,23 +78,28 @@ class GoogleAuthorizationCodeClient(
                 add("grant_type", "refresh_token")
             }
 
-        return try {
-            webClient
-                .post()
-                .uri("https://oauth2.googleapis.com/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(params))
-                .retrieve()
-                .bodyToMono(GoogleTokenExchangeResponse::class.java)
-                .block()!!
-                .accessToken
-        } catch (e: WebClientResponseException) {
-            log.warn("Google token refresh failed: ${e.responseBodyAsString}", e)
-            throw GoogleTokenRefreshFailedException()
-        } catch (e: Exception) {
-            log.warn("Google token refresh failed", e)
-            throw GoogleTokenRefreshFailedException()
-        }
+        val response =
+            try {
+                webClient
+                    .post()
+                    .uri("https://oauth2.googleapis.com/token")
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(params))
+                    .retrieve()
+                    .bodyToMono(GoogleTokenExchangeResponse::class.java)
+                    .block()
+            } catch (e: WebClientResponseException) {
+                log.warn("Google token refresh failed: ${e.responseBodyAsString}", e)
+                if (e.isRetryableUpstreamFailure()) {
+                    throw GoogleOAuthProviderUnavailableException()
+                }
+                throw GoogleTokenRefreshFailedException()
+            } catch (e: Exception) {
+                log.warn("Google token refresh failed", e)
+                throw GoogleOAuthProviderUnavailableException()
+            }
+
+        return response?.accessToken ?: throw GoogleOAuthProviderUnavailableException()
     }
 
     fun revokeRefreshToken(refreshToken: String) {
@@ -122,12 +134,22 @@ class GoogleAuthorizationCodeClient(
                     .block()
             } catch (e: WebClientResponseException) {
                 log.warn("Google fetch user info failed: ${e.responseBodyAsString}", e)
+                if (e.isRetryableUpstreamFailure()) {
+                    throw GoogleOAuthProviderUnavailableException()
+                }
                 throw GoogleTokenExchangeFailedException()
             } catch (e: Exception) {
                 log.warn("Google fetch user info failed", e)
-                throw GoogleTokenExchangeFailedException()
+                throw GoogleOAuthProviderUnavailableException()
             }
 
-        return userInfo ?: throw GoogleTokenExchangeFailedException()
+        return userInfo ?: throw GoogleOAuthProviderUnavailableException()
+    }
+
+    private fun WebClientResponseException.isRetryableUpstreamFailure(): Boolean =
+        statusCode.is5xxServerError || statusCode.value() == TOO_MANY_REQUESTS_STATUS
+
+    private companion object {
+        const val TOO_MANY_REQUESTS_STATUS = 429
     }
 }
