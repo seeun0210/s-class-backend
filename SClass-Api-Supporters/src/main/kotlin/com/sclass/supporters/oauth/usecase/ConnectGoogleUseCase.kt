@@ -8,6 +8,8 @@ import com.sclass.common.exception.GoogleRefreshTokenMissingException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import com.sclass.supporters.oauth.dto.GoogleConnectionStatusResponse
 
@@ -17,8 +19,9 @@ class ConnectGoogleUseCase(
     private val connectGoogleAccountLockedUseCase: ConnectGoogleAccountLockedUseCase,
     private val encryptor: AesTokenEncryptor,
 ) {
+    @DistributedLock(prefix = "teacher-google-account", waitTime = 30)
     fun execute(
-        userId: String,
+        @LockKey userId: String,
         role: Role,
         request: ConnectGoogleRequest,
     ): GoogleConnectionStatusResponse {

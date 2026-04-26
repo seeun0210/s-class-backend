@@ -10,12 +10,15 @@ import com.sclass.domain.domains.user.domain.Role
 import com.sclass.infrastructure.oauth.client.GoogleAuthorizationCodeClient
 import com.sclass.infrastructure.oauth.dto.GoogleTokenExchangeResponse
 import com.sclass.infrastructure.oauth.dto.GoogleUserInfoResponse
+import com.sclass.infrastructure.redis.DistributedLock
+import com.sclass.infrastructure.redis.LockKey
 import com.sclass.supporters.oauth.dto.ConnectGoogleRequest
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -265,5 +268,25 @@ class ConnectGoogleUseCaseTest {
                 scope = grantedScope,
             )
         }
+    }
+
+    @Test
+    fun `connect 전체 흐름은 userId 기반 분산 락으로 보호된다`() {
+        val method =
+            ConnectGoogleUseCase::class.java.getDeclaredMethod(
+                "execute",
+                String::class.java,
+                Role::class.java,
+                ConnectGoogleRequest::class.java,
+            )
+
+        val lock = method.getAnnotation(DistributedLock::class.java)
+
+        assertAll(
+            { assertNotNull(lock) },
+            { assertEquals("teacher-google-account", lock.prefix) },
+            { assertEquals(30L, lock.waitTime) },
+            { assertTrue(method.parameters[0].isAnnotationPresent(LockKey::class.java)) },
+        )
     }
 }
