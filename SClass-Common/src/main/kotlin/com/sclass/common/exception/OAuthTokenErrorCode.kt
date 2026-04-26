@@ -7,4 +7,7 @@ enum class OAuthTokenErrorCode(
 ) : ErrorCode {
     OAUTH_TOKEN_AUDIENCE_MISMATCH("OAUTH_010", "OAuth 토큰의 대상 애플리케이션이 일치하지 않습니다", 401),
     OAUTH_TOKEN_VALIDATION_FAILED("OAUTH_011", "OAuth 토큰 검증에 실패했습니다", 502),
+    GOOGLE_TOKEN_EXCHANGE_FAILED("OAUTH_012", "Google 토큰 교환에 실패했습니다", 400),
+    GOOGLE_TOKEN_REFRESH_FAILED("OAUTH_013", "Google 토큰 갱신에 실패했습니다", 401),
+    GOOGLE_REFRESH_TOKEN_MISSING("OAUTH_014", "Google에서 refresh token이 발급되지 않았습니다", 400),
 }

@@ -124,6 +124,12 @@ variable "google_client_id" {
   default = ""
 }
 
+variable "google_client_secret" {
+  type      = string
+  default   = ""
+  sensitive = true
+}
+
 variable "kakao_client_id" {
   type    = string
   default = ""

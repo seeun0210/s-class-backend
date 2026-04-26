@@ -41,6 +41,14 @@ resource "aws_ssm_parameter" "google_client_id" {
   tags      = { Name = "${local.name_prefix}-ssm-google-client" }
 }
 
+resource "aws_ssm_parameter" "google_client_secret" {
+  name      = "/sclass/${var.environment}/GOOGLE_CLIENT_SECRET"
+  type      = "SecureString"
+  value     = var.google_client_secret
+  overwrite = true
+  tags      = { Name = "${local.name_prefix}-ssm-google-client-secret" }
+}
+
 resource "aws_ssm_parameter" "kakao_client_id" {
   name      = "/sclass/${var.environment}/KAKAO_CLIENT_ID"
   type      = "SecureString"

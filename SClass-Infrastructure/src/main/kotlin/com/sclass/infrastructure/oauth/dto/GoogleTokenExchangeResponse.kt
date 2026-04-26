@@ -1,0 +1,12 @@
+package com.sclass.infrastructure.oauth.dto
+
+import com.fasterxml.jackson.annotation.JsonProperty
+
+data class GoogleTokenExchangeResponse(
+    @param:JsonProperty("access_token") val accessToken: String,
+    @param:JsonProperty("expires_in") val expiresIn: Long = 0,
+    @param:JsonProperty("refresh_token") val refreshToken: String? = null,
+    @param:JsonProperty("scope") val scope: String = "",
+    @param:JsonProperty("token_type") val tokenType: String = "Bearer",
+    @param:JsonProperty("id_token") val idToken: String? = null,
+)
