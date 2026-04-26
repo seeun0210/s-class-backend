@@ -18,6 +18,7 @@ import com.sclass.supporters.lesson.dto.UpdateLessonRequest
 import com.sclass.supporters.lesson.usecase.CompleteLessonUseCase
 import com.sclass.supporters.lesson.usecase.CreateLessonInquiryPlanUseCase
 import com.sclass.supporters.lesson.usecase.CreateLessonScheduleUseCase
+import com.sclass.supporters.lesson.usecase.DeleteLessonScheduleUseCase
 import com.sclass.supporters.lesson.usecase.GetLessonDetailUseCase
 import com.sclass.supporters.lesson.usecase.GetLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.GetMySubstituteLessonsUseCase
@@ -28,6 +29,7 @@ import com.sclass.supporters.lesson.usecase.UpdateLessonReportUseCase
 import com.sclass.supporters.lesson.usecase.UpdateLessonScheduleUseCase
 import com.sclass.supporters.lesson.usecase.UpdateLessonUseCase
 import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -53,6 +55,7 @@ class LessonController(
     private val recordLessonUseCase: RecordLessonUseCase,
     private val createLessonScheduleUseCase: CreateLessonScheduleUseCase,
     private val updateLessonScheduleUseCase: UpdateLessonScheduleUseCase,
+    private val deleteLessonScheduleUseCase: DeleteLessonScheduleUseCase,
 ) {
     @GetMapping("/my/substitutes")
     fun mySubstituteLessons(
@@ -148,6 +151,18 @@ class LessonController(
                 userId,
                 lessonId,
                 request,
+            ),
+        )
+
+    @DeleteMapping("/{lessonId}/schedule")
+    fun deleteSchedule(
+        @CurrentUserId userId: String,
+        @PathVariable lessonId: Long,
+    ): ApiResponse<LessonResponse> =
+        ApiResponse.success(
+            deleteLessonScheduleUseCase.execute(
+                userId,
+                lessonId,
             ),
         )
 }

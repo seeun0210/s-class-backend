@@ -55,7 +55,7 @@ class UpdateLessonScheduleUseCase(
             }
 
         return try {
-            saveSchedule(userId, lessonId, request, prepared.scheduledAt, result)
+            saveSchedule(userId, lessonId, request, prepared, result)
         } catch (e: RuntimeException) {
             rollbackCalendarEvent(prepared, result)
             throw e
@@ -92,6 +92,8 @@ class UpdateLessonScheduleUseCase(
                 calendarClient = calendarClient,
                 refreshToken = refreshToken,
                 eventId = lesson.googleMeet?.calendarEventId,
+                studentUserId = lesson.studentUserId,
+                teacherUserId = lesson.effectiveTeacherUserId,
             )
         }!!
 
@@ -112,31 +114,53 @@ class UpdateLessonScheduleUseCase(
         }
     }
 
+    private fun lockScheduleParticipants(lesson: Lesson) {
+        userAdaptor.lockByIdsForUpdate(
+            listOf(
+                lesson.studentUserId,
+                lesson.effectiveTeacherUserId,
+            ),
+        )
+    }
+
     private fun saveSchedule(
         userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
-        scheduledAt: LocalDateTime,
+        prepared: PreparedUpdateSchedule,
         result: GoogleCalendarEventResult,
     ): LessonResponse =
         txTemplate.execute {
-            val lesson = lessonAdaptor.findById(lessonId)
+            val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
             if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
-            validateNoScheduleConflict(lesson, scheduledAt)
+            lesson.validateParticipantSnapshot(prepared.studentUserId, prepared.teacherUserId)
+            lockScheduleParticipants(lesson)
+            validateNoScheduleConflict(lesson, prepared.scheduledAt)
 
-            lesson.updateSchedule(request.name, scheduledAt)
+            lesson.updateSchedule(request.name, prepared.scheduledAt)
             lesson.attachGoogleMeet(
                 eventId = result.eventId,
                 meetJoinUrl = result.meetJoinUrl,
                 meetCode = result.meetCode,
             )
+            lessonAdaptor.save(lesson)
 
             val centralAccount = centralGoogleAccountAdaptor.findGoogle()
             centralAccount.markUsed(LocalDateTime.now(clock))
+            centralGoogleAccountAdaptor.save(centralAccount)
             LessonResponse.from(lesson)
         }!!
+
+    private fun Lesson.validateParticipantSnapshot(
+        studentUserId: String,
+        teacherUserId: String,
+    ) {
+        if (this.studentUserId != studentUserId || effectiveTeacherUserId != teacherUserId) {
+            throw LessonScheduleConflictException()
+        }
+    }
 
     private fun rollbackCalendarEvent(
         prepared: PreparedUpdateSchedule,
@@ -206,6 +230,8 @@ class UpdateLessonScheduleUseCase(
         val calendarClient: CentralGoogleCalendarClient,
         val refreshToken: String,
         val eventId: String?,
+        val studentUserId: String,
+        val teacherUserId: String,
     )
 
     private companion object {

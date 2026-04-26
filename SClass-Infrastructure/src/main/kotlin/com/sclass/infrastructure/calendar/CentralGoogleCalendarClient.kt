@@ -54,6 +54,7 @@ class CentralGoogleCalendarClient(
     fun deleteMeetEventWithRefreshToken(
         refreshToken: String,
         eventId: String,
+        sendUpdates: Boolean = false,
     ) {
         val accessToken = authorizationCodeClient.refreshAccessToken(refreshToken)
         try {
@@ -61,6 +62,7 @@ class CentralGoogleCalendarClient(
                 eventId = eventId,
                 accessToken = accessToken,
                 calendarId = properties.calendarId,
+                sendUpdates = sendUpdates,
             )
         } catch (e: WebClientResponseException) {
             if (e.isAuthorizationFailure()) throw GoogleCalendarUnauthorizedException()

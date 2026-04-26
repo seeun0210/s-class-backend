@@ -65,6 +65,7 @@ class UpdateLessonScheduleUseCaseTest {
         every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
             firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
         }
+        every { userAdaptor.lockByIdsForUpdate(any()) } just Runs
         useCase =
             UpdateLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
@@ -89,6 +90,7 @@ class UpdateLessonScheduleUseCaseTest {
         val newScheduledAt = LocalDateTime.of(2026, 5, 2, 21, 0)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -103,6 +105,8 @@ class UpdateLessonScheduleUseCaseTest {
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
         every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
         every {
             calendarClient.updateMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
@@ -141,6 +145,7 @@ class UpdateLessonScheduleUseCaseTest {
         val newScheduledAt = LocalDateTime.of(2026, 5, 2, 21, 0)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -155,6 +160,8 @@ class UpdateLessonScheduleUseCaseTest {
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
         every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
         every {
             calendarClient.createMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
@@ -184,6 +191,7 @@ class UpdateLessonScheduleUseCaseTest {
         val lesson = lesson(scheduledAt = originalScheduledAt)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -222,6 +230,7 @@ class UpdateLessonScheduleUseCaseTest {
         val commandSlots = mutableListOf<GoogleCalendarEventCreateCommand>()
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -279,6 +288,7 @@ class UpdateLessonScheduleUseCaseTest {
         val account = centralGoogleAccount()
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,

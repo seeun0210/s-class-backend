@@ -1,5 +1,7 @@
-package com.sclass.supporters.lesson.usecase
+package com.sclass.backoffice.lesson.usecase
 
+import com.sclass.backoffice.lesson.dto.LessonResponse
+import com.sclass.backoffice.lesson.dto.ScheduleLessonRequest
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.GoogleCalendarCentralDisabledException
 import com.sclass.common.jwt.AesTokenEncryptor
@@ -7,14 +9,11 @@ import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
 import com.sclass.domain.domains.lesson.exception.LessonScheduleAlreadyExistsException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleConflictException
-import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
-import com.sclass.supporters.lesson.dto.LessonResponse
-import com.sclass.supporters.lesson.dto.ScheduleLessonRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.transaction.support.TransactionTemplate
@@ -35,11 +34,10 @@ class CreateLessonScheduleUseCase(
     private val log = LoggerFactory.getLogger(CreateLessonScheduleUseCase::class.java)
 
     fun execute(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
     ): LessonResponse {
-        val prepared = prepareSchedule(userId, lessonId, request)
+        val prepared = prepareSchedule(lessonId, request)
         val result =
             prepared.calendarClient.createMeetEventWithRefreshToken(
                 refreshToken = prepared.refreshToken,
@@ -47,7 +45,7 @@ class CreateLessonScheduleUseCase(
             )
 
         return try {
-            saveSchedule(userId, lessonId, request, prepared, result)
+            saveSchedule(lessonId, request, prepared, result)
         } catch (e: RuntimeException) {
             deleteCreatedCalendarEvent(prepared, result.eventId)
             throw e
@@ -55,14 +53,12 @@ class CreateLessonScheduleUseCase(
     }
 
     private fun prepareSchedule(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
     ): PreparedCreateSchedule =
         txTemplate.execute {
             val scheduledAt = requireNotNull(request.scheduledAt)
             val lesson = lessonAdaptor.findById(lessonId)
-            if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
             lesson.validateScheduleUpdatable()
 
@@ -111,7 +107,6 @@ class CreateLessonScheduleUseCase(
     }
 
     private fun saveSchedule(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
         prepared: PreparedCreateSchedule,
@@ -119,7 +114,6 @@ class CreateLessonScheduleUseCase(
     ): LessonResponse =
         txTemplate.execute {
             val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
-            if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
             if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
             lesson.validateScheduleUpdatable()
             lesson.validateParticipantSnapshot(prepared.studentUserId, prepared.teacherUserId)

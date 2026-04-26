@@ -123,11 +123,12 @@ class GoogleCalendarClient(
         eventId: String,
         accessToken: String,
         calendarId: String = PRIMARY_CALENDAR_ID,
+        sendUpdates: Boolean = false,
     ) {
         try {
             webClient
                 .delete()
-                .uri(calendarEventUri(calendarId, eventId, sendUpdates = false))
+                .uri(calendarEventDeleteUri(calendarId, eventId, sendUpdates = sendUpdates))
                 .header("Authorization", "Bearer $accessToken")
                 .retrieve()
                 .toBodilessEntity()
@@ -255,6 +256,25 @@ class GoogleCalendarClient(
             )
         return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events/$encodedEventId" +
             "?conferenceDataVersion=1$sendUpdatesQuery"
+    }
+
+    private fun calendarEventDeleteUri(
+        calendarId: String,
+        eventId: String,
+        sendUpdates: Boolean,
+    ): String {
+        val sendUpdatesQuery = if (sendUpdates) "?sendUpdates=all" else ""
+        val encodedCalendarId =
+            URLEncoder.encode(
+                calendarId,
+                StandardCharsets.UTF_8,
+            )
+        val encodedEventId =
+            URLEncoder.encode(
+                eventId,
+                StandardCharsets.UTF_8,
+            )
+        return "https://www.googleapis.com/calendar/v3/calendars/$encodedCalendarId/events/$encodedEventId$sendUpdatesQuery"
     }
 
     private fun String.extractMeetCode(): String? =

@@ -1,20 +1,19 @@
-package com.sclass.supporters.lesson.usecase
+package com.sclass.backoffice.lesson.usecase
 
+import com.sclass.backoffice.lesson.dto.LessonResponse
+import com.sclass.backoffice.lesson.dto.ScheduleLessonRequest
 import com.sclass.common.annotation.UseCase
 import com.sclass.common.exception.GoogleCalendarCentralDisabledException
 import com.sclass.common.jwt.AesTokenEncryptor
 import com.sclass.domain.domains.lesson.adaptor.LessonAdaptor
 import com.sclass.domain.domains.lesson.domain.Lesson
-import com.sclass.domain.domains.lesson.exception.LessonScheduleAlreadyExistsException
 import com.sclass.domain.domains.lesson.exception.LessonScheduleConflictException
-import com.sclass.domain.domains.lesson.exception.LessonUnauthorizedAccessException
+import com.sclass.domain.domains.lesson.exception.LessonScheduleNotFoundException
 import com.sclass.domain.domains.oauth.adaptor.CentralGoogleAccountAdaptor
 import com.sclass.domain.domains.user.adaptor.UserAdaptor
 import com.sclass.infrastructure.calendar.CentralGoogleCalendarClient
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventCreateCommand
 import com.sclass.infrastructure.calendar.dto.GoogleCalendarEventResult
-import com.sclass.supporters.lesson.dto.LessonResponse
-import com.sclass.supporters.lesson.dto.ScheduleLessonRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.transaction.support.TransactionTemplate
@@ -23,7 +22,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @UseCase
-class CreateLessonScheduleUseCase(
+class UpdateLessonScheduleUseCase(
     private val lessonAdaptor: LessonAdaptor,
     private val centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor,
     private val userAdaptor: UserAdaptor,
@@ -32,38 +31,43 @@ class CreateLessonScheduleUseCase(
     private val txTemplate: TransactionTemplate,
     private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    private val log = LoggerFactory.getLogger(CreateLessonScheduleUseCase::class.java)
+    private val log = LoggerFactory.getLogger(UpdateLessonScheduleUseCase::class.java)
 
     fun execute(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
     ): LessonResponse {
-        val prepared = prepareSchedule(userId, lessonId, request)
+        val prepared = prepareSchedule(lessonId, request)
         val result =
-            prepared.calendarClient.createMeetEventWithRefreshToken(
-                refreshToken = prepared.refreshToken,
-                command = prepared.command,
-            )
+            if (prepared.eventId.isNullOrBlank()) {
+                prepared.calendarClient.createMeetEventWithRefreshToken(
+                    refreshToken = prepared.refreshToken,
+                    command = prepared.command,
+                )
+            } else {
+                prepared.calendarClient.updateMeetEventWithRefreshToken(
+                    refreshToken = prepared.refreshToken,
+                    eventId = prepared.eventId,
+                    command = prepared.command,
+                )
+            }
 
         return try {
-            saveSchedule(userId, lessonId, request, prepared, result)
+            saveSchedule(lessonId, request, prepared, result)
         } catch (e: RuntimeException) {
-            deleteCreatedCalendarEvent(prepared, result.eventId)
+            rollbackCalendarEvent(prepared, result)
             throw e
         }
     }
 
     private fun prepareSchedule(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
-    ): PreparedCreateSchedule =
+    ): PreparedUpdateSchedule =
         txTemplate.execute {
             val scheduledAt = requireNotNull(request.scheduledAt)
             val lesson = lessonAdaptor.findById(lessonId)
-            if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
-            if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
+            val currentScheduledAt = lesson.scheduledAt ?: throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
 
             validateNoScheduleConflict(lesson, scheduledAt)
@@ -74,11 +78,13 @@ class CreateLessonScheduleUseCase(
             val centralAccount = centralGoogleAccountAdaptor.findGoogle()
             val refreshToken = aesTokenEncryptor.decrypt(centralAccount.encryptedRefreshToken)
 
-            PreparedCreateSchedule(
+            PreparedUpdateSchedule(
                 scheduledAt = scheduledAt,
                 command = lesson.toGoogleCalendarCommand(request.name, scheduledAt),
+                previousCommand = lesson.toGoogleCalendarCommand(lesson.name, currentScheduledAt),
                 calendarClient = calendarClient,
                 refreshToken = refreshToken,
+                eventId = lesson.googleMeet?.calendarEventId,
                 studentUserId = lesson.studentUserId,
                 teacherUserId = lesson.effectiveTeacherUserId,
             )
@@ -111,16 +117,14 @@ class CreateLessonScheduleUseCase(
     }
 
     private fun saveSchedule(
-        userId: String,
         lessonId: Long,
         request: ScheduleLessonRequest,
-        prepared: PreparedCreateSchedule,
+        prepared: PreparedUpdateSchedule,
         result: GoogleCalendarEventResult,
     ): LessonResponse =
         txTemplate.execute {
             val lesson = lessonAdaptor.findByIdForUpdate(lessonId)
-            if (!lesson.isTeacher(userId)) throw LessonUnauthorizedAccessException()
-            if (lesson.scheduledAt != null) throw LessonScheduleAlreadyExistsException()
+            if (lesson.scheduledAt == null) throw LessonScheduleNotFoundException()
             lesson.validateScheduleUpdatable()
             lesson.validateParticipantSnapshot(prepared.studentUserId, prepared.teacherUserId)
             lockScheduleParticipants(lesson)
@@ -149,8 +153,19 @@ class CreateLessonScheduleUseCase(
         }
     }
 
+    private fun rollbackCalendarEvent(
+        prepared: PreparedUpdateSchedule,
+        result: GoogleCalendarEventResult,
+    ) {
+        if (prepared.eventId.isNullOrBlank()) {
+            deleteCreatedCalendarEvent(prepared, result.eventId)
+        } else {
+            restoreUpdatedCalendarEvent(prepared)
+        }
+    }
+
     private fun deleteCreatedCalendarEvent(
-        prepared: PreparedCreateSchedule,
+        prepared: PreparedUpdateSchedule,
         eventId: String,
     ) {
         runCatching {
@@ -160,6 +175,22 @@ class CreateLessonScheduleUseCase(
             )
         }.onFailure {
             log.warn("Failed to delete Google Calendar event after lesson schedule save failed: eventId={}", eventId, it)
+        }
+    }
+
+    private fun restoreUpdatedCalendarEvent(prepared: PreparedUpdateSchedule) {
+        runCatching {
+            prepared.calendarClient.updateMeetEventWithRefreshToken(
+                refreshToken = prepared.refreshToken,
+                eventId = prepared.eventId!!,
+                command = prepared.previousCommand,
+            )
+        }.onFailure {
+            log.warn(
+                "Failed to restore Google Calendar event after lesson schedule save failed: eventId={}",
+                prepared.eventId,
+                it,
+            )
         }
     }
 
@@ -173,16 +204,23 @@ class CreateLessonScheduleUseCase(
         return GoogleCalendarEventCreateCommand(
             summary = name ?: this.name,
             startAt = scheduledAt.atZone(SEOUL_ZONE_ID),
-            endAt = scheduledAt.plusMinutes(Lesson.DEFAULT_DURATION_MINUTES).atZone(SEOUL_ZONE_ID),
-            attendeeEmails = listOf(teacher.email, student.email).distinct(),
+            endAt =
+                scheduledAt.plusMinutes(Lesson.DEFAULT_DURATION_MINUTES).atZone(SEOUL_ZONE_ID),
+            attendeeEmails =
+                listOf(
+                    teacher.email,
+                    student.email,
+                ).distinct(),
         )
     }
 
-    private data class PreparedCreateSchedule(
+    private data class PreparedUpdateSchedule(
         val scheduledAt: LocalDateTime,
         val command: GoogleCalendarEventCreateCommand,
+        val previousCommand: GoogleCalendarEventCreateCommand,
         val calendarClient: CentralGoogleCalendarClient,
         val refreshToken: String,
+        val eventId: String?,
         val studentUserId: String,
         val teacherUserId: String,
     )

@@ -12,6 +12,12 @@ class UserAdaptor(
 ) {
     fun findById(id: String): User = userRepository.findById(id).orElseThrow { UserNotFoundException() }
 
+    fun lockByIdsForUpdate(ids: Collection<String>) {
+        val distinctIds = ids.distinct()
+        val users = userRepository.findAllByIdsForUpdate(distinctIds)
+        if (users.size != distinctIds.size) throw UserNotFoundException()
+    }
+
     fun findByEmail(email: String): User = userRepository.findByEmail(email) ?: throw UserNotFoundException()
 
     fun findByEmailOrNull(email: String): User? = userRepository.findByEmail(email)

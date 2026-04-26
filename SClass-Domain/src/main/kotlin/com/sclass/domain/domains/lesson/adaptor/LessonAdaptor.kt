@@ -18,6 +18,8 @@ class LessonAdaptor(
 
     fun findById(id: Long): Lesson = lessonRepository.findByIdOrNull(id) ?: throw LessonNotFoundException()
 
+    fun findByIdForUpdate(id: Long): Lesson = lessonRepository.findByIdForUpdate(id) ?: throw LessonNotFoundException()
+
     fun findByIdOrNull(id: Long): Lesson? = lessonRepository.findByIdOrNull(id)
 
     fun findAllByIds(ids: Collection<Long>): List<Lesson> = lessonRepository.findAllById(ids)

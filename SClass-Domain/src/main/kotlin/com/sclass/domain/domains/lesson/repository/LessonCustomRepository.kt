@@ -4,6 +4,8 @@ import com.sclass.domain.domains.lesson.domain.Lesson
 import java.time.LocalDateTime
 
 interface LessonCustomRepository {
+    fun findByIdForUpdate(id: Long): Lesson?
+
     fun findAllByEffectiveTeacher(teacherUserId: String): List<Lesson>
 
     fun existsScheduleConflict(

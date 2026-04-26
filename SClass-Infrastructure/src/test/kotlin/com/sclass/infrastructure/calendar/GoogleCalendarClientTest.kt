@@ -74,7 +74,7 @@ class GoogleCalendarClientTest {
         every { requestHeadersSpec.retrieve() } returns responseSpec
     }
 
-    private fun mockDeleteEventCall(uri: String = CALENDAR_EVENT_URI) {
+    private fun mockDeleteEventCall(uri: String = CALENDAR_EVENT_DELETE_URI) {
         every { webClient.delete() } returns requestHeadersUriSpec
         every { requestHeadersUriSpec.uri(uri) } returns deleteRequestHeadersSpec
         every { deleteRequestHeadersSpec.header(HttpHeaders.AUTHORIZATION, any()) } returns deleteRequestHeadersSpec
@@ -83,7 +83,7 @@ class GoogleCalendarClientTest {
 
     private fun mockUpdateEventCall(
         requestSlot: MutableList<GoogleCalendarEventUpdateRequest> = mutableListOf(),
-        uri: String = CALENDAR_EVENT_URI,
+        uri: String = CALENDAR_EVENT_UPDATE_URI,
     ) {
         every { webClient.patch() } returns requestBodyUriSpec
         every { requestBodyUriSpec.uri(uri) } returns requestBodySpec
@@ -218,7 +218,7 @@ class GoogleCalendarClientTest {
 
     @Test
     fun `event id와 calendar id는 update URL path에 안전하게 인코딩한다`() {
-        mockUpdateEventCall(uri = CALENDAR_EVENT_WITH_ENCODED_IDS_URI)
+        mockUpdateEventCall(uri = CALENDAR_EVENT_UPDATE_WITH_ENCODED_IDS_URI)
         every { responseSpec.bodyToMono(GoogleCalendarEventResponse::class.java) } returns
             Mono.just(calendarResponse(meetUri = "https://meet.google.com/updated-code"))
 
@@ -234,7 +234,7 @@ class GoogleCalendarClientTest {
             calendarId = "central@example.com",
         )
 
-        verify { requestBodyUriSpec.uri(CALENDAR_EVENT_WITH_ENCODED_IDS_URI) }
+        verify { requestBodyUriSpec.uri(CALENDAR_EVENT_UPDATE_WITH_ENCODED_IDS_URI) }
     }
 
     @Test
@@ -247,13 +247,13 @@ class GoogleCalendarClientTest {
             accessToken = "access-token",
         )
 
-        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_URI) }
+        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_DELETE_URI) }
         verify { deleteRequestHeadersSpec.header(HttpHeaders.AUTHORIZATION, "Bearer access-token") }
     }
 
     @Test
     fun `event id와 calendar id는 delete URL path에 안전하게 인코딩한다`() {
-        mockDeleteEventCall(uri = CALENDAR_EVENT_WITH_ENCODED_IDS_URI)
+        mockDeleteEventCall(uri = CALENDAR_EVENT_DELETE_WITH_ENCODED_IDS_URI)
         every { responseSpec.toBodilessEntity() } returns Mono.just(ResponseEntity.noContent().build())
 
         client.deleteMeetEventWithAccessToken(
@@ -262,7 +262,21 @@ class GoogleCalendarClientTest {
             calendarId = "central@example.com",
         )
 
-        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_WITH_ENCODED_IDS_URI) }
+        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_DELETE_WITH_ENCODED_IDS_URI) }
+    }
+
+    @Test
+    fun `Calendar event 삭제는 sendUpdates가 켜져 있으면 취소 알림을 전송한다`() {
+        mockDeleteEventCall(uri = CALENDAR_EVENT_DELETE_WITH_SEND_UPDATES_URI)
+        every { responseSpec.toBodilessEntity() } returns Mono.just(ResponseEntity.noContent().build())
+
+        client.deleteMeetEventWithAccessToken(
+            eventId = "event-id-1",
+            accessToken = "access-token",
+            sendUpdates = true,
+        )
+
+        verify { requestHeadersUriSpec.uri(CALENDAR_EVENT_DELETE_WITH_SEND_UPDATES_URI) }
     }
 
     @Test
@@ -439,11 +453,17 @@ class GoogleCalendarClientTest {
             "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all"
         const val CALENDAR_EVENTS_WITH_ENCODED_CALENDAR_ID_URI =
             "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events?conferenceDataVersion=1"
-        const val CALENDAR_EVENT_URI =
+        const val CALENDAR_EVENT_UPDATE_URI =
             "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1?conferenceDataVersion=1"
         const val CALENDAR_EVENT_WITH_SEND_UPDATES_URI =
             "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1?conferenceDataVersion=1&sendUpdates=all"
-        const val CALENDAR_EVENT_WITH_ENCODED_IDS_URI =
+        const val CALENDAR_EVENT_UPDATE_WITH_ENCODED_IDS_URI =
             "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events/event%2Fid+with+space?conferenceDataVersion=1"
+        const val CALENDAR_EVENT_DELETE_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1"
+        const val CALENDAR_EVENT_DELETE_WITH_SEND_UPDATES_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-id-1?sendUpdates=all"
+        const val CALENDAR_EVENT_DELETE_WITH_ENCODED_IDS_URI =
+            "https://www.googleapis.com/calendar/v3/calendars/central%40example.com/events/event%2Fid+with+space"
     }
 }

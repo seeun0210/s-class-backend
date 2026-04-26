@@ -66,6 +66,7 @@ class CreateLessonScheduleUseCaseTest {
         every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
             firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
         }
+        every { userAdaptor.lockByIdsForUpdate(any()) } just Runs
         useCase =
             CreateLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
@@ -86,6 +87,7 @@ class CreateLessonScheduleUseCaseTest {
         val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -100,6 +102,8 @@ class CreateLessonScheduleUseCaseTest {
         every { aesTokenEncryptor.decrypt("encrypted-refresh-token") } returns "refresh-token"
         every { userAdaptor.findById(teacherUserId) } returns user(teacherUserId, "teacher@example.com")
         every { userAdaptor.findById(studentUserId) } returns user(studentUserId, "student@example.com")
+        every { lessonAdaptor.save(lesson) } returns lesson
+        every { centralGoogleAccountAdaptor.save(account) } returns account
         every {
             calendarClient.createMeetEventWithRefreshToken(
                 refreshToken = "refresh-token",
@@ -152,6 +156,7 @@ class CreateLessonScheduleUseCaseTest {
         val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
@@ -181,6 +186,7 @@ class CreateLessonScheduleUseCaseTest {
         val scheduledAt = LocalDateTime.of(2026, 5, 1, 20, 0)
 
         every { lessonAdaptor.findById(1L) } returns lesson
+        every { lessonAdaptor.findByIdForUpdate(1L) } returns lesson
         every {
             lessonAdaptor.existsScheduleConflict(
                 studentUserId = studentUserId,
