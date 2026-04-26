@@ -29,18 +29,20 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.transaction.support.TransactionCallback
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-class
-CreateLessonScheduleUseCaseTest {
+class CreateLessonScheduleUseCaseTest {
     private lateinit var lessonAdaptor: LessonAdaptor
     private lateinit var centralGoogleAccountAdaptor: CentralGoogleAccountAdaptor
     private lateinit var userAdaptor: UserAdaptor
     private lateinit var aesTokenEncryptor: AesTokenEncryptor
     private lateinit var calendarClientProvider: ObjectProvider<CentralGoogleCalendarClient>
     private lateinit var calendarClient: CentralGoogleCalendarClient
+    private lateinit var txTemplate: TransactionTemplate
     private lateinit var useCase: CreateLessonScheduleUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -57,6 +59,10 @@ CreateLessonScheduleUseCaseTest {
         aesTokenEncryptor = mockk()
         calendarClientProvider = mockk()
         calendarClient = mockk()
+        txTemplate = mockk()
+        every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
+            firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
+        }
         useCase =
             CreateLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
@@ -64,6 +70,7 @@ CreateLessonScheduleUseCaseTest {
                 userAdaptor = userAdaptor,
                 aesTokenEncryptor = aesTokenEncryptor,
                 centralGoogleCalendarClientProvider = calendarClientProvider,
+                txTemplate = txTemplate,
                 clock = clock,
             )
     }
@@ -118,6 +125,7 @@ CreateLessonScheduleUseCaseTest {
             { assertEquals(scheduledAt.plusMinutes(60).atZone(zoneId), commandSlot.captured.endAt) },
             { assertEquals(listOf("teacher@example.com", "student@example.com"), commandSlot.captured.attendeeEmails) },
         )
+        verify(exactly = 2) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
     }
 
     @Test

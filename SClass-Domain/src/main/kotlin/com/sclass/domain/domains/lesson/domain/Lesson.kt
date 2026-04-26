@@ -173,4 +173,8 @@ class Lesson(
             }
         if (status !in allowed) throw LessonInvalidStatusTransitionException()
     }
+
+    companion object {
+        const val DEFAULT_DURATION_MINUTES = 60L
+    }
 }

@@ -1,5 +1,8 @@
 package com.sclass.infrastructure.calendar.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class GoogleCalendarEventRequest(
     val summary: String,
     val start: GoogleCalendarEventDateTime,

@@ -28,6 +28,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.transaction.support.TransactionCallback
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -39,6 +41,7 @@ class UpdateLessonScheduleUseCaseTest {
     private lateinit var aesTokenEncryptor: AesTokenEncryptor
     private lateinit var calendarClientProvider: ObjectProvider<CentralGoogleCalendarClient>
     private lateinit var calendarClient: CentralGoogleCalendarClient
+    private lateinit var txTemplate: TransactionTemplate
     private lateinit var useCase: UpdateLessonScheduleUseCase
 
     private val studentUserId = "student-user-id-0000000001"
@@ -55,6 +58,10 @@ class UpdateLessonScheduleUseCaseTest {
         aesTokenEncryptor = mockk()
         calendarClientProvider = mockk()
         calendarClient = mockk()
+        txTemplate = mockk()
+        every { txTemplate.execute(any<TransactionCallback<Any?>>()) } answers {
+            firstArg<TransactionCallback<Any?>>().doInTransaction(mockk())
+        }
         useCase =
             UpdateLessonScheduleUseCase(
                 lessonAdaptor = lessonAdaptor,
@@ -62,6 +69,7 @@ class UpdateLessonScheduleUseCaseTest {
                 userAdaptor = userAdaptor,
                 aesTokenEncryptor = aesTokenEncryptor,
                 centralGoogleCalendarClientProvider = calendarClientProvider,
+                txTemplate = txTemplate,
                 clock = clock,
             )
     }
@@ -120,6 +128,7 @@ class UpdateLessonScheduleUseCaseTest {
             { assertEquals(newScheduledAt.plusMinutes(60).atZone(zoneId), commandSlot.captured.endAt) },
         )
         verify(exactly = 0) { calendarClient.createMeetEventWithRefreshToken(any(), any()) }
+        verify(exactly = 2) { txTemplate.execute(any<TransactionCallback<Any?>>()) }
     }
 
     @Test

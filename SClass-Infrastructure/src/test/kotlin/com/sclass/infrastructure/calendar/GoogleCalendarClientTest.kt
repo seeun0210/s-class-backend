@@ -1,5 +1,6 @@
 package com.sclass.infrastructure.calendar
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.sclass.common.exception.GoogleCalendarRequestFailedException
 import com.sclass.common.exception.GoogleCalendarUnauthorizedException
 import com.sclass.common.exception.GoogleOAuthProviderUnavailableException
@@ -15,6 +16,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -196,6 +198,7 @@ class GoogleCalendarClientTest {
             { assertEquals(null, requestSlot.single().conferenceData) },
             { assertEquals(listOf("teacher@example.com"), requestSlot.single().attendees.map { it.email }) },
         )
+        assertFalse(ObjectMapper().writeValueAsString(requestSlot.single()).contains("conferenceData"))
         verify { requestBodySpec.header(HttpHeaders.AUTHORIZATION, "Bearer access-token") }
     }
 
